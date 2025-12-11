@@ -1,0 +1,196 @@
+---
+title: Deliverability Best Practices
+description: "Maximize email deliverability and inbox placement"
+---
+
+# Deliverability Best Practices
+
+Ensure your emails reach the inbox, not spam.
+
+## Authentication Setup
+
+### Complete DNS Configuration
+
+<Steps>
+  <Step title="SPF Record">
+    Authorizes Lettr to send on your behalf.
+    ```
+    v=spf1 include:spf.lettr.dev ~all
+    ```
+  </Step>
+  <Step title="DKIM Record">
+    Signs emails cryptographically.
+    ```
+    CNAME: lettr._domainkey → dkim.lettr.dev
+    ```
+  </Step>
+  <Step title="DMARC Record">
+    Sets policy for failed authentication.
+    ```
+    v=DMARC1; p=quarantine; rua=mailto:dmarc@yourdomain.com
+    ```
+  </Step>
+</Steps>
+
+## Sender Reputation
+
+### Warm Up New Domains
+
+Don't send large volumes immediately. Ramp up gradually:
+
+| Week | Daily Volume |
+|------|-------------|
+| 1 | 50-100 |
+| 2 | 200-500 |
+| 3 | 1,000-2,000 |
+| 4 | 5,000+ |
+
+### Monitor Reputation
+
+```javascript
+const reputation = await lettr.domains.getReputation('dom_123');
+
+// Target: score > 80
+console.log({
+  score: reputation.score,
+  bounceRate: reputation.bounceRate,  // Keep < 2%
+  spamRate: reputation.spamRate       // Keep < 0.1%
+});
+```
+
+## List Hygiene
+
+### Remove Invalid Addresses
+
+Process bounces immediately:
+
+```javascript
+app.post('/webhooks', (req, res) => {
+  if (req.body.type === 'email.bounced') {
+    const { to, bounceType } = req.body.data;
+    
+    if (bounceType === 'hard') {
+      removeFromList(to);
+    }
+  }
+  res.sendStatus(200);
+});
+```
+
+### Use Double Opt-In
+
+Confirm subscriptions before sending:
+
+```javascript
+// 1. User signs up
+await sendConfirmationEmail(email);
+
+// 2. User clicks link
+await confirmSubscription(email);
+
+// 3. Now safe to send marketing emails
+```
+
+### Remove Unengaged Subscribers
+
+Stop sending to users who never open:
+
+```javascript
+// Find subscribers with no opens in 6 months
+const unengaged = await db.subscribers.findAll({
+  where: {
+    lastOpenedAt: { $lt: sixMonthsAgo }
+  }
+});
+
+// Remove or re-engage them
+```
+
+## Content Best Practices
+
+### Subject Lines
+
+<AccordionGroup>
+  <Accordion title="Do: Be clear and relevant">
+    "Your order #12345 has shipped"
+  </Accordion>
+  <Accordion title="Don't: Use spam triggers">
+    "FREE!!! LIMITED TIME OFFER!!!"
+  </Accordion>
+</AccordionGroup>
+
+### Email Body
+
+| Do | Don't |
+|----|-------|
+| Balance text and images | Use only images |
+| Include plain text version | Send HTML only |
+| Add unsubscribe link | Hide unsubscribe |
+| Use your domain for links | Use URL shorteners |
+
+### Required Elements
+
+Always include:
+
+- Physical mailing address
+- Unsubscribe link (one-click preferred)
+- Reply-to address
+
+## Engagement Metrics
+
+### Track and Improve
+
+| Metric | Target | Action if Low |
+|--------|--------|---------------|
+| Open Rate | > 20% | Improve subject lines |
+| Click Rate | > 2% | Better CTAs |
+| Bounce Rate | < 2% | Clean list |
+| Spam Rate | < 0.1% | Review content |
+
+## Testing
+
+### Before Sending
+
+1. **Spam check** - Use tools to scan for spam triggers
+2. **Preview** - Check rendering in multiple clients
+3. **Test send** - Send to yourself first
+4. **Links** - Verify all links work
+
+### A/B Testing
+
+```javascript
+const campaign = await lettr.campaigns.create({
+  variants: [
+    { subject: 'Version A', weight: 50 },
+    { subject: 'Version B', weight: 50 }
+  ],
+  testSettings: {
+    testPercentage: 20,
+    winnerCriteria: 'open_rate'
+  }
+});
+```
+
+## Common Deliverability Issues
+
+<AccordionGroup>
+  <Accordion title="Emails going to spam">
+    - Check authentication (SPF, DKIM, DMARC)
+    - Review content for spam triggers
+    - Check domain reputation
+    - Ensure proper unsubscribe mechanism
+  </Accordion>
+  <Accordion title="High bounce rate">
+    - Implement double opt-in
+    - Validate emails at signup
+    - Remove inactive subscribers
+    - Process bounces immediately
+  </Accordion>
+  <Accordion title="Low open rates">
+    - Improve subject lines
+    - Send at optimal times
+    - Segment your audience
+    - Remove unengaged subscribers
+  </Accordion>
+</AccordionGroup>
+

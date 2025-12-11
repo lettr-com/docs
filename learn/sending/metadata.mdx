@@ -1,0 +1,122 @@
+---
+title: Metadata
+description: "Add custom metadata to track and organize emails"
+---
+
+# Email Metadata
+
+Attach custom metadata to your emails for tracking, filtering, and analytics.
+
+## Adding Metadata
+
+```javascript
+await lettr.emails.send({
+  from: 'you@example.com',
+  to: ['recipient@example.com'],
+  subject: 'Order Confirmation',
+  html: '<p>Your order is confirmed!</p>',
+  metadata: {
+    orderId: 'order_12345',
+    customerId: 'cust_67890',
+    orderTotal: 99.99,
+    source: 'checkout'
+  }
+});
+```
+
+## Metadata in Webhooks
+
+Metadata is included in webhook payloads:
+
+```json
+{
+  "type": "email.delivered",
+  "data": {
+    "emailId": "email_abc123",
+    "to": "recipient@example.com",
+    "metadata": {
+      "orderId": "order_12345",
+      "customerId": "cust_67890",
+      "orderTotal": 99.99,
+      "source": "checkout"
+    }
+  }
+}
+```
+
+## Query by Metadata
+
+Find emails by metadata values:
+
+```javascript
+const emails = await lettr.emails.list({
+  metadata: {
+    orderId: 'order_12345'
+  }
+});
+```
+
+## Use Cases
+
+<CardGroup cols={2}>
+  <Card title="Order Tracking" icon="box">
+    Link emails to orders for support and auditing.
+  </Card>
+  <Card title="User Attribution" icon="user">
+    Track which user triggered each email.
+  </Card>
+  <Card title="Analytics" icon="chart-line">
+    Segment email performance by custom dimensions.
+  </Card>
+  <Card title="Debugging" icon="bug">
+    Include request IDs for easier troubleshooting.
+  </Card>
+</CardGroup>
+
+## Metadata vs Tags
+
+| Feature | Metadata | Tags |
+|---------|----------|------|
+| Structure | Key-value pairs | Array of strings |
+| Values | Strings, numbers, booleans | Strings only |
+| Query support | Query by specific values | Filter by tag presence |
+| Best for | Detailed tracking data | Categorization |
+
+## Example: Full Tracking Setup
+
+```javascript
+await lettr.emails.send({
+  from: 'orders@example.com',
+  to: ['customer@example.com'],
+  subject: 'Order #12345 Confirmed',
+  html: orderConfirmationHtml,
+  
+  // Tags for categorization
+  tags: ['transactional', 'order-confirmation', 'us-region'],
+  
+  // Metadata for detailed tracking
+  metadata: {
+    orderId: 'order_12345',
+    customerId: 'cust_67890',
+    orderTotal: 299.99,
+    currency: 'USD',
+    itemCount: 3,
+    shippingMethod: 'express',
+    requestId: 'req_xyz789'
+  }
+});
+```
+
+## Limits
+
+| Limit | Value |
+|-------|-------|
+| Max keys | 50 |
+| Max key length | 40 characters |
+| Max value length | 500 characters |
+| Max total size | 8 KB |
+
+<Warning>
+  Don't store sensitive information (passwords, API keys, PII) in metadata. Metadata is visible in the dashboard and webhook payloads.
+</Warning>
+

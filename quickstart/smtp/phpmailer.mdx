@@ -1,0 +1,94 @@
+---
+title: PHPMailer
+description: "Use Lettr with PHPMailer"
+---
+
+# PHPMailer Integration
+
+Learn how to send emails through Lettr using PHPMailer.
+
+## Installation
+
+Install PHPMailer via Composer:
+
+```bash
+composer require phpmailer/phpmailer
+```
+
+## Configuration
+
+```php
+<?php
+
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\SMTP;
+use PHPMailer\PHPMailer\Exception;
+
+require 'vendor/autoload.php';
+
+$mail = new PHPMailer(true);
+
+try {
+    // Server settings
+    $mail->SMTPDebug = SMTP::DEBUG_OFF;
+    $mail->isSMTP();
+    $mail->Host       = 'smtp.lettr.dev';
+    $mail->SMTPAuth   = true;
+    $mail->Username   = 'lettr';
+    $mail->Password   = 'your-api-key';
+    $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+    $mail->Port       = 587;
+
+    // Recipients
+    $mail->setFrom('you@example.com', 'Your Name');
+    $mail->addAddress('recipient@example.com', 'Recipient Name');
+    $mail->addReplyTo('reply@example.com', 'Reply Address');
+
+    // Content
+    $mail->isHTML(true);
+    $mail->Subject = 'Hello from Lettr';
+    $mail->Body    = '<p>Welcome to <b>Lettr</b>!</p>';
+    $mail->AltBody = 'Welcome to Lettr!';
+
+    $mail->send();
+    echo 'Message has been sent';
+} catch (Exception $e) {
+    echo "Message could not be sent. Mailer Error: {$mail->ErrorInfo}";
+}
+```
+
+## Adding Attachments
+
+```php
+$mail->addAttachment('/path/to/file.pdf', 'document.pdf');
+$mail->addAttachment('/path/to/image.jpg', 'photo.jpg');
+```
+
+## Adding CC and BCC
+
+```php
+$mail->addCC('cc@example.com');
+$mail->addBCC('bcc@example.com');
+```
+
+## Using SSL Instead of TLS
+
+If you prefer SSL encryption:
+
+```php
+$mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+$mail->Port       = 465;
+```
+
+## Debug Mode
+
+Enable debug mode to troubleshoot issues:
+
+```php
+$mail->SMTPDebug = SMTP::DEBUG_SERVER;
+```
+
+<Warning>
+  Never enable debug mode in production as it may expose sensitive information.
+</Warning>
+

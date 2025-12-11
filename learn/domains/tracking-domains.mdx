@@ -1,0 +1,101 @@
+---
+title: Tracking Domains
+description: "Set up custom tracking domains for opens and clicks"
+---
+
+# Tracking Domains
+
+Use custom domains for tracking links and pixels to maintain brand consistency.
+
+## Why Custom Tracking Domains?
+
+By default, tracking links use Lettr's domain. Custom tracking domains:
+
+- **Brand Consistency** - Links show your domain, not Lettr's
+- **Improved Deliverability** - Some spam filters trust custom domains more
+- **User Trust** - Recipients see familiar links
+
+## Default vs Custom Tracking
+
+| Type | Link Example |
+|------|--------------|
+| Default | `https://track.lettr.dev/c/abc123` |
+| Custom | `https://links.example.com/c/abc123` |
+
+## Setup Custom Tracking Domain
+
+<Steps>
+  <Step title="Choose a Subdomain">
+    Pick a subdomain like `links`, `track`, or `click`.
+  </Step>
+  <Step title="Add DNS Record">
+    Add a CNAME record pointing to Lettr.
+  </Step>
+  <Step title="Configure in Dashboard">
+    Set the tracking domain in your domain settings.
+  </Step>
+</Steps>
+
+## DNS Configuration
+
+Add this CNAME record:
+
+```
+Type: CNAME
+Host: links (or your chosen subdomain)
+Value: track.lettr.dev
+```
+
+## Via API
+
+```javascript
+const domain = await lettr.domains.update('dom_123', {
+  trackingDomain: 'links.example.com'
+});
+```
+
+## SSL Certificate
+
+Lettr automatically provisions SSL certificates for custom tracking domains. This process takes a few minutes after DNS verification.
+
+## Verify Setup
+
+```javascript
+const domain = await lettr.domains.get('dom_123');
+
+console.log({
+  trackingDomain: domain.trackingDomain,
+  trackingDomainStatus: domain.trackingDomainStatus,
+  sslStatus: domain.trackingSslStatus
+});
+```
+
+## Using Custom Tracking
+
+Once configured, all tracking links automatically use your custom domain:
+
+```javascript
+await lettr.emails.send({
+  from: 'you@example.com',
+  to: ['recipient@example.com'],
+  subject: 'Newsletter',
+  html: '<p>Click <a href="https://example.com/offer">here</a></p>',
+  tracking: { clicks: true }
+});
+
+// Link in email becomes: https://links.example.com/c/abc123
+```
+
+## Open Tracking Pixel
+
+The open tracking pixel also uses your custom domain:
+
+```html
+<!-- In the email -->
+<img src="https://links.example.com/o/xyz789" width="1" height="1" />
+```
+
+<Note>
+  Changing your tracking domain won't affect previously sent emails. Only new emails will use the updated tracking domain.
+</Note>
+

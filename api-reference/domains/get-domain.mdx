@@ -1,0 +1,81 @@
+---
+title: Get Domain
+api: GET /v1/domains/{id}
+description: "Retrieve a domain by ID"
+---
+
+# Get Domain
+
+Retrieve details of a specific domain by its ID.
+
+<ParamField path="id" type="string" required>
+  The ID of the domain to retrieve.
+</ParamField>
+
+## Request
+
+<CodeGroup>
+```bash cURL
+curl https://api.lettr.dev/v1/domains/dom_123abc \
+  -H "Authorization: Bearer le_xxxxxxxxxxxx"
+```
+
+```javascript Node.js
+const domain = await lettr.domains.get('dom_123abc');
+```
+
+```php PHP
+$domain = $lettr->domains->get('dom_123abc');
+```
+</CodeGroup>
+
+## Response
+
+```json
+{
+  "id": "dom_123abc",
+  "object": "domain",
+  "name": "example.com",
+  "status": "verified",
+  "region": "us",
+  "dnsRecords": [
+    {
+      "type": "TXT",
+      "host": "@",
+      "value": "v=spf1 include:spf.lettr.dev ~all",
+      "purpose": "spf",
+      "verified": true
+    },
+    {
+      "type": "CNAME",
+      "host": "lettr._domainkey",
+      "value": "dkim.lettr.dev",
+      "purpose": "dkim",
+      "verified": true
+    },
+    {
+      "type": "TXT",
+      "host": "_dmarc",
+      "value": "v=DMARC1; p=none;",
+      "purpose": "dmarc",
+      "verified": true
+    }
+  ],
+  "spfStatus": "verified",
+  "dkimStatus": "verified",
+  "dmarcStatus": "verified",
+  "trackingDomain": "links.example.com",
+  "trackingDomainStatus": "verified",
+  "createdAt": "2024-01-15T10:30:00Z",
+  "verifiedAt": "2024-01-15T12:00:00Z"
+}
+```
+
+## Domain Status
+
+| Status | Description |
+|--------|-------------|
+| `pending` | Waiting for DNS verification |
+| `verified` | All DNS records verified |
+| `failed` | Verification failed |
+

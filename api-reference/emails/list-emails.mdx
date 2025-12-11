@@ -1,0 +1,125 @@
+---
+title: List Emails
+api: GET /v1/emails
+description: "List all emails"
+---
+
+# List Emails
+
+Retrieve a list of emails with optional filtering.
+
+<ParamField query="limit" type="integer" default="10">
+  Number of emails to return. Maximum 100.
+</ParamField>
+
+<ParamField query="starting_after" type="string">
+  Cursor for pagination. Use the ID of the last email from the previous page.
+</ParamField>
+
+<ParamField query="ending_before" type="string">
+  Cursor for pagination. Use the ID of the first email from the previous page.
+</ParamField>
+
+<ParamField query="status" type="string">
+  Filter by status: `queued`, `sent`, `delivered`, `bounced`, `failed`.
+</ParamField>
+
+<ParamField query="to" type="string">
+  Filter by recipient email address.
+</ParamField>
+
+<ParamField query="tags" type="string">
+  Filter by tag (comma-separated for multiple).
+</ParamField>
+
+<ParamField query="from_date" type="string">
+  Filter emails created after this ISO 8601 timestamp.
+</ParamField>
+
+<ParamField query="to_date" type="string">
+  Filter emails created before this ISO 8601 timestamp.
+</ParamField>
+
+## Request
+
+<CodeGroup>
+```bash cURL
+curl "https://api.lettr.dev/v1/emails?limit=10&status=delivered" \
+  -H "Authorization: Bearer le_xxxxxxxxxxxx"
+```
+
+```javascript Node.js
+const emails = await lettr.emails.list({
+  limit: 10,
+  status: 'delivered'
+});
+```
+
+```php PHP
+$emails = $lettr->emails->list([
+    'limit' => 10,
+    'status' => 'delivered'
+]);
+```
+
+```python Python
+emails = lettr.emails.list(
+    limit=10,
+    status='delivered'
+)
+```
+</CodeGroup>
+
+## Response
+
+```json
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "email_123abc",
+      "object": "email",
+      "from": "you@example.com",
+      "to": ["recipient@example.com"],
+      "subject": "Hello World",
+      "status": "delivered",
+      "createdAt": "2024-01-15T10:30:00Z"
+    },
+    {
+      "id": "email_456def",
+      "object": "email",
+      "from": "you@example.com",
+      "to": ["another@example.com"],
+      "subject": "Welcome",
+      "status": "delivered",
+      "createdAt": "2024-01-15T09:00:00Z"
+    }
+  ],
+  "hasMore": true,
+  "totalCount": 150
+}
+```
+
+## Pagination Example
+
+```javascript
+// Fetch all emails using pagination
+let allEmails = [];
+let hasMore = true;
+let cursor = null;
+
+while (hasMore) {
+  const response = await lettr.emails.list({
+    limit: 100,
+    starting_after: cursor
+  });
+  
+  allEmails = allEmails.concat(response.data);
+  hasMore = response.hasMore;
+  
+  if (response.data.length > 0) {
+    cursor = response.data[response.data.length - 1].id;
+  }
+}
+```
+

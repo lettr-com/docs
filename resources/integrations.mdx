@@ -1,0 +1,166 @@
+---
+title: Integrations
+description: "Connect Lettr with your favorite tools"
+---
+
+# Integrations
+
+Connect Lettr with your favorite tools and platforms.
+
+## No-Code Integrations
+
+<CardGroup cols={3}>
+  <Card title="Zapier" icon="bolt" href="https://zapier.com/apps/lettr">
+    Automate workflows with 5,000+ apps
+  </Card>
+  <Card title="Make" icon="m" href="https://make.com/integrations/lettr">
+    Visual automation platform
+  </Card>
+  <Card title="n8n" icon="workflow" href="https://n8n.io/integrations/lettr">
+    Self-hosted workflow automation
+  </Card>
+</CardGroup>
+
+## CRM Integrations
+
+<CardGroup cols={2}>
+  <Card title="Salesforce" icon="salesforce">
+    Sync contacts and trigger emails from Salesforce workflows.
+  </Card>
+  <Card title="HubSpot" icon="hubspot">
+    Connect HubSpot contacts with Lettr campaigns.
+  </Card>
+</CardGroup>
+
+## E-commerce Integrations
+
+<CardGroup cols={3}>
+  <Card title="Shopify" icon="shopify">
+    Transactional emails for orders
+  </Card>
+  <Card title="WooCommerce" icon="wordpress">
+    WordPress email integration
+  </Card>
+  <Card title="Stripe" icon="stripe">
+    Payment notification emails
+  </Card>
+</CardGroup>
+
+## Zapier Example
+
+Connect Lettr to Zapier for no-code automation:
+
+<Steps>
+  <Step title="Create a Zap">
+    Go to Zapier and create a new Zap.
+  </Step>
+  <Step title="Choose Trigger">
+    Select your trigger app (e.g., Google Sheets, Typeform).
+  </Step>
+  <Step title="Add Lettr Action">
+    Search for Lettr and select "Send Email".
+  </Step>
+  <Step title="Configure">
+    Map fields from your trigger to email parameters.
+  </Step>
+</Steps>
+
+## Webhook Integration
+
+Use webhooks to integrate with any platform:
+
+```javascript
+// Send data to your CRM when emails are delivered
+app.post('/webhooks/lettr', (req, res) => {
+  const event = req.body;
+  
+  if (event.type === 'email.delivered') {
+    // Update CRM
+    await crm.contacts.update({
+      email: event.data.to,
+      lastEmailDelivered: event.data.deliveredAt
+    });
+  }
+  
+  res.sendStatus(200);
+});
+```
+
+## Custom Integration
+
+Build custom integrations using our API:
+
+```javascript
+// Sync newsletter subscribers from your database
+async function syncSubscribers() {
+  const subscribers = await db.subscribers.findAll({
+    where: { status: 'active' }
+  });
+
+  for (const subscriber of subscribers) {
+    await lettr.contacts.upsert({
+      email: subscriber.email,
+      firstName: subscriber.firstName,
+      lastName: subscriber.lastName,
+      tags: subscriber.interests
+    });
+  }
+}
+```
+
+## Analytics Integrations
+
+Send email events to your analytics platform:
+
+### Google Analytics
+
+```javascript
+app.post('/webhooks/lettr', (req, res) => {
+  const event = req.body;
+  
+  // Send to Google Analytics
+  gtag('event', event.type, {
+    email_id: event.data.emailId,
+    campaign: event.data.metadata?.campaign
+  });
+  
+  res.sendStatus(200);
+});
+```
+
+### Segment
+
+```javascript
+app.post('/webhooks/lettr', (req, res) => {
+  const event = req.body;
+  
+  analytics.track({
+    userId: event.data.metadata?.userId,
+    event: `Email ${event.type.split('.')[1]}`,
+    properties: event.data
+  });
+  
+  res.sendStatus(200);
+});
+```
+
+## Request an Integration
+
+Don't see the integration you need?
+
+<Card title="Request Integration" icon="plus" href="mailto:support@lettr.dev">
+  Let us know what integrations would help your workflow
+</Card>
+
+## Build a Public Integration
+
+Become a Lettr integration partner:
+
+1. Build your integration using our API
+2. Submit for review
+3. Get listed in our integrations directory
+
+<Card title="Partner Program" icon="handshake" href="https://lettr.dev/partners">
+  Learn about our partner program
+</Card>
+

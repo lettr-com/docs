@@ -1,0 +1,141 @@
+---
+title: Bounces
+description: "Understanding and handling email bounces"
+---
+
+# Email Bounces
+
+Learn how to handle bounced emails and maintain list hygiene.
+
+## Types of Bounces
+
+### Hard Bounces
+
+Permanent delivery failures:
+
+- Invalid email address
+- Domain doesn't exist
+- Recipient mailbox doesn't exist
+
+```json
+{
+  "type": "email.bounced",
+  "data": {
+    "emailId": "email_123",
+    "to": "invalid@nonexistent.com",
+    "bounceType": "hard",
+    "bounceCategory": "invalid_address",
+    "message": "550 5.1.1 The email account does not exist"
+  }
+}
+```
+
+### Soft Bounces
+
+Temporary delivery failures:
+
+- Mailbox full
+- Server temporarily unavailable
+- Message too large
+
+```json
+{
+  "type": "email.bounced",
+  "data": {
+    "emailId": "email_456",
+    "to": "full@example.com",
+    "bounceType": "soft",
+    "bounceCategory": "mailbox_full",
+    "message": "452 4.2.2 Mailbox full"
+  }
+}
+```
+
+## Bounce Categories
+
+| Category | Type | Description |
+|----------|------|-------------|
+| `invalid_address` | Hard | Email address doesn't exist |
+| `domain_not_found` | Hard | Domain doesn't exist |
+| `mailbox_full` | Soft | Recipient's mailbox is full |
+| `server_error` | Soft | Receiving server error |
+| `content_rejected` | Hard | Content blocked by filters |
+| `policy_related` | Hard | Blocked by recipient's policy |
+
+## Automatic Handling
+
+Lettr automatically:
+
+<Steps>
+  <Step title="Tracks Bounces">
+    All bounces are logged and tracked in your dashboard.
+  </Step>
+  <Step title="Suppresses Hard Bounces">
+    Hard-bounced addresses are added to your suppression list.
+  </Step>
+  <Step title="Retries Soft Bounces">
+    Soft bounces are automatically retried up to 3 times.
+  </Step>
+  <Step title="Sends Webhooks">
+    Bounce events are sent to your configured webhook endpoints.
+  </Step>
+</Steps>
+
+## Handling Bounces in Your App
+
+```javascript
+// Webhook handler
+app.post('/webhooks/lettr', (req, res) => {
+  const event = req.body;
+  
+  if (event.type === 'email.bounced') {
+    const { to, bounceType, bounceCategory } = event.data;
+    
+    if (bounceType === 'hard') {
+      // Remove from your mailing list
+      await removeFromMailingList(to);
+      
+      // Notify the user if needed
+      await notifyUser(to, bounceCategory);
+    }
+  }
+  
+  res.sendStatus(200);
+});
+```
+
+## Viewing Bounces
+
+```javascript
+// List all bounces
+const bounces = await lettr.bounces.list({
+  startDate: '2024-01-01',
+  endDate: '2024-01-31'
+});
+
+// Get bounce rate statistics
+const stats = await lettr.stats.get({
+  startDate: '2024-01-01',
+  endDate: '2024-01-31'
+});
+
+console.log(`Bounce rate: ${stats.bounceRate}%`);
+```
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Use Double Opt-In">
+    Confirm email addresses before adding to your list.
+  </Accordion>
+  <Accordion title="Clean Your Lists Regularly">
+    Remove inactive and invalid addresses periodically.
+  </Accordion>
+  <Accordion title="Monitor Bounce Rates">
+    High bounce rates (>5%) can hurt deliverability.
+  </Accordion>
+  <Accordion title="Handle Webhooks Promptly">
+    Process bounce notifications to keep lists clean.
+  </Accordion>
+</AccordionGroup>
+

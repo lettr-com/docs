@@ -1,0 +1,79 @@
+---
+title: Laravel SMTP
+description: "Configure SMTP in Laravel for Lettr"
+---
+
+# Laravel SMTP Configuration
+
+Configure Laravel to send emails through Lettr using SMTP.
+
+## Configuration
+
+Update your `.env` file with the following SMTP settings:
+
+```env
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.lettr.dev
+MAIL_PORT=587
+MAIL_USERNAME=lettr
+MAIL_PASSWORD=your-api-key
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS=you@example.com
+MAIL_FROM_NAME="${APP_NAME}"
+```
+
+## Verify Configuration
+
+Ensure your `config/mail.php` is using the correct mailer:
+
+```php
+'default' => env('MAIL_MAILER', 'smtp'),
+
+'mailers' => [
+    'smtp' => [
+        'transport' => 'smtp',
+        'host' => env('MAIL_HOST', 'smtp.mailgun.org'),
+        'port' => env('MAIL_PORT', 587),
+        'encryption' => env('MAIL_ENCRYPTION', 'tls'),
+        'username' => env('MAIL_USERNAME'),
+        'password' => env('MAIL_PASSWORD'),
+        'timeout' => null,
+        'local_domain' => env('MAIL_EHLO_DOMAIN'),
+    ],
+    // ...
+],
+```
+
+## Sending Emails
+
+Use Laravel's Mail facade as usual:
+
+```php
+use Illuminate\Support\Facades\Mail;
+use App\Mail\WelcomeEmail;
+
+Mail::to('recipient@example.com')->send(new WelcomeEmail());
+```
+
+## Testing Your Setup
+
+Send a test email using Tinker:
+
+```bash
+php artisan tinker
+```
+
+```php
+Mail::raw('Test email from Lettr', function ($message) {
+    $message->to('test@example.com')
+            ->subject('Test Email');
+});
+```
+
+<Tip>
+  Clear your config cache after changing environment variables:
+  ```bash
+  php artisan config:clear
+  ```
+</Tip>
+

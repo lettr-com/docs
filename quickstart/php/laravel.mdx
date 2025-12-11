@@ -1,0 +1,93 @@
+---
+title: Laravel
+description: "Integrate Lettr with Laravel"
+---
+
+# Laravel Integration
+
+Learn how to integrate Lettr with your Laravel application.
+
+## Installation
+
+Install the Lettr Laravel package via Composer:
+
+```bash
+composer require lettr/lettr-laravel
+```
+
+## Configuration
+
+Publish the configuration file:
+
+```bash
+php artisan vendor:publish --tag=lettr-config
+```
+
+Add your API key to your `.env` file:
+
+```env
+LETTR_API_KEY=your-api-key
+```
+
+## Using Laravel's Mail Facade
+
+Lettr integrates seamlessly with Laravel's mail system:
+
+```php
+use Illuminate\Support\Facades\Mail;
+use App\Mail\WelcomeEmail;
+
+Mail::to('recipient@example.com')->send(new WelcomeEmail());
+```
+
+## Using the Lettr Facade
+
+You can also use the Lettr facade directly:
+
+```php
+use Lettr\Facades\Lettr;
+
+Lettr::emails()->send([
+    'from' => 'you@example.com',
+    'to' => ['recipient@example.com'],
+    'subject' => 'Hello from Lettr',
+    'html' => '<p>Welcome to Lettr!</p>'
+]);
+```
+
+## Creating a Mailable
+
+```php
+php artisan make:mail WelcomeEmail
+```
+
+```php
+<?php
+
+namespace App\Mail;
+
+use Illuminate\Bus\Queueable;
+use Illuminate\Mail\Mailable;
+use Illuminate\Queue\SerializesModels;
+
+class WelcomeEmail extends Mailable
+{
+    use Queueable, SerializesModels;
+
+    public function build()
+    {
+        return $this
+            ->subject('Welcome to Our App')
+            ->view('emails.welcome');
+    }
+}
+```
+
+## Queue Integration
+
+Lettr works with Laravel's queue system out of the box:
+
+```php
+Mail::to('recipient@example.com')->queue(new WelcomeEmail());
+```
+

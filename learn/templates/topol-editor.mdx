@@ -1,0 +1,145 @@
+---
+title: Topol.io Email Editor
+description: "Create beautiful emails with the Topol.io drag-and-drop editor"
+---
+
+# Topol.io Email Editor
+
+Create professional email templates with our integrated Topol.io drag-and-drop editor.
+
+## Overview
+
+Topol.io is a powerful email editor that allows you to:
+
+- Design emails visually without coding
+- Create responsive templates
+- Use pre-built blocks and layouts
+- Export production-ready HTML
+
+## Access the Editor
+
+<Steps>
+  <Step title="Navigate to Templates">
+    Go to Templates in your Lettr dashboard.
+  </Step>
+  <Step title="Create New Template">
+    Click "New Template" and select "Visual Editor".
+  </Step>
+  <Step title="Design Your Email">
+    Use the drag-and-drop interface to build your template.
+  </Step>
+</Steps>
+
+## Editor Features
+
+### Content Blocks
+
+| Block | Description |
+|-------|-------------|
+| Text | Rich text with formatting options |
+| Image | Single images with alt text |
+| Button | Call-to-action buttons |
+| Divider | Visual separators |
+| Spacer | Vertical spacing |
+| Social | Social media icons |
+| Video | Video thumbnails with play buttons |
+| Menu | Navigation menus |
+
+### Layout Blocks
+
+| Block | Description |
+|-------|-------------|
+| 1 Column | Full-width content |
+| 2 Columns | Side-by-side content |
+| 3 Columns | Three-column layout |
+| 4 Columns | Four-column layout |
+
+## Using Variables
+
+Insert dynamic content using variables:
+
+```
+Hello {{name}},
+
+Your order #{{order_id}} has shipped!
+```
+
+In the editor, click "Merge Tags" to insert variables.
+
+## Saving Templates
+
+```javascript
+// Templates are saved to your account
+const templates = await lettr.templates.list();
+
+// Get template HTML
+const template = await lettr.templates.get('tpl_123');
+console.log(template.html);
+```
+
+## Using Templates
+
+Send emails using saved templates:
+
+```javascript
+await lettr.emails.send({
+  from: 'you@example.com',
+  to: ['recipient@example.com'],
+  subject: 'Your Order Update',
+  templateId: 'tpl_123',
+  variables: {
+    name: 'John',
+    order_id: '12345'
+  }
+});
+```
+
+## Exporting Templates
+
+Export templates as HTML for use elsewhere:
+
+```javascript
+const template = await lettr.templates.get('tpl_123');
+
+// Get raw HTML
+const html = template.html;
+
+// Download as file
+await lettr.templates.export('tpl_123', {
+  format: 'html'
+});
+```
+
+## Template Library
+
+Access pre-built templates:
+
+<CardGroup cols={3}>
+  <Card title="Welcome Emails" icon="hand-wave">
+    Onboarding and welcome templates
+  </Card>
+  <Card title="Transactional" icon="receipt">
+    Order confirmations, receipts
+  </Card>
+  <Card title="Marketing" icon="bullhorn">
+    Newsletters and promotions
+  </Card>
+</CardGroup>
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Keep It Simple">
+    Don't overcomplicate designs. Simple layouts render better across clients.
+  </Accordion>
+  <Accordion title="Test Across Clients">
+    Preview your template in different email clients before sending.
+  </Accordion>
+  <Accordion title="Use Web-Safe Fonts">
+    Stick to fonts that render well in email clients.
+  </Accordion>
+  <Accordion title="Optimize Images">
+    Compress images for faster loading.
+  </Accordion>
+</AccordionGroup>
+

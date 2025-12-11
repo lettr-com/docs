@@ -1,0 +1,121 @@
+---
+title: HTML / CSS / AMP
+description: "Design beautiful emails with HTML, CSS, and AMP"
+---
+
+# HTML, CSS & AMP Emails
+
+Learn how to create visually appealing and responsive emails.
+
+## HTML Emails
+
+Lettr supports full HTML emails:
+
+```javascript
+await lettr.emails.send({
+  from: 'you@example.com',
+  to: ['recipient@example.com'],
+  subject: 'Beautiful Email',
+  html: `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+      </head>
+      <body style="font-family: Arial, sans-serif; margin: 0; padding: 20px;">
+        <h1 style="color: #333;">Welcome!</h1>
+        <p style="color: #666;">Thanks for signing up.</p>
+      </body>
+    </html>
+  `
+});
+```
+
+## Inline CSS
+
+Email clients have limited CSS support. Always use inline styles:
+
+```html
+<!-- ✅ Good: Inline styles -->
+<p style="color: #333; font-size: 16px;">Hello World</p>
+
+<!-- ❌ Bad: External or <style> tag CSS (may not work) -->
+<style>
+  .text { color: #333; }
+</style>
+<p class="text">Hello World</p>
+```
+
+## Responsive Design
+
+Use media queries in a `<style>` tag for clients that support it:
+
+```html
+<style>
+  @media only screen and (max-width: 600px) {
+    .container { width: 100% !important; }
+    .mobile-hide { display: none !important; }
+  }
+</style>
+
+<table class="container" width="600" style="width: 600px;">
+  <!-- Email content -->
+</table>
+```
+
+## AMP Emails
+
+Lettr supports AMP for Email for interactive experiences:
+
+```javascript
+await lettr.emails.send({
+  from: 'you@example.com',
+  to: ['recipient@example.com'],
+  subject: 'Interactive Email',
+  html: '<p>Fallback HTML content</p>',
+  amp: `
+    <!doctype html>
+    <html ⚡4email>
+      <head>
+        <meta charset="utf-8">
+        <script async src="https://cdn.ampproject.org/v0.js"></script>
+        <style amp4email-boilerplate>body{visibility:hidden}</style>
+      </head>
+      <body>
+        <amp-img src="https://example.com/image.jpg" 
+                 width="300" height="200" layout="responsive">
+        </amp-img>
+      </body>
+    </html>
+  `
+});
+```
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Use Tables for Layout">
+    Tables provide the most consistent rendering across email clients.
+  </Accordion>
+  <Accordion title="Always Include Plain Text">
+    Some clients prefer or require plain text versions.
+  </Accordion>
+  <Accordion title="Test Across Clients">
+    Test your emails in Gmail, Outlook, Apple Mail, and mobile clients.
+  </Accordion>
+  <Accordion title="Keep Images Small">
+    Optimize images for faster loading and smaller file sizes.
+  </Accordion>
+</AccordionGroup>
+
+## CSS Support Reference
+
+| Property | Gmail | Outlook | Apple Mail |
+|----------|-------|---------|------------|
+| `background-color` | ✅ | ✅ | ✅ |
+| `border-radius` | ✅ | ❌ | ✅ |
+| `box-shadow` | ✅ | ❌ | ✅ |
+| `flexbox` | ✅ | ❌ | ✅ |
+| `grid` | ❌ | ❌ | ✅ |
+

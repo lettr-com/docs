@@ -1,0 +1,172 @@
+---
+title: Authorization
+description: "Secure your webhook endpoints"
+---
+
+# Webhook Authorization
+
+Verify that webhook requests come from Lettr, not malicious actors.
+
+## Signature Verification
+
+Every webhook request includes a signature header:
+
+```
+Lettr-Signature: t=1673789400,v1=5257a869e7ecebeda32affa62cdca3fa51cad7e77a0e56ff536d0ce8e108d8bd
+```
+
+The signature contains:
+- `t`: Unix timestamp when the signature was created
+- `v1`: HMAC-SHA256 signature
+
+## Verify in Node.js
+
+```javascript
+import crypto from 'crypto';
+
+function verifyWebhookSignature(payload, signature, secret) {
+  const elements = signature.split(',');
+  const timestamp = elements.find(e => e.startsWith('t=')).slice(2);
+  const expectedSignature = elements.find(e => e.startsWith('v1=')).slice(3);
+  
+  // Verify timestamp is recent (within 5 minutes)
+  const now = Math.floor(Date.now() / 1000);
+  if (Math.abs(now - parseInt(timestamp)) > 300) {
+    throw new Error('Timestamp too old');
+  }
+  
+  // Compute expected signature
+  const signedPayload = `${timestamp}.${payload}`;
+  const computedSignature = crypto
+    .createHmac('sha256', secret)
+    .update(signedPayload)
+    .digest('hex');
+  
+  // Compare signatures
+  if (!crypto.timingSafeEqual(
+    Buffer.from(expectedSignature),
+    Buffer.from(computedSignature)
+  )) {
+    throw new Error('Invalid signature');
+  }
+  
+  return JSON.parse(payload);
+}
+
+// Usage
+app.post('/webhooks/lettr', express.raw({ type: 'application/json' }), (req, res) => {
+  try {
+    const event = verifyWebhookSignature(
+      req.body.toString(),
+      req.headers['lettr-signature'],
+      process.env.LETTR_WEBHOOK_SECRET
+    );
+    
+    // Process event
+    res.sendStatus(200);
+  } catch (err) {
+    res.sendStatus(400);
+  }
+});
+```
+
+## Using the SDK
+
+The SDK handles verification for you:
+
+```javascript
+import { verifyWebhook } from 'lettr';
+
+app.post('/webhooks/lettr', express.raw({ type: 'application/json' }), (req, res) => {
+  try {
+    const event = verifyWebhook(
+      req.body,
+      req.headers['lettr-signature'],
+      process.env.LETTR_WEBHOOK_SECRET
+    );
+    
+    // Event is verified
+    console.log(event.type, event.data);
+    res.sendStatus(200);
+  } catch (err) {
+    console.error('Webhook verification failed');
+    res.sendStatus(400);
+  }
+});
+```
+
+## PHP Verification
+
+```php
+function verifyWebhook($payload, $signature, $secret) {
+    $elements = explode(',', $signature);
+    $timestamp = null;
+    $expectedSignature = null;
+    
+    foreach ($elements as $element) {
+        if (str_starts_with($element, 't=')) {
+            $timestamp = substr($element, 2);
+        } elseif (str_starts_with($element, 'v1=')) {
+            $expectedSignature = substr($element, 3);
+        }
+    }
+    
+    // Verify timestamp
+    if (abs(time() - (int)$timestamp) > 300) {
+        throw new Exception('Timestamp too old');
+    }
+    
+    // Compute signature
+    $signedPayload = "{$timestamp}.{$payload}";
+    $computedSignature = hash_hmac('sha256', $signedPayload, $secret);
+    
+    if (!hash_equals($expectedSignature, $computedSignature)) {
+        throw new Exception('Invalid signature');
+    }
+    
+    return json_decode($payload, true);
+}
+```
+
+## Webhook Secret
+
+Get your webhook secret from the dashboard or when creating a webhook:
+
+```javascript
+const webhook = await lettr.webhooks.create({
+  url: 'https://example.com/webhooks',
+  events: ['email.delivered']
+});
+
+console.log(webhook.secret); // whsec_xxxxx
+// Store this securely!
+```
+
+## Rotate Webhook Secret
+
+Rotate the secret if compromised:
+
+```javascript
+const webhook = await lettr.webhooks.rotateSecret('wh_123');
+
+console.log(webhook.secret); // New secret
+```
+
+<Warning>
+  After rotating the secret, update your webhook handler immediately to use the new secret.
+</Warning>
+
+## IP Allowlisting
+
+For additional security, allowlist Lettr's IP addresses:
+
+```
+203.0.113.10
+203.0.113.11
+203.0.113.12
+```
+
+<Note>
+  Contact support for the current list of webhook source IPs.
+</Note>
+

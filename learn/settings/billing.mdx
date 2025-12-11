@@ -1,0 +1,180 @@
+---
+title: Billing
+description: "Manage billing, invoices, and subscription"
+---
+
+# Billing
+
+Manage your subscription, payment methods, and invoices.
+
+## Plans
+
+| Feature | Free | Pro | Enterprise |
+|---------|------|-----|------------|
+| Emails/month | 3,000 | 50,000 | Unlimited |
+| Domains | 1 | 10 | Unlimited |
+| Team members | 1 | 5 | Unlimited |
+| Log retention | 1 day | 30 days | 90 days |
+| Support | Community | Email | Priority |
+| SLA | - | 99.9% | 99.99% |
+
+## View Current Plan
+
+```javascript
+const subscription = await lettr.billing.getSubscription();
+
+console.log({
+  plan: subscription.plan,
+  status: subscription.status,
+  currentPeriodEnd: subscription.currentPeriodEnd,
+  emailsUsed: subscription.usage.emails,
+  emailsLimit: subscription.limits.emails
+});
+```
+
+## Upgrade Plan
+
+```javascript
+await lettr.billing.updateSubscription({
+  plan: 'pro'
+});
+```
+
+Or upgrade from the dashboard:
+
+1. Go to **Settings** → **Billing**
+2. Click **Upgrade Plan**
+3. Select your new plan
+4. Confirm payment
+
+## Payment Methods
+
+### Add Payment Method
+
+```javascript
+await lettr.billing.addPaymentMethod({
+  type: 'card',
+  token: 'tok_xxx'  // From Stripe.js
+});
+```
+
+### List Payment Methods
+
+```javascript
+const methods = await lettr.billing.listPaymentMethods();
+
+methods.forEach(method => {
+  console.log({
+    id: method.id,
+    type: method.type,
+    last4: method.card.last4,
+    expiry: `${method.card.expMonth}/${method.card.expYear}`,
+    isDefault: method.isDefault
+  });
+});
+```
+
+### Set Default Payment Method
+
+```javascript
+await lettr.billing.setDefaultPaymentMethod('pm_xxx');
+```
+
+## Invoices
+
+### List Invoices
+
+```javascript
+const invoices = await lettr.billing.listInvoices();
+
+invoices.forEach(invoice => {
+  console.log({
+    id: invoice.id,
+    amount: invoice.amount,
+    status: invoice.status,
+    pdfUrl: invoice.pdfUrl,
+    createdAt: invoice.createdAt
+  });
+});
+```
+
+### Download Invoice
+
+```javascript
+const pdf = await lettr.billing.downloadInvoice('inv_xxx');
+```
+
+## Usage
+
+### Current Usage
+
+```javascript
+const usage = await lettr.billing.getUsage();
+
+console.log({
+  emails: {
+    used: usage.emails.used,
+    limit: usage.emails.limit,
+    percentage: usage.emails.percentage
+  },
+  resetDate: usage.resetDate
+});
+```
+
+### Usage History
+
+```javascript
+const history = await lettr.billing.getUsageHistory({
+  months: 6
+});
+
+history.forEach(month => {
+  console.log(`${month.period}: ${month.emails} emails`);
+});
+```
+
+## Billing Alerts
+
+Set up usage alerts:
+
+```javascript
+await lettr.billing.updateAlerts({
+  emailUsageThreshold: 80,  // Alert at 80% usage
+  notifyEmails: ['billing@company.com']
+});
+```
+
+## Cancel Subscription
+
+```javascript
+await lettr.billing.cancelSubscription({
+  reason: 'No longer needed',
+  feedback: 'Optional feedback'
+});
+```
+
+<Note>
+  Cancellation takes effect at the end of your current billing period. You'll retain access until then.
+</Note>
+
+## Billing Portal
+
+Access the full billing portal:
+
+```javascript
+const portalUrl = await lettr.billing.createPortalSession();
+// Redirect user to portalUrl
+```
+
+## Enterprise Billing
+
+Enterprise customers have access to:
+
+- Custom pricing
+- Annual billing discounts
+- Purchase orders
+- Custom contracts
+- Dedicated support
+
+Contact sales@lettr.dev for enterprise pricing.
+

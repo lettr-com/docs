@@ -1,0 +1,52 @@
+---
+title: Delete Domain
+api: DELETE /v1/domains/{id}
+description: "Delete a domain"
+---
+
+# Delete Domain
+
+Remove a domain from your account.
+
+<ParamField path="id" type="string" required>
+  The ID of the domain to delete.
+</ParamField>
+
+## Request
+
+<CodeGroup>
+```bash cURL
+curl -X DELETE https://api.lettr.dev/v1/domains/dom_123abc \
+  -H "Authorization: Bearer le_xxxxxxxxxxxx"
+```
+
+```javascript Node.js
+await lettr.domains.delete('dom_123abc');
+```
+
+```php PHP
+$lettr->domains->delete('dom_123abc');
+```
+</CodeGroup>
+
+## Response
+
+```json
+{
+  "id": "dom_123abc",
+  "object": "domain",
+  "deleted": true
+}
+```
+
+<Warning>
+  Deleting a domain is permanent. You will no longer be able to send emails from addresses on this domain.
+</Warning>
+
+## Errors
+
+| Code | Description |
+|------|-------------|
+| `not_found` | Domain with specified ID not found |
+| `in_use` | Domain has pending emails and cannot be deleted |
+

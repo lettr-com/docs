@@ -1,0 +1,82 @@
+---
+title: Create Webhook
+api: POST /v1/webhooks
+description: "Create a new webhook"
+---
+
+# Create Webhook
+
+Create a new webhook endpoint to receive event notifications.
+
+<ParamField body="url" type="string" required>
+  The URL to receive webhook events. Must be HTTPS.
+</ParamField>
+
+<ParamField body="events" type="string[]" required>
+  Array of event types to subscribe to. Use `*` for all events.
+</ParamField>
+
+<ParamField body="description" type="string">
+  Optional description for the webhook.
+</ParamField>
+
+## Request
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.lettr.dev/v1/webhooks \
+  -H "Authorization: Bearer le_xxxxxxxxxxxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://example.com/webhooks/lettr",
+    "events": ["email.delivered", "email.bounced", "email.opened"]
+  }'
+```
+
+```javascript Node.js
+const webhook = await lettr.webhooks.create({
+  url: 'https://example.com/webhooks/lettr',
+  events: ['email.delivered', 'email.bounced', 'email.opened']
+});
+```
+
+```php PHP
+$webhook = $lettr->webhooks->create([
+    'url' => 'https://example.com/webhooks/lettr',
+    'events' => ['email.delivered', 'email.bounced', 'email.opened']
+]);
+```
+</CodeGroup>
+
+## Response
+
+```json
+{
+  "id": "wh_123abc",
+  "object": "webhook",
+  "url": "https://example.com/webhooks/lettr",
+  "events": ["email.delivered", "email.bounced", "email.opened"],
+  "secret": "whsec_xxxxxxxxxxxxxxxxxxxx",
+  "status": "active",
+  "createdAt": "2024-01-15T10:30:00Z"
+}
+```
+
+<Warning>
+  The webhook secret is only shown once. Store it securely to verify incoming webhook signatures.
+</Warning>
+
+## Available Events
+
+| Event | Description |
+|-------|-------------|
+| `*` | All events |
+| `email.*` | All email events |
+| `email.sent` | Email accepted |
+| `email.delivered` | Email delivered |
+| `email.bounced` | Email bounced |
+| `email.opened` | Email opened |
+| `email.clicked` | Link clicked |
+| `email.complained` | Marked as spam |
+| `email.unsubscribed` | Unsubscribed |
+

@@ -1,0 +1,165 @@
+---
+title: Next.js
+description: "Integrate Lettr with Next.js"
+---
+
+# Next.js Integration
+
+Learn how to integrate Lettr with your Next.js application.
+
+## Installation
+
+```bash
+npm install lettr
+```
+
+## Environment Setup
+
+Add your API key to `.env.local`:
+
+```env
+LETTR_API_KEY=your-api-key
+```
+
+## API Route (App Router)
+
+Create `app/api/email/route.ts`:
+
+```typescript
+import { NextResponse } from 'next/server';
+import { Lettr } from 'lettr';
+
+const lettr = new Lettr(process.env.LETTR_API_KEY!);
+
+export async function POST(request: Request) {
+  const { to, subject, html } = await request.json();
+
+  try {
+    const data = await lettr.emails.send({
+      from: 'you@example.com',
+      to: [to],
+      subject,
+      html
+    });
+
+    return NextResponse.json(data);
+  } catch (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+```
+
+## Server Actions
+
+Create `app/actions/email.ts`:
+
+```typescript
+'use server';
+
+import { Lettr } from 'lettr';
+
+const lettr = new Lettr(process.env.LETTR_API_KEY!);
+
+export async function sendContactEmail(formData: FormData) {
+  const email = formData.get('email') as string;
+  const name = formData.get('name') as string;
+  const message = formData.get('message') as string;
+
+  await lettr.emails.send({
+    from: 'contact@example.com',
+    to: ['team@example.com'],
+    subject: `Contact from ${name}`,
+    html: `
+      <h2>New Contact Message</h2>
+      <p><strong>From:</strong> ${name} (${email})</p>
+      <p><strong>Message:</strong></p>
+      <p>${message}</p>
+    `
+  });
+
+  return { success: true };
+}
+```
+
+## Contact Form Component
+
+```tsx
+'use client';
+
+import { sendContactEmail } from '@/app/actions/email';
+import { useFormStatus } from 'react-dom';
+
+function SubmitButton() {
+  const { pending } = useFormStatus();
+  return (
+    <button type="submit" disabled={pending}>
+      {pending ? 'Sending...' : 'Send Message'}
+    </button>
+  );
+}
+
+export function ContactForm() {
+  return (
+    <form action={sendContactEmail}>
+      <input name="name" placeholder="Your name" required />
+      <input name="email" type="email" placeholder="Your email" required />
+      <textarea name="message" placeholder="Your message" required />
+      <SubmitButton />
+    </form>
+  );
+}
+```
+
+## React Email Integration
+
+Use React Email for beautiful templates:
+
+```bash
+npm install @react-email/components
+```
+
+```tsx
+// emails/welcome.tsx
+import { Html, Head, Body, Container, Text, Button } from '@react-email/components';
+
+export function WelcomeEmail({ name }: { name: string }) {
+  return (
+    <Html>
+      <Head />
+      <Body>
+        <Container>
+          <Text>Welcome, {name}!</Text>
+          <Button href="https://example.com/dashboard">
+            Get Started
+          </Button>
+        </Container>
+      </Body>
+    </Html>
+  );
+}
+```
+
+```typescript
+// app/api/welcome/route.ts
+import { Lettr } from 'lettr';
+import { render } from '@react-email/render';
+import { WelcomeEmail } from '@/emails/welcome';
+
+const lettr = new Lettr(process.env.LETTR_API_KEY!);
+
+export async function POST(request: Request) {
+  const { email, name } = await request.json();
+  
+  const html = render(<WelcomeEmail name={name} />);
+
+  await lettr.emails.send({
+    from: 'welcome@example.com',
+    to: [email],
+    subject: 'Welcome to Our App!',
+    html
+  });
+
+  return Response.json({ success: true });
+}
+```
+

@@ -1,0 +1,122 @@
+---
+title: Custom Headers
+description: "Add custom headers to your emails"
+---
+
+# Custom Headers
+
+Add custom email headers for tracking, routing, and advanced use cases.
+
+## Adding Custom Headers
+
+```javascript
+await lettr.emails.send({
+  from: 'you@example.com',
+  to: ['recipient@example.com'],
+  subject: 'Email with Custom Headers',
+  html: '<p>Hello!</p>',
+  headers: {
+    'X-Campaign-ID': 'summer-sale-2024',
+    'X-Customer-ID': 'cust_123',
+    'X-Priority': 'high'
+  }
+});
+```
+
+## Common Use Cases
+
+### Reply-To Header
+
+```javascript
+await lettr.emails.send({
+  from: 'noreply@example.com',
+  to: ['recipient@example.com'],
+  subject: 'Support Ticket Update',
+  html: '<p>Your ticket has been updated.</p>',
+  replyTo: 'support@example.com'
+  // Or via headers:
+  // headers: { 'Reply-To': 'support@example.com' }
+});
+```
+
+### List-Unsubscribe Header
+
+```javascript
+await lettr.emails.send({
+  from: 'newsletter@example.com',
+  to: ['recipient@example.com'],
+  subject: 'Weekly Newsletter',
+  html: '<p>Newsletter content...</p>',
+  headers: {
+    'List-Unsubscribe': '<https://example.com/unsubscribe?email={{email}}>, <mailto:unsubscribe@example.com>',
+    'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click'
+  }
+});
+```
+
+### Message-ID and References (Threading)
+
+```javascript
+// Original email
+const original = await lettr.emails.send({
+  from: 'you@example.com',
+  to: ['recipient@example.com'],
+  subject: 'Initial Message',
+  html: '<p>Hello!</p>'
+});
+
+// Reply (will be threaded)
+await lettr.emails.send({
+  from: 'you@example.com',
+  to: ['recipient@example.com'],
+  subject: 'Re: Initial Message',
+  html: '<p>Following up...</p>',
+  headers: {
+    'In-Reply-To': original.messageId,
+    'References': original.messageId
+  }
+});
+```
+
+## Reserved Headers
+
+These headers cannot be overridden:
+
+- `From`
+- `To`
+- `Subject`
+- `Date`
+- `MIME-Version`
+- `Content-Type`
+- `Content-Transfer-Encoding`
+- `DKIM-Signature`
+
+## Header Naming Conventions
+
+<Tip>
+  Custom headers should start with `X-` prefix to avoid conflicts with standard email headers.
+</Tip>
+
+| Header Type | Example |
+|-------------|---------|
+| Custom tracking | `X-Campaign-ID`, `X-User-ID` |
+| Priority | `X-Priority`, `Importance` |
+| Auto-responses | `Auto-Submitted`, `X-Auto-Response-Suppress` |
+
+## Prevent Auto-Replies
+
+Prevent out-of-office and auto-responder replies:
+
+```javascript
+await lettr.emails.send({
+  from: 'system@example.com',
+  to: ['recipient@example.com'],
+  subject: 'Automated Notification',
+  html: '<p>System notification...</p>',
+  headers: {
+    'X-Auto-Response-Suppress': 'All',
+    'Auto-Submitted': 'auto-generated'
+  }
+});
+```
+

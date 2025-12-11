@@ -1,0 +1,140 @@
+---
+title: Receiving Introduction
+description: "Process incoming emails with Lettr"
+---
+
+# Receiving Emails
+
+Lettr allows you to receive and process incoming emails programmatically.
+
+## How It Works
+
+<Steps>
+  <Step title="Configure Inbound Domain">
+    Set up MX records to route emails to Lettr.
+  </Step>
+  <Step title="Set Up Webhook">
+    Configure a webhook endpoint to receive parsed emails.
+  </Step>
+  <Step title="Process Emails">
+    Your application receives structured email data via webhooks.
+  </Step>
+</Steps>
+
+## Configure Inbound Domain
+
+Add these MX records to your domain:
+
+| Priority | Host | Value |
+|----------|------|-------|
+| 10 | @ | `mx1.lettr.dev` |
+| 20 | @ | `mx2.lettr.dev` |
+
+## Webhook Payload
+
+When an email is received, Lettr sends a webhook with parsed data:
+
+```json
+{
+  "type": "email.received",
+  "data": {
+    "id": "inbound_123abc",
+    "from": "sender@example.com",
+    "fromName": "John Sender",
+    "to": ["support@yourdomain.com"],
+    "cc": [],
+    "subject": "Help with my order",
+    "text": "Plain text content...",
+    "html": "<p>HTML content...</p>",
+    "attachments": [
+      {
+        "filename": "receipt.pdf",
+        "contentType": "application/pdf",
+        "size": 12345,
+        "url": "https://lettr.dev/attachments/abc123"
+      }
+    ],
+    "headers": {
+      "message-id": "<abc123@example.com>",
+      "date": "Mon, 15 Jan 2024 10:30:00 +0000"
+    },
+    "receivedAt": "2024-01-15T10:30:15Z"
+  }
+}
+```
+
+## Handle Incoming Emails
+
+```javascript
+app.post('/webhooks/lettr', async (req, res) => {
+  const event = req.body;
+  
+  if (event.type === 'email.received') {
+    const { from, subject, text, html, attachments } = event.data;
+    
+    // Process the email
+    await processIncomingEmail({
+      sender: from,
+      subject,
+      body: text || html,
+      attachments
+    });
+  }
+  
+  res.sendStatus(200);
+});
+```
+
+## Email Routing
+
+Route emails to different handlers based on recipient:
+
+```javascript
+app.post('/webhooks/lettr', async (req, res) => {
+  const { to, subject, text } = req.body.data;
+  const recipient = to[0];
+  
+  if (recipient.startsWith('support@')) {
+    await createSupportTicket(req.body.data);
+  } else if (recipient.startsWith('sales@')) {
+    await notifySalesTeam(req.body.data);
+  } else if (recipient.startsWith('unsubscribe+')) {
+    const userId = recipient.split('+')[1].split('@')[0];
+    await handleUnsubscribe(userId);
+  }
+  
+  res.sendStatus(200);
+});
+```
+
+## Spam Filtering
+
+Lettr automatically filters obvious spam. You can configure sensitivity:
+
+```javascript
+const domain = await lettr.domains.update('dom_123', {
+  inboundSpamFilter: 'aggressive' // 'off', 'moderate', 'aggressive'
+});
+```
+
+## Attachment Handling
+
+Attachments are stored temporarily and accessible via URL:
+
+```javascript
+const { attachments } = event.data;
+
+for (const attachment of attachments) {
+  // Download the attachment
+  const response = await fetch(attachment.url);
+  const buffer = await response.arrayBuffer();
+  
+  // Save or process
+  await saveAttachment(attachment.filename, buffer);
+}
+```
+
+<Note>
+  Attachment URLs are valid for 24 hours. Download and store attachments if you need them longer.
+</Note>
+

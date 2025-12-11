@@ -1,0 +1,104 @@
+---
+title: Suppressions Introduction
+description: "Manage suppressed email addresses"
+---
+
+# Suppressions
+
+Suppressions prevent emails from being sent to specific addresses, protecting your sender reputation.
+
+## What Are Suppressions?
+
+Suppressed addresses are email addresses that should not receive emails. This includes:
+
+- **Hard bounces** - Invalid addresses
+- **Spam complaints** - Recipients who marked you as spam
+- **Unsubscribes** - Recipients who opted out
+- **Manual additions** - Addresses you've blocked
+
+## Why Suppressions Matter
+
+<AccordionGroup>
+  <Accordion title="Protect Sender Reputation">
+    Sending to invalid addresses hurts deliverability.
+  </Accordion>
+  <Accordion title="Legal Compliance">
+    Honoring unsubscribes is required by law (CAN-SPAM, GDPR).
+  </Accordion>
+  <Accordion title="Reduce Costs">
+    Don't waste sends on addresses that won't receive them.
+  </Accordion>
+</AccordionGroup>
+
+## Automatic Suppressions
+
+Lettr automatically suppresses addresses when:
+
+| Event | Suppression Type | Duration |
+|-------|-----------------|----------|
+| Hard bounce | Permanent | Forever |
+| Spam complaint | Permanent | Forever |
+| Unsubscribe | Permanent | Until removed |
+| Soft bounce (3x) | Temporary | 72 hours |
+
+## View Suppressions
+
+```javascript
+const suppressions = await lettr.suppressions.list({
+  type: 'hard_bounce',
+  limit: 100
+});
+
+suppressions.forEach(s => {
+  console.log({
+    email: s.email,
+    type: s.type,
+    reason: s.reason,
+    suppressedAt: s.createdAt
+  });
+});
+```
+
+## Check If Suppressed
+
+```javascript
+const check = await lettr.suppressions.check('user@example.com');
+
+if (check.suppressed) {
+  console.log(`Suppressed: ${check.type} - ${check.reason}`);
+} else {
+  console.log('Email is not suppressed');
+}
+```
+
+## What Happens When You Send to Suppressed Addresses?
+
+The email is silently dropped and counted as suppressed:
+
+```javascript
+const result = await lettr.emails.send({
+  from: 'you@example.com',
+  to: ['suppressed@example.com'],
+  subject: 'Hello',
+  html: '<p>Hello!</p>'
+});
+
+// Returns:
+{
+  "id": "email_123",
+  "status": "suppressed",
+  "suppressionReason": "hard_bounce"
+}
+```
+
+## Learn More
+
+<CardGroup cols={2}>
+  <Card title="Suppression Lists" icon="list" href="/learn/suppressions/suppression-lists">
+    Manage custom suppression lists
+  </Card>
+  <Card title="Bounces" icon="arrow-rotate-left" href="/learn/suppressions/bounces">
+    Handle bounced emails
+  </Card>
+</CardGroup>
+

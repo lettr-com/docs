@@ -1,0 +1,75 @@
+---
+title: List Domains
+api: GET /v1/domains
+description: "List all domains"
+---
+
+# List Domains
+
+Retrieve a list of all domains in your account.
+
+<ParamField query="limit" type="integer" default="10">
+  Number of domains to return. Maximum 100.
+</ParamField>
+
+<ParamField query="starting_after" type="string">
+  Cursor for pagination.
+</ParamField>
+
+<ParamField query="status" type="string">
+  Filter by status: `pending`, `verified`, `failed`.
+</ParamField>
+
+## Request
+
+<CodeGroup>
+```bash cURL
+curl "https://api.lettr.dev/v1/domains?limit=10" \
+  -H "Authorization: Bearer le_xxxxxxxxxxxx"
+```
+
+```javascript Node.js
+const domains = await lettr.domains.list({
+  limit: 10
+});
+```
+
+```php PHP
+$domains = $lettr->domains->list(['limit' => 10]);
+```
+</CodeGroup>
+
+## Response
+
+```json
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "dom_123abc",
+      "object": "domain",
+      "name": "example.com",
+      "status": "verified",
+      "region": "us",
+      "spfStatus": "verified",
+      "dkimStatus": "verified",
+      "dmarcStatus": "verified",
+      "createdAt": "2024-01-15T10:30:00Z"
+    },
+    {
+      "id": "dom_456def",
+      "object": "domain",
+      "name": "mail.example.com",
+      "status": "pending",
+      "region": "us",
+      "spfStatus": "pending",
+      "dkimStatus": "pending",
+      "dmarcStatus": "pending",
+      "createdAt": "2024-01-14T08:00:00Z"
+    }
+  ],
+  "hasMore": false,
+  "totalCount": 2
+}
+```
+

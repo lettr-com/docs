@@ -1,0 +1,170 @@
+---
+title: Nuxt
+description: "Integrate Lettr with Nuxt"
+---
+
+# Nuxt Integration
+
+Learn how to integrate Lettr with your Nuxt application.
+
+## Installation
+
+```bash
+npm install lettr
+```
+
+## Environment Setup
+
+Add your API key to `.env`:
+
+```env
+LETTR_API_KEY=your-api-key
+```
+
+## API Route
+
+Create `server/api/email.post.ts`:
+
+```typescript
+import { Lettr } from 'lettr';
+
+const lettr = new Lettr(process.env.LETTR_API_KEY!);
+
+export default defineEventHandler(async (event) => {
+  const { to, subject, html } = await readBody(event);
+
+  try {
+    const data = await lettr.emails.send({
+      from: 'you@example.com',
+      to: [to],
+      subject,
+      html
+    });
+
+    return data;
+  } catch (error) {
+    throw createError({
+      statusCode: 500,
+      message: error.message
+    });
+  }
+});
+```
+
+## Nuxt Module (Optional)
+
+Create a Nuxt module for easier integration:
+
+```typescript
+// modules/lettr.ts
+import { defineNuxtModule, addServerHandler } from '@nuxt/kit';
+
+export default defineNuxtModule({
+  meta: {
+    name: 'lettr',
+    configKey: 'lettr'
+  },
+  defaults: {
+    apiKey: ''
+  },
+  setup(options, nuxt) {
+    nuxt.options.runtimeConfig.lettr = {
+      apiKey: options.apiKey || process.env.LETTR_API_KEY
+    };
+  }
+});
+```
+
+## Contact Form
+
+```vue
+<!-- components/ContactForm.vue -->
+<template>
+  <form @submit.prevent="sendEmail">
+    <input v-model="form.name" placeholder="Your name" required />
+    <input v-model="form.email" type="email" placeholder="Your email" required />
+    <textarea v-model="form.message" placeholder="Your message" required />
+    <button type="submit" :disabled="loading">
+      {{ loading ? 'Sending...' : 'Send Message' }}
+    </button>
+  </form>
+</template>
+
+<script setup lang="ts">
+const form = reactive({
+  name: '',
+  email: '',
+  message: ''
+});
+
+const loading = ref(false);
+
+async function sendEmail() {
+  loading.value = true;
+  
+  try {
+    await $fetch('/api/email', {
+      method: 'POST',
+      body: {
+        to: 'team@example.com',
+        subject: `Contact from ${form.name}`,
+        html: `
+          <h2>New Contact Message</h2>
+          <p><strong>From:</strong> ${form.name} (${form.email})</p>
+          <p><strong>Message:</strong></p>
+          <p>${form.message}</p>
+        `
+      }
+    });
+    
+    // Reset form
+    form.name = '';
+    form.email = '';
+    form.message = '';
+    
+    alert('Message sent successfully!');
+  } catch (error) {
+    alert('Failed to send message');
+  } finally {
+    loading.value = false;
+  }
+}
+</script>
+```
+
+## Server Utils
+
+Create reusable server utilities:
+
+```typescript
+// server/utils/email.ts
+import { Lettr } from 'lettr';
+
+let lettr: Lettr;
+
+export function useLettr() {
+  if (!lettr) {
+    const config = useRuntimeConfig();
+    lettr = new Lettr(config.lettr.apiKey);
+  }
+  return lettr;
+}
+```
+
+```typescript
+// server/api/welcome.post.ts
+export default defineEventHandler(async (event) => {
+  const { email, name } = await readBody(event);
+  const lettr = useLettr();
+
+  await lettr.emails.send({
+    from: 'welcome@example.com',
+    to: [email],
+    subject: 'Welcome!',
+    html: `<p>Welcome, ${name}!</p>`
+  });
+
+  return { success: true };
+});
+```
+

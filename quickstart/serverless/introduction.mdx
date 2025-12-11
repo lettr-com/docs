@@ -1,0 +1,71 @@
+---
+title: Serverless Introduction
+description: "Deploy Lettr on serverless platforms"
+---
+
+# Serverless Quickstart
+
+Learn how to use Lettr in serverless environments.
+
+## Overview
+
+Lettr is designed to work seamlessly in serverless environments. Our lightweight SDKs and fast API response times make it perfect for:
+
+- AWS Lambda
+- Cloudflare Workers
+- Vercel Functions
+- Netlify Functions
+- Google Cloud Functions
+
+## Key Considerations
+
+<AccordionGroup>
+  <Accordion title="Cold Starts">
+    Our SDKs are optimized for minimal cold start impact. Connection pooling is handled automatically.
+  </Accordion>
+  <Accordion title="Timeouts">
+    Lettr's API typically responds within 100-300ms, well within most serverless timeout limits.
+  </Accordion>
+  <Accordion title="Environment Variables">
+    Always store your API key in environment variables, never in code.
+  </Accordion>
+</AccordionGroup>
+
+## Quick Example
+
+Here's a simple serverless function that sends an email:
+
+```javascript
+export default async function handler(req, res) {
+  const response = await fetch('https://api.lettr.dev/v1/emails', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${process.env.LETTR_API_KEY}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      from: 'you@example.com',
+      to: ['recipient@example.com'],
+      subject: 'Hello from Serverless',
+      html: '<p>Sent from a serverless function!</p>'
+    })
+  });
+
+  return res.json({ success: true });
+}
+```
+
+## Next Steps
+
+<CardGroup cols={3}>
+  <Card title="AWS Lambda" icon="aws" href="/quickstart/serverless/aws-lambda">
+    Deploy on AWS Lambda
+  </Card>
+  <Card title="Cloudflare Workers" icon="cloudflare" href="/quickstart/serverless/cloudflare-workers">
+    Deploy on Cloudflare Workers
+  </Card>
+  <Card title="Vercel Functions" icon="triangle" href="/quickstart/serverless/vercel-functions">
+    Deploy on Vercel Functions
+  </Card>
+</CardGroup>
+

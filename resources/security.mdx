@@ -1,0 +1,171 @@
+---
+title: Security
+description: "Security practices and compliance"
+---
+
+# Security
+
+Learn about Lettr's security practices and how to secure your integration.
+
+## Infrastructure Security
+
+### Data Centers
+
+- **Location**: AWS data centers in EU and US
+- **Certifications**: SOC 2 Type II, ISO 27001
+- **Redundancy**: Multi-AZ deployments
+
+### Network Security
+
+- All traffic encrypted with TLS 1.3
+- DDoS protection via Cloudflare
+- Web Application Firewall (WAF)
+- Regular penetration testing
+
+## Data Protection
+
+### Encryption
+
+| Data | At Rest | In Transit |
+|------|---------|------------|
+| Email content | AES-256 | TLS 1.3 |
+| API keys | AES-256 | TLS 1.3 |
+| Webhooks | - | TLS 1.3 |
+| Attachments | AES-256 | TLS 1.3 |
+
+### Data Retention
+
+| Data Type | Retention |
+|-----------|-----------|
+| Email metadata | 90 days |
+| Email content | 7 days |
+| Logs | 30 days |
+| Analytics | 1 year |
+
+<Note>
+  Enterprise plans can customize retention periods.
+</Note>
+
+## API Security
+
+### Authentication
+
+Always use API keys in headers, not URLs:
+
+```javascript
+// ✅ Good
+fetch('https://api.lettr.dev/v1/emails', {
+  headers: {
+    'Authorization': 'Bearer le_xxxx'
+  }
+});
+
+// ❌ Bad - API key in URL
+fetch('https://api.lettr.dev/v1/emails?api_key=le_xxxx');
+```
+
+### IP Allowlisting
+
+Restrict API access by IP:
+
+```javascript
+const key = await lettr.apiKeys.create({
+  name: 'Production',
+  ipRestrictions: ['203.0.113.0/24']
+});
+```
+
+### Rate Limiting
+
+| Plan | Rate Limit |
+|------|------------|
+| Free | 10 req/sec |
+| Pro | 100 req/sec |
+| Enterprise | Custom |
+
+## Webhook Security
+
+### Signature Verification
+
+Always verify webhook signatures:
+
+```javascript
+import { verifyWebhook } from 'lettr';
+
+app.post('/webhooks', (req, res) => {
+  try {
+    const event = verifyWebhook(
+      req.body,
+      req.headers['lettr-signature'],
+      process.env.WEBHOOK_SECRET
+    );
+    // Process verified event
+  } catch (err) {
+    res.status(400).send('Invalid signature');
+  }
+});
+```
+
+### Webhook IP Addresses
+
+Allowlist Lettr's webhook IPs:
+
+```
+203.0.113.10/32
+203.0.113.11/32
+203.0.113.12/32
+```
+
+## Compliance
+
+### GDPR
+
+- Data processing agreements available
+- EU data residency option
+- Right to erasure support
+- Data portability
+
+### CAN-SPAM
+
+- Automatic unsubscribe handling
+- Physical address support
+- Opt-out processing
+
+### SOC 2
+
+Lettr is SOC 2 Type II certified. Request our report:
+
+<Card title="Request SOC 2 Report" icon="file-shield" href="mailto:security@lettr.dev">
+  Contact us for compliance documentation
+</Card>
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Rotate API Keys Regularly">
+    Create new keys and retire old ones every 90 days.
+  </Accordion>
+  <Accordion title="Use Environment Variables">
+    Never hardcode API keys in source code.
+  </Accordion>
+  <Accordion title="Principle of Least Privilege">
+    Only grant permissions that are needed.
+  </Accordion>
+  <Accordion title="Monitor API Usage">
+    Set up alerts for unusual activity.
+  </Accordion>
+  <Accordion title="Enable 2FA">
+    Require two-factor authentication for all team members.
+  </Accordion>
+</AccordionGroup>
+
+## Vulnerability Reporting
+
+Report security vulnerabilities responsibly:
+
+<Card title="Security Contact" icon="shield" href="mailto:security@lettr.dev">
+  security@lettr.dev
+</Card>
+
+We respond to all reports within 24 hours and offer a bug bounty program for qualifying vulnerabilities.
+

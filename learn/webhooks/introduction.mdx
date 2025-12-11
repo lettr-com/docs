@@ -1,0 +1,121 @@
+---
+title: Webhooks Introduction
+description: "Receive real-time notifications about email events"
+---
+
+# Webhooks
+
+Webhooks notify your application when email events occur in real-time.
+
+## How Webhooks Work
+
+<Steps>
+  <Step title="Event Occurs">
+    An email is sent, delivered, opened, etc.
+  </Step>
+  <Step title="Lettr Sends Webhook">
+    A POST request is sent to your endpoint.
+  </Step>
+  <Step title="You Process">
+    Your server processes the event and responds.
+  </Step>
+</Steps>
+
+## Create a Webhook
+
+```javascript
+const webhook = await lettr.webhooks.create({
+  url: 'https://example.com/webhooks/lettr',
+  events: ['email.delivered', 'email.bounced', 'email.opened']
+});
+```
+
+## Webhook Payload
+
+```json
+{
+  "id": "evt_123abc",
+  "type": "email.delivered",
+  "createdAt": "2024-01-15T10:30:00Z",
+  "data": {
+    "emailId": "email_xyz",
+    "to": "recipient@example.com",
+    "subject": "Hello World",
+    "deliveredAt": "2024-01-15T10:30:00Z",
+    "metadata": {
+      "orderId": "order_123"
+    }
+  }
+}
+```
+
+## Handle Webhooks
+
+```javascript
+import express from 'express';
+import { verifyWebhook } from 'lettr';
+
+const app = express();
+
+app.post('/webhooks/lettr', express.raw({ type: 'application/json' }), (req, res) => {
+  const signature = req.headers['lettr-signature'];
+  
+  try {
+    const event = verifyWebhook(req.body, signature, process.env.LETTR_WEBHOOK_SECRET);
+    
+    switch (event.type) {
+      case 'email.delivered':
+        console.log('Email delivered:', event.data.emailId);
+        break;
+      case 'email.bounced':
+        console.log('Email bounced:', event.data.to);
+        break;
+      case 'email.opened':
+        console.log('Email opened:', event.data.emailId);
+        break;
+    }
+    
+    res.sendStatus(200);
+  } catch (err) {
+    console.error('Webhook verification failed:', err.message);
+    res.sendStatus(400);
+  }
+});
+```
+
+## Available Events
+
+| Event | Description |
+|-------|-------------|
+| `email.sent` | Email accepted by Lettr |
+| `email.delivered` | Email delivered to recipient |
+| `email.bounced` | Email bounced |
+| `email.opened` | Recipient opened the email |
+| `email.clicked` | Recipient clicked a link |
+| `email.complained` | Marked as spam |
+| `email.unsubscribed` | Recipient unsubscribed |
+
+## Testing Webhooks
+
+Use the dashboard to send test events:
+
+```javascript
+await lettr.webhooks.test('wh_123', {
+  eventType: 'email.delivered'
+});
+```
+
+## Learn More
+
+<CardGroup cols={2}>
+  <Card title="Event Types" icon="list" href="/learn/webhooks/event-types">
+    All available webhook events
+  </Card>
+  <Card title="Retries" icon="rotate" href="/learn/webhooks/retries">
+    Understand retry behavior
+  </Card>
+  <Card title="Authorization" icon="lock" href="/learn/webhooks/authorization">
+    Secure your webhooks
+  </Card>
+</CardGroup>
+

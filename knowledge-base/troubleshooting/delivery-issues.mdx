@@ -1,0 +1,154 @@
+---
+title: Delivery Issues
+description: "Troubleshoot email delivery problems"
+---
+
+# Troubleshooting Delivery Issues
+
+Common issues and solutions when emails aren't being delivered.
+
+## Quick Checklist
+
+<Steps>
+  <Step title="Check Domain Status">
+    Ensure your sending domain is verified with SPF, DKIM, and DMARC.
+  </Step>
+  <Step title="Check Suppression List">
+    The recipient may be suppressed due to previous bounces or complaints.
+  </Step>
+  <Step title="Check Email Status">
+    Look up the email in your dashboard to see its current status.
+  </Step>
+  <Step title="Review Bounce Messages">
+    Bounce messages often explain exactly why delivery failed.
+  </Step>
+</Steps>
+
+## Common Issues
+
+### Domain Not Verified
+
+**Symptoms:**
+- Emails fail with "domain not verified" error
+- Low deliverability to major providers
+
+**Solution:**
+1. Go to **Domains** in your dashboard
+2. Check the verification status
+3. Add missing DNS records
+4. Click **Verify** to re-check
+
+### Recipient Suppressed
+
+**Symptoms:**
+- Email status shows "suppressed"
+- No bounce or error message
+
+**Solution:**
+```javascript
+// Check if address is suppressed
+const check = await lettr.suppressions.check('user@example.com');
+
+if (check.suppressed) {
+  console.log(`Reason: ${check.type} - ${check.reason}`);
+  
+  // Remove suppression if appropriate
+  // await lettr.suppressions.delete('user@example.com');
+}
+```
+
+### Spam Filters Blocking
+
+**Symptoms:**
+- Emails delivered but go to spam
+- Low open rates
+
+**Solution:**
+- Verify DMARC is properly configured
+- Review email content for spam triggers
+- Check your domain reputation
+- Ensure proper unsubscribe links are included
+
+### Rate Limited
+
+**Symptoms:**
+- HTTP 429 errors
+- Emails queued but not sending
+
+**Solution:**
+```javascript
+// Implement backoff when rate limited
+async function sendWithRetry(emailOptions, maxRetries = 3) {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await lettr.emails.send(emailOptions);
+    } catch (error) {
+      if (error.code === 'rate_limit_exceeded') {
+        const delay = Math.pow(2, i) * 1000;
+        await new Promise(r => setTimeout(r, delay));
+      } else {
+        throw error;
+      }
+    }
+  }
+}
+```
+
+### Invalid From Address
+
+**Symptoms:**
+- Error: "From address not allowed"
+
+**Solution:**
+- Ensure the from address uses a verified domain
+- Check that the domain is active (not deleted)
+
+## Checking Email Status
+
+Use the dashboard or API to check email status:
+
+```javascript
+const email = await lettr.emails.get('email_123');
+
+console.log({
+  status: email.status,
+  deliveredAt: email.deliveredAt,
+  bouncedAt: email.bouncedAt,
+  bounceReason: email.bounceReason
+});
+```
+
+## Reading Bounce Messages
+
+Bounce messages provide specific failure reasons:
+
+| Code | Meaning | Action |
+|------|---------|--------|
+| 550 5.1.1 | User unknown | Remove from list |
+| 550 5.7.1 | Blocked by policy | Check content/reputation |
+| 452 4.2.2 | Mailbox full | Retry later |
+| 421 4.7.0 | Rate limited | Slow down sending |
+
+## Testing Deliverability
+
+Send test emails to check your setup:
+
+```javascript
+await lettr.emails.send({
+  from: 'test@yourdomain.com',
+  to: ['your-personal-email@gmail.com'],
+  subject: 'Deliverability Test',
+  html: '<p>Testing deliverability</p>'
+});
+```
+
+Check if it arrives in inbox vs spam.
+
+## Still Having Issues?
+
+If you've tried everything:
+
+1. Check the [Status Page](https://status.lettr.dev) for outages
+2. Review the [API Reference](/api-reference/introduction) for correct usage
+3. Contact support with your email ID for investigation
+

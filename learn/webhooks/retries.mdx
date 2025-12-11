@@ -1,0 +1,131 @@
+---
+title: Retries
+description: "Understand webhook retry behavior"
+---
+
+# Webhook Retries
+
+Lettr automatically retries failed webhook deliveries to ensure you receive all events.
+
+## Retry Schedule
+
+When a webhook delivery fails, Lettr retries with exponential backoff:
+
+| Attempt | Delay | Time After Failure |
+|---------|-------|-------------------|
+| 1 | Immediate | 0 minutes |
+| 2 | 1 minute | 1 minute |
+| 3 | 5 minutes | 6 minutes |
+| 4 | 30 minutes | 36 minutes |
+| 5 | 2 hours | 2.6 hours |
+| 6 | 8 hours | 10.6 hours |
+| 7 | 24 hours | 34.6 hours |
+
+After 7 failed attempts, the webhook is marked as failed and no further retries occur.
+
+## Success Response
+
+Your endpoint must return a `2xx` status code within 30 seconds:
+
+```javascript
+app.post('/webhooks/lettr', (req, res) => {
+  // Process the event
+  
+  // Return success
+  res.sendStatus(200);
+});
+```
+
+## Failure Conditions
+
+Webhooks are retried when:
+
+- Response status is `4xx` or `5xx` (except 410)
+- Connection timeout (30 seconds)
+- DNS resolution failure
+- SSL/TLS errors
+
+Webhooks are **not** retried when:
+
+- Response status is `2xx` (success)
+- Response status is `410` (Gone) - webhook is disabled
+
+## Idempotency
+
+Your webhook handler should be idempotent. Use the event ID to prevent duplicate processing:
+
+```javascript
+app.post('/webhooks/lettr', async (req, res) => {
+  const event = req.body;
+  
+  // Check if already processed
+  const processed = await db.webhookEvents.findOne({ eventId: event.id });
+  if (processed) {
+    return res.sendStatus(200);
+  }
+  
+  // Process the event
+  await handleEvent(event);
+  
+  // Mark as processed
+  await db.webhookEvents.create({ eventId: event.id });
+  
+  res.sendStatus(200);
+});
+```
+
+## Monitoring Webhook Health
+
+View webhook delivery status in the dashboard or via API:
+
+```javascript
+const webhook = await lettr.webhooks.get('wh_123');
+
+console.log({
+  status: webhook.status,           // 'active', 'failing', 'disabled'
+  lastDeliveryAt: webhook.lastDeliveryAt,
+  lastDeliveryStatus: webhook.lastDeliveryStatus,
+  failureCount: webhook.failureCount
+});
+```
+
+## View Delivery History
+
+```javascript
+const deliveries = await lettr.webhooks.listDeliveries('wh_123', {
+  limit: 10
+});
+
+deliveries.forEach(delivery => {
+  console.log({
+    eventId: delivery.eventId,
+    eventType: delivery.eventType,
+    status: delivery.status,
+    attempts: delivery.attempts,
+    responseCode: delivery.responseCode
+  });
+});
+```
+
+## Manual Retry
+
+Retry a specific failed delivery:
+
+```javascript
+await lettr.webhooks.retryDelivery('wh_123', 'delivery_abc');
+```
+
+## Disabling Webhooks
+
+Webhooks are automatically disabled after repeated failures. Re-enable in the dashboard or via API:
+
+```javascript
+await lettr.webhooks.update('wh_123', {
+  status: 'active'
+});
+```
+
+<Warning>
+  If your endpoint consistently fails, fix the underlying issue before re-enabling the webhook to avoid missing events.
+</Warning>
+

@@ -1,0 +1,71 @@
+---
+title: Knowledge Base
+description: "Guides, troubleshooting, and best practices"
+---
+
+# Knowledge Base
+
+Find answers to common questions, troubleshooting guides, and best practices for using Lettr.
+
+## Popular Topics
+
+<CardGroup cols={2}>
+  <Card title="Delivery Issues" icon="triangle-exclamation" href="/knowledge-base/troubleshooting/delivery-issues">
+    Troubleshoot email delivery problems
+  </Card>
+  <Card title="Authentication" icon="lock" href="/knowledge-base/troubleshooting/authentication">
+    Fix API key and authentication issues
+  </Card>
+  <Card title="Deliverability Tips" icon="inbox" href="/knowledge-base/best-practices/deliverability">
+    Improve your email deliverability
+  </Card>
+  <Card title="Security Best Practices" icon="shield" href="/knowledge-base/best-practices/security">
+    Secure your integration
+  </Card>
+</CardGroup>
+
+## Browse by Category
+
+### Troubleshooting
+
+- [Delivery Issues](/knowledge-base/troubleshooting/delivery-issues) - Why emails aren't being delivered
+- [Authentication](/knowledge-base/troubleshooting/authentication) - API key and auth problems
+- [Rate Limits](/knowledge-base/troubleshooting/rate-limits) - Understanding and handling rate limits
+
+### Best Practices
+
+- [Deliverability](/knowledge-base/best-practices/deliverability) - Maximize inbox placement
+- [Security](/knowledge-base/best-practices/security) - Protect your account and data
+- [Templates](/knowledge-base/best-practices/templates) - Design effective email templates
+
+## Quick Answers
+
+<AccordionGroup>
+  <Accordion title="Why isn't my email being delivered?">
+    Check your domain verification status, ensure the recipient isn't suppressed, and verify you're not hitting rate limits. See [Delivery Issues](/knowledge-base/troubleshooting/delivery-issues) for detailed troubleshooting.
+  </Accordion>
+  <Accordion title="How do I verify my domain?">
+    Add the DNS records shown in your dashboard, wait for propagation (15 min to 48 hours), then click Verify. See [Domains](/learn/domains/introduction) for details.
+  </Accordion>
+  <Accordion title="What's the API rate limit?">
+    Free: 10 req/sec, Pro: 100 req/sec, Enterprise: Custom. See [Rate Limits](/knowledge-base/troubleshooting/rate-limits).
+  </Accordion>
+  <Accordion title="How do I track email opens?">
+    Open tracking is enabled by default. View stats in the dashboard or via the API. See [Analytics](/learn/sending/analytics).
+  </Accordion>
+</AccordionGroup>
+
+## Need More Help?
+
+<CardGroup cols={3}>
+  <Card title="Documentation" icon="book" href="/introduction">
+    Complete product documentation
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference/introduction">
+    Technical API documentation
+  </Card>
+  <Card title="Contact Support" icon="headset" href="mailto:support@lettr.dev">
+    Get help from our team
+  </Card>
+</CardGroup>
+

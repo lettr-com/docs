@@ -1,0 +1,236 @@
+---
+title: Security Best Practices
+description: "Secure your Lettr integration"
+---
+
+# Security Best Practices
+
+Protect your account, API keys, and data.
+
+## API Key Security
+
+### Environment Variables
+
+Never hardcode API keys:
+
+```javascript
+// ❌ Bad
+const lettr = new Lettr('le_xxxxxxxxxxxx');
+
+// ✅ Good
+const lettr = new Lettr(process.env.LETTR_API_KEY);
+```
+
+### .gitignore
+
+Ensure secrets aren't committed:
+
+```gitignore
+# .gitignore
+.env
+.env.local
+.env.*.local
+```
+
+### Key Rotation
+
+Rotate keys regularly:
+
+```javascript
+// 1. Create new key
+const newKey = await lettr.apiKeys.create({
+  name: 'Production - Q2 2024',
+  permissions: ['emails:send']
+});
+
+// 2. Update your application with new key
+
+// 3. Delete old key
+await lettr.apiKeys.delete('old_key_id');
+```
+
+### Minimum Permissions
+
+Only grant necessary permissions:
+
+```javascript
+// ❌ Bad - Full access when only sending needed
+const key = await lettr.apiKeys.create({
+  permissions: ['*']
+});
+
+// ✅ Good - Only required permissions
+const key = await lettr.apiKeys.create({
+  permissions: ['emails:send']
+});
+```
+
+## Webhook Security
+
+### Always Verify Signatures
+
+```javascript
+import { verifyWebhook } from 'lettr';
+
+app.post('/webhooks', express.raw({ type: 'application/json' }), (req, res) => {
+  try {
+    const event = verifyWebhook(
+      req.body,
+      req.headers['lettr-signature'],
+      process.env.LETTR_WEBHOOK_SECRET
+    );
+    // Process verified event
+  } catch (err) {
+    // Reject unverified requests
+    return res.status(400).send('Invalid signature');
+  }
+});
+```
+
+### IP Allowlisting
+
+Restrict webhook origins:
+
+```javascript
+const allowedIPs = ['203.0.113.10', '203.0.113.11'];
+
+app.post('/webhooks', (req, res, next) => {
+  const clientIP = req.ip;
+  if (!allowedIPs.includes(clientIP)) {
+    return res.status(403).send('Forbidden');
+  }
+  next();
+});
+```
+
+## Account Security
+
+### Enable Two-Factor Authentication
+
+Require 2FA for all team members:
+
+```javascript
+await lettr.team.updateSettings({
+  require2FA: true
+});
+```
+
+### Review Team Access
+
+Regularly audit team members:
+
+```javascript
+const members = await lettr.team.list();
+
+members.forEach(member => {
+  console.log({
+    email: member.email,
+    role: member.role,
+    lastLogin: member.lastLoginAt
+  });
+});
+```
+
+### Use SSO (Enterprise)
+
+Enterprise customers should use SSO for centralized access management.
+
+## Data Protection
+
+### Sensitive Data in Emails
+
+Don't include sensitive data in email content that's logged:
+
+```javascript
+// ❌ Bad - Password in email
+await lettr.emails.send({
+  html: `Your password is: ${password}`
+});
+
+// ✅ Good - Secure reset link
+await lettr.emails.send({
+  html: `Click to reset: ${resetUrl}`
+});
+```
+
+### Metadata Security
+
+Don't store sensitive data in metadata:
+
+```javascript
+// ❌ Bad
+await lettr.emails.send({
+  metadata: { ssn: '123-45-6789' }
+});
+
+// ✅ Good - Use opaque references
+await lettr.emails.send({
+  metadata: { userId: 'user_123' }
+});
+```
+
+## Monitoring
+
+### Set Up Alerts
+
+Monitor for suspicious activity:
+
+```javascript
+// Alert on unusual sending patterns
+const stats = await lettr.stats.get({ period: 'today' });
+
+if (stats.sent > normalDailyAverage * 2) {
+  alertSecurityTeam('Unusual sending volume detected');
+}
+```
+
+### Audit Logs
+
+Review account activity:
+
+```javascript
+const logs = await lettr.auditLogs.list({
+  startDate: '2024-01-01'
+});
+
+// Look for suspicious activity
+logs.forEach(log => {
+  if (log.action === 'api_key.created' || log.action === 'team.invited') {
+    console.log(log);
+  }
+});
+```
+
+## Security Checklist
+
+<Steps>
+  <Step title="API Keys in Environment Variables">
+    Never hardcode keys in source code.
+  </Step>
+  <Step title="Minimum Permissions">
+    Only grant permissions actually needed.
+  </Step>
+  <Step title="Webhook Signature Verification">
+    Always verify webhook signatures.
+  </Step>
+  <Step title="Two-Factor Authentication">
+    Enable 2FA for all team members.
+  </Step>
+  <Step title="Regular Key Rotation">
+    Rotate API keys every 90 days.
+  </Step>
+  <Step title="Access Reviews">
+    Audit team access quarterly.
+  </Step>
+</Steps>
+
+## Reporting Security Issues
+
+Found a vulnerability? Report responsibly:
+
+<Card title="Security Contact" icon="shield" href="mailto:security@lettr.dev">
+  security@lettr.dev
+</Card>
+
+We respond within 24 hours and offer a bug bounty program.
+

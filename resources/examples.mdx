@@ -1,0 +1,213 @@
+---
+title: Examples
+description: "Code examples and sample applications"
+---
+
+# Examples
+
+Learn from complete code examples and sample applications.
+
+## Quick Examples
+
+### Send a Simple Email
+
+```javascript
+import { Lettr } from 'lettr';
+
+const lettr = new Lettr(process.env.LETTR_API_KEY);
+
+await lettr.emails.send({
+  from: 'hello@example.com',
+  to: ['user@example.com'],
+  subject: 'Hello World',
+  html: '<p>Welcome to Lettr!</p>'
+});
+```
+
+### Send with Attachments
+
+```javascript
+import fs from 'fs';
+
+const pdfBuffer = fs.readFileSync('invoice.pdf');
+
+await lettr.emails.send({
+  from: 'billing@example.com',
+  to: ['customer@example.com'],
+  subject: 'Your Invoice',
+  html: '<p>Please find your invoice attached.</p>',
+  attachments: [{
+    filename: 'invoice.pdf',
+    content: pdfBuffer.toString('base64'),
+    contentType: 'application/pdf'
+  }]
+});
+```
+
+### Send to Multiple Recipients
+
+```javascript
+await lettr.emails.send({
+  from: 'newsletter@example.com',
+  to: ['user1@example.com', 'user2@example.com'],
+  subject: 'Weekly Update',
+  html: '<p>Here is your weekly update...</p>',
+  recipientVariables: {
+    'user1@example.com': { name: 'Alice' },
+    'user2@example.com': { name: 'Bob' }
+  }
+});
+```
+
+## Application Examples
+
+<CardGroup cols={2}>
+  <Card title="Contact Form" icon="envelope" href="https://github.com/lettr/examples/tree/main/contact-form">
+    Simple contact form with email notifications
+  </Card>
+  <Card title="User Authentication" icon="user-lock" href="https://github.com/lettr/examples/tree/main/auth-emails">
+    Verification, password reset, and welcome emails
+  </Card>
+  <Card title="E-commerce" icon="cart-shopping" href="https://github.com/lettr/examples/tree/main/ecommerce">
+    Order confirmations, shipping updates, receipts
+  </Card>
+  <Card title="SaaS Notifications" icon="bell" href="https://github.com/lettr/examples/tree/main/saas-notifications">
+    Team invites, billing alerts, activity digests
+  </Card>
+</CardGroup>
+
+## Framework Examples
+
+### Next.js API Route
+
+```typescript
+// app/api/contact/route.ts
+import { NextResponse } from 'next/server';
+import { Lettr } from 'lettr';
+
+const lettr = new Lettr(process.env.LETTR_API_KEY!);
+
+export async function POST(request: Request) {
+  const { name, email, message } = await request.json();
+
+  await lettr.emails.send({
+    from: 'contact@example.com',
+    to: ['team@example.com'],
+    subject: `Contact from ${name}`,
+    html: `
+      <h2>New Contact Message</h2>
+      <p><strong>From:</strong> ${name} (${email})</p>
+      <p><strong>Message:</strong></p>
+      <p>${message}</p>
+    `
+  });
+
+  return NextResponse.json({ success: true });
+}
+```
+
+### Express.js Middleware
+
+```javascript
+import express from 'express';
+import { Lettr } from 'lettr';
+
+const lettr = new Lettr(process.env.LETTR_API_KEY);
+
+const emailMiddleware = (template) => async (req, res, next) => {
+  req.sendEmail = async (to, variables) => {
+    return lettr.emails.send({
+      from: 'app@example.com',
+      to: [to],
+      templateId: template,
+      variables
+    });
+  };
+  next();
+};
+
+app.post('/signup', emailMiddleware('welcome'), async (req, res) => {
+  const user = await createUser(req.body);
+  await req.sendEmail(user.email, { name: user.name });
+  res.json({ success: true });
+});
+```
+
+### Laravel Controller
+
+```php
+<?php
+
+namespace App\Http\Controllers;
+
+use Lettr\Facades\Lettr;
+
+class ContactController extends Controller
+{
+    public function send(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string',
+            'email' => 'required|email',
+            'message' => 'required|string'
+        ]);
+
+        Lettr::emails()->send([
+            'from' => 'contact@example.com',
+            'to' => ['team@example.com'],
+            'subject' => "Contact from {$validated['name']}",
+            'html' => view('emails.contact', $validated)->render()
+        ]);
+
+        return response()->json(['success' => true]);
+    }
+}
+```
+
+## Webhook Handler Example
+
+```javascript
+import express from 'express';
+import { verifyWebhook } from 'lettr';
+
+const app = express();
+
+app.post('/webhooks/lettr', 
+  express.raw({ type: 'application/json' }), 
+  async (req, res) => {
+    try {
+      const event = verifyWebhook(
+        req.body,
+        req.headers['lettr-signature'],
+        process.env.LETTR_WEBHOOK_SECRET
+      );
+
+      switch (event.type) {
+        case 'email.delivered':
+          await logDelivery(event.data);
+          break;
+        case 'email.bounced':
+          await handleBounce(event.data);
+          break;
+        case 'email.opened':
+          await trackOpen(event.data);
+          break;
+      }
+
+      res.sendStatus(200);
+    } catch (err) {
+      console.error('Webhook error:', err);
+      res.sendStatus(400);
+    }
+  }
+);
+```
+
+## GitHub Repository
+
+Find all examples and starter templates:
+
+<Card title="lettr/examples" icon="github" href="https://github.com/lettr/examples">
+  Complete example repository with multiple frameworks and use cases
+</Card>
+

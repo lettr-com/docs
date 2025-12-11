@@ -1,0 +1,162 @@
+---
+title: Bounces
+description: "Handle and manage bounced email addresses"
+---
+
+# Managing Bounces
+
+Understand and manage bounced email addresses to maintain list hygiene.
+
+## Bounce Types
+
+### Hard Bounces
+
+Permanent delivery failures - addresses are automatically suppressed.
+
+| Category | Cause | Action |
+|----------|-------|--------|
+| `invalid_address` | Address doesn't exist | Auto-suppress |
+| `domain_not_found` | Domain doesn't exist | Auto-suppress |
+| `blocked` | Recipient blocked sender | Auto-suppress |
+
+### Soft Bounces
+
+Temporary delivery failures - Lettr retries automatically.
+
+| Category | Cause | Action |
+|----------|-------|--------|
+| `mailbox_full` | Recipient's inbox is full | Retry |
+| `server_error` | Receiving server issue | Retry |
+| `rate_limited` | Too many emails sent | Retry with backoff |
+
+## View Bounces
+
+```javascript
+const bounces = await lettr.bounces.list({
+  startDate: '2024-01-01',
+  endDate: '2024-01-31',
+  type: 'hard'
+});
+
+bounces.forEach(bounce => {
+  console.log({
+    email: bounce.email,
+    type: bounce.type,
+    category: bounce.category,
+    message: bounce.message,
+    bouncedAt: bounce.createdAt
+  });
+});
+```
+
+## Bounce Statistics
+
+```javascript
+const stats = await lettr.stats.get({
+  startDate: '2024-01-01',
+  endDate: '2024-01-31'
+});
+
+console.log({
+  totalSent: stats.sent,
+  totalBounced: stats.bounced,
+  hardBounces: stats.hardBounces,
+  softBounces: stats.softBounces,
+  bounceRate: stats.bounceRate
+});
+```
+
+## Bounce Rate Guidelines
+
+| Rate | Status | Action |
+|------|--------|--------|
+| < 2% | Healthy | Maintain current practices |
+| 2-5% | Warning | Review list hygiene |
+| > 5% | Critical | Clean list immediately |
+
+## Clean Your List
+
+Remove bounced addresses from your mailing list:
+
+```javascript
+// Get all hard bounces
+const bounces = await lettr.bounces.list({
+  type: 'hard',
+  limit: 1000
+});
+
+// Remove from your database
+for (const bounce of bounces) {
+  await yourDatabase.subscribers.delete({
+    email: bounce.email
+  });
+}
+```
+
+## Re-Enable a Bounced Address
+
+If you're certain an address is now valid:
+
+```javascript
+await lettr.suppressions.delete('previously-bounced@example.com');
+```
+
+<Warning>
+  Only remove bounce suppressions if you have strong evidence the address is now valid. Sending to known bad addresses hurts your reputation.
+</Warning>
+
+## Bounce Webhooks
+
+Handle bounces in real-time:
+
+```javascript
+app.post('/webhooks/lettr', (req, res) => {
+  const event = req.body;
+  
+  if (event.type === 'email.bounced') {
+    const { to, bounceType, bounceCategory } = event.data;
+    
+    if (bounceType === 'hard') {
+      // Update your database
+      markAsInvalid(to);
+      
+      // Notify relevant team
+      notifyTeam(to, bounceCategory);
+    }
+  }
+  
+  res.sendStatus(200);
+});
+```
+
+## Prevent Bounces
+
+<AccordionGroup>
+  <Accordion title="Use Double Opt-In">
+    Confirm email addresses before adding to your list.
+  </Accordion>
+  <Accordion title="Validate on Entry">
+    Use email validation when collecting addresses.
+  </Accordion>
+  <Accordion title="Regular Cleaning">
+    Remove inactive subscribers periodically.
+  </Accordion>
+  <Accordion title="Monitor Engagement">
+    Stop sending to recipients who never engage.
+  </Accordion>
+</AccordionGroup>
+
+## Email Validation
+
+Validate addresses before adding to your list:
+
+```javascript
+const validation = await lettr.validate('user@example.com');
+
+if (validation.valid) {
+  // Safe to add to list
+} else {
+  console.log(`Invalid: ${validation.reason}`);
+}
+```
+

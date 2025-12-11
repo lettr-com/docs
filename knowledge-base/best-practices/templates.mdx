@@ -1,0 +1,256 @@
+---
+title: Template Best Practices
+description: "Design effective and deliverable email templates"
+---
+
+# Template Best Practices
+
+Create email templates that look great and deliver reliably.
+
+## Design Principles
+
+### Mobile-First
+
+Over 60% of emails are opened on mobile:
+
+```html
+<!-- Responsive container -->
+<table width="100%" style="max-width: 600px;">
+  <tr>
+    <td style="padding: 20px;">
+      <!-- Content -->
+    </td>
+  </tr>
+</table>
+```
+
+### Single-Column Layout
+
+Simpler layouts render better across clients:
+
+```html
+<!-- ✅ Good - Single column -->
+<table width="100%" style="max-width: 600px;">
+  <tr><td>Header</td></tr>
+  <tr><td>Content</td></tr>
+  <tr><td>Footer</td></tr>
+</table>
+
+<!-- ⚠️ Caution - Multi-column (may break) -->
+<table>
+  <tr>
+    <td width="50%">Left</td>
+    <td width="50%">Right</td>
+  </tr>
+</table>
+```
+
+### Accessible Design
+
+- Use sufficient color contrast (4.5:1 ratio)
+- Include alt text for images
+- Use semantic HTML when possible
+- Don't rely on color alone to convey meaning
+
+## Code Practices
+
+### Use Tables for Layout
+
+Tables render consistently across email clients:
+
+```html
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+  <tr>
+    <td align="center" style="padding: 20px;">
+      <h1 style="margin: 0; color: #333;">Welcome!</h1>
+    </td>
+  </tr>
+</table>
+```
+
+### Inline All CSS
+
+Email clients strip `<style>` tags:
+
+```html
+<!-- ❌ Bad -->
+<style>
+  .heading { color: blue; }
+</style>
+<h1 class="heading">Hello</h1>
+
+<!-- ✅ Good -->
+<h1 style="color: blue;">Hello</h1>
+```
+
+### Use Web-Safe Fonts
+
+Fall back to system fonts:
+
+```html
+<p style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+  Your text here
+</p>
+```
+
+### Set Image Dimensions
+
+Prevent layout shifts:
+
+```html
+<img 
+  src="https://example.com/image.png" 
+  alt="Description" 
+  width="600" 
+  height="300"
+  style="max-width: 100%; height: auto;"
+/>
+```
+
+## Content Guidelines
+
+### Subject Lines
+
+| Do | Don't |
+|----|-------|
+| Keep under 50 characters | Use ALL CAPS |
+| Be specific and relevant | Use excessive punctuation!!! |
+| Create urgency naturally | Use spammy words (FREE, ACT NOW) |
+| Test with A/B testing | Mislead recipients |
+
+### Preheader Text
+
+The preview text shown after the subject:
+
+```html
+<!-- Hidden preheader -->
+<div style="display: none; max-height: 0; overflow: hidden;">
+  Your preview text here (40-130 characters)
+</div>
+```
+
+### Call-to-Action Buttons
+
+```html
+<table role="presentation" cellpadding="0" cellspacing="0">
+  <tr>
+    <td style="background: #6366F1; border-radius: 6px;">
+      <a href="https://example.com" style="
+        display: inline-block;
+        padding: 14px 28px;
+        color: #ffffff;
+        text-decoration: none;
+        font-weight: bold;
+      ">
+        Click Here
+      </a>
+    </td>
+  </tr>
+</table>
+```
+
+## Required Elements
+
+### Unsubscribe Link
+
+```html
+<p style="font-size: 12px; color: #666;">
+  <a href="{{unsubscribe_url}}" style="color: #666;">Unsubscribe</a>
+</p>
+```
+
+### Physical Address
+
+Required by CAN-SPAM:
+
+```html
+<p style="font-size: 12px; color: #666;">
+  Company Name<br>
+  123 Main Street<br>
+  City, State 12345
+</p>
+```
+
+### View in Browser Link
+
+```html
+<p style="font-size: 12px;">
+  <a href="{{view_in_browser_url}}">View in browser</a>
+</p>
+```
+
+## Using Variables
+
+### Basic Variables
+
+```html
+<p>Hello {{name}},</p>
+<p>Your order #{{order_id}} is confirmed.</p>
+```
+
+### Conditional Content
+
+```html
+{{#if premium}}
+  <p>Thank you for being a premium member!</p>
+{{else}}
+  <p>Upgrade to premium for exclusive benefits.</p>
+{{/if}}
+```
+
+### Default Values
+
+```html
+<p>Hello {{name|default:"there"}},</p>
+```
+
+## Testing
+
+### Preview Across Clients
+
+Test in:
+- Gmail (web and mobile)
+- Outlook (desktop and web)
+- Apple Mail (macOS and iOS)
+- Yahoo Mail
+
+### Dark Mode
+
+Ensure readability in dark mode:
+
+```html
+<!-- Use both background-color and bgcolor -->
+<td bgcolor="#ffffff" style="background-color: #ffffff;">
+  <!-- Content -->
+</td>
+```
+
+### Accessibility Testing
+
+- Screen reader compatibility
+- Keyboard navigation
+- Color contrast checkers
+
+## Template Checklist
+
+<Steps>
+  <Step title="Mobile Responsive">
+    Renders well on small screens.
+  </Step>
+  <Step title="Inline CSS">
+    All styles are inline.
+  </Step>
+  <Step title="Alt Text">
+    All images have alt attributes.
+  </Step>
+  <Step title="Unsubscribe Link">
+    Visible and functional.
+  </Step>
+  <Step title="Physical Address">
+    Included in footer.
+  </Step>
+  <Step title="Tested">
+    Previewed in major email clients.
+  </Step>
+</Steps>
+

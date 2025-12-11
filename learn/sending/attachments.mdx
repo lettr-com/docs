@@ -1,0 +1,129 @@
+---
+title: Attachments
+description: "Add file attachments to your emails"
+---
+
+# Email Attachments
+
+Learn how to attach files to your emails.
+
+## Basic Attachment
+
+Attach files using base64-encoded content:
+
+```javascript
+import fs from 'fs';
+
+const fileContent = fs.readFileSync('invoice.pdf');
+const base64Content = fileContent.toString('base64');
+
+await lettr.emails.send({
+  from: 'you@example.com',
+  to: ['recipient@example.com'],
+  subject: 'Your Invoice',
+  html: '<p>Please find your invoice attached.</p>',
+  attachments: [
+    {
+      filename: 'invoice.pdf',
+      content: base64Content,
+      contentType: 'application/pdf'
+    }
+  ]
+});
+```
+
+## Multiple Attachments
+
+```javascript
+await lettr.emails.send({
+  from: 'you@example.com',
+  to: ['recipient@example.com'],
+  subject: 'Project Files',
+  html: '<p>Here are the requested files.</p>',
+  attachments: [
+    {
+      filename: 'report.pdf',
+      content: reportBase64,
+      contentType: 'application/pdf'
+    },
+    {
+      filename: 'data.xlsx',
+      content: excelBase64,
+      contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    },
+    {
+      filename: 'image.png',
+      content: imageBase64,
+      contentType: 'image/png'
+    }
+  ]
+});
+```
+
+## URL-Based Attachments
+
+Attach files from a URL (Lettr will fetch and attach them):
+
+```javascript
+await lettr.emails.send({
+  from: 'you@example.com',
+  to: ['recipient@example.com'],
+  subject: 'Your Document',
+  html: '<p>Document attached.</p>',
+  attachments: [
+    {
+      filename: 'document.pdf',
+      url: 'https://example.com/files/document.pdf'
+    }
+  ]
+});
+```
+
+## Inline Images
+
+Embed images directly in your email HTML:
+
+```javascript
+await lettr.emails.send({
+  from: 'you@example.com',
+  to: ['recipient@example.com'],
+  subject: 'Email with Image',
+  html: '<p>Check out this image:</p><img src="cid:logo" />',
+  attachments: [
+    {
+      filename: 'logo.png',
+      content: logoBase64,
+      contentType: 'image/png',
+      cid: 'logo' // Content-ID for inline reference
+    }
+  ]
+});
+```
+
+## Attachment Limits
+
+| Limit | Value |
+|-------|-------|
+| Max attachment size | 25 MB |
+| Max total email size | 30 MB |
+| Max attachments per email | 10 |
+
+<Warning>
+  Large attachments can affect deliverability and may be blocked by recipient email servers. Consider using download links for files over 10 MB.
+</Warning>
+
+## Common MIME Types
+
+| Extension | MIME Type |
+|-----------|-----------|
+| `.pdf` | `application/pdf` |
+| `.doc` | `application/msword` |
+| `.docx` | `application/vnd.openxmlformats-officedocument.wordprocessingml.document` |
+| `.xls` | `application/vnd.ms-excel` |
+| `.xlsx` | `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` |
+| `.png` | `image/png` |
+| `.jpg` | `image/jpeg` |
+| `.gif` | `image/gif` |
+| `.zip` | `application/zip` |
+| `.csv` | `text/csv` |
+

@@ -1,0 +1,90 @@
+---
+title: Create API Key
+api: POST /v1/api-keys
+description: "Create a new API key"
+---
+
+# Create API Key
+
+Create a new API key with specified permissions.
+
+<ParamField body="name" type="string" required>
+  A descriptive name for the API key.
+</ParamField>
+
+<ParamField body="permissions" type="string[]">
+  Array of permissions. Use `*` for full access.
+</ParamField>
+
+<ParamField body="domainRestrictions" type="string[]">
+  Restrict key to specific domains.
+</ParamField>
+
+<ParamField body="ipRestrictions" type="string[]">
+  Restrict key to specific IP addresses or CIDR ranges.
+</ParamField>
+
+<ParamField body="expiresAt" type="string">
+  ISO 8601 timestamp for key expiration.
+</ParamField>
+
+## Request
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.lettr.dev/v1/api-keys \
+  -H "Authorization: Bearer le_xxxxxxxxxxxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Production Server",
+    "permissions": ["emails:send", "emails:read"]
+  }'
+```
+
+```javascript Node.js
+const apiKey = await lettr.apiKeys.create({
+  name: 'Production Server',
+  permissions: ['emails:send', 'emails:read']
+});
+```
+
+```php PHP
+$apiKey = $lettr->apiKeys->create([
+    'name' => 'Production Server',
+    'permissions' => ['emails:send', 'emails:read']
+]);
+```
+</CodeGroup>
+
+## Response
+
+```json
+{
+  "id": "key_123abc",
+  "object": "api_key",
+  "name": "Production Server",
+  "key": "le_xxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+  "permissions": ["emails:send", "emails:read"],
+  "domainRestrictions": [],
+  "ipRestrictions": [],
+  "createdAt": "2024-01-15T10:30:00Z"
+}
+```
+
+<Warning>
+  The full API key is only shown once upon creation. Store it securely—you won't be able to retrieve it again.
+</Warning>
+
+## Available Permissions
+
+| Permission | Description |
+|------------|-------------|
+| `*` | Full access |
+| `emails:send` | Send emails |
+| `emails:read` | Read email details |
+| `emails:list` | List emails |
+| `domains:*` | All domain operations |
+| `api-keys:*` | All API key operations |
+| `webhooks:*` | All webhook operations |
+| `analytics:read` | Read analytics |
+

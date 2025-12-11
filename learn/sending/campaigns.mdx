@@ -1,0 +1,139 @@
+---
+title: Campaigns
+description: "Send bulk emails with campaign management"
+---
+
+# Email Campaigns
+
+Send bulk emails to multiple recipients with tracking and analytics.
+
+## Create a Campaign
+
+```javascript
+const campaign = await lettr.campaigns.create({
+  name: 'Summer Sale 2024',
+  from: 'marketing@example.com',
+  subject: 'Summer Sale - Up to 50% Off!',
+  html: '<p>Check out our summer deals!</p>',
+  audienceId: 'aud_123'
+});
+```
+
+## Send a Campaign
+
+```javascript
+// Send immediately
+await lettr.campaigns.send(campaign.id);
+
+// Or schedule for later
+await lettr.campaigns.schedule(campaign.id, {
+  scheduledAt: '2024-06-01T09:00:00Z'
+});
+```
+
+## Campaign with Segments
+
+Target specific audience segments:
+
+```javascript
+const campaign = await lettr.campaigns.create({
+  name: 'Premium User Announcement',
+  from: 'team@example.com',
+  subject: 'Exclusive Feature for Premium Users',
+  html: '<p>As a premium user, you get early access...</p>',
+  audienceId: 'aud_123',
+  segmentId: 'seg_premium_users'
+});
+```
+
+## A/B Testing
+
+Test different subject lines or content:
+
+```javascript
+const campaign = await lettr.campaigns.create({
+  name: 'Newsletter A/B Test',
+  from: 'newsletter@example.com',
+  variants: [
+    {
+      name: 'Variant A',
+      subject: 'This Week in Tech',
+      html: '<p>Content version A...</p>',
+      weight: 50
+    },
+    {
+      name: 'Variant B',
+      subject: '🔥 Hot Tech News This Week',
+      html: '<p>Content version B...</p>',
+      weight: 50
+    }
+  ],
+  audienceId: 'aud_123',
+  testSettings: {
+    testPercentage: 20,
+    winnerCriteria: 'open_rate',
+    waitDuration: '4h'
+  }
+});
+```
+
+## Campaign Analytics
+
+```javascript
+const stats = await lettr.campaigns.getStats(campaign.id);
+
+// Returns:
+{
+  "sent": 10000,
+  "delivered": 9850,
+  "opened": 2500,
+  "clicked": 500,
+  "bounced": 150,
+  "unsubscribed": 25,
+  "openRate": 25.38,
+  "clickRate": 5.08,
+  "bounceRate": 1.52
+}
+```
+
+## Campaign Status
+
+| Status | Description |
+|--------|-------------|
+| `draft` | Campaign created but not sent |
+| `scheduled` | Campaign scheduled for future delivery |
+| `sending` | Campaign is currently being sent |
+| `sent` | Campaign has been fully sent |
+| `paused` | Campaign sending was paused |
+| `cancelled` | Campaign was cancelled |
+
+## Pause and Resume
+
+```javascript
+// Pause a sending campaign
+await lettr.campaigns.pause(campaign.id);
+
+// Resume sending
+await lettr.campaigns.resume(campaign.id);
+
+// Cancel completely
+await lettr.campaigns.cancel(campaign.id);
+```
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Warm Up Your Sending">
+    Gradually increase volume when starting with a new domain.
+  </Accordion>
+  <Accordion title="Monitor Bounce Rates">
+    High bounce rates can hurt deliverability. Clean your lists regularly.
+  </Accordion>
+  <Accordion title="Test Before Sending">
+    Always send test emails before launching a campaign.
+  </Accordion>
+  <Accordion title="Include Unsubscribe Links">
+    Required by law and improves deliverability.
+  </Accordion>
+</AccordionGroup>
+

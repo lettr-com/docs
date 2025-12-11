@@ -1,0 +1,151 @@
+---
+title: Send Email
+api: POST /v1/emails
+description: "Send an email"
+---
+
+# Send Email
+
+Send an email to one or more recipients.
+
+<ParamField body="from" type="string" required>
+  Sender email address. Must be from a verified domain.
+</ParamField>
+
+<ParamField body="to" type="string[]" required>
+  Array of recipient email addresses. Maximum 50 recipients.
+</ParamField>
+
+<ParamField body="subject" type="string" required>
+  Email subject line. Maximum 998 characters.
+</ParamField>
+
+<ParamField body="html" type="string">
+  HTML content of the email.
+</ParamField>
+
+<ParamField body="text" type="string">
+  Plain text content of the email.
+</ParamField>
+
+<ParamField body="cc" type="string[]">
+  Array of CC recipient addresses.
+</ParamField>
+
+<ParamField body="bcc" type="string[]">
+  Array of BCC recipient addresses.
+</ParamField>
+
+<ParamField body="replyTo" type="string">
+  Reply-to email address.
+</ParamField>
+
+<ParamField body="attachments" type="object[]">
+  Array of file attachments.
+  
+  <Expandable title="Attachment object">
+    <ParamField body="filename" type="string" required>
+      Name of the file.
+    </ParamField>
+    <ParamField body="content" type="string">
+      Base64-encoded file content.
+    </ParamField>
+    <ParamField body="url" type="string">
+      URL to fetch the file from.
+    </ParamField>
+    <ParamField body="contentType" type="string">
+      MIME type of the file.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="headers" type="object">
+  Custom email headers as key-value pairs.
+</ParamField>
+
+<ParamField body="tags" type="string[]">
+  Array of tags for categorization.
+</ParamField>
+
+<ParamField body="metadata" type="object">
+  Custom metadata as key-value pairs.
+</ParamField>
+
+<ParamField body="scheduledAt" type="string">
+  ISO 8601 timestamp to schedule the email for later delivery.
+</ParamField>
+
+<ParamField body="templateId" type="string">
+  ID of a saved template to use.
+</ParamField>
+
+<ParamField body="variables" type="object">
+  Variables to substitute in the template or content.
+</ParamField>
+
+## Request
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.lettr.dev/v1/emails \
+  -H "Authorization: Bearer le_xxxxxxxxxxxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "from": "you@example.com",
+    "to": ["recipient@example.com"],
+    "subject": "Hello World",
+    "html": "<p>Welcome to Lettr!</p>"
+  }'
+```
+
+```javascript Node.js
+const email = await lettr.emails.send({
+  from: 'you@example.com',
+  to: ['recipient@example.com'],
+  subject: 'Hello World',
+  html: '<p>Welcome to Lettr!</p>'
+});
+```
+
+```php PHP
+$email = $lettr->emails->send([
+    'from' => 'you@example.com',
+    'to' => ['recipient@example.com'],
+    'subject' => 'Hello World',
+    'html' => '<p>Welcome to Lettr!</p>'
+]);
+```
+
+```python Python
+email = lettr.emails.send(
+    from_email='you@example.com',
+    to=['recipient@example.com'],
+    subject='Hello World',
+    html='<p>Welcome to Lettr!</p>'
+)
+```
+</CodeGroup>
+
+## Response
+
+```json
+{
+  "id": "email_123abc",
+  "object": "email",
+  "from": "you@example.com",
+  "to": ["recipient@example.com"],
+  "subject": "Hello World",
+  "status": "sent",
+  "createdAt": "2024-01-15T10:30:00Z"
+}
+```
+
+## Errors
+
+| Code | Description |
+|------|-------------|
+| `invalid_from` | Sender address not from verified domain |
+| `invalid_to` | Invalid recipient email address |
+| `suppressed` | Recipient is suppressed |
+| `rate_limit_exceeded` | Too many requests |
+

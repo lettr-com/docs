@@ -1,0 +1,133 @@
+---
+title: Teams
+description: "Manage team members and access"
+---
+
+# Team Management
+
+Invite team members and manage access to your Lettr account.
+
+## Invite Team Members
+
+```javascript
+await lettr.team.invite({
+  email: 'colleague@company.com',
+  role: 'developer'
+});
+```
+
+Or invite from the dashboard:
+
+1. Go to **Settings** → **Team**
+2. Click **Invite Member**
+3. Enter email and select role
+4. Send invitation
+
+## Roles
+
+| Role | Permissions |
+|------|-------------|
+| **Owner** | Full access, billing, can delete account |
+| **Admin** | Full access except billing and account deletion |
+| **Developer** | API keys, domains, webhooks, sending |
+| **Analyst** | Read-only access to analytics and logs |
+| **Billing** | Billing and invoices only |
+
+## Role Permissions Matrix
+
+| Permission | Owner | Admin | Developer | Analyst | Billing |
+|------------|-------|-------|-----------|---------|---------|
+| Send emails | ✅ | ✅ | ✅ | ❌ | ❌ |
+| View analytics | ✅ | ✅ | ✅ | ✅ | ❌ |
+| Manage domains | ✅ | ✅ | ✅ | ❌ | ❌ |
+| Manage API keys | ✅ | ✅ | ✅ | ❌ | ❌ |
+| Manage team | ✅ | ✅ | ❌ | ❌ | ❌ |
+| Manage billing | ✅ | ❌ | ❌ | ❌ | ✅ |
+| Delete account | ✅ | ❌ | ❌ | ❌ | ❌ |
+
+## List Team Members
+
+```javascript
+const members = await lettr.team.list();
+
+members.forEach(member => {
+  console.log({
+    email: member.email,
+    role: member.role,
+    status: member.status,  // 'active', 'pending'
+    joinedAt: member.createdAt
+  });
+});
+```
+
+## Update Member Role
+
+```javascript
+await lettr.team.update('member_123', {
+  role: 'admin'
+});
+```
+
+## Remove Team Member
+
+```javascript
+await lettr.team.remove('member_123');
+```
+
+<Warning>
+  Removing a team member is immediate. They will lose access to all account resources.
+</Warning>
+
+## Transfer Ownership
+
+Transfer account ownership to another admin:
+
+```javascript
+await lettr.team.transferOwnership({
+  newOwnerId: 'member_456',
+  confirmPassword: 'your-password'
+});
+```
+
+## Single Sign-On (SSO)
+
+Enterprise plans support SSO integration:
+
+- SAML 2.0
+- OpenID Connect
+- Google Workspace
+- Okta
+- Azure AD
+
+Contact support to configure SSO for your organization.
+
+## Audit Log
+
+View team activity:
+
+```javascript
+const logs = await lettr.auditLogs.list({
+  startDate: '2024-01-01',
+  actorId: 'member_123'  // Optional: filter by member
+});
+
+logs.forEach(log => {
+  console.log({
+    action: log.action,
+    actor: log.actorEmail,
+    resource: log.resource,
+    timestamp: log.createdAt
+  });
+});
+```
+
+## Two-Factor Authentication
+
+Require 2FA for all team members:
+
+```javascript
+await lettr.team.updateSettings({
+  require2FA: true
+});
+```
+

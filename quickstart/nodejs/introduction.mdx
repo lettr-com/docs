@@ -1,0 +1,91 @@
+---
+title: Node.js Introduction
+description: "Get started with Lettr using Node.js"
+---
+
+# Node.js Quickstart
+
+Learn how to send your first email using Lettr with Node.js.
+
+## Prerequisites
+
+- Node.js 18 or higher
+- npm or yarn
+- A Lettr API key
+
+## Installation
+
+Install the Lettr Node.js SDK:
+
+```bash
+npm install lettr
+# or
+yarn add lettr
+# or
+pnpm add lettr
+```
+
+## Send Your First Email
+
+```javascript
+import { Lettr } from 'lettr';
+
+const lettr = new Lettr(process.env.LETTR_API_KEY);
+
+async function main() {
+  await lettr.emails.send({
+    from: 'you@example.com',
+    to: ['recipient@example.com'],
+    subject: 'Hello from Lettr',
+    html: '<p>Welcome to Lettr!</p>'
+  });
+}
+
+main();
+```
+
+## CommonJS Usage
+
+```javascript
+const { Lettr } = require('lettr');
+
+const lettr = new Lettr(process.env.LETTR_API_KEY);
+
+lettr.emails.send({
+  from: 'you@example.com',
+  to: ['recipient@example.com'],
+  subject: 'Hello from Lettr',
+  html: '<p>Welcome to Lettr!</p>'
+});
+```
+
+## TypeScript Support
+
+Full TypeScript support is included:
+
+```typescript
+import { Lettr, SendEmailOptions } from 'lettr';
+
+const lettr = new Lettr(process.env.LETTR_API_KEY!);
+
+const options: SendEmailOptions = {
+  from: 'you@example.com',
+  to: ['recipient@example.com'],
+  subject: 'Hello from Lettr',
+  html: '<p>Welcome to Lettr!</p>'
+};
+
+await lettr.emails.send(options);
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Next.js" icon="react" href="/quickstart/nodejs/nextjs">
+    Integrate Lettr with Next.js
+  </Card>
+  <Card title="Nuxt" icon="vuejs" href="/quickstart/nodejs/nuxt">
+    Integrate Lettr with Nuxt
+  </Card>
+</CardGroup>
+

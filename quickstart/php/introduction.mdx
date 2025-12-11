@@ -1,0 +1,53 @@
+---
+title: PHP Introduction
+description: "Get started with Lettr using PHP"
+---
+
+# PHP Quickstart
+
+Learn how to send your first email using Lettr with PHP.
+
+## Prerequisites
+
+- PHP 8.1 or higher
+- Composer installed
+- A Lettr API key
+
+## Installation
+
+Install the Lettr PHP SDK via Composer:
+
+```bash
+composer require lettr/lettr-php
+```
+
+## Send Your First Email
+
+```php
+<?php
+
+require 'vendor/autoload.php';
+
+use Lettr\Lettr;
+
+$lettr = new Lettr('your-api-key');
+
+$lettr->emails->send([
+    'from' => 'you@example.com',
+    'to' => ['recipient@example.com'],
+    'subject' => 'Hello from Lettr',
+    'html' => '<p>Welcome to Lettr!</p>'
+]);
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Laravel" icon="laravel" href="/quickstart/php/laravel">
+    Integrate Lettr with Laravel
+  </Card>
+  <Card title="Symfony" icon="symfony" href="/quickstart/php/symfony">
+    Integrate Lettr with Symfony
+  </Card>
+</CardGroup>
+

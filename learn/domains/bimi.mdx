@@ -1,0 +1,117 @@
+---
+title: BIMI
+description: "Display your logo in email clients with BIMI"
+---
+
+# BIMI (Brand Indicators for Message Identification)
+
+Display your brand logo next to your emails in supported email clients.
+
+## What is BIMI?
+
+BIMI allows your verified logo to appear in email clients that support it, increasing brand recognition and trust.
+
+<Frame>
+  ![BIMI Example](/images/bimi-example.png)
+</Frame>
+
+## Requirements
+
+Before setting up BIMI, you need:
+
+<Steps>
+  <Step title="DMARC Enforcement">
+    DMARC policy must be set to `quarantine` or `reject` with `pct=100`.
+  </Step>
+  <Step title="Verified Mark Certificate (VMC)">
+    A certificate from an authorized provider (required for some email clients).
+  </Step>
+  <Step title="SVG Logo">
+    Your logo in SVG Tiny PS format.
+  </Step>
+</Steps>
+
+## Logo Requirements
+
+| Requirement | Specification |
+|-------------|---------------|
+| Format | SVG Tiny 1.2 Portable/Secure |
+| Shape | Square |
+| Background | Solid color (no transparency) |
+| Size | At least 32x32 pixels |
+| File size | Under 32 KB |
+
+## BIMI Record
+
+Add a TXT record to your domain:
+
+```
+Type: TXT
+Host: default._bimi
+Value: v=BIMI1; l=https://example.com/logo.svg; a=https://example.com/vmc.pem
+```
+
+### Record Parameters
+
+| Parameter | Description | Required |
+|-----------|-------------|----------|
+| `v=BIMI1` | BIMI version | Yes |
+| `l=` | URL to your SVG logo | Yes |
+| `a=` | URL to your VMC certificate | No* |
+
+*VMC is required for Gmail and some other clients.
+
+## VMC Providers
+
+Verified Mark Certificates are available from:
+
+- DigiCert
+- Entrust
+
+<Note>
+  VMC certificates require trademark registration and cost several thousand dollars annually.
+</Note>
+
+## Setup in Lettr
+
+```javascript
+const domain = await lettr.domains.update('dom_123', {
+  bimi: {
+    logoUrl: 'https://example.com/logo.svg',
+    vmcUrl: 'https://example.com/vmc.pem' // Optional
+  }
+});
+```
+
+## Check BIMI Status
+
+```javascript
+const domain = await lettr.domains.get('dom_123');
+
+console.log({
+  bimiStatus: domain.bimiStatus,
+  bimiLogoUrl: domain.bimiLogoUrl
+});
+```
+
+## Email Client Support
+
+| Client | Support Level |
+|--------|--------------|
+| Gmail | VMC required |
+| Apple Mail | Basic BIMI (no VMC) |
+| Yahoo | VMC required |
+| Fastmail | Basic BIMI |
+
+## Testing BIMI
+
+Use these tools to validate your BIMI setup:
+
+1. **BIMI Inspector** - Check your DNS records
+2. **BIMI Generator** - Create compliant SVG logos
+3. **Send test emails** - Verify logo appears in supported clients
+
+<Warning>
+  BIMI display depends on multiple factors including your domain reputation and the recipient's email client. Not all emails will show your logo.
+</Warning>
+

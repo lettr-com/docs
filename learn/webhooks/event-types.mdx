@@ -1,0 +1,188 @@
+---
+title: Event Types
+description: "All available webhook event types"
+---
+
+# Webhook Event Types
+
+Complete reference of all webhook events Lettr can send.
+
+## Email Events
+
+### email.sent
+
+Triggered when an email is accepted by Lettr for delivery.
+
+```json
+{
+  "type": "email.sent",
+  "data": {
+    "emailId": "email_123",
+    "from": "you@example.com",
+    "to": ["recipient@example.com"],
+    "subject": "Hello World",
+    "sentAt": "2024-01-15T10:30:00Z"
+  }
+}
+```
+
+### email.delivered
+
+Triggered when an email is successfully delivered to the recipient's mail server.
+
+```json
+{
+  "type": "email.delivered",
+  "data": {
+    "emailId": "email_123",
+    "to": "recipient@example.com",
+    "deliveredAt": "2024-01-15T10:30:05Z"
+  }
+}
+```
+
+### email.bounced
+
+Triggered when an email bounces (hard or soft).
+
+```json
+{
+  "type": "email.bounced",
+  "data": {
+    "emailId": "email_123",
+    "to": "invalid@example.com",
+    "bounceType": "hard",
+    "bounceCategory": "invalid_address",
+    "message": "550 5.1.1 User unknown",
+    "bouncedAt": "2024-01-15T10:30:05Z"
+  }
+}
+```
+
+### email.deferred
+
+Triggered when email delivery is temporarily delayed.
+
+```json
+{
+  "type": "email.deferred",
+  "data": {
+    "emailId": "email_123",
+    "to": "recipient@example.com",
+    "reason": "Server temporarily unavailable",
+    "retryCount": 1,
+    "nextRetryAt": "2024-01-15T10:45:00Z"
+  }
+}
+```
+
+### email.opened
+
+Triggered when a recipient opens an email (requires open tracking).
+
+```json
+{
+  "type": "email.opened",
+  "data": {
+    "emailId": "email_123",
+    "to": "recipient@example.com",
+    "openedAt": "2024-01-15T11:00:00Z",
+    "userAgent": "Mozilla/5.0...",
+    "ipAddress": "203.0.113.50",
+    "isFirstOpen": true
+  }
+}
+```
+
+### email.clicked
+
+Triggered when a recipient clicks a link (requires click tracking).
+
+```json
+{
+  "type": "email.clicked",
+  "data": {
+    "emailId": "email_123",
+    "to": "recipient@example.com",
+    "url": "https://example.com/offer",
+    "clickedAt": "2024-01-15T11:05:00Z",
+    "userAgent": "Mozilla/5.0...",
+    "ipAddress": "203.0.113.50"
+  }
+}
+```
+
+### email.complained
+
+Triggered when a recipient marks an email as spam.
+
+```json
+{
+  "type": "email.complained",
+  "data": {
+    "emailId": "email_123",
+    "to": "recipient@example.com",
+    "complainedAt": "2024-01-15T12:00:00Z"
+  }
+}
+```
+
+### email.unsubscribed
+
+Triggered when a recipient unsubscribes.
+
+```json
+{
+  "type": "email.unsubscribed",
+  "data": {
+    "emailId": "email_123",
+    "to": "recipient@example.com",
+    "unsubscribedAt": "2024-01-15T12:00:00Z",
+    "reason": "user_request"
+  }
+}
+```
+
+## Inbound Events
+
+### email.received
+
+Triggered when an email is received on your inbound domain.
+
+```json
+{
+  "type": "email.received",
+  "data": {
+    "id": "inbound_123",
+    "from": "sender@example.com",
+    "to": ["support@yourdomain.com"],
+    "subject": "Help request",
+    "text": "I need help...",
+    "html": "<p>I need help...</p>",
+    "receivedAt": "2024-01-15T10:30:00Z"
+  }
+}
+```
+
+## Subscribing to Events
+
+```javascript
+// Subscribe to specific events
+const webhook = await lettr.webhooks.create({
+  url: 'https://example.com/webhooks',
+  events: ['email.delivered', 'email.bounced']
+});
+
+// Subscribe to all events
+const webhook = await lettr.webhooks.create({
+  url: 'https://example.com/webhooks',
+  events: ['*']
+});
+
+// Subscribe to all email events
+const webhook = await lettr.webhooks.create({
+  url: 'https://example.com/webhooks',
+  events: ['email.*']
+});
+```
+

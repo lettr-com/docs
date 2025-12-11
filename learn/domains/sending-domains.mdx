@@ -1,0 +1,132 @@
+---
+title: Sending Domains
+description: "Configure domains for sending emails"
+---
+
+# Sending Domains
+
+Set up domains to send emails from your own addresses.
+
+## Adding a Sending Domain
+
+```javascript
+const domain = await lettr.domains.create({
+  name: 'example.com',
+  type: 'sending'
+});
+```
+
+## DNS Records
+
+After adding a domain, add these DNS records:
+
+### SPF Record
+
+Authorizes Lettr to send on your behalf:
+
+```
+Type: TXT
+Host: @
+Value: v=spf1 include:spf.lettr.dev ~all
+```
+
+If you have existing SPF records, merge them:
+
+```
+v=spf1 include:spf.lettr.dev include:_spf.google.com ~all
+```
+
+### DKIM Record
+
+Enables email signing for authenticity:
+
+```
+Type: CNAME
+Host: lettr._domainkey
+Value: dkim.lettr.dev
+```
+
+### Return-Path (Optional)
+
+Custom bounce handling domain:
+
+```
+Type: CNAME
+Host: bounce
+Value: bounce.lettr.dev
+```
+
+## Verify DNS Records
+
+```javascript
+const result = await lettr.domains.verify('dom_123');
+
+if (result.verified) {
+  console.log('Domain verified successfully!');
+} else {
+  console.log('Missing records:', result.missingRecords);
+}
+```
+
+## Sending From Verified Domains
+
+Once verified, use any address on your domain:
+
+```javascript
+await lettr.emails.send({
+  from: 'hello@example.com',      // ✅ Works
+  from: 'support@example.com',    // ✅ Works
+  from: 'team@example.com',       // ✅ Works
+  to: ['recipient@other.com'],
+  subject: 'Hello',
+  html: '<p>Hello!</p>'
+});
+```
+
+## From Name
+
+Customize the sender name:
+
+```javascript
+await lettr.emails.send({
+  from: 'Your Company <hello@example.com>',
+  // or
+  from: {
+    email: 'hello@example.com',
+    name: 'Your Company'
+  },
+  to: ['recipient@other.com'],
+  subject: 'Hello',
+  html: '<p>Hello!</p>'
+});
+```
+
+## Multiple Domains
+
+You can verify multiple domains for different purposes:
+
+| Domain | Use Case |
+|--------|----------|
+| `example.com` | General communications |
+| `mail.example.com` | Marketing emails |
+| `notifications.example.com` | Automated notifications |
+
+<Tip>
+  Using subdomains for different email types helps protect your main domain's reputation.
+</Tip>
+
+## Domain Reputation
+
+Monitor your sending domain's reputation:
+
+```javascript
+const reputation = await lettr.domains.getReputation('dom_123');
+
+console.log({
+  score: reputation.score,        // 0-100
+  status: reputation.status,      // 'good', 'fair', 'poor'
+  bounceRate: reputation.bounceRate,
+  spamRate: reputation.spamRate
+});
+```
+

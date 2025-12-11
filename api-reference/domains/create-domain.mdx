@@ -1,0 +1,87 @@
+---
+title: Create Domain
+api: POST /v1/domains
+description: "Add a new domain"
+---
+
+# Create Domain
+
+Add a new domain for sending emails.
+
+<ParamField body="name" type="string" required>
+  The domain name (e.g., `example.com`).
+</ParamField>
+
+<ParamField body="region" type="string" default="us">
+  Data region: `us` or `eu`.
+</ParamField>
+
+## Request
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.lettr.dev/v1/domains \
+  -H "Authorization: Bearer le_xxxxxxxxxxxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "example.com"
+  }'
+```
+
+```javascript Node.js
+const domain = await lettr.domains.create({
+  name: 'example.com'
+});
+```
+
+```php PHP
+$domain = $lettr->domains->create([
+    'name' => 'example.com'
+]);
+```
+</CodeGroup>
+
+## Response
+
+```json
+{
+  "id": "dom_123abc",
+  "object": "domain",
+  "name": "example.com",
+  "status": "pending",
+  "region": "us",
+  "dnsRecords": [
+    {
+      "type": "TXT",
+      "host": "@",
+      "value": "v=spf1 include:spf.lettr.dev ~all",
+      "purpose": "spf"
+    },
+    {
+      "type": "CNAME",
+      "host": "lettr._domainkey",
+      "value": "dkim.lettr.dev",
+      "purpose": "dkim"
+    },
+    {
+      "type": "TXT",
+      "host": "_dmarc",
+      "value": "v=DMARC1; p=none;",
+      "purpose": "dmarc"
+    }
+  ],
+  "spfStatus": "pending",
+  "dkimStatus": "pending",
+  "dmarcStatus": "pending",
+  "createdAt": "2024-01-15T10:30:00Z"
+}
+```
+
+## Next Steps
+
+After creating a domain:
+
+1. Add the DNS records shown in the response to your domain
+2. Wait for DNS propagation (usually 15 minutes to 48 hours)
+3. Call the [Verify Domain](/api-reference/domains/verify-domain) endpoint
+

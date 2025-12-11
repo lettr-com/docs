@@ -1,0 +1,87 @@
+---
+title: Domains Introduction
+description: "Configure domains for sending emails"
+---
+
+# Domains
+
+Configure and verify domains to send emails with Lettr.
+
+## Why Verify Domains?
+
+Domain verification is essential for:
+
+- **Deliverability** - Properly authenticated emails reach the inbox
+- **Brand Trust** - Send from your own domain, not a shared one
+- **Compliance** - Meet email authentication requirements (SPF, DKIM, DMARC)
+
+## Add a Domain
+
+<Steps>
+  <Step title="Add Domain in Dashboard">
+    Go to Domains → Add Domain and enter your domain name.
+  </Step>
+  <Step title="Add DNS Records">
+    Add the provided DNS records to your domain.
+  </Step>
+  <Step title="Verify Domain">
+    Click Verify to confirm DNS propagation.
+  </Step>
+</Steps>
+
+## Via API
+
+```javascript
+const domain = await lettr.domains.create({
+  name: 'example.com'
+});
+
+// Get DNS records to add
+console.log(domain.dnsRecords);
+```
+
+## Required DNS Records
+
+| Type | Name | Value | Purpose |
+|------|------|-------|---------|
+| TXT | `@` | `v=spf1 include:spf.lettr.dev ~all` | SPF authentication |
+| CNAME | `lettr._domainkey` | `dkim.lettr.dev` | DKIM signing |
+| TXT | `_dmarc` | `v=DMARC1; p=none;` | DMARC policy |
+
+## Check Domain Status
+
+```javascript
+const domain = await lettr.domains.get('dom_123');
+
+console.log({
+  spfStatus: domain.spfStatus,    // 'verified', 'pending', 'failed'
+  dkimStatus: domain.dkimStatus,  // 'verified', 'pending', 'failed'
+  dmarcStatus: domain.dmarcStatus // 'verified', 'pending', 'failed'
+});
+```
+
+## Domain Status
+
+| Status | Description |
+|--------|-------------|
+| `pending` | DNS records not yet detected |
+| `verified` | All records verified and active |
+| `failed` | Verification failed (check DNS) |
+
+## Learn More
+
+<CardGroup cols={2}>
+  <Card title="Sending Domains" icon="paper-plane" href="/learn/domains/sending-domains">
+    Configure domains for sending
+  </Card>
+  <Card title="Tracking Domains" icon="chart-line" href="/learn/domains/tracking-domains">
+    Custom tracking domains
+  </Card>
+  <Card title="DMARC" icon="shield" href="/learn/domains/dmarc">
+    Set up DMARC policies
+  </Card>
+  <Card title="BIMI" icon="image" href="/learn/domains/bimi">
+    Display your logo in email clients
+  </Card>
+</CardGroup>
+

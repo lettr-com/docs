@@ -1,0 +1,172 @@
+---
+title: Rate Limits
+description: "Understanding and handling API rate limits"
+---
+
+# Rate Limits
+
+Understand Lettr's rate limits and how to handle them.
+
+## Rate Limit Tiers
+
+| Plan | Requests/Second | Emails/Month |
+|------|-----------------|--------------|
+| Free | 10 | 3,000 |
+| Pro | 100 | 50,000 |
+| Enterprise | Custom | Unlimited |
+
+## Rate Limit Headers
+
+Every response includes rate limit information:
+
+```
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 95
+X-RateLimit-Reset: 1673789400
+```
+
+| Header | Description |
+|--------|-------------|
+| `X-RateLimit-Limit` | Maximum requests per second |
+| `X-RateLimit-Remaining` | Remaining requests in window |
+| `X-RateLimit-Reset` | Unix timestamp when limit resets |
+
+## Handling Rate Limits
+
+### HTTP 429 Response
+
+When rate limited, you'll receive:
+
+```json
+{
+  "error": {
+    "code": "rate_limit_exceeded",
+    "message": "Too many requests. Please slow down.",
+    "retryAfter": 1
+  }
+}
+```
+
+### Retry-After Header
+
+The `Retry-After` header tells you how long to wait:
+
+```
+Retry-After: 1
+```
+
+### Implementing Backoff
+
+```javascript
+async function sendWithBackoff(emailOptions) {
+  const maxRetries = 5;
+  let delay = 1000;
+
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await lettr.emails.send(emailOptions);
+    } catch (error) {
+      if (error.statusCode === 429) {
+        const retryAfter = error.headers?.['retry-after'] || delay / 1000;
+        console.log(`Rate limited. Retrying in ${retryAfter}s...`);
+        await new Promise(r => setTimeout(r, retryAfter * 1000));
+        delay *= 2; // Exponential backoff
+      } else {
+        throw error;
+      }
+    }
+  }
+
+  throw new Error('Max retries exceeded');
+}
+```
+
+### SDK Automatic Handling
+
+Our SDKs handle rate limits automatically:
+
+```javascript
+import { Lettr } from 'lettr';
+
+const lettr = new Lettr(process.env.LETTR_API_KEY, {
+  retryOnRateLimit: true,  // Default: true
+  maxRetries: 3            // Default: 3
+});
+```
+
+## Batch Operations
+
+For high-volume sending, use batch operations:
+
+```javascript
+// Send multiple emails in one request
+const emails = await lettr.emails.sendBatch([
+  { from: 'a@example.com', to: ['b@example.com'], subject: 'Hi', html: '...' },
+  { from: 'a@example.com', to: ['c@example.com'], subject: 'Hi', html: '...' },
+  // Up to 100 emails per batch
+]);
+```
+
+## Queuing Strategies
+
+For large volumes, implement a queue:
+
+```javascript
+import { Queue } from 'bull';
+
+const emailQueue = new Queue('emails', process.env.REDIS_URL);
+
+// Add emails to queue
+emailQueue.add({ to: 'user@example.com', subject: '...', html: '...' });
+
+// Process with rate limiting
+emailQueue.process(10, async (job) => {  // 10 concurrent jobs
+  await lettr.emails.send(job.data);
+});
+```
+
+## Monitoring Usage
+
+Check your current usage:
+
+```javascript
+const usage = await lettr.billing.getUsage();
+
+console.log({
+  emailsSent: usage.emails.used,
+  emailsLimit: usage.emails.limit,
+  percentUsed: usage.emails.percentage
+});
+```
+
+## Increasing Limits
+
+### Upgrade Your Plan
+
+Higher plans include higher rate limits. Upgrade in the dashboard.
+
+### Request Custom Limits
+
+Enterprise customers can request custom rate limits:
+
+<Card title="Contact Sales" icon="phone" href="mailto:sales@lettr.dev">
+  Request custom rate limits for your use case
+</Card>
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Spread Load Over Time">
+    Don't send all emails at once. Space them throughout the day.
+  </Accordion>
+  <Accordion title="Use Webhooks for Status">
+    Don't poll the API for email status. Use webhooks instead.
+  </Accordion>
+  <Accordion title="Cache Domain Data">
+    Cache domain and template data to reduce API calls.
+  </Accordion>
+  <Accordion title="Batch When Possible">
+    Use batch endpoints for multiple operations.
+  </Accordion>
+</AccordionGroup>
+

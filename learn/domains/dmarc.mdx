@@ -1,0 +1,110 @@
+---
+title: DMARC
+description: "Configure DMARC for email authentication"
+---
+
+# DMARC Configuration
+
+Domain-based Message Authentication, Reporting, and Conformance (DMARC) protects your domain from email spoofing.
+
+## What is DMARC?
+
+DMARC tells receiving email servers what to do when emails claiming to be from your domain fail SPF or DKIM checks.
+
+## DMARC Policies
+
+| Policy | Action | Use Case |
+|--------|--------|----------|
+| `none` | Monitor only | Initial setup, gathering data |
+| `quarantine` | Send to spam | Transitioning to enforcement |
+| `reject` | Block the email | Full protection |
+
+## Setting Up DMARC
+
+Add a TXT record to your domain:
+
+```
+Type: TXT
+Host: _dmarc
+Value: v=DMARC1; p=none; rua=mailto:dmarc@example.com
+```
+
+## DMARC Record Explained
+
+```
+v=DMARC1;           # DMARC version (required)
+p=none;             # Policy: none, quarantine, or reject
+rua=mailto:...;     # Aggregate report email
+ruf=mailto:...;     # Forensic report email (optional)
+pct=100;            # Percentage of messages to apply policy
+adkim=r;            # DKIM alignment: r (relaxed) or s (strict)
+aspf=r;             # SPF alignment: r (relaxed) or s (strict)
+```
+
+## Recommended Rollout
+
+<Steps>
+  <Step title="Monitor (2-4 weeks)">
+    Start with `p=none` to receive reports without affecting delivery.
+    ```
+    v=DMARC1; p=none; rua=mailto:dmarc@example.com
+    ```
+  </Step>
+  <Step title="Quarantine (2-4 weeks)">
+    Move to `p=quarantine` with a low percentage.
+    ```
+    v=DMARC1; p=quarantine; pct=10; rua=mailto:dmarc@example.com
+    ```
+  </Step>
+  <Step title="Enforce">
+    Gradually increase to `p=reject` at 100%.
+    ```
+    v=DMARC1; p=reject; rua=mailto:dmarc@example.com
+    ```
+  </Step>
+</Steps>
+
+## Lettr DMARC Alignment
+
+Lettr automatically aligns SPF and DKIM for DMARC compliance:
+
+- **DKIM**: Signs emails with your domain's DKIM key
+- **SPF**: Return-path domain aligns with your sending domain
+
+## Check DMARC Status
+
+```javascript
+const domain = await lettr.domains.get('dom_123');
+
+console.log({
+  dmarcStatus: domain.dmarcStatus,
+  dmarcPolicy: domain.dmarcPolicy
+});
+```
+
+## DMARC Reports
+
+Configure report recipients in your DMARC record:
+
+```
+v=DMARC1; p=none; rua=mailto:dmarc-reports@example.com
+```
+
+Reports include:
+
+- Source IPs sending email for your domain
+- SPF/DKIM pass/fail rates
+- Emails that failed authentication
+
+<Tip>
+  Use a DMARC report analyzer service to parse and visualize the XML reports you receive.
+</Tip>
+
+## Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| DMARC failing | Ensure SPF and DKIM are properly configured |
+| Reports not received | Verify the email address in `rua` |
+| Legitimate emails rejected | Start with `p=none` and monitor first |
+

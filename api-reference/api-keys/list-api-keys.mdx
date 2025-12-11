@@ -1,0 +1,69 @@
+---
+title: List API Keys
+api: GET /v1/api-keys
+description: "List all API keys"
+---
+
+# List API Keys
+
+Retrieve a list of all API keys in your account.
+
+<ParamField query="limit" type="integer" default="10">
+  Number of keys to return. Maximum 100.
+</ParamField>
+
+<ParamField query="starting_after" type="string">
+  Cursor for pagination.
+</ParamField>
+
+## Request
+
+<CodeGroup>
+```bash cURL
+curl "https://api.lettr.dev/v1/api-keys" \
+  -H "Authorization: Bearer le_xxxxxxxxxxxx"
+```
+
+```javascript Node.js
+const keys = await lettr.apiKeys.list();
+```
+
+```php PHP
+$keys = $lettr->apiKeys->list();
+```
+</CodeGroup>
+
+## Response
+
+```json
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "key_123abc",
+      "object": "api_key",
+      "name": "Production Server",
+      "keyPrefix": "le_xxxx",
+      "permissions": ["emails:send", "emails:read"],
+      "lastUsedAt": "2024-01-15T14:30:00Z",
+      "createdAt": "2024-01-15T10:30:00Z"
+    },
+    {
+      "id": "key_456def",
+      "object": "api_key",
+      "name": "Analytics Dashboard",
+      "keyPrefix": "le_yyyy",
+      "permissions": ["analytics:read"],
+      "lastUsedAt": "2024-01-14T09:00:00Z",
+      "createdAt": "2024-01-10T08:00:00Z"
+    }
+  ],
+  "hasMore": false,
+  "totalCount": 2
+}
+```
+
+<Note>
+  For security, the full API key is never returned after creation. Only a prefix is shown.
+</Note>
+

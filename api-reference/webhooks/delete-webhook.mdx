@@ -1,0 +1,51 @@
+---
+title: Delete Webhook
+api: DELETE /v1/webhooks/{id}
+description: "Delete a webhook"
+---
+
+# Delete Webhook
+
+Delete a webhook endpoint.
+
+<ParamField path="id" type="string" required>
+  The ID of the webhook to delete.
+</ParamField>
+
+## Request
+
+<CodeGroup>
+```bash cURL
+curl -X DELETE https://api.lettr.dev/v1/webhooks/wh_123abc \
+  -H "Authorization: Bearer le_xxxxxxxxxxxx"
+```
+
+```javascript Node.js
+await lettr.webhooks.delete('wh_123abc');
+```
+
+```php PHP
+$lettr->webhooks->delete('wh_123abc');
+```
+</CodeGroup>
+
+## Response
+
+```json
+{
+  "id": "wh_123abc",
+  "object": "webhook",
+  "deleted": true
+}
+```
+
+<Note>
+  Deleting a webhook stops all future event deliveries to that endpoint. Pending deliveries may still be attempted.
+</Note>
+
+## Errors
+
+| Code | Description |
+|------|-------------|
+| `not_found` | Webhook with specified ID not found |
+

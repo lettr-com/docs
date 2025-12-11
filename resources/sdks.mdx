@@ -1,0 +1,196 @@
+---
+title: SDKs
+description: "Official SDKs for all major languages"
+---
+
+# SDKs
+
+Official Lettr SDKs for all major programming languages.
+
+## Official SDKs
+
+<CardGroup cols={2}>
+  <Card title="Node.js" icon="node-js" href="https://github.com/lettr/lettr-node">
+    ```bash
+    npm install lettr
+    ```
+  </Card>
+  <Card title="PHP" icon="php" href="https://github.com/lettr/lettr-php">
+    ```bash
+    composer require lettr/lettr-php
+    ```
+  </Card>
+  <Card title="Python" icon="python" href="https://github.com/lettr/lettr-python">
+    ```bash
+    pip install lettr
+    ```
+  </Card>
+  <Card title="Ruby" icon="gem" href="https://github.com/lettr/lettr-ruby">
+    ```bash
+    gem install lettr
+    ```
+  </Card>
+  <Card title="Go" icon="golang" href="https://github.com/lettr/lettr-go">
+    ```bash
+    go get github.com/lettr/lettr-go
+    ```
+  </Card>
+  <Card title="Java" icon="java" href="https://github.com/lettr/lettr-java">
+    ```xml
+    <dependency>
+      <groupId>dev.lettr</groupId>
+      <artifactId>lettr-java</artifactId>
+    </dependency>
+    ```
+  </Card>
+</CardGroup>
+
+## Framework Integrations
+
+<CardGroup cols={3}>
+  <Card title="Laravel" icon="laravel" href="https://github.com/lettr/lettr-laravel">
+    Official Laravel package
+  </Card>
+  <Card title="Symfony" icon="symfony" href="https://github.com/lettr/lettr-symfony">
+    Symfony bundle
+  </Card>
+  <Card title="Django" icon="python" href="https://github.com/lettr/lettr-django">
+    Django email backend
+  </Card>
+</CardGroup>
+
+## Node.js SDK
+
+### Installation
+
+```bash
+npm install lettr
+```
+
+### Usage
+
+```javascript
+import { Lettr } from 'lettr';
+
+const lettr = new Lettr('your-api-key');
+
+// Send email
+const email = await lettr.emails.send({
+  from: 'you@example.com',
+  to: ['recipient@example.com'],
+  subject: 'Hello',
+  html: '<p>Hello World</p>'
+});
+
+// List emails
+const emails = await lettr.emails.list({ limit: 10 });
+
+// Get domains
+const domains = await lettr.domains.list();
+```
+
+## PHP SDK
+
+### Installation
+
+```bash
+composer require lettr/lettr-php
+```
+
+### Usage
+
+```php
+<?php
+
+use Lettr\Lettr;
+
+$lettr = new Lettr('your-api-key');
+
+// Send email
+$email = $lettr->emails->send([
+    'from' => 'you@example.com',
+    'to' => ['recipient@example.com'],
+    'subject' => 'Hello',
+    'html' => '<p>Hello World</p>'
+]);
+
+// List emails
+$emails = $lettr->emails->list(['limit' => 10]);
+```
+
+## Python SDK
+
+### Installation
+
+```bash
+pip install lettr
+```
+
+### Usage
+
+```python
+from lettr import Lettr
+
+lettr = Lettr('your-api-key')
+
+# Send email
+email = lettr.emails.send(
+    from_email='you@example.com',
+    to=['recipient@example.com'],
+    subject='Hello',
+    html='<p>Hello World</p>'
+)
+
+# List emails
+emails = lettr.emails.list(limit=10)
+```
+
+## Go SDK
+
+### Installation
+
+```bash
+go get github.com/lettr/lettr-go
+```
+
+### Usage
+
+```go
+package main
+
+import (
+    "github.com/lettr/lettr-go"
+)
+
+func main() {
+    client := lettr.New("your-api-key")
+
+    email, err := client.Emails.Send(&lettr.SendEmailParams{
+        From:    "you@example.com",
+        To:      []string{"recipient@example.com"},
+        Subject: "Hello",
+        HTML:    "<p>Hello World</p>",
+    })
+}
+```
+
+## SDK Features
+
+All SDKs include:
+
+| Feature | Description |
+|---------|-------------|
+| Type definitions | Full TypeScript/type hints support |
+| Error handling | Structured error responses |
+| Automatic retries | Retry on transient failures |
+| Webhook verification | Built-in signature verification |
+| Rate limiting | Automatic rate limit handling |
+
+## Contributing
+
+SDKs are open source. Contributions welcome!
+
+<Card title="Contribution Guide" icon="code-pull-request" href="https://github.com/lettr/lettr-node/blob/main/CONTRIBUTING.md">
+  Learn how to contribute to our SDKs
+</Card>
+

@@ -1,0 +1,142 @@
+---
+title: Suppression Lists
+description: "Create and manage custom suppression lists"
+---
+
+# Suppression Lists
+
+Create custom lists to prevent sending to specific addresses.
+
+## Create a Suppression List
+
+```javascript
+const list = await lettr.suppressionLists.create({
+  name: 'Competitors',
+  description: 'Competitor email addresses'
+});
+```
+
+## Add to Suppression List
+
+### Single Address
+
+```javascript
+await lettr.suppressions.create({
+  email: 'competitor@rival.com',
+  listId: 'list_123',
+  reason: 'Competitor address'
+});
+```
+
+### Bulk Import
+
+```javascript
+await lettr.suppressions.import({
+  listId: 'list_123',
+  emails: [
+    { email: 'user1@example.com', reason: 'Requested removal' },
+    { email: 'user2@example.com', reason: 'Invalid address' }
+  ]
+});
+```
+
+### Import from CSV
+
+```javascript
+const csv = `email,reason
+user1@example.com,Requested removal
+user2@example.com,Invalid address`;
+
+await lettr.suppressions.importCsv({
+  listId: 'list_123',
+  csv: csv
+});
+```
+
+## List Types
+
+| Type | Description | Automatic |
+|------|-------------|-----------|
+| `global` | Applies to all sends | Yes |
+| `hard_bounces` | Invalid addresses | Yes |
+| `complaints` | Spam complaints | Yes |
+| `unsubscribes` | Opted out | Yes |
+| `custom` | User-created lists | No |
+
+## Remove from Suppression
+
+```javascript
+await lettr.suppressions.delete('user@example.com');
+```
+
+<Warning>
+  Removing a hard bounce or complaint suppression may hurt your deliverability. Only do this if you're certain the address is valid and wants to receive email.
+</Warning>
+
+## Export Suppressions
+
+```javascript
+const csv = await lettr.suppressions.export({
+  listId: 'list_123',
+  format: 'csv'
+});
+```
+
+## Use in API Calls
+
+Check before sending:
+
+```javascript
+async function safeSend(to, subject, html) {
+  const check = await lettr.suppressions.check(to);
+  
+  if (check.suppressed) {
+    console.log(`Skipping suppressed address: ${to}`);
+    return null;
+  }
+  
+  return lettr.emails.send({
+    from: 'you@example.com',
+    to: [to],
+    subject,
+    html
+  });
+}
+```
+
+## Dashboard Management
+
+Manage suppressions in the dashboard:
+
+1. Go to **Suppressions** in the sidebar
+2. View all suppression lists
+3. Search for specific addresses
+4. Add or remove suppressions
+5. Import/export in bulk
+
+## Suppression Webhooks
+
+Get notified when addresses are suppressed:
+
+```javascript
+const webhook = await lettr.webhooks.create({
+  url: 'https://example.com/webhooks',
+  events: ['suppression.created', 'suppression.deleted']
+});
+```
+
+Webhook payload:
+
+```json
+{
+  "type": "suppression.created",
+  "data": {
+    "email": "user@example.com",
+    "type": "hard_bounce",
+    "reason": "550 User unknown",
+    "listId": "list_global",
+    "createdAt": "2024-01-15T10:30:00Z"
+  }
+}
+```
+

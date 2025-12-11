@@ -1,0 +1,70 @@
+---
+title: Sending Introduction
+description: "Learn how to send emails with Lettr"
+---
+
+# Sending Emails
+
+Lettr provides a powerful and flexible API for sending transactional and marketing emails.
+
+## Basic Email
+
+Send a simple email with minimal configuration:
+
+```javascript
+await lettr.emails.send({
+  from: 'you@example.com',
+  to: ['recipient@example.com'],
+  subject: 'Hello World',
+  html: '<p>This is my first email!</p>'
+});
+```
+
+## Email Options
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `from` | string | Yes | Sender email address |
+| `to` | string[] | Yes | Array of recipient addresses |
+| `subject` | string | Yes | Email subject line |
+| `html` | string | No | HTML content |
+| `text` | string | No | Plain text content |
+| `cc` | string[] | No | CC recipients |
+| `bcc` | string[] | No | BCC recipients |
+| `replyTo` | string | No | Reply-to address |
+| `attachments` | array | No | File attachments |
+| `headers` | object | No | Custom headers |
+| `tags` | array | No | Email tags for analytics |
+| `metadata` | object | No | Custom metadata |
+| `scheduledAt` | string | No | ISO 8601 date for scheduled sending |
+
+## Response
+
+```json
+{
+  "id": "email_123abc",
+  "from": "you@example.com",
+  "to": ["recipient@example.com"],
+  "subject": "Hello World",
+  "status": "sent",
+  "createdAt": "2024-01-15T10:30:00Z"
+}
+```
+
+## Learn More
+
+<CardGroup cols={2}>
+  <Card title="HTML / CSS / AMP" icon="code" href="/learn/sending/html-css-amp">
+    Design beautiful emails
+  </Card>
+  <Card title="Variables" icon="brackets-curly" href="/learn/sending/variables">
+    Personalize your emails
+  </Card>
+  <Card title="Attachments" icon="paperclip" href="/learn/sending/attachments">
+    Add files to your emails
+  </Card>
+  <Card title="Postponed Sending" icon="clock" href="/learn/sending/postponed-sending">
+    Schedule emails for later
+  </Card>
+</CardGroup>
+
