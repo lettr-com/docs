@@ -71,8 +71,29 @@ Send an email to one or more recipients.
   Custom email headers as key-value pairs.
 </ParamField>
 
+<ParamField body="options" type="object">
+  Email sending options.
+  
+  <Expandable title="Options object">
+    <ParamField body="click_tracking" type="boolean" default="true">
+      Enable click tracking for links in the email.
+    </ParamField>
+    <ParamField body="transactional" type="boolean" default="false">
+      Mark this email as transactional. Transactional emails bypass certain suppression rules.
+    </ParamField>
+    <ParamField body="inline_css" type="boolean" default="false">
+      Automatically inline CSS styles in the HTML content.
+    </ParamField>
+  </Expandable>
+</ParamField>
 
+<ParamField body="campaign_id" type="string">
+  Associate this email with a campaign for analytics purposes.
+</ParamField>
 
+<ParamField body="metadata" type="object">
+  Custom metadata as key-value pairs. Values must be strings. Metadata is available in Webhook events.
+</ParamField>
 
 ## Request
 
