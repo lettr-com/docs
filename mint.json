@@ -181,7 +181,7 @@
       "group": "Emails",
       "pages": [
         "api-reference/emails/send-email",
-        "api-reference/emails/get-email",
+        "api-reference/emails/get-request",
         "api-reference/emails/list-emails"
       ]
     },
