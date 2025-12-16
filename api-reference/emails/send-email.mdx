@@ -9,34 +9,42 @@ description: "Send an email"
 Send an email to one or more recipients.
 
 <ParamField body="from" type="string" required>
-  Sender email address. Must be from a verified domain.
+  Sender email address. Must be from a verified domain. Maximum 255 characters.
 </ParamField>
 
-<ParamField body="to" type="string[]" required>
-  Array of recipient email addresses. Maximum 50 recipients.
+<ParamField body="from_name" type="string">
+  Friendly sender name. Maximum 255 characters.
 </ParamField>
 
 <ParamField body="subject" type="string" required>
   Email subject line. Maximum 998 characters.
 </ParamField>
 
+<ParamField body="to" type="string[]" required>
+  Array of recipient email addresses. Maximum 50 recipients.
+</ParamField>
+
 <ParamField body="html" type="string">
-  HTML content of the email.
+  HTML content of the email. Required if `text` is not provided. Expected in the UTF-8 charset.
 </ParamField>
 
 <ParamField body="text" type="string">
-  Plain text content of the email.
+  Plain text content of the email. Required if `html` is not provided. Expected in the UTF-8 charset.
+</ParamField>
+
+<ParamField body="amp_html" type="string">
+  AMPHTML Email content for the email's `text/x-amp-html` MIME part. At least one of `html` or `text` must also be provided. Expected in the UTF-8 charset.
 </ParamField>
 
 <ParamField body="cc" type="string[]">
-  Array of CC recipient addresses.
+  Array of CC (Carbon Copy) recipient addresses.
 </ParamField>
 
 <ParamField body="bcc" type="string[]">
-  Array of BCC recipient addresses.
+  Array of BCC (Blind Carbon Copy) recipient addresses.
 </ParamField>
 
-<ParamField body="replyTo" type="string">
+<ParamField body="reply_to" type="string">
   Reply-to email address.
 </ParamField>
 
@@ -44,17 +52,17 @@ Send an email to one or more recipients.
   Array of file attachments.
   
   <Expandable title="Attachment object">
-    <ParamField body="filename" type="string" required>
+    <ParamField body="name" type="string" required>
       Name of the file.
     </ParamField>
     <ParamField body="content" type="string">
-      Base64-encoded file content.
+      The content of the attachment as a Base64 encoded string. The string should not contain \r\n line breaks. At least one of `remote_path` or `content` must be provided.
     </ParamField>
-    <ParamField body="url" type="string">
-      URL to fetch the file from.
-    </ParamField>
-    <ParamField body="contentType" type="string">
+    <ParamField body="type" type="string">
       MIME type of the file.
+    </ParamField>
+    <ParamField body="remote_path" type="string">
+      TBD Include the remote_path parameter to send attachments from a remote file. This parameter accepts a URL to the file you want to attach. At least one of `remote_path` or `content` must be provided.
     </ParamField>
   </Expandable>
 </ParamField>
@@ -63,9 +71,6 @@ Send an email to one or more recipients.
   Custom email headers as key-value pairs.
 </ParamField>
 
-<ParamField body="tags" type="string[]">
-  Array of tags for categorization.
-</ParamField>
 
 <ParamField body="metadata" type="object">
   Custom metadata as key-value pairs.
@@ -73,10 +78,6 @@ Send an email to one or more recipients.
 
 <ParamField body="scheduledAt" type="string">
   ISO 8601 timestamp to schedule the email for later delivery.
-</ParamField>
-
-<ParamField body="templateId" type="string">
-  ID of a saved template to use.
 </ParamField>
 
 <ParamField body="variables" type="object">
