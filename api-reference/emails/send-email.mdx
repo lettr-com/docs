@@ -8,6 +8,10 @@ description: "Send an email"
 
 Send an email to one or more recipients.
 
+<Warning>
+  The total email content (text + HTML + attachments) is limited to 20 MB.
+</Warning>
+
 <ParamField body="from" type="string" required>
   Sender email address. Must be from a verified domain. Maximum 255 characters.
 </ParamField>
@@ -109,7 +113,7 @@ Send an email to one or more recipients.
 </ParamField>
 
 <ParamField body="campaign_id" type="string">
-  Associate this email with a campaign for analytics purposes.
+  Associate this email with a campaign for analytics purposes. Maximum 64 bytes.
 </ParamField>
 
 <ParamField body="metadata" type="object">
@@ -117,7 +121,7 @@ Send an email to one or more recipients.
 </ParamField>
 
 <ParamField body="substitution_data" type="object">
-  Custom variables as key-value pairs. Those are passed to email templates and replaces placeholders in email content.
+  Custom variables as key-value pairs. Those are passed to email templates and replaces placeholders in email content. Maximum 100 KB.
 </ParamField>
 
 ## Request
