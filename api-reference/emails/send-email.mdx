@@ -75,6 +75,9 @@ Send an email to one or more recipients.
   Email sending options.
   
   <Expandable title="Options object">
+    <ParamField body="open_tracking" type="boolean" default="true">
+      Enable open tracking pixel.
+    </ParamField>
     <ParamField body="click_tracking" type="boolean" default="true">
       Enable click tracking for links in the email.
     </ParamField>
@@ -83,6 +86,9 @@ Send an email to one or more recipients.
     </ParamField>
     <ParamField body="inline_css" type="boolean" default="false">
       Automatically inline CSS styles in the HTML content.
+    </ParamField>
+    <ParamField body="perform_substitutions" type="boolean" default="true">
+      Enable or disable substitutions of variables in email content.
     </ParamField>
   </Expandable>
 </ParamField>
