@@ -20,8 +20,23 @@ Send an email to one or more recipients.
   Email subject line. Maximum 998 characters.
 </ParamField>
 
-<ParamField body="to" type="string[]" required>
-  Array of recipient email addresses. Maximum 50 recipients.
+<ParamField body="to" type="string[] | object[]" required>
+  Array of recipient email addresses. Maximum 50 recipients. Can be simple email strings or recipient objects.
+  
+  <Expandable title="Recipient object">
+    <ParamField body="email" type="string" required>
+      Recipient email address.
+    </ParamField>
+    <ParamField body="name" type="string">
+      Recipient display name.
+    </ParamField>
+    <ParamField body="metadata" type="object">
+      Recipient-specific metadata. Available in Webhooks events.
+    </ParamField>
+    <ParamField body="substitution_data" type="object">
+      Recipient-specific substitution_data. Passed to email templates and replaces placeholders in email content.
+    </ParamField>
+  </Expandable>
 </ParamField>
 
 <ParamField body="html" type="string">
