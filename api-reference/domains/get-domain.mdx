@@ -1,31 +1,35 @@
 ---
 title: Get Domain
-api: GET /v1/domains/{id}
-description: "Retrieve a domain by ID"
+api: GET /domains/{domain}
+description: "Retrieve a domain by name"
 ---
 
 # Get Domain
 
-Retrieve details of a specific domain by its ID.
+Retrieve details and verification status of a specific domain.
 
-<ParamField path="id" type="string" required>
-  The ID of the domain to retrieve.
+<ParamField path="domain" type="string" required>
+  The domain name to retrieve.
 </ParamField>
 
 ## Request
 
 <CodeGroup>
 ```bash cURL
-curl https://api.lettr.dev/v1/domains/dom_123abc \
+curl https://app.uselettr.com/api/domains/secure.example.com \
   -H "Authorization: Bearer le_xxxxxxxxxxxx"
 ```
 
 ```javascript Node.js
-const domain = await lettr.domains.get('dom_123abc');
+const domain = await lettr.domains.get('secure.example.com');
 ```
 
 ```php PHP
-$domain = $lettr->domains->get('dom_123abc');
+$domain = $lettr->domains->get('secure.example.com');
+```
+
+```python Python
+domain = lettr.domains.get('secure.example.com')
 ```
 </CodeGroup>
 
@@ -33,49 +37,37 @@ $domain = $lettr->domains->get('dom_123abc');
 
 ```json
 {
-  "id": "dom_123abc",
-  "object": "domain",
-  "name": "example.com",
-  "status": "verified",
-  "region": "us",
-  "dnsRecords": [
-    {
-      "type": "TXT",
-      "host": "@",
-      "value": "v=spf1 include:spf.lettr.dev ~all",
-      "purpose": "spf",
-      "verified": true
-    },
-    {
-      "type": "CNAME",
-      "host": "lettr._domainkey",
-      "value": "dkim.lettr.dev",
-      "purpose": "dkim",
-      "verified": true
-    },
-    {
-      "type": "TXT",
-      "host": "_dmarc",
-      "value": "v=DMARC1; p=none;",
-      "purpose": "dmarc",
-      "verified": true
-    }
-  ],
-  "spfStatus": "verified",
-  "dkimStatus": "verified",
-  "dmarcStatus": "verified",
-  "trackingDomain": "links.example.com",
-  "trackingDomainStatus": "verified",
-  "createdAt": "2024-01-15T10:30:00Z",
-  "verifiedAt": "2024-01-15T12:00:00Z"
+  "domain": "secure.example.com",
+  "cname_status": "valid",
+  "compliance_status": "valid",
+  "dkim_status": "valid",
+  "created_at": "2024-01-15T10:30:00Z",
+  "updated_at": "2024-01-15T10:35:00Z"
 }
 ```
 
-## Domain Status
+## Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `domain` | string | The domain name |
+| `cname_status` | string | CNAME record verification status |
+| `compliance_status` | string | Compliance verification status |
+| `dkim_status` | string | DKIM record verification status |
+| `created_at` | string \| null | ISO 8601 timestamp when the domain was created |
+| `updated_at` | string \| null | ISO 8601 timestamp when the domain was last updated |
+
+## Status Values
 
 | Status | Description |
 |--------|-------------|
-| `pending` | Waiting for DNS verification |
-| `verified` | All DNS records verified |
-| `failed` | Verification failed |
+| `valid` | Record is properly configured and verified |
+| `pending` | Verification is in progress |
+| `invalid` | Record is missing or misconfigured |
+| `unverified` | Record has not been verified yet |
 
+## Errors
+
+| Code | Description |
+|------|-------------|
+| `not_found` | Domain not found in your account |
