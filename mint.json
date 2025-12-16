@@ -18,12 +18,12 @@
   "topbarLinks": [
     {
       "name": "Support",
-      "url": "mailto:support@lettr.dev"
+      "url": "mailto:support@uselettr.com"
     }
   ],
   "topbarCtaButton": {
     "name": "Dashboard",
-    "url": "https://app.lettr.dev"
+    "url": "https://app.uselettr.com"
   },
   "tabs": [
     {

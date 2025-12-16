@@ -37,7 +37,7 @@ Here's a simple serverless function that sends an email:
 
 ```javascript
 export default async function handler(req, res) {
-  const response = await fetch('https://api.lettr.dev/v1/emails', {
+  const response = await fetch('https://app.uselettr.com/api/emails', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${process.env.LETTR_API_KEY}`,
