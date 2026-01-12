@@ -11,43 +11,52 @@ Lettr provides a powerful and flexible API for sending transactional and marketi
 
 Send a simple email with minimal configuration:
 
-```javascript
-await lettr.emails.send({
-  from: 'you@example.com',
-  to: ['recipient@example.com'],
-  subject: 'Hello World',
-  html: '<p>This is my first email!</p>'
-});
+```bash
+curl -X POST https://app.uselettr.com/api/emails \
+  -H "Authorization: Bearer le_xxxxxxxxxxxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "from": "you@yourdomain.com",
+    "to": ["recipient@example.com"],
+    "subject": "Hello World",
+    "html": "<p>This is my first email!</p>"
+  }'
 ```
 
 ## Email Options
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `from` | string | Yes | Sender email address |
-| `to` | string[] | Yes | Array of recipient addresses |
-| `subject` | string | Yes | Email subject line |
-| `html` | string | No | HTML content |
-| `text` | string | No | Plain text content |
-| `cc` | string[] | No | CC recipients |
-| `bcc` | string[] | No | BCC recipients |
-| `replyTo` | string | No | Reply-to address |
+| `from` | string | Yes | Sender email address (must be from verified domain) |
+| `from_name` | string | No | Friendly sender name |
+| `to` | string or string[] | Yes | Recipient address(es), max 50 |
+| `subject` | string | Yes | Email subject line (max 998 chars) |
+| `html` | string | No* | HTML content |
+| `text` | string | No* | Plain text content |
+| `amp_html` | string | No | AMP HTML content |
+| `cc` | string or string[] | No | CC recipients |
+| `bcc` | string or string[] | No | BCC recipients |
+| `reply_to` | string | No | Reply-to address |
+| `reply_to_name` | string | No | Reply-to display name |
 | `attachments` | array | No | File attachments |
-| `headers` | object | No | Custom headers |
-| `tags` | array | No | Email tags for analytics |
-| `metadata` | object | No | Custom metadata |
-| `scheduledAt` | string | No | ISO 8601 date for scheduled sending |
+| `options` | object | No | Tracking and sending options |
+| `campaign_id` | string | No | Campaign identifier (max 64 chars) |
+| `metadata` | object | No | Custom metadata (available in webhooks) |
+| `substitution_data` | object | No | Variables for template substitution |
+
+*At least one of `html` or `text` is required.
 
 ## Response
 
 ```json
 {
-  "id": "email_123abc",
-  "from": "you@example.com",
-  "to": ["recipient@example.com"],
-  "subject": "Hello World",
-  "status": "sent",
-  "createdAt": "2024-01-15T10:30:00Z"
+  "success": true,
+  "message": "Email queued for delivery.",
+  "data": {
+    "request_id": "7582751837467401763",
+    "accepted": 1,
+    "rejected": 0
+  }
 }
 ```
 
@@ -63,8 +72,7 @@ await lettr.emails.send({
   <Card title="Attachments" icon="paperclip" href="/learn/sending/attachments">
     Add files to your emails
   </Card>
-  <Card title="Postponed Sending" icon="clock" href="/learn/sending/postponed-sending">
-    Schedule emails for later
+  <Card title="Campaigns" icon="chart-line" href="/learn/sending/campaigns">
+    Track email campaigns
   </Card>
 </CardGroup>
-

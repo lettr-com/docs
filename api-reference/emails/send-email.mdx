@@ -24,23 +24,8 @@ Send an email to one or more recipients.
   Email subject line. Maximum 998 characters.
 </ParamField>
 
-<ParamField body="to" type="string[] | object[]" required>
-  Array of recipient email addresses. Maximum 50 recipients. Can be simple email strings or recipient objects.
-  
-  <Expandable title="Recipient object">
-    <ParamField body="email" type="string" required>
-      Recipient email address.
-    </ParamField>
-    <ParamField body="name" type="string">
-      Recipient display name.
-    </ParamField>
-    <ParamField body="metadata" type="object">
-      Recipient-specific metadata. Available in Webhooks events.
-    </ParamField>
-    <ParamField body="substitution_data" type="object">
-      Recipient-specific substitution_data. Passed to email templates and replaces placeholders in email content.
-    </ParamField>
-  </Expandable>
+<ParamField body="to" type="string | string[]" required>
+  Recipient email address(es). Can be a single email string or an array of email addresses. Maximum 50 recipients. Each email address has a maximum of 255 characters.
 </ParamField>
 
 <ParamField body="html" type="string">
@@ -55,44 +40,41 @@ Send an email to one or more recipients.
   AMPHTML Email content for the email's `text/x-amp-html` MIME part. At least one of `html` or `text` must also be provided. Expected in the UTF-8 charset.
 </ParamField>
 
-<ParamField body="cc" type="string[]">
-  Array of CC (Carbon Copy) recipient addresses.
+<ParamField body="cc" type="string | string[]">
+  CC (Carbon Copy) recipient address(es). Can be a single email string or an array.
 </ParamField>
 
-<ParamField body="bcc" type="string[]">
-  Array of BCC (Blind Carbon Copy) recipient addresses.
+<ParamField body="bcc" type="string | string[]">
+  BCC (Blind Carbon Copy) recipient address(es). Can be a single email string or an array.
 </ParamField>
 
 <ParamField body="reply_to" type="string">
-  Reply-to email address.
+  Reply-to email address. Maximum 255 characters.
+</ParamField>
+
+<ParamField body="reply_to_name" type="string">
+  Reply-to display name. Maximum 255 characters.
 </ParamField>
 
 <ParamField body="attachments" type="object[]">
   Array of file attachments.
-  
+
   <Expandable title="Attachment object">
     <ParamField body="name" type="string" required>
-      Name of the file.
+      Name of the file. Maximum 255 characters.
     </ParamField>
-    <ParamField body="content" type="string">
-      The content of the attachment as a Base64 encoded string. The string should not contain \r\n line breaks. At least one of `remote_path` or `content` must be provided.
+    <ParamField body="data" type="string" required>
+      The content of the attachment as a Base64 encoded string. The string must not contain `\r\n` line breaks.
     </ParamField>
-    <ParamField body="type" type="string">
-      MIME type of the file.
-    </ParamField>
-    <ParamField body="remote_path" type="string">
-      TBD Include the remote_path parameter to send attachments from a remote file. This parameter accepts a URL to the file you want to attach. At least one of `remote_path` or `content` must be provided.
+    <ParamField body="type" type="string" required>
+      MIME type of the file. Maximum 255 characters.
     </ParamField>
   </Expandable>
 </ParamField>
 
-<ParamField body="headers" type="object">
-  Custom email headers as key-value pairs.
-</ParamField>
-
 <ParamField body="options" type="object">
   Email sending options.
-  
+
   <Expandable title="Options object">
     <ParamField body="open_tracking" type="boolean" default="true">
       Enable open tracking pixel.
@@ -113,7 +95,7 @@ Send an email to one or more recipients.
 </ParamField>
 
 <ParamField body="campaign_id" type="string">
-  Associate this email with a campaign for analytics purposes. Maximum 64 bytes.
+  Associate this email with a campaign for analytics purposes. Maximum 64 characters.
 </ParamField>
 
 <ParamField body="metadata" type="object">
@@ -121,13 +103,12 @@ Send an email to one or more recipients.
 </ParamField>
 
 <ParamField body="substitution_data" type="object">
-  Custom variables as key-value pairs. Those are passed to email templates and replaces placeholders in email content. Maximum 100 KB.
+  Custom variables as key-value pairs. Values must be strings. These are passed to email templates and replace placeholders in email content.
 </ParamField>
 
 ## Request
 
-<CodeGroup>
-```bash cURL
+```bash
 curl -X POST https://app.uselettr.com/api/emails \
   -H "Authorization: Bearer le_xxxxxxxxxxxx" \
   -H "Content-Type: application/json" \
@@ -139,50 +120,68 @@ curl -X POST https://app.uselettr.com/api/emails \
   }'
 ```
 
-```javascript Node.js
-const email = await lettr.emails.send({
-  from: 'you@example.com',
-  to: ['recipient@example.com'],
-  subject: 'Hello World',
-  html: '<p>Welcome to Lettr!</p>'
-});
-```
-
-```php PHP
-$email = $lettr->emails->send([
-    'from' => 'you@example.com',
-    'to' => ['recipient@example.com'],
-    'subject' => 'Hello World',
-    'html' => '<p>Welcome to Lettr!</p>'
-]);
-```
-
-```python Python
-email = lettr.emails.send(
-    from_email='you@example.com',
-    to=['recipient@example.com'],
-    subject='Hello World',
-    html='<p>Welcome to Lettr!</p>'
-)
-```
-</CodeGroup>
-
 ## Response
+
+**Success (200)**
 
 ```json
 {
-  "id": "7582751837467401763",
-  "accepted": 1,
-  "rejected": 0
+  "success": true,
+  "message": "Email queued for delivery.",
+  "data": {
+    "request_id": "7582751837467401763",
+    "accepted": 1,
+    "rejected": 0
+  }
 }
 ```
 
 ## Errors
 
-| Code | Description |
-|------|-------------|
-| `invalid_from` | Sender address not from verified domain |
-| `invalid_to` | Invalid recipient email address |
-| `suppressed` | Recipient is suppressed |
-| `rate_limit_exceeded` | Too many requests |
+All error responses follow the same format:
 
+```json
+{
+  "success": false,
+  "message": "Error description",
+  "errors": []
+}
+```
+
+**400 Bad Request**
+
+Returned when the email fails to send due to configuration issues (e.g., unverified domain).
+
+```json
+{
+  "success": false,
+  "message": "Failed to send email.",
+  "errors": ["Sending domain is not configured or verified."]
+}
+```
+
+**422 Unprocessable Entity**
+
+Returned when request validation fails.
+
+```json
+{
+  "success": false,
+  "message": "Validation failed.",
+  "errors": {
+    "from": ["The sender email address is required."]
+  }
+}
+```
+
+**502 Bad Gateway**
+
+Returned when the email transmission fails due to an upstream error.
+
+```json
+{
+  "success": false,
+  "message": "Failed to send email.",
+  "errors": ["Upstream service error"]
+}
+```

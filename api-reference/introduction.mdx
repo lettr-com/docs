@@ -1,5 +1,5 @@
 ---
-title: API Reference
+title: Introduction
 description: "Complete API reference for Lettr"
 ---
 
@@ -27,7 +27,7 @@ curl https://app.uselettr.com/api/emails \
 Send JSON-encoded bodies with the appropriate Content-Type header:
 
 ```bash
-curl https://app.uselettr.com/api/emails \
+curl -X POST https://app.uselettr.com/api/emails \
   -H "Authorization: Bearer le_xxxxxxxxxxxx" \
   -H "Content-Type: application/json" \
   -d '{"from": "you@example.com", "to": ["recipient@example.com"], "subject": "Hello", "html": "<p>Hello!</p>"}'
@@ -35,17 +35,29 @@ curl https://app.uselettr.com/api/emails \
 
 ## Response Format
 
-All responses are JSON-encoded:
+All responses follow a consistent JSON format with `success`, `message`, and optionally `data` or `errors` fields.
+
+**Success response:**
 
 ```json
 {
-  "id": "email_123abc",
-  "object": "email",
-  "from": "you@example.com",
-  "to": ["recipient@example.com"],
-  "subject": "Hello",
-  "status": "sent",
-  "createdAt": "2024-01-15T10:30:00Z"
+  "success": true,
+  "message": "Email queued for delivery.",
+  "data": {
+    "request_id": "7582751837467401763",
+    "accepted": 1,
+    "rejected": 0
+  }
+}
+```
+
+**Error response:**
+
+```json
+{
+  "success": false,
+  "message": "Error description",
+  "errors": []
 }
 ```
 
@@ -54,76 +66,14 @@ All responses are JSON-encoded:
 | Code | Description |
 |------|-------------|
 | `200` | Success |
-| `201` | Created |
-| `400` | Bad Request - Invalid parameters |
-| `401` | Unauthorized - Invalid API key |
-| `403` | Forbidden - Insufficient permissions |
-| `404` | Not Found |
-| `429` | Too Many Requests - Rate limited |
+| `400` | Bad Request - Operation failed |
+| `401` | Unauthorized - Invalid or missing API key |
+| `422` | Unprocessable Entity - Validation failed |
+| `502` | Bad Gateway - Upstream service error |
 | `500` | Server Error |
-
-## Error Response
-
-Errors return a consistent format:
-
-```json
-{
-  "error": {
-    "code": "invalid_parameter",
-    "message": "The 'to' field must be an array of email addresses",
-    "param": "to"
-  }
-}
-```
-
-## Pagination
-
-List endpoints support pagination:
-
-```bash
-curl "https://app.uselettr.com/api/emails?limit=10&starting_after=email_123"
-```
-
-Response includes pagination info:
-
-```json
-{
-  "data": [...],
-  "hasMore": true,
-  "totalCount": 150
-}
-```
-
-## Rate Limits
-
-| Plan | Limit |
-|------|-------|
-| Free | 10 requests/second |
-| Pro | 100 requests/second |
-| Enterprise | Custom |
-
-Rate limit headers are included in responses:
-
-```
-X-RateLimit-Limit: 100
-X-RateLimit-Remaining: 95
-X-RateLimit-Reset: 1673789400
-```
 
 ## API Endpoints
 
-<CardGroup cols={2}>
-  <Card title="Emails" icon="envelope" href="/api-reference/emails/send-email">
-    Send and manage emails
-  </Card>
-  <Card title="Domains" icon="globe" href="/api-reference/domains/create-domain">
-    Manage sending domains
-  </Card>
-  <Card title="API Keys" icon="key" href="/api-reference/api-keys/create-api-key">
-    Manage API keys
-  </Card>
-  <Card title="Webhooks" icon="webhook" href="/api-reference/webhooks/create-webhook">
-    Configure webhooks
-  </Card>
-</CardGroup>
-
+<Card title="Send Email" icon="envelope" href="/api-reference/emails/send-email">
+  Send emails to one or more recipients
+</Card>
