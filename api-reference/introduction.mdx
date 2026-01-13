@@ -30,34 +30,43 @@ Send JSON-encoded bodies with the appropriate Content-Type header:
 curl -X POST https://app.uselettr.com/api/emails \
   -H "Authorization: Bearer le_xxxxxxxxxxxx" \
   -H "Content-Type: application/json" \
-  -d '{"from": "you@example.com", "to": ["recipient@example.com"], "subject": "Hello", "html": "<p>Hello!</p>"}'
+  -d '{"from": "you@yourdomain.com", "to": ["recipient@example.com"], "subject": "Hello", "html": "<p>Hello!</p>"}'
 ```
 
 ## Response Format
 
-All responses follow a consistent JSON format with `success`, `message`, and optionally `data` or `errors` fields.
-
-**Success response:**
+**Success response (200):**
 
 ```json
 {
-  "success": true,
   "message": "Email queued for delivery.",
   "data": {
-    "request_id": "7582751837467401763",
+    "request_id": "12345678901234567890",
     "accepted": 1,
     "rejected": 0
   }
 }
 ```
 
-**Error response:**
+**Error response (400, 502):**
 
 ```json
 {
-  "success": false,
-  "message": "Error description",
-  "errors": []
+  "message": "The sender domain is not configured or approved for sending.",
+  "error_code": "unconfigured_domain"
+}
+```
+
+**Validation error response (422):**
+
+```json
+{
+  "message": "Validation failed.",
+  "error_code": "validation_error",
+  "errors": {
+    "from": ["The sender email address is required."],
+    "to": ["At least one recipient email address is required."]
+  }
 }
 ```
 
@@ -65,12 +74,21 @@ All responses follow a consistent JSON format with `success`, `message`, and opt
 
 | Code | Description |
 |------|-------------|
-| `200` | Success |
-| `400` | Bad Request - Operation failed |
+| `200` | Success - Email queued for delivery |
+| `400` | Bad Request - Domain configuration error |
 | `401` | Unauthorized - Invalid or missing API key |
 | `422` | Unprocessable Entity - Validation failed |
-| `502` | Bad Gateway - Upstream service error |
-| `500` | Server Error |
+| `502` | Bad Gateway - Upstream transmission failed |
+
+## Error Codes
+
+| Code | HTTP Status | Description |
+|------|-------------|-------------|
+| `validation_error` | 422 | Request validation failed. Check the `errors` object for field-specific messages. |
+| `invalid_domain` | 400 | The sender domain could not be determined from the email address. |
+| `unconfigured_domain` | 400 | The sender domain is not configured or approved for sending. |
+| `send_error` | 400 | General error during email send preparation. |
+| `transmission_failed` | 502 | Email transmission to the upstream provider failed. |
 
 ## API Endpoints
 
