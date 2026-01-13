@@ -187,7 +187,9 @@
     {
       "group": "Emails",
       "pages": [
-        "api-reference/emails/send-email"
+        "api-reference/emails/send-email",
+        "api-reference/emails/list-emails",
+        "api-reference/emails/get-email"
       ]
     },
     {
