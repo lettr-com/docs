@@ -1,54 +1,12 @@
 ---
-title: SMTP Introduction
+title: Introduction
 description: "Connect to Lettr via SMTP"
 ---
 
 # SMTP Quickstart
 
-Learn how to send emails through Lettr using SMTP.
+<Info>
+  This section is a work in progress. Check back soon for detailed SMTP integration guides.
+</Info>
 
-## SMTP Credentials
-
-Use the following SMTP settings to connect to Lettr:
-
-| Setting | Value |
-|---------|-------|
-| Host | `smtp.lettr.dev` |
-| Port | `587` (TLS) or `465` (SSL) |
-| Username | `lettr` |
-| Password | Your API Key |
-| Encryption | TLS or SSL |
-
-<Note>
-  Use your Lettr API key as the SMTP password.
-</Note>
-
-## Testing Your Connection
-
-You can test your SMTP connection using the command line:
-
-```bash
-# Using OpenSSL
-openssl s_client -starttls smtp -connect smtp.lettr.dev:587
-
-# Or using swaks
-swaks --to recipient@example.com \
-      --from you@example.com \
-      --server smtp.lettr.dev:587 \
-      --auth LOGIN \
-      --auth-user lettr \
-      --auth-password your-api-key \
-      --tls
-```
-
-## Next Steps
-
-<CardGroup cols={2}>
-  <Card title="Laravel" icon="laravel" href="/quickstart/smtp/laravel">
-    Configure SMTP in Laravel
-  </Card>
-  <Card title="PHPMailer" icon="php" href="/quickstart/smtp/phpmailer">
-    Use Lettr with PHPMailer
-  </Card>
-</CardGroup>
-
+In the meantime, check out the [API Reference](/api-reference/introduction) to get started with the Lettr API.
