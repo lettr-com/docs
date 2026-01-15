@@ -84,6 +84,13 @@
         "api-reference/emails/list-emails",
         "api-reference/emails/get-email"
       ]
+    },
+    {
+      "group": "Domains",
+      "pages": [
+        "api-reference/domains/list-domains",
+        "api-reference/domains/create-domain"
+      ]
     }
   ],
   "footerSocials": {}
