@@ -1,12 +1,41 @@
 ---
-title: Introduction
-description: "Connect to Lettr via SMTP"
+title: Send with SMTP
+description: "Connect to Lettr via SMTP relay"
 ---
 
-# SMTP Quickstart
+If you prefer SMTP over HTTP, you can send emails using Lettr's SMTP relay service.
 
-<Info>
-  This section is a work in progress. Check back soon for detailed SMTP integration guides.
-</Info>
+## Prerequisites
 
-In the meantime, check out the [API Reference](/api-reference/introduction) to get started with the Lettr API.
+Before you begin, make sure you have:
+
+1. [Created an API key](https://app.uselettr.com/api-keys)
+2. [Verified your domain](https://app.uselettr.com/domains)
+
+## SMTP Credentials
+
+Use the following settings to connect to Lettr's SMTP server:
+
+| Setting  | Value                     |
+|----------|---------------------------|
+| Host     | `smtp.uselettr.com`       |
+| Port     | `587` (recommended), `465`|
+| Username | `lettr`                   |
+| Password | Your API key              |
+
+
+## Example
+
+Here's a basic example using `swaks` (Swiss Army Knife for SMTP):
+
+```bash
+swaks --to recipient@example.com \
+  --from sender@yourdomain.com \
+  --server smtp.uselettr.com:587 \
+  --auth LOGIN \
+  --auth-user api \
+  --auth-password "your_api_key" \
+  --tlsc \
+  --header "Subject: Hello from Lettr" \
+  --body "This is a test email sent via SMTP."
+```
