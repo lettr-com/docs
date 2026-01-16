@@ -68,5 +68,5 @@ Changes to the docs are automatically deployed when pushed to the main branch.
 ## Links
 
 - [Mintlify Documentation](https://mintlify.com/docs)
-- [Lettr Dashboard](https://app.lettr.dev)
-- [Lettr Status](https://status.lettr.dev)
+- [Lettr Dashboard](https://app.lettr.com)
+- [Lettr Status](https://status.lettr.com)
