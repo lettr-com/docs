@@ -1,9 +1,9 @@
 {
   "$schema": "https://mintlify.com/schema.json",
   "name": "Lettr",
-  "openapi": "https://app.uselettr.com/openapi.json",
+  "openapi": "https://app.lettr.com/openapi.json",
   "api": {
-    "baseUrl": "https://app.uselettr.com/api",
+    "baseUrl": "https://app.lettr.com/api",
     "auth": {
       "method": "bearer"
     }
@@ -25,12 +25,12 @@
   "topbarLinks": [
     {
       "name": "Support",
-      "url": "mailto:support@uselettr.com"
+      "url": "mailto:support@lettr.com"
     }
   ],
   "topbarCtaButton": {
     "name": "Dashboard",
-    "url": "https://app.uselettr.com"
+    "url": "https://app.lettr.com"
   },
   "tabs": [
     {

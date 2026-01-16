@@ -10,7 +10,7 @@ The Lettr API is organized around REST. Our API has predictable resource-oriente
 ## Base URL
 
 ```
-https://app.uselettr.com/api/
+https://app.lettr.com/api/
 ```
 
 ## Authentication
@@ -18,7 +18,7 @@ https://app.uselettr.com/api/
 Authenticate requests using an API key in the Authorization header:
 
 ```bash
-curl https://app.uselettr.com/api/emails \
+curl https://app.lettr.com/api/emails \
   -H "Authorization: Bearer le_xxxxxxxxxxxx"
 ```
 
@@ -27,7 +27,7 @@ curl https://app.uselettr.com/api/emails \
 Send JSON-encoded bodies with the appropriate Content-Type header:
 
 ```bash
-curl -X POST https://app.uselettr.com/api/emails \
+curl -X POST https://app.lettr.com/api/emails \
   -H "Authorization: Bearer le_xxxxxxxxxxxx" \
   -H "Content-Type: application/json" \
   -d '{"from": "you@yourdomain.com", "to": ["recipient@example.com"], "subject": "Hello", "html": "<p>Hello!</p>"}'
