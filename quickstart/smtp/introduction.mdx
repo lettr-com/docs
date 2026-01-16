@@ -19,10 +19,20 @@ Use the following settings to connect to Lettr's SMTP server:
 | Setting  | Value                     |
 |----------|---------------------------|
 | Host     | `smtp.lettr.com`       |
-| Port     | `465` (recommended), `587`|
+| Port     | `465` (recommended), `2465`, `25`, `587`, `2587`|
 | Username | `lettr`                   |
 | Password | Your API key              |
 
+## Ports & Security
+
+The port you choose determines the security protocol for your SMTP connection:
+
+| Type     | Ports            | Security                                                                 |
+|----------|------------------|--------------------------------------------------------------------------|
+| SMTPS    | `465`, `2465`    | Implicit TLS — establishes a secure connection immediately               |
+| STARTTLS | `25`, `587`, `2587` | Explicit TLS — starts unencrypted, then upgrades to a secure connection |
+
+We recommend using port `465` with implicit TLS for the best security and compatibility.
 
 ## Example
 
@@ -33,7 +43,7 @@ swaks --to recipient@example.com \
   --from sender@yourdomain.com \
   --server smtp.lettr.com:465 \
   --auth LOGIN \
-  --auth-user api \
+  --auth-user lettr \
   --auth-password "your_api_key" \
   --tlsc \
   --header "Subject: Hello from Lettr" \
