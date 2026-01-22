@@ -1,6 +1,7 @@
 {
   "$schema": "https://mintlify.com/schema.json",
   "name": "Lettr",
+  "theme": "mint",
   "openapi": "https://app.lettr.com/openapi.json",
   "api": {
     "baseUrl": "https://app.lettr.com/api",
