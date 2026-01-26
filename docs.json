@@ -206,6 +206,31 @@
             ]
           }
         ]
+      },
+      {
+        "tab": "Knowledgebase",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": ["knowledge-base/introduction"]
+          },
+          {
+            "group": "Best Practices",
+            "pages": [
+              "knowledge-base/best-practices/deliverability",
+              "knowledge-base/best-practices/security",
+              "knowledge-base/best-practices/templates"
+            ]
+          },
+          {
+            "group": "Troubleshooting",
+            "pages": [
+              "knowledge-base/troubleshooting/authentication",
+              "knowledge-base/troubleshooting/delivery-issues",
+              "knowledge-base/troubleshooting/rate-limits"
+            ]
+          }
+        ]
       }
     ]
   },
