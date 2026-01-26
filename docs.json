@@ -17,11 +17,7 @@
   "colors": {
     "primary": "#6366F1",
     "light": "#818CF8",
-    "dark": "#4F46E5",
-    "anchors": {
-      "from": "#6366F1",
-      "to": "#8B5CF6"
-    }
+    "dark": "#4F46E5"
   },
   "topbarLinks": [
     {
@@ -33,69 +29,66 @@
     "name": "Dashboard",
     "url": "https://app.lettr.com"
   },
-  "tabs": [
-    {
-      "name": "API Reference",
-      "url": "api-reference"
-    }
-  ],
-  "anchors": [],
-  "navigation": [
-    {
-      "group": "Documentation",
-      "pages": ["introduction"]
-    },
-    {
-      "group": "Quickstart",
-      "pages": [
-        {
-          "group": "PHP",
-          "pages": [
-            "quickstart/php/introduction"
-          ]
-        },
-        {
-          "group": "SMTP",
-          "pages": [
-            "quickstart/smtp/introduction"
-          ]
-        },
-        {
-          "group": "Serverless",
-          "pages": [
-            "quickstart/serverless/introduction"
-          ]
-        },
-        {
-          "group": "Node.js",
-          "pages": [
-            "quickstart/nodejs/introduction"
-          ]
-        }
-      ]
-    },
-    {
-      "group": "API Reference",
-      "pages": ["api-reference/introduction"]
-    },
-    {
-      "group": "Emails",
-      "pages": [
-        "api-reference/emails/send-email",
-        "api-reference/emails/list-emails",
-        "api-reference/emails/get-email"
-      ]
-    },
-    {
-      "group": "Domains",
-      "pages": [
-        "api-reference/domains/list-domains",
-        "api-reference/domains/create-domain",
-        "api-reference/domains/get-domain",
-        "api-reference/domains/delete-domain",
-        "api-reference/domains/verify-domain"
-      ]
-    }
-  ],
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Documentation",
+            "pages": ["introduction"]
+          },
+          {
+            "group": "Quickstart",
+            "pages": [
+              {
+                "group": "PHP",
+                "pages": ["quickstart/php/introduction"]
+              },
+              {
+                "group": "SMTP",
+                "pages": ["quickstart/smtp/introduction"]
+              },
+              {
+                "group": "Serverless",
+                "pages": ["quickstart/serverless/introduction"]
+              },
+              {
+                "group": "Node.js",
+                "pages": ["quickstart/nodejs/introduction"]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "API Reference",
+            "pages": ["api-reference/introduction"]
+          },
+          {
+            "group": "Emails",
+            "pages": [
+              "api-reference/emails/send-email",
+              "api-reference/emails/list-emails",
+              "api-reference/emails/get-email"
+            ]
+          },
+          {
+            "group": "Domains",
+            "pages": [
+              "api-reference/domains/list-domains",
+              "api-reference/domains/create-domain",
+              "api-reference/domains/get-domain",
+              "api-reference/domains/delete-domain",
+              "api-reference/domains/verify-domain"
+            ]
+          }
+        ]
+      }
+    ]
+  },
   "footerSocials": {}
 }
