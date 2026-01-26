@@ -1,0 +1,8 @@
+{
+  "name": "lettr-docs",
+  "scripts": {
+    "fetch-openapi": "curl -s https://app.lettr.com/openapi.json -o openapi.json",
+    "dev": "npm run fetch-openapi && mintlify dev",
+    "build": "npm run fetch-openapi"
+  }
+}

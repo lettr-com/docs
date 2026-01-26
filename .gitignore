@@ -1,0 +1,8 @@
+# Auto-generated OpenAPI spec (fetched at build time)
+openapi.json
+
+# Mintlify
+.mintlify
+
+# Node
+node_modules

@@ -2,7 +2,8 @@
   "$schema": "https://mintlify.com/schema.json",
   "name": "Lettr",
   "theme": "mint",
-  "openapi": "https://app.lettr.com/openapi.json",
+  "buildCommand": "curl -s https://app.lettr.com/openapi.json -o openapi.json",
+  "openapi": "/openapi.json",
   "api": {
     "baseUrl": "https://app.lettr.com/api",
     "auth": {
