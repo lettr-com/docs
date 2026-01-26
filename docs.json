@@ -86,6 +86,21 @@
               "api-reference/domains/delete-domain",
               "api-reference/domains/verify-domain"
             ]
+          },
+          {
+            "group": "Templates",
+            "pages": [
+              "api-reference/templates/list-templates",
+              "api-reference/templates/get-template",
+              "api-reference/templates/get-template-merge-tags"
+            ]
+          },
+          {
+            "group": "Webhooks",
+            "pages": [
+              "api-reference/webhooks/list-webhooks",
+              "api-reference/webhooks/get-webhook"
+            ]
           }
         ]
       }

@@ -1290,6 +1290,145 @@
         }
       }
     },
+    "/templates/{slug}/merge-tags": {
+      "get": {
+        "operationId": "getTemplateMergeTags",
+        "summary": "Get Template Merge Tags",
+        "description": "Retrieve the merge tags (variables) for a template version. By default, returns merge tags for the active version. Use the `version` parameter to get merge tags for a specific version.",
+        "tags": ["Templates"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "description": "The template slug (URL-friendly identifier)",
+            "schema": {
+              "type": "string",
+              "example": "welcome-email"
+            }
+          },
+          {
+            "name": "project_id",
+            "in": "query",
+            "description": "Project ID to retrieve the template from. If not provided, uses the team's default project.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "description": "Template version number. If not provided, uses the active version.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Merge tags retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetMergeTagsResponse"
+                },
+                "example": {
+                  "message": "Merge tags retrieved successfully.",
+                  "data": {
+                    "template_slug": "welcome-email",
+                    "version": 2,
+                    "merge_tags": [
+                      {
+                        "key": "first_name",
+                        "required": true
+                      },
+                      {
+                        "key": "company_name",
+                        "required": false
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "description": "Template, version, or project not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "template_not_found": {
+                    "summary": "Template not found",
+                    "value": {
+                      "message": "Template with slug 'welcome-email' was not found.",
+                      "error_code": "not_found"
+                    }
+                  },
+                  "project_not_found": {
+                    "summary": "Project not found",
+                    "value": {
+                      "message": "Project with ID '123' was not found or you don't have access to it.",
+                      "error_code": "not_found"
+                    }
+                  },
+                  "no_default_project": {
+                    "summary": "No default project configured",
+                    "value": {
+                      "message": "No default project is configured for this team.",
+                      "error_code": "not_found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                },
+                "example": {
+                  "message": "Validation failed.",
+                  "error_code": "validation_error",
+                  "errors": {
+                    "version": ["The version parameter must be an integer."]
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "Failed to retrieve merge tags. Please try again later.",
+                  "error_code": "send_error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/domains/{domain}/verify": {
       "post": {
         "operationId": "verifyDomain",
@@ -2452,6 +2591,62 @@
             "format": "date-time",
             "description": "When the template was last updated",
             "example": "2025-01-20T14:30:00+00:00"
+          }
+        }
+      },
+      "GetMergeTagsResponse": {
+        "type": "object",
+        "description": "Response containing merge tags for a template version",
+        "required": ["message", "data"],
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Human-readable response message",
+            "example": "Merge tags retrieved successfully."
+          },
+          "data": {
+            "$ref": "#/components/schemas/MergeTagsListView"
+          }
+        }
+      },
+      "MergeTagsListView": {
+        "type": "object",
+        "description": "Merge tags for a template version",
+        "required": ["template_slug", "version", "merge_tags"],
+        "properties": {
+          "template_slug": {
+            "type": "string",
+            "description": "The template slug",
+            "example": "welcome-email"
+          },
+          "version": {
+            "type": "integer",
+            "description": "The template version number",
+            "example": 2
+          },
+          "merge_tags": {
+            "type": "array",
+            "description": "List of merge tags in this template version",
+            "items": {
+              "$ref": "#/components/schemas/MergeTagView"
+            }
+          }
+        }
+      },
+      "MergeTagView": {
+        "type": "object",
+        "description": "A single merge tag",
+        "required": ["key", "required"],
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "The merge tag key/name used in templates",
+            "example": "first_name"
+          },
+          "required": {
+            "type": "boolean",
+            "description": "Whether this merge tag is required when sending emails",
+            "example": true
           }
         }
       },
