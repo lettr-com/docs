@@ -1,0 +1,160 @@
+---
+title: Content Types
+description: "Create emails with HTML, plain text, and AMP content"
+---
+
+# Email Content Types
+
+Lettr supports multiple content formats to ensure your emails render correctly across all email clients.
+
+## HTML Emails
+
+Send rich HTML emails with full styling support:
+
+```javascript
+await lettr.emails.send({
+  from: 'you@example.com',
+  to: ['recipient@example.com'],
+  subject: 'Beautiful Email',
+  html: `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+      </head>
+      <body style="font-family: Arial, sans-serif; margin: 0; padding: 20px;">
+        <h1 style="color: #333;">Welcome!</h1>
+        <p style="color: #666;">Thanks for signing up.</p>
+      </body>
+    </html>
+  `
+});
+```
+
+## Plain Text Emails
+
+Include a plain text version for clients that don't support HTML:
+
+```javascript
+await lettr.emails.send({
+  from: 'you@example.com',
+  to: ['recipient@example.com'],
+  subject: 'Plain Text Email',
+  text: 'Hello!\n\nThis is a plain text email.\n\nBest regards,\nThe Team'
+});
+```
+
+## HTML + Plain Text (Recommended)
+
+Always include both versions for best compatibility:
+
+```javascript
+await lettr.emails.send({
+  from: 'you@example.com',
+  to: ['recipient@example.com'],
+  subject: 'Welcome to Acme',
+  html: '<h1>Welcome!</h1><p>Thanks for joining us.</p>',
+  text: 'Welcome!\n\nThanks for joining us.'
+});
+```
+
+## AMP Emails
+
+Create interactive emails with AMP for Email:
+
+```javascript
+await lettr.emails.send({
+  from: 'you@example.com',
+  to: ['recipient@example.com'],
+  subject: 'Interactive Email',
+  html: '<p>Fallback HTML content for clients that do not support AMP</p>',
+  amp_html: `
+    <!doctype html>
+    <html ⚡4email>
+      <head>
+        <meta charset="utf-8">
+        <script async src="https://cdn.ampproject.org/v0.js"></script>
+        <style amp4email-boilerplate>body{visibility:hidden}</style>
+      </head>
+      <body>
+        <amp-img src="https://example.com/image.jpg"
+                 width="300" height="200" layout="responsive">
+        </amp-img>
+      </body>
+    </html>
+  `
+});
+```
+
+<Note>
+  AMP emails require HTML fallback content. Not all email clients support AMP.
+</Note>
+
+## Inline CSS Processing
+
+Lettr can automatically inline your CSS for better email client compatibility:
+
+```javascript
+await lettr.emails.send({
+  from: 'you@example.com',
+  to: ['recipient@example.com'],
+  subject: 'Styled Email',
+  html: `
+    <style>
+      .header { color: #333; font-size: 24px; }
+      .content { color: #666; }
+    </style>
+    <h1 class="header">Welcome</h1>
+    <p class="content">Hello world</p>
+  `,
+  options: {
+    inline_css: true
+  }
+});
+```
+
+With `inline_css: true`, the output becomes:
+
+```html
+<h1 style="color: #333; font-size: 24px;">Welcome</h1>
+<p style="color: #666;">Hello world</p>
+```
+
+## Content Requirements
+
+| Rule | Description |
+|------|-------------|
+| Required content | At least one of `html`, `text`, or a template |
+| Subject length | Maximum 998 characters |
+| Recommended | Include both HTML and plain text versions |
+
+## CSS Support by Client
+
+| Property | Gmail | Outlook | Apple Mail |
+|----------|-------|---------|------------|
+| `background-color` | Yes | Yes | Yes |
+| `border-radius` | Yes | No | Yes |
+| `box-shadow` | Yes | No | Yes |
+| `flexbox` | Yes | No | Yes |
+| `grid` | No | No | Yes |
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Use Tables for Layout">
+    Tables provide the most consistent rendering across email clients.
+  </Accordion>
+  <Accordion title="Inline Your Styles">
+    Use inline CSS or enable the `inline_css` option for best compatibility.
+  </Accordion>
+  <Accordion title="Always Include Plain Text">
+    Some clients prefer or require plain text versions.
+  </Accordion>
+  <Accordion title="Test Across Clients">
+    Test your emails in Gmail, Outlook, Apple Mail, and mobile clients.
+  </Accordion>
+  <Accordion title="Keep Images Small">
+    Optimize images for faster loading and smaller file sizes.
+  </Accordion>
+</AccordionGroup>

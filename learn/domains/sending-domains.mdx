@@ -1,20 +1,18 @@
 ---
 title: Sending Domains
-description: "Configure and verify domains for sending emails with Lettr"
+description: "Configure and verify domains for sending emails with SPF, DKIM, and DMARC authentication"
 ---
 
 # Sending Domains
 
-Sending domains are the primary domains you use to send emails. When you send an email from `hello@example.com`, `example.com` is your sending domain. Proper configuration ensures your emails reach the inbox and are trusted by recipients.
+A sending domain is the domain you use in the "From" address of your emails, such as `yourcompany.com` in `hello@yourcompany.com`. Configuring a sending domain allows you to authenticate your emails with SPF, DKIM, and DMARC, which tells email providers that Lettr is authorized to send on your behalf. This authentication is essential for reaching inboxes instead of spam folders, building brand trust, and maintaining a positive sender reputation over time.
 
-## Why Verify Sending Domains?
+## Why Use a Sending Domain?
 
-Email providers are increasingly strict about authentication. Verified sending domains provide:
-
-- **Deliverability** - Authenticated emails are trusted and reach the inbox
-- **Brand Identity** - Send from your own domain, not a shared one
-- **Reputation Building** - Build a positive sending reputation for your domain
-- **Compliance** - Meet modern email authentication requirements (SPF, DKIM, DMARC)
+- **Better Deliverability** - Authenticated emails are less likely to be marked as spam
+- **Brand Recognition** - Recipients see your domain, not a generic sender
+- **Reputation Building** - Build and maintain your own sender reputation
+- **DMARC Compliance** - Required for advanced email security features like BIMI
 
 ## Adding a Sending Domain
 
@@ -34,191 +32,394 @@ Email providers are increasingly strict about authentication. Verified sending d
 
 Create a sending domain with `POST /domains`. The request body contains only the domain name:
 
-```javascript
-const response = await fetch('https://app.lettr.com/api/domains', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'Authorization': 'Bearer YOUR_API_KEY'
-  },
-  body: JSON.stringify({ domain: 'example.com' })
-});
+### Via Dashboard
 
-const { message, data } = await response.json();
-// data.domain, data.status, data.status_label, data.dkim (selector, public, headers)
+<Steps>
+  <Step title="Navigate to Domains">
+    Go to **Domains** → **Sending** in your dashboard.
+  </Step>
+  <Step title="Add Domain">
+    Click **Add Domain** and enter your domain name (e.g., `example.com`).
+  </Step>
+  <Step title="Copy DNS Records">
+    Copy the provided DNS records. You'll need to add these to your DNS provider.
+  </Step>
+  <Step title="Configure DNS">
+    Add the SPF, DKIM, CNAME, and DMARC records to your domain's DNS settings.
+  </Step>
+  <Step title="Verify Domain">
+    Return to Lettr and click **Verify** to check your DNS configuration.
+  </Step>
+</Steps>
+
+### Via API
+
+Create a sending domain:
+
+```bash
+curl -X POST https://app.lettr.com/api/domains \
+  -H "Authorization: Bearer le_xxxxxxxxxxxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "domain": "example.com"
+  }'
 ```
 
-On success (201), use `data.dkim` to add your DKIM DNS record. For full DNS record details (including CNAME for the return-path), call [Get Domain](/api-reference/domains/get-domain) (`GET /domains/{domain}`). See [Create Domain](/api-reference/domains/create-domain) for the full request/response schema.
+Response with DNS records to configure:
 
-## Required DNS Records
+```json
+{
+  "success": true,
+  "data": {
+    "domain": "example.com",
+    "status": "pending",
+    "dkim_status": "unverified",
+    "cname_status": "unverified",
+    "dkim": {
+      "record_type": "TXT",
+      "hostname": "lettr._domainkey.example.com",
+      "value": "v=DKIM1; k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQ..."
+    },
+    "cname": {
+      "record_type": "CNAME",
+      "hostname": "bounce.example.com",
+      "value": "bounce.lettr.dev"
+    },
+    "created_at": "2024-01-15T10:30:00Z"
+  }
+}
+```
 
-Required records differ for a **primary (root) domain** (e.g. `example.com`) vs a **subdomain** (e.g. `mail.example.com`). For subdomains, SPF for the return-path is handled automatically—you only add the Bounce CNAME.
+## DNS Records Configuration
+
+After adding your domain, configure these DNS records with your DNS provider:
+
+### SPF Record
+
+SPF (Sender Policy Framework) authorizes Lettr to send emails on your behalf.
+
+| Field | Value |
+|-------|-------|
+| Type | TXT |
+| Host/Name | `@` (or leave blank for root domain) |
+| Value | `v=spf1 include:spf.lettr.dev ~all` |
+
+<Accordion title="Merging with existing SPF records">
+If you already have an SPF record, merge them into a single record. SPF allows only one TXT record per domain.
+
+**Before (two separate records - invalid):**
+```
+v=spf1 include:_spf.google.com ~all
+v=spf1 include:spf.lettr.dev ~all
+```
+
+**After (merged - valid):**
+```
+v=spf1 include:spf.lettr.dev include:_spf.google.com ~all
+```
+</Accordion>
+
+### DKIM Record
+
+DKIM (DomainKeys Identified Mail) enables email signing to verify message authenticity.
+
+| Field | Value |
+|-------|-------|
+| Type | TXT |
+| Host/Name | `lettr._domainkey` |
+| Value | `v=DKIM1; k=rsa; p=...` (provided by Lettr) |
+
+<Note>
+  The DKIM value is unique to your domain and will be provided when you add your domain. Copy it exactly as shown since it is a long string.
+</Note>
+
+### CNAME Record (Return-Path)
+
+The CNAME record configures bounce handling for improved deliverability.
+
+| Field | Value |
+|-------|-------|
+| Type | CNAME |
+| Host/Name | `bounce` |
+| Value | `bounce.lettr.dev` |
+
+### DMARC Record
+
+DMARC ties together SPF and DKIM to protect against spoofing. Start with a monitoring policy:
+
+| Field | Value |
+|-------|-------|
+| Type | TXT |
+| Host/Name | `_dmarc` |
+| Value | `v=DMARC1; p=none; rua=mailto:dmarc@example.com` |
 
 <Tip>
-  **We recommend using a subdomain** (e.g. `mail.example.com`, `news.example.com`) for sending. Subdomains isolate your sending reputation from your root domain and make it easier to add the Bounce CNAME required for return-path.
+  See our [DMARC guide](/learn/domains/dmarc) for recommended rollout strategies and policy options.
 </Tip>
 
-### Primary (root) domain — e.g. `example.com`
+## Verifying Your Domain
 
-| Record | Type | Host | Value |
-|--------|------|------|-------|
-| **SPF** | TXT | `@` (or blank) | `v=spf1 include:_spf.sparkpostmail.com ~all` |
-| **DKIM** | CNAME | `lettr._domainkey` | (from Get Domain / create response) |
-| **DMARC** | TXT | `_dmarc` | `v=DMARC1;p=none;` |
+After configuring DNS records, verify your domain:
 
-If you already have an SPF record, merge the include: `v=spf1 include:_spf.sparkpostmail.com ... ~all`. Learn more in our [SPF guide](/learn/domains/spf).
+### Via Dashboard
 
-### Subdomain — e.g. `mail.example.com`
+1. Go to **Domains** → **Sending**
+2. Find your domain and click **Verify**
+3. Wait for verification to complete (usually within a few minutes)
 
-| Record | Type | Host | Value |
-|--------|------|------|-------|
-| **DKIM** | CNAME | `lettr._domainkey.mail` | (from Get Domain / create response) |
-| **DMARC** | TXT | `_dmarc` | `v=DMARC1;p=none;` |
-| **Bounce** | CNAME | `bounce` (or `send`) | `sparkpostmail.com` |
+### Via API
 
-No SPF record is needed for the subdomain—return-path (bounce) is handled automatically via the Bounce CNAME. See [Custom Return-Path and Bounce Record](#custom-return-path-and-bounce-record) below.
-
-See our [DMARC guide](/learn/domains/dmarc) for detailed configuration and safe rollout to enforcement.
-
-## Custom Return-Path and Bounce Record
-
-- **Primary (root) domains** use an **SPF record** (TXT) to authorize sending and bounces.
-- **Subdomains** use a **Bounce record** (CNAME to `sparkpostmail.com`) for the return-path; SPF for the subdomain is not required and is handled automatically. Add the Bounce CNAME for the subdomain you use (e.g. `bounce` or `send`):
-
-```
-Type:  CNAME
-Host:  bounce (or send / your chosen subdomain)
-Value: sparkpostmail.com
+```bash
+curl -X POST https://app.lettr.com/api/domains/example.com/verify \
+  -H "Authorization: Bearer le_xxxxxxxxxxxx"
 ```
 
-Create the subdomain via API the same way (body `{ "domain": "mail.example.com" }`). Add the Bounce CNAME record in your DNS provider as shown above.
+Response:
 
-## Verify DNS Records
-
-Trigger a verification check with `POST /domains/{domain}/verify`:
-
-```javascript
-const response = await fetch('https://app.lettr.com/api/domains/example.com/verify', {
-  method: 'POST',
-  headers: { 'Authorization': 'Bearer YOUR_API_KEY' }
-});
-
-const { message, data } = await response.json();
-// data.domain, data.dkim_status, data.cname_status, data.ownership_verified
-// data.dns (dkim_record, cname_record, dkim_error, cname_error) when unverified
+```json
+{
+  "success": true,
+  "data": {
+    "domain": "example.com",
+    "dkim_status": "verified",
+    "cname_status": "verified",
+    "dmarc_status": "verified",
+    "ownership_verified": true
+  }
+}
 ```
-
-## Sending From Verified Domains
-
-Once verified, you can send from any email address on your domain:
-
-```javascript
-await lettr.emails.send({
-  from: 'hello@example.com',
-  to: ['recipient@other.com'],
-  subject: 'Hello from Lettr',
-  html: '<p>Your email content here.</p>'
-});
-
-// All addresses on the domain work:
-// - hello@example.com ✓
-// - support@example.com ✓
-// - team@example.com ✓
-// - any-address@example.com ✓
-```
-
-## Sender Name
-
-Customize the display name that appears alongside your email address:
-
-```javascript
-// String format
-await lettr.emails.send({
-  from: 'Acme Inc <hello@example.com>',
-  to: ['recipient@other.com'],
-  subject: 'Hello',
-  html: '<p>Hello!</p>'
-});
-
-// Object format
-await lettr.emails.send({
-  from: {
-    email: 'hello@example.com',
-    name: 'Acme Inc'
-  },
-  to: ['recipient@other.com'],
-  subject: 'Hello',
-  html: '<p>Hello!</p>'
-});
-```
-
-## Subdomains for Sending
-
-We recommend using subdomains to isolate different types of email:
-
-| Subdomain | Use Case | Benefit |
-|-----------|----------|---------|
-| `mail.example.com` | Transactional emails | Isolated reputation |
-| `news.example.com` | Marketing newsletters | Separate reputation |
-| `alerts.example.com` | Automated notifications | Protected main domain |
-
-<Tip>
-  If one email type experiences deliverability issues (e.g., high unsubscribes from marketing), it won't affect your transactional emails on a different subdomain.
-</Tip>
-
-### Setting Up a Subdomain
-
-Add the subdomain via the same Create Domain endpoint with the subdomain name:
-
-```javascript
-const response = await fetch('https://app.lettr.com/api/domains', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'Authorization': 'Bearer YOUR_API_KEY'
-  },
-  body: JSON.stringify({ domain: 'mail.example.com' })
-});
-```
-
-DNS records for subdomains: DKIM, DMARC, and Bounce CNAME as in the [Required DNS Records](#required-dns-records) table (no SPF needed for subdomains).
 
 ## Domain Status
 
-Retrieve a domain's status and DNS verification state with `GET /domains/{domain}`:
+### Verification Status
 
-```javascript
-const response = await fetch('https://app.lettr.com/api/domains/example.com', {
-  headers: { 'Authorization': 'Bearer YOUR_API_KEY' }
-});
+Each DNS record has its own verification status:
 
-const { data } = await response.json();
-// data.domain, data.status ('pending' | 'approved' | 'blocked'), data.status_label
-// data.can_send, data.dkim_status, data.cname_status, data.dns, data.created_at, data.updated_at
+| Status | Description |
+|--------|-------------|
+| `verified` | Record found and valid |
+| `unverified` | Record not yet detected |
+| `pending` | Verification in progress |
+
+### Approval Status
+
+Sending domains also have an approval status that determines whether you can send emails:
+
+| Status | Description | Can Send? |
+|--------|-------------|-----------|
+| `approved` | Domain approved for sending | Yes |
+| `pending` | Under review | No |
+| `blocked` | Domain blocked | No |
+
+<Note>
+  Lettr automatically evaluates new domains for approval based on domain age, reputation, and other factors. Most legitimate business domains are approved automatically.
+</Note>
+
+## Check Domain Status
+
+### Via API
+
+```bash
+curl https://app.lettr.com/api/domains/example.com \
+  -H "Authorization: Bearer le_xxxxxxxxxxxx"
+```
+
+```json
+{
+  "success": true,
+  "data": {
+    "domain": "example.com",
+    "status": "approved",
+    "dkim_status": "verified",
+    "cname_status": "verified",
+    "dmarc_status": "verified",
+    "tracking_domain": "links.example.com",
+    "created_at": "2024-01-15T10:30:00Z",
+    "updated_at": "2024-01-15T10:35:00Z"
+  }
+}
+```
+
+## Sending Emails from Your Domain
+
+Once verified, you can send emails from any address on your domain:
+
+```bash
+curl -X POST https://app.lettr.com/api/emails \
+  -H "Authorization: Bearer le_xxxxxxxxxxxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "from": "hello@example.com",
+    "to": ["recipient@other.com"],
+    "subject": "Welcome!",
+    "html": "<p>Thanks for signing up!</p>"
+  }'
+```
+
+### Using a From Name
+
+Customize the sender display name:
+
+```bash
+curl -X POST https://app.lettr.com/api/emails \
+  -H "Authorization: Bearer le_xxxxxxxxxxxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "from": "hello@example.com",
+    "from_name": "Your Company",
+    "to": ["recipient@other.com"],
+    "subject": "Welcome!",
+    "html": "<p>Thanks for signing up!</p>"
+  }'
+```
+
+This appears in email clients as: **Your Company** `<hello@example.com>`
+
+## Multiple Sending Domains
+
+You can verify multiple domains for different purposes:
+
+| Domain | Use Case |
+|--------|----------|
+| `yourcompany.com` | General business communications |
+| `mail.yourcompany.com` | Marketing and newsletters |
+| `notifications.yourcompany.com` | Automated transactional emails |
+| `support.yourcompany.com` | Customer support communications |
+
+<Tip>
+  Using subdomains for different email types helps isolate reputation. If marketing emails generate complaints, your transactional email reputation remains protected.
+</Tip>
+
+## Associating a Tracking Domain
+
+Link a [tracking domain](/learn/domains/tracking-domains) to your sending domain for branded tracking links:
+
+### Via Dashboard
+
+1. Go to **Domains** → **Sending**
+2. Select your sending domain
+3. Under **Tracking Domain**, select or add a tracking domain
+
+### Via API
+
+```bash
+curl -X PATCH https://app.lettr.com/api/domains/example.com \
+  -H "Authorization: Bearer le_xxxxxxxxxxxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "tracking_domain": "links.example.com"
+  }'
+```
+
+## List All Sending Domains
+
+```bash
+curl https://app.lettr.com/api/domains \
+  -H "Authorization: Bearer le_xxxxxxxxxxxx"
+```
+
+```json
+{
+  "success": true,
+  "data": {
+    "domains": [
+      {
+        "domain": "example.com",
+        "status": "approved",
+        "dkim_status": "verified",
+        "cname_status": "verified",
+        "dmarc_status": "verified",
+        "tracking_domain": "links.example.com"
+      },
+      {
+        "domain": "notifications.example.com",
+        "status": "approved",
+        "dkim_status": "verified",
+        "cname_status": "verified",
+        "dmarc_status": "missing"
+      }
+    ],
+    "total": 2
+  }
+}
+```
+
+## Delete a Sending Domain
+
+<Warning>
+  Deleting a domain removes all associated DNS verification. You won't be able to send emails from this domain until it's re-added and verified.
+</Warning>
+
+### Via Dashboard
+
+1. Go to **Domains** → **Sending**
+2. Find the domain and click the **Delete** button
+3. Confirm deletion
+
+### Via API
+
+```bash
+curl -X DELETE https://app.lettr.com/api/domains/example.com \
+  -H "Authorization: Bearer le_xxxxxxxxxxxx"
 ```
 
 ## Troubleshooting
 
-| Issue | Solution |
-|-------|----------|
-| SPF not verifying | Ensure TXT record is on root domain (`@`) |
-| DKIM not verifying | Check CNAME record at `lettr._domainkey` |
-| Sending fails | Verify domain status is `verified` |
-| Emails going to spam | Ensure DMARC is configured and enforced |
+<AccordionGroup>
+  <Accordion title="DNS records not detected">
+    - DNS changes can take up to 48 hours to propagate, though most complete within minutes
+    - Verify records are added to the correct domain/subdomain
+    - Check for typos in record values
+    - Ensure you're using the correct record type (TXT vs CNAME)
+    - Try using a DNS lookup tool like [MXToolbox](https://mxtoolbox.com/) to verify your records
+  </Accordion>
 
-## Next Steps
+  <Accordion title="DKIM verification failing">
+    - Ensure the entire DKIM value is copied (it's a long string)
+    - Check that the hostname is exactly `lettr._domainkey` (not `lettr._domainkey.example.com` in the host field)
+    - Some DNS providers require you to remove quotes from the value
+  </Accordion>
+
+  <Accordion title="SPF record issues">
+    - You can only have one SPF record per domain. Merge multiple includes into one record.
+    - Ensure the record starts with `v=spf1`
+    - Check that `include:spf.lettr.dev` is present
+  </Accordion>
+
+  <Accordion title="Domain stuck in pending status">
+    - New domains undergo automatic approval review
+    - Domains less than 30 days old may require manual review
+    - Contact support if your domain remains pending for more than 24 hours
+  </Accordion>
+
+  <Accordion title="Cannot send from verified domain">
+    - Check that domain status is `approved`, not just verified
+    - Verify your API key has permission to send emails
+    - Ensure you're using the exact domain that was verified
+  </Accordion>
+</AccordionGroup>
+
+## Best Practices
+
+1. **Use subdomains for different email types** - Isolate marketing, transactional, and support emails
+2. **Start with DMARC `p=none`** - Monitor authentication results before enforcing
+3. **Set up a tracking domain** - Branded links improve click-through rates and trust
+4. **Monitor your reputation** - Check deliverability metrics regularly
+5. **Keep DNS records updated** - If you change email providers, update your SPF record
+
+## Related Topics
 
 <CardGroup cols={2}>
-  <Card title="SPF Configuration" icon="list-check" href="/learn/domains/spf">
-    Learn more about SPF authentication
-  </Card>
-  <Card title="DKIM Configuration" icon="key" href="/learn/domains/dkim">
-    Understand DKIM signing
-  </Card>
   <Card title="Tracking Domains" icon="chart-line" href="/learn/domains/tracking-domains">
-    Set up custom click tracking
+    Set up custom tracking domains
   </Card>
   <Card title="DMARC" icon="shield" href="/learn/domains/dmarc">
     Configure DMARC policies
+  </Card>
+  <Card title="BIMI" icon="image" href="/learn/domains/bimi">
+    Display your logo in email clients
+  </Card>
+  <Card title="Sending Emails" icon="paper-plane" href="/learn/sending/introduction">
+    Start sending emails
   </Card>
 </CardGroup>

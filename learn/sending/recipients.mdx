@@ -1,0 +1,121 @@
+---
+title: Recipients
+description: "Configure email recipients including To, CC, BCC, and Reply-To"
+---
+
+# Email Recipients
+
+Learn how to specify recipients and configure sender information for your emails.
+
+## To Recipients
+
+Send to one or multiple recipients:
+
+```javascript
+// Single recipient
+await lettr.emails.send({
+  from: 'you@example.com',
+  to: 'recipient@example.com',
+  subject: 'Hello',
+  html: '<p>Hello!</p>'
+});
+
+// Multiple recipients (up to 50)
+await lettr.emails.send({
+  from: 'you@example.com',
+  to: ['alice@example.com', 'bob@example.com', 'carol@example.com'],
+  subject: 'Team Update',
+  html: '<p>Hello team!</p>'
+});
+```
+
+## CC Recipients
+
+Add carbon copy recipients who are visible to all recipients:
+
+```javascript
+await lettr.emails.send({
+  from: 'you@example.com',
+  to: ['primary@example.com'],
+  cc: ['manager@example.com', 'team-lead@example.com'],
+  subject: 'Project Update',
+  html: '<p>Here is the latest update...</p>'
+});
+```
+
+## BCC Recipients
+
+Add blind carbon copy recipients who are hidden from other recipients:
+
+```javascript
+await lettr.emails.send({
+  from: 'you@example.com',
+  to: ['customer@example.com'],
+  bcc: ['sales-archive@example.com', 'compliance@example.com'],
+  subject: 'Your Order Confirmation',
+  html: '<p>Thank you for your order!</p>'
+});
+```
+
+## Reply-To Address
+
+Specify where replies should be sent:
+
+```javascript
+await lettr.emails.send({
+  from: 'noreply@example.com',
+  from_name: 'Acme Support',
+  to: ['customer@example.com'],
+  reply_to: 'support@example.com',
+  reply_to_name: 'Acme Support Team',
+  subject: 'Your Support Ticket',
+  html: '<p>We received your request...</p>'
+});
+```
+
+## Sender Name
+
+Add a friendly name to the sender address:
+
+```javascript
+await lettr.emails.send({
+  from: 'notifications@example.com',
+  from_name: 'Acme Inc',
+  to: ['recipient@example.com'],
+  subject: 'Welcome to Acme',
+  html: '<p>Welcome aboard!</p>'
+});
+```
+
+The recipient will see: `Acme Inc <notifications@example.com>`
+
+## Recipient Limits
+
+| Limit | Value |
+|-------|-------|
+| Max recipients per request | 50 (combined to, cc, bcc) |
+| Max email address length | 255 characters |
+
+<Warning>
+  Sending to more than 50 recipients requires multiple API calls. For bulk sending, see [Batch Sending](/learn/sending/batch-sending).
+</Warning>
+
+## Email Address Validation
+
+Lettr validates all email addresses before sending:
+
+- Must be valid RFC-compliant email format
+- Domain must exist and accept email
+- Addresses on your suppression list will be rejected
+
+## Recipient Parameters Reference
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `to` | string or string[] | Yes | Primary recipient(s) |
+| `cc` | string or string[] | No | Carbon copy recipients |
+| `bcc` | string or string[] | No | Blind carbon copy recipients |
+| `from` | string | Yes | Sender email (must be from verified domain) |
+| `from_name` | string | No | Sender display name |
+| `reply_to` | string | No | Reply-to email address |
+| `reply_to_name` | string | No | Reply-to display name |
