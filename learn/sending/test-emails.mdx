@@ -1,0 +1,148 @@
+---
+title: Test Emails
+description: "Send test emails during development and QA"
+---
+
+# Test Emails
+
+Send test emails to verify your templates and content before sending to real recipients.
+
+## Send a Test Email
+
+Send a test email from the Lettr dashboard or via API:
+
+```javascript
+await lettr.emails.sendTest({
+  template_slug: 'welcome-email',
+  to: ['developer@example.com'],
+  substitution_data: {
+    name: 'Test User',
+    company: 'Acme Inc'
+  }
+});
+```
+
+## Test with Custom HTML
+
+Test custom HTML content without using a template:
+
+```javascript
+await lettr.emails.sendTest({
+  to: ['developer@example.com'],
+  subject: 'Test Email',
+  html: '<h1>Testing</h1><p>This is a test email with {{name}}.</p>',
+  substitution_data: {
+    name: 'Preview Name'
+  }
+});
+```
+
+## Multiple Test Recipients
+
+Send tests to multiple team members:
+
+```javascript
+await lettr.emails.sendTest({
+  template_slug: 'order-confirmation',
+  to: [
+    'developer@example.com',
+    'designer@example.com',
+    'qa@example.com'
+  ],
+  substitution_data: {
+    order_id: 'TEST-12345',
+    customer_name: 'Test Customer',
+    total: '$99.99'
+  }
+});
+```
+
+## Test Different Variables
+
+Verify how your template renders with different data:
+
+```javascript
+// Test with minimal data
+await lettr.emails.sendTest({
+  template_slug: 'welcome-email',
+  to: ['developer@example.com'],
+  substitution_data: {
+    name: 'User'
+  }
+});
+
+// Test with full data
+await lettr.emails.sendTest({
+  template_slug: 'welcome-email',
+  to: ['developer@example.com'],
+  substitution_data: {
+    name: 'John Smith',
+    company: 'Acme Corporation',
+    role: 'Administrator',
+    features: ['Dashboard', 'Reports', 'API Access']
+  }
+});
+```
+
+## Test Email Characteristics
+
+Test emails have some special characteristics:
+
+| Feature | Behavior |
+|---------|----------|
+| Tracking | Disabled by default |
+| Analytics | Not counted in statistics |
+| Webhooks | Events still fire (for testing webhooks) |
+| Rate limits | Subject to normal rate limits |
+
+## Testing in the Dashboard
+
+The Lettr dashboard provides a visual test email feature:
+
+1. Open your template in the editor
+2. Click "Send Test Email"
+3. Enter test recipient addresses
+4. Optionally provide test variable data
+5. Click "Send"
+
+<Tip>
+  Use the dashboard preview to see how your email renders before sending test emails.
+</Tip>
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Test Across Email Clients">
+    Send test emails to accounts in Gmail, Outlook, Apple Mail, and mobile clients to verify rendering.
+  </Accordion>
+  <Accordion title="Test Edge Cases">
+    Test with missing variables, long text, special characters, and empty arrays.
+  </Accordion>
+  <Accordion title="Test Links">
+    Verify all links work correctly, including unsubscribe and tracking links.
+  </Accordion>
+  <Accordion title="Test Plain Text Version">
+    Check that your plain text fallback is readable and properly formatted.
+  </Accordion>
+  <Accordion title="Use Realistic Data">
+    Test with data similar to production to catch formatting issues.
+  </Accordion>
+</AccordionGroup>
+
+## Staging Environment
+
+For integration testing, consider sending to a staging email service:
+
+```javascript
+const isProduction = process.env.NODE_ENV === 'production';
+
+await lettr.emails.send({
+  from: 'you@example.com',
+  to: isProduction
+    ? [realRecipient]
+    : ['staging-inbox@example.com'],
+  subject: 'Order Confirmation',
+  template_slug: 'order-confirmation',
+  substitution_data: orderData
+});
+```

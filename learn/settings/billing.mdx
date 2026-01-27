@@ -5,176 +5,221 @@ description: "Manage billing, invoices, and subscription"
 
 # Billing
 
-Manage your subscription, payment methods, and invoices.
+Lettr uses a tiered subscription model with calendar-month billing. Each tier includes a base number of emails per month, and additional emails beyond your limit are charged at a flat overage rate. All subscriptions renew on the 1st of each month.
 
 ## Plans
 
-| Feature | Free | Pro | Enterprise |
-|---------|------|-----|------------|
-| Emails/month | 3,000 | 50,000 | Unlimited |
-| Domains | 1 | 10 | Unlimited |
-| Team members | 1 | 5 | Unlimited |
-| Log retention | 1 day | 30 days | 90 days |
-| Support | Community | Email | Priority |
-| SLA | - | 99.9% | 99.99% |
+Lettr offers a free tier for testing and development, plus six Pro tiers for production use:
+
+### Free Tier
+
+All teams without an active subscription receive **3,000 emails per month** at no cost. This is ideal for testing, development, and low-volume applications. If you exceed the free tier limit, overage charges apply.
+
+### Pro Tiers
+
+| Tier | Emails/Month | Price/Month |
+|------|--------------|-------------|
+| 50K | 50,000 | $15 |
+| 100K | 100,000 | $30 |
+| 200K | 200,000 | $60 |
+| 500K | 500,000 | $150 |
+| 1M | 1,000,000 | $300 |
+| 2M | 2,000,000 | $500 |
+
+All Pro tiers include:
+- Unlimited sending domains
+- Unlimited team members
+- 30-day log retention
+- Email support
+- 99.9% uptime SLA
+
+### Overage Pricing
+
+Emails sent beyond your tier limit are charged at **$0.80 per 1,000 emails**, rounded up to the nearest thousand.
+
+<AccordionGroup>
+  <Accordion title="Overage calculation examples">
+    - **1,500 overage emails**: Rounded up to 2,000 → $1.60
+    - **10,001 overage emails**: Rounded up to 11,000 → $8.80
+    - **1 overage email**: Rounded up to 1,000 → $0.80
+  </Accordion>
+</AccordionGroup>
+
+## How Billing Works
+
+Lettr uses calendar-month billing cycles, meaning all subscriptions are aligned to the 1st of each month regardless of when you signed up.
+
+<Steps>
+  <Step title="Subscribe Mid-Month">
+    When you subscribe, you're charged a prorated amount for the remainder of the current month. For example, signing up on January 15th charges roughly half the monthly rate for January.
+  </Step>
+  <Step title="Monthly Renewal">
+    On the 1st of each month, your subscription renews and you're charged the full tier price. Your email counter resets to zero.
+  </Step>
+  <Step title="Overage Reporting">
+    Shortly before your invoice finalizes, Lettr calculates any overage emails (emails sent beyond your tier limit) and adds the overage charge to your invoice.
+  </Step>
+  <Step title="Invoice Issued">
+    Your invoice includes the tier subscription fee plus any overage charges from the previous period. Invoices are available in your dashboard and via email.
+  </Step>
+</Steps>
+
+### Upgrading Your Tier
+
+When you upgrade to a higher tier mid-month, you receive a prorated credit for your current tier and are charged a prorated amount for the new tier. The change takes effect immediately, and your new email limit applies for the remainder of the billing period.
+
+### Downgrading Your Tier
+
+Downgrades take effect at the end of your current billing period. You retain your current tier's limits until the 1st of the next month, when the new tier becomes active. No prorations are applied for downgrades.
 
 ## View Current Plan
 
-```javascript
-const subscription = await lettr.billing.getSubscription();
+Check your current subscription and usage in the dashboard at **Settings** → **Billing**, or via the Stripe billing portal.
 
-console.log({
-  plan: subscription.plan,
-  status: subscription.status,
-  currentPeriodEnd: subscription.currentPeriodEnd,
-  emailsUsed: subscription.usage.emails,
-  emailsLimit: subscription.limits.emails
-});
-```
-
-## Upgrade Plan
-
-```javascript
-await lettr.billing.updateSubscription({
-  plan: 'pro'
-});
-```
-
-Or upgrade from the dashboard:
+### Via Dashboard
 
 1. Go to **Settings** → **Billing**
-2. Click **Upgrade Plan**
-3. Select your new plan
-4. Confirm payment
-
-## Payment Methods
-
-### Add Payment Method
-
-```javascript
-await lettr.billing.addPaymentMethod({
-  type: 'card',
-  token: 'tok_xxx'  // From Stripe.js
-});
-```
-
-### List Payment Methods
-
-```javascript
-const methods = await lettr.billing.listPaymentMethods();
-
-methods.forEach(method => {
-  console.log({
-    id: method.id,
-    type: method.type,
-    last4: method.card.last4,
-    expiry: `${method.card.expMonth}/${method.card.expYear}`,
-    isDefault: method.isDefault
-  });
-});
-```
-
-### Set Default Payment Method
-
-```javascript
-await lettr.billing.setDefaultPaymentMethod('pm_xxx');
-```
-
-## Invoices
-
-### List Invoices
-
-```javascript
-const invoices = await lettr.billing.listInvoices();
-
-invoices.forEach(invoice => {
-  console.log({
-    id: invoice.id,
-    amount: invoice.amount,
-    status: invoice.status,
-    pdfUrl: invoice.pdfUrl,
-    createdAt: invoice.createdAt
-  });
-});
-```
-
-### Download Invoice
-
-```javascript
-const pdf = await lettr.billing.downloadInvoice('inv_xxx');
-```
-
-## Usage
+2. View your current tier, email usage, and billing period
+3. Click **Manage Subscription** to access the Stripe billing portal
 
 ### Current Usage
 
-```javascript
-const usage = await lettr.billing.getUsage();
+The dashboard displays:
+- **Emails sent** this billing period
+- **Email limit** for your current tier
+- **Overage emails** (if any)
+- **Days remaining** in the current billing period
 
-console.log({
-  emails: {
-    used: usage.emails.used,
-    limit: usage.emails.limit,
-    percentage: usage.emails.percentage
-  },
-  resetDate: usage.resetDate
-});
-```
+## Change Your Plan
 
-### Usage History
+### Upgrade
 
-```javascript
-const history = await lettr.billing.getUsageHistory({
-  months: 6
-});
+1. Go to **Settings** → **Billing**
+2. Click **Upgrade Plan**
+3. Select your new tier
+4. Confirm the prorated charge
 
-history.forEach(month => {
-  console.log(`${month.period}: ${month.emails} emails`);
-});
-```
+Your new email limit applies immediately.
 
-## Billing Alerts
+### Downgrade
 
-Set up usage alerts:
+1. Go to **Settings** → **Billing**
+2. Click **Change Plan**
+3. Select a lower tier
+4. Confirm the change
 
-```javascript
-await lettr.billing.updateAlerts({
-  emailUsageThreshold: 80,  // Alert at 80% usage
-  notifyEmails: ['billing@company.com']
-});
-```
+The downgrade takes effect on the 1st of next month.
+
+## Payment Methods
+
+Lettr accepts all major credit cards via Stripe. Payment methods are managed through the Stripe billing portal.
+
+### Add or Update Payment Method
+
+1. Go to **Settings** → **Billing**
+2. Click **Manage Subscription** to open the Stripe portal
+3. Select **Payment methods**
+4. Add a new card or update your default
+
+### Billing Portal
+
+Access the full Stripe billing portal for:
+- Updating payment methods
+- Viewing and downloading invoices
+- Updating billing address
+- Managing tax IDs (VAT numbers)
+
+## Invoices
+
+Invoices are generated monthly on the 1st and include:
+- **Subscription fee**: Your tier's monthly price
+- **Overage charges**: Any emails sent beyond your limit in the previous period
+- **Taxes**: Automatically calculated based on your billing address
+
+### View Invoices
+
+1. Go to **Settings** → **Billing**
+2. Click **View Invoices** or access via the Stripe portal
+3. Download PDF invoices for your records
+
+### Tax Handling
+
+Lettr uses Stripe Tax for automatic tax calculation:
+
+| Region | Tax Treatment |
+|--------|---------------|
+| EU (with VAT ID) | Reverse charge (0%) |
+| EU (without VAT ID) | Local VAT rate |
+| Non-EU | No tax |
+
+<Tip>
+  Add your VAT ID in the Stripe billing portal to enable reverse charge for EU business customers.
+</Tip>
+
+## Usage Tracking
+
+Email usage is tracked in real-time. Your counter resets to zero on the 1st of each month when your subscription renews.
+
+### What Counts as Usage
+
+Each email sent through the API counts as one email toward your limit, regardless of:
+- Number of recipients (each recipient = 1 email)
+- Email size
+- Whether tracking is enabled
+
+Emails that fail validation before being queued do not count toward your limit. Emails that bounce after delivery do count.
+
+### Usage Alerts
+
+Set up alerts to notify you when approaching your limit:
+
+1. Go to **Settings** → **Billing**
+2. Configure usage threshold alerts (e.g., 80%, 90%)
+3. Add notification email addresses
 
 ## Cancel Subscription
 
-```javascript
-await lettr.billing.cancelSubscription({
-  reason: 'No longer needed',
-  feedback: 'Optional feedback'
-});
-```
+To cancel your subscription:
+
+1. Go to **Settings** → **Billing**
+2. Click **Manage Subscription**
+3. Select **Cancel subscription** in the Stripe portal
 
 <Note>
-  Cancellation takes effect at the end of your current billing period. You'll retain access until then.
+  Cancellation takes effect at the end of your current billing period. You retain full access and your current email limit until then. After cancellation, your team reverts to the free tier (3,000 emails/month).
 </Note>
 
-## Billing Portal
+## Enterprise
 
-Access the full billing portal:
+For teams with high-volume needs or custom requirements, contact us for enterprise pricing:
 
-```javascript
-const portalUrl = await lettr.billing.createPortalSession();
-// Redirect user to portalUrl
-```
-
-## Enterprise Billing
-
-Enterprise customers have access to:
-
-- Custom pricing
-- Annual billing discounts
-- Purchase orders
+- Custom email limits
+- Volume discounts
+- Annual billing options
 - Custom contracts
 - Dedicated support
 
-Contact sales@lettr.dev for enterprise pricing.
+Contact [sales@lettr.com](mailto:sales@lettr.com) for enterprise inquiries.
 
+## Frequently Asked Questions
+
+<AccordionGroup>
+  <Accordion title="What happens if I exceed my email limit?">
+    You can continue sending emails beyond your limit. Overage emails are charged at $0.80 per 1,000 emails, rounded up to the nearest thousand. Overage charges are added to your next invoice.
+  </Accordion>
+  <Accordion title="When does my email counter reset?">
+    Your email counter resets to zero on the 1st of each month when your subscription renews, regardless of when you originally subscribed.
+  </Accordion>
+  <Accordion title="Can I change tiers mid-month?">
+    Yes. Upgrades take effect immediately with prorated billing. Downgrades take effect at the start of the next billing period.
+  </Accordion>
+  <Accordion title="What payment methods do you accept?">
+    We accept all major credit cards (Visa, Mastercard, American Express) via Stripe. Some regions may have additional payment options available through Stripe.
+  </Accordion>
+  <Accordion title="Do you offer refunds?">
+    We don't offer refunds for partial months. If you cancel mid-month, you retain access until the end of your billing period. Contact support for exceptional circumstances.
+  </Accordion>
+  <Accordion title="How do I get a VAT invoice?">
+    Add your VAT ID in the Stripe billing portal. Your invoices will automatically include your VAT number and apply reverse charge for EU business customers.
+  </Accordion>
+</AccordionGroup>

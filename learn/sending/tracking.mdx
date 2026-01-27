@@ -1,0 +1,150 @@
+---
+title: Tracking
+description: "Configure open and click tracking for your emails"
+---
+
+# Email Tracking
+
+Track email engagement with open and click tracking to measure the effectiveness of your emails.
+
+## Default Tracking
+
+By default, Lettr tracks opens and clicks for all emails:
+
+```javascript
+await lettr.emails.send({
+  from: 'you@example.com',
+  to: ['recipient@example.com'],
+  subject: 'Newsletter',
+  html: '<p>Check out our <a href="https://example.com">website</a>!</p>'
+  // Open and click tracking enabled by default
+});
+```
+
+## Customize Tracking Options
+
+Enable or disable tracking per email:
+
+```javascript
+await lettr.emails.send({
+  from: 'you@example.com',
+  to: ['recipient@example.com'],
+  subject: 'Private Message',
+  html: '<p>This is a private message.</p>',
+  options: {
+    open_tracking: false,
+    click_tracking: false
+  }
+});
+```
+
+## How Open Tracking Works
+
+Lettr inserts a tiny invisible image (tracking pixel) into your HTML emails. When the recipient's email client loads images, the open is recorded.
+
+<Note>
+  Open tracking requires HTML content. Plain text emails cannot be tracked for opens. Some email clients block images by default, which may result in under-reported open rates.
+</Note>
+
+## How Click Tracking Works
+
+Lettr rewrites links in your email to route through our tracking servers. When a recipient clicks a link:
+
+1. The click is recorded with timestamp and link URL
+2. The recipient is immediately redirected to the original destination
+
+```html
+<!-- Original link in your email -->
+<a href="https://example.com/product">View Product</a>
+
+<!-- Becomes (with click tracking enabled) -->
+<a href="https://track.lettr.com/c/abc123">View Product</a>
+```
+
+## Custom Tracking Domain
+
+Use your own domain for tracking links instead of the default Lettr domain:
+
+```javascript
+await lettr.emails.send({
+  from: 'you@example.com',
+  to: ['recipient@example.com'],
+  subject: 'Newsletter',
+  html: '<p>Click <a href="https://example.com">here</a>!</p>',
+  options: {
+    click_tracking: true
+  }
+});
+```
+
+Links will use your configured tracking domain (e.g., `track.yourdomain.com`) if set up in your domain settings.
+
+<Card title="Set Up Tracking Domain" icon="globe" href="/learn/domains/tracking-domains">
+  Learn how to configure a custom tracking domain
+</Card>
+
+## Transactional Flag
+
+Mark emails as transactional for better deliverability:
+
+```javascript
+await lettr.emails.send({
+  from: 'you@example.com',
+  to: ['recipient@example.com'],
+  subject: 'Password Reset',
+  html: '<p>Click here to reset your password...</p>',
+  options: {
+    transactional: true  // Default is true
+  }
+});
+```
+
+<Tip>
+  Transactional emails (password resets, order confirmations) typically have higher deliverability than marketing emails.
+</Tip>
+
+## Tracking Options Reference
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `open_tracking` | boolean | `true` | Track when emails are opened |
+| `click_tracking` | boolean | `true` | Track when links are clicked |
+| `transactional` | boolean | `true` | Mark as transactional email |
+
+## Privacy Considerations
+
+Respect user privacy by disabling tracking when appropriate:
+
+```javascript
+// For privacy-sensitive emails
+await lettr.emails.send({
+  from: 'you@example.com',
+  to: ['privacy-conscious@example.com'],
+  subject: 'Your Data Export',
+  html: '<p>Here is your requested data export.</p>',
+  options: {
+    open_tracking: false,
+    click_tracking: false
+  }
+});
+```
+
+## Viewing Tracking Data
+
+Access tracking data via the API or dashboard:
+
+```javascript
+// Get email with tracking stats
+const email = await lettr.emails.get('email_123');
+
+console.log({
+  opens: email.opens,
+  clicks: email.clicks,
+  firstOpenedAt: email.firstOpenedAt,
+  lastOpenedAt: email.lastOpenedAt
+});
+```
+
+<Card title="Analytics" icon="chart-line" href="/learn/sending/analytics">
+  Learn more about viewing and analyzing tracking data
+</Card>

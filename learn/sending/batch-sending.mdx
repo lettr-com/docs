@@ -1,0 +1,170 @@
+---
+title: Batch Sending
+description: "Send emails to multiple recipients efficiently"
+---
+
+# Batch Sending
+
+Send emails to multiple recipients efficiently with Lettr's batch sending capabilities.
+
+## Multiple Recipients Per Request
+
+Send the same email to up to 50 recipients in a single API call:
+
+```javascript
+await lettr.emails.send({
+  from: 'you@example.com',
+  to: [
+    'alice@example.com',
+    'bob@example.com',
+    'carol@example.com'
+    // ... up to 50 recipients
+  ],
+  subject: 'Team Announcement',
+  html: '<p>Important update for the team!</p>'
+});
+```
+
+## Per-Recipient Personalization
+
+Personalize content for each recipient:
+
+```javascript
+await lettr.emails.send({
+  from: 'you@example.com',
+  to: ['john@example.com', 'jane@example.com', 'bob@example.com'],
+  subject: 'Your monthly report, {{name}}',
+  html: '<p>Hi {{name}}, here is your report for {{month}}.</p>',
+  recipientVariables: {
+    'john@example.com': { name: 'John', month: 'January' },
+    'jane@example.com': { name: 'Jane', month: 'January' },
+    'bob@example.com': { name: 'Bob', month: 'January' }
+  }
+});
+```
+
+## Batch Limits
+
+| Limit | Value |
+|-------|-------|
+| Max recipients per request | 50 (combined to, cc, bcc) |
+| Max requests per minute | See [Rate Limits](/learn/sending/rate-limits) |
+
+## Sending to Large Lists
+
+For lists larger than 50 recipients, split into multiple API calls:
+
+```javascript
+const recipients = [...]; // Array of 500 recipients
+const batchSize = 50;
+
+for (let i = 0; i < recipients.length; i += batchSize) {
+  const batch = recipients.slice(i, i + batchSize);
+
+  await lettr.emails.send({
+    from: 'you@example.com',
+    to: batch,
+    subject: 'Newsletter',
+    html: '<p>Newsletter content...</p>'
+  });
+
+  // Optional: Add delay between batches to respect rate limits
+  await sleep(100);
+}
+```
+
+## Parallel Batch Sending
+
+Send multiple batches in parallel for faster throughput:
+
+```javascript
+const recipients = [...]; // Large recipient list
+const batchSize = 50;
+const parallelBatches = 5;
+
+const batches = chunkArray(recipients, batchSize);
+
+// Process batches in parallel groups
+for (let i = 0; i < batches.length; i += parallelBatches) {
+  const parallelGroup = batches.slice(i, i + parallelBatches);
+
+  await Promise.all(
+    parallelGroup.map(batch =>
+      lettr.emails.send({
+        from: 'you@example.com',
+        to: batch,
+        subject: 'Newsletter',
+        html: '<p>Content...</p>'
+      })
+    )
+  );
+}
+```
+
+## Response for Batch Sends
+
+The response indicates how many recipients were accepted or rejected:
+
+```json
+{
+  "success": true,
+  "message": "Email queued for delivery.",
+  "data": {
+    "request_id": "7582751837467401763",
+    "accepted": 48,
+    "rejected": 2
+  }
+}
+```
+
+<Note>
+  Rejected recipients may be on your suppression list or have invalid email addresses. Check your suppression list and validate addresses before sending.
+</Note>
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Validate Addresses First">
+    Validate email addresses before sending to reduce rejections and protect your sender reputation.
+  </Accordion>
+  <Accordion title="Use Personalization">
+    Personalized emails have higher engagement rates. Use recipient variables whenever possible.
+  </Accordion>
+  <Accordion title="Respect Rate Limits">
+    Monitor your API usage and implement appropriate delays between batches.
+  </Accordion>
+  <Accordion title="Handle Partial Failures">
+    Check the `accepted` and `rejected` counts in responses and handle partial failures gracefully.
+  </Accordion>
+  <Accordion title="Use Webhooks for Delivery Status">
+    Set up webhooks to track delivery, bounces, and engagement for batch sends.
+  </Accordion>
+</AccordionGroup>
+
+## Tracking Batch Emails
+
+Use metadata to group and track batch sends:
+
+```javascript
+const batchId = `batch_${Date.now()}`;
+
+await lettr.emails.send({
+  from: 'you@example.com',
+  to: batchRecipients,
+  subject: 'Newsletter',
+  html: '<p>Content...</p>',
+  metadata: {
+    batch_id: batchId,
+    campaign: 'january-newsletter',
+    send_date: new Date().toISOString()
+  }
+});
+```
+
+Query emails by batch:
+
+```javascript
+const batchEmails = await lettr.emails.list({
+  metadata: { batch_id: 'batch_1234567890' }
+});
+```

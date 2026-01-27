@@ -5,7 +5,55 @@ description: "Lettr is the email API for developers"
 
 # Introduction
 
-Lettr is the email API for developers. Build reliable email delivery into your applications with our simple, powerful API.
+Lettr is an email infrastructure platform built for developers who need reliable, scalable email delivery without the complexity. Whether you're sending transactional emails like password resets and order confirmations, or building sophisticated email workflows with tracking and analytics, Lettr provides the APIs and tools to get it done.
+
+Email delivery is deceptively complex. Between authentication protocols like SPF, DKIM, and DMARC, reputation management, bounce handling, and the ever-changing landscape of spam filtering, building reliable email infrastructure from scratch is a significant undertaking. Lettr handles this complexity so you can focus on your application.
+
+## What You Can Build with Lettr
+
+<CardGroup cols={2}>
+  <Card title="Transactional Emails" icon="paper-plane">
+    Password resets, order confirmations, shipping notifications, account alerts, and any email triggered by user actions.
+  </Card>
+  <Card title="Marketing Campaigns" icon="bullhorn">
+    Newsletters, announcements, and promotional emails with open and click tracking.
+  </Card>
+  <Card title="Inbound Processing" icon="inbox">
+    Receive and parse incoming emails to power support tickets, reply detection, and automated workflows.
+  </Card>
+  <Card title="Email Automation" icon="gear">
+    Build complex email flows with webhooks, templates, and real-time event tracking.
+  </Card>
+</CardGroup>
+
+## Core Capabilities
+
+Lettr provides everything you need for production email infrastructure:
+
+<AccordionGroup>
+  <Accordion title="Send at Scale">
+    Send individual emails or batch thousands with a single API call. Lettr handles queuing, delivery optimization, and retry logic automatically. Support for HTML, plain text, and AMP email formats with automatic MIME handling.
+  </Accordion>
+  <Accordion title="Domain Authentication">
+    Configure SPF, DKIM, and DMARC records through the dashboard or API. Lettr guides you through DNS setup and verifies your configuration to ensure maximum deliverability. Support for multiple sending domains, tracking domains, and custom storage domains for email assets.
+  </Accordion>
+  <Accordion title="Real-Time Tracking">
+    Track opens, clicks, bounces, spam complaints, and unsubscribes as they happen. Receive instant webhook notifications or query the API for detailed analytics. Custom tracking domains keep your brand visible in every link.
+  </Accordion>
+  <Accordion title="Template System">
+    Create email templates with the visual Topol.io editor or write HTML directly. Use variables for personalization and store templates in Lettr for consistent branding across your application.
+  </Accordion>
+  <Accordion title="Suppression Management">
+    Automatic handling of bounces, spam complaints, and unsubscribes protects your sender reputation. Lettr maintains suppression lists and prevents sending to problematic addresses without any code on your part.
+  </Accordion>
+  <Accordion title="Inbound Email">
+    Receive emails at your domain and process them programmatically. Parse sender information, subject, body, and attachments via webhooks. Build support inboxes, reply detection, or any workflow that starts with an incoming email.
+  </Accordion>
+</AccordionGroup>
+
+## Get Started
+
+Choose your integration path and send your first email:
 
 <CardGroup cols={2}>
   <Card title="PHP Quickstart" icon="php" href="/quickstart/php/introduction">
@@ -22,20 +70,59 @@ Lettr is the email API for developers. Build reliable email delivery into your a
   </Card>
 </CardGroup>
 
+## How It Works
+
+<Steps>
+  <Step title="Get Your API Key">
+    Create an account at [app.lettr.com](https://app.lettr.com) and generate an API key from your dashboard. Keys can be scoped to sending-only or full access.
+  </Step>
+  <Step title="Verify Your Domain">
+    Add your sending domain and configure DNS records for SPF, DKIM, and DMARC authentication. Lettr provides the exact records to add and verifies your setup.
+  </Step>
+  <Step title="Send Your First Email">
+    Make a single API call to send an email. Lettr handles delivery, tracking, and bounce processing automatically.
+  </Step>
+  <Step title="Monitor and Iterate">
+    Track delivery metrics in the dashboard or receive real-time webhook notifications. Use analytics to optimize your email strategy.
+  </Step>
+</Steps>
+
 ## Why Lettr?
 
 <AccordionGroup>
   <Accordion title="Developer-First Experience">
-    Clean APIs, comprehensive SDKs, and detailed documentation designed for developers.
+    Clean REST APIs with predictable responses, comprehensive SDKs for popular languages, and documentation written by developers for developers. No enterprise sales calls required—sign up and start building.
   </Accordion>
   <Accordion title="High Deliverability">
-    Optimized infrastructure to ensure your emails reach the inbox, not spam.
+    Lettr maintains relationships with major email providers and continuously optimizes delivery infrastructure. Automatic warm-up for new domains, reputation monitoring, and feedback loop integration help ensure your emails reach the inbox.
   </Accordion>
-  <Accordion title="Real-Time Analytics">
-    Track opens, clicks, bounces, and more with webhooks and dashboard analytics.
+  <Accordion title="Real-Time Visibility">
+    Know exactly what's happening with every email. Track delivery status, opens, clicks, and bounces as they occur. Webhooks deliver events in real-time, and the dashboard provides at-a-glance analytics.
   </Accordion>
   <Accordion title="Flexible Integration">
-    Use our API, SDKs, or SMTP relay — integrate however suits your stack.
+    Use the REST API directly, integrate with official SDKs, or connect via standard SMTP. Lettr fits into your existing stack without requiring architectural changes. Works with serverless functions, traditional servers, and everything in between.
   </Accordion>
 </AccordionGroup>
 
+## Explore the Documentation
+
+<CardGroup cols={3}>
+  <Card title="API Keys" icon="key" href="/learn/api-keys/introduction">
+    Authentication and permissions
+  </Card>
+  <Card title="Domains" icon="globe" href="/learn/domains/introduction">
+    SPF, DKIM, and DMARC setup
+  </Card>
+  <Card title="Sending" icon="paper-plane" href="/learn/sending/introduction">
+    Email delivery options
+  </Card>
+  <Card title="Webhooks" icon="webhook" href="/learn/webhooks/introduction">
+    Real-time event notifications
+  </Card>
+  <Card title="Templates" icon="paintbrush" href="/learn/templates/topol-editor">
+    Visual email editor
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference/introduction">
+    Complete API documentation
+  </Card>
+</CardGroup>

@@ -1,0 +1,386 @@
+---
+title: Storage Domains
+description: "Configure custom domains for hosting email assets, images, and content"
+---
+
+# Storage Domains
+
+A storage domain is a custom subdomain used to serve email assets like images, files, and hosted email content. Instead of assets being served from Lettr's default domain, you can configure a branded domain like `assets.yourcompany.com`. This keeps your email source code looking professional, improves deliverability by using your own trusted domain, and ensures recipients see your brand in image URLs when inspecting your emails.
+
+## Why Use Storage Domains?
+
+When you use Lettr's email editor or upload images, they're hosted on Lettr's storage. By default, these assets are served from Lettr's domain:
+
+```
+https://storage.lettr.dev/your-team/image.png
+```
+
+With a custom storage domain, assets are served from your brand:
+
+```
+https://assets.yourcompany.com/image.png
+```
+
+### Benefits
+
+- **Brand Consistency** - Image URLs show your domain in email source
+- **Improved Deliverability** - Links to your domain may be trusted more than third-party hosts
+- **Professional Appearance** - Clean, branded URLs for all email content
+- **Link Inspection** - Recipients can see URLs point to your domain before clicking
+
+## What Storage Domains Host
+
+Storage domains serve content from Lettr's cloud storage:
+
+| Content Type | Description |
+|--------------|-------------|
+| Template Images | Images uploaded to email templates |
+| Email Assets | Files attached to email content |
+| Hosted Emails | Web-hosted versions of sent emails |
+| Template Previews | Preview images for templates |
+
+## Adding a Storage Domain
+
+### Via Dashboard
+
+<Steps>
+  <Step title="Navigate to Storage Domains">
+    Go to **Domains** → **Storage** in your dashboard.
+  </Step>
+  <Step title="Add Domain">
+    Click **Add Domain** and enter your storage subdomain (e.g., `assets.example.com`).
+  </Step>
+  <Step title="Add DNS Records">
+    Add the provided DNS records to your domain:
+    - A CNAME record pointing to Lettr's storage
+    - TXT records for domain ownership verification
+  </Step>
+  <Step title="Verify Domain">
+    Click **Verify** to check DNS configuration and activate your storage domain.
+  </Step>
+</Steps>
+
+### Via API
+
+Connect a custom storage domain:
+
+```bash
+curl -X POST https://app.lettr.com/api/domains/storage \
+  -H "Authorization: Bearer le_xxxxxxxxxxxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "domain": "assets.example.com"
+  }'
+```
+
+Response:
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "stor_abc123",
+    "domain": "assets.example.com",
+    "status": "pending",
+    "ssl_status": "pending",
+    "dns_records": {
+      "cname": {
+        "type": "CNAME",
+        "name": "assets",
+        "value": "r2-proxy.uselettr.com"
+      },
+      "verification_txt": {
+        "type": "TXT",
+        "name": "_cf-custom-hostname.assets",
+        "value": "abc123..."
+      },
+      "ownership_txt": {
+        "type": "TXT",
+        "name": "_verify.assets",
+        "value": "def456..."
+      }
+    },
+    "created_at": "2024-01-15T10:30:00Z"
+  }
+}
+```
+
+## DNS Configuration
+
+Configure these DNS records for your storage domain:
+
+### CNAME Record
+
+Points your subdomain to Lettr's storage servers:
+
+| Field | Value |
+|-------|-------|
+| Type | CNAME |
+| Name | `assets` (your chosen subdomain) |
+| Value | `r2-proxy.uselettr.com` |
+
+### Verification TXT Record
+
+Proves domain ownership:
+
+| Field | Value |
+|-------|-------|
+| Type | TXT |
+| Name | `_cf-custom-hostname.assets` |
+| Value | (provided by Lettr) |
+
+### Ownership TXT Record
+
+Additional ownership verification:
+
+| Field | Value |
+|-------|-------|
+| Type | TXT |
+| Name | `_verify.assets` |
+| Value | (provided by Lettr) |
+
+<Note>
+  TXT record values are unique to your domain. Copy them exactly as provided in your dashboard.
+</Note>
+
+## Choosing a Subdomain
+
+Common choices for storage subdomains:
+
+| Subdomain | Full Domain | Use Case |
+|-----------|-------------|----------|
+| `assets` | `assets.example.com` | General email assets |
+| `images` | `images.example.com` | Image-focused |
+| `cdn` | `cdn.example.com` | CDN-style naming |
+| `email` | `email.example.com` | Email-specific content |
+| `content` | `content.example.com` | All email content |
+
+<Tip>
+  Choose a subdomain that's generic enough to cover all storage use cases. `assets` or `cdn` work well.
+</Tip>
+
+## SSL Certificates
+
+Lettr automatically provisions SSL certificates for your storage domain. All content is served over HTTPS.
+
+### SSL Status
+
+| Status | Description |
+|--------|-------------|
+| `active` | SSL certificate active, domain ready to use |
+| `pending` | Certificate being provisioned |
+
+Certificate provisioning completes within a few minutes after DNS verification.
+
+## Verifying Your Storage Domain
+
+### Via Dashboard
+
+1. Go to **Domains** → **Storage**
+2. Find your domain and click **Verify**
+3. Wait for CNAME and SSL verification to complete
+
+### Via API
+
+```bash
+curl -X POST https://app.lettr.com/api/domains/storage/stor_abc123/verify \
+  -H "Authorization: Bearer le_xxxxxxxxxxxx"
+```
+
+Response:
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "stor_abc123",
+    "domain": "assets.example.com",
+    "status": "active",
+    "verified": true,
+    "enabled": true,
+    "ssl_status": "active",
+    "cname_verified": true,
+    "ssl_txt_verified": true,
+    "ownership_txt_verified": true
+  }
+}
+```
+
+## Storage Domain Status
+
+| Status | Description |
+|--------|-------------|
+| `active` | Domain verified and serving content |
+| `pending` | Awaiting DNS verification |
+| `not_found` | Domain configuration not found |
+
+## Setting a Default Storage Domain
+
+If you have multiple storage domains, set one as the default for new uploads:
+
+### Via Dashboard
+
+1. Go to **Domains** → **Storage**
+2. Find the domain and click **Set as Default**
+
+### Via API
+
+```bash
+curl -X PATCH https://app.lettr.com/api/domains/storage/stor_abc123/default \
+  -H "Authorization: Bearer le_xxxxxxxxxxxx"
+```
+
+The first verified storage domain is automatically set as the default.
+
+## Domain Limits
+
+Each team can configure up to **5 storage domains**. This allows for:
+
+- Different domains for different brands
+- Separate domains for different email types
+- Testing domains alongside production
+
+<Note>
+  Contact support if you need more than 5 storage domains.
+</Note>
+
+## Using Storage Domains
+
+Once configured, your storage domain is used automatically:
+
+### Template Images
+
+When you upload images in the email editor, they're hosted on your storage domain:
+
+```html
+<img src="https://assets.example.com/templates/hero-image.png" />
+```
+
+### Hosted Emails
+
+Web versions of sent emails are accessible via your storage domain:
+
+```
+https://assets.example.com/emails/abc123.html
+```
+
+### Updating Existing Templates
+
+When you verify a storage domain, existing templates can be updated to use the new domain. This happens automatically for the default storage domain.
+
+## Check Storage Domain Status
+
+### Via API
+
+```bash
+curl https://app.lettr.com/api/domains/storage \
+  -H "Authorization: Bearer le_xxxxxxxxxxxx"
+```
+
+```json
+{
+  "success": true,
+  "data": {
+    "domains": [
+      {
+        "id": "stor_abc123",
+        "domain": "assets.example.com",
+        "status": "active",
+        "ssl_status": "active",
+        "is_default": true,
+        "verified": true,
+        "enabled": true
+      },
+      {
+        "id": "stor_def456",
+        "domain": "cdn.other-brand.com",
+        "status": "pending",
+        "ssl_status": "pending",
+        "is_default": false,
+        "verified": false,
+        "enabled": false
+      }
+    ]
+  }
+}
+```
+
+## Delete a Storage Domain
+
+<Warning>
+  Deleting a storage domain doesn't delete the underlying content, but URLs using that domain will stop working. Templates will need to be updated to use a different domain.
+</Warning>
+
+### Via Dashboard
+
+1. Go to **Domains** → **Storage**
+2. Find the domain and click **Delete**
+3. Confirm deletion
+
+### Via API
+
+```bash
+curl -X DELETE https://app.lettr.com/api/domains/storage/stor_abc123 \
+  -H "Authorization: Bearer le_xxxxxxxxxxxx"
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="CNAME not verified">
+    - Verify the CNAME record points to `r2-proxy.uselettr.com`
+    - Check the record is added to the correct subdomain
+    - DNS propagation can take up to 48 hours
+    - Use a DNS lookup tool to verify your CNAME is resolving
+  </Accordion>
+
+  <Accordion title="SSL certificate pending">
+    - Ensure TXT records are added exactly as provided
+    - TXT records must be on the correct subdomain
+    - Certificate provisioning can take up to 24 hours in rare cases
+  </Accordion>
+
+  <Accordion title="Images not loading">
+    - Verify domain status is `active`
+    - Check that SSL status is `active`
+    - Ensure the image path is correct
+    - Try clearing browser cache
+  </Accordion>
+
+  <Accordion title="Domain limit reached">
+    - Each team is limited to 5 storage domains
+    - Remove unused domains to add new ones
+    - Contact support for increased limits
+  </Accordion>
+
+  <Accordion title="Existing templates using old domain">
+    - Templates created before adding a storage domain use Lettr's default
+    - Re-save templates to update image URLs
+    - Or manually update image URLs in template HTML
+  </Accordion>
+</AccordionGroup>
+
+## Best Practices
+
+1. **Use a dedicated subdomain** - Don't use your root domain for storage
+2. **Set up early** - Configure storage domains before creating templates
+3. **Use consistent naming** - Pick one subdomain naming convention across your domains
+4. **Set a default** - Always have a default storage domain configured
+5. **Monitor SSL** - Ensure certificates remain active
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Sending Domains" icon="paper-plane" href="/learn/domains/sending-domains">
+    Configure domains for sending
+  </Card>
+  <Card title="Tracking Domains" icon="chart-line" href="/learn/domains/tracking-domains">
+    Custom tracking domains
+  </Card>
+  <Card title="Templates" icon="file-code" href="/learn/templates/topol-editor">
+    Create email templates
+  </Card>
+  <Card title="Sending Emails" icon="envelope" href="/learn/sending/introduction">
+    Start sending emails
+  </Card>
+</CardGroup>

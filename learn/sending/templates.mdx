@@ -1,0 +1,153 @@
+---
+title: Templates
+description: "Send emails using pre-designed templates"
+---
+
+# Sending with Templates
+
+Use pre-designed templates to send consistent, well-formatted emails without embedding HTML in your code.
+
+## Basic Template Usage
+
+Send an email using a template by its slug:
+
+```javascript
+await lettr.emails.send({
+  from: 'you@example.com',
+  to: ['recipient@example.com'],
+  subject: 'Welcome to Acme',
+  template_slug: 'welcome-email'
+});
+```
+
+## Template with Variables
+
+Pass data to populate template variables:
+
+```javascript
+await lettr.emails.send({
+  from: 'you@example.com',
+  to: ['recipient@example.com'],
+  subject: 'Your Order Confirmation',
+  template_slug: 'order-confirmation',
+  substitution_data: {
+    customer_name: 'John Smith',
+    order_id: 'ORD-12345',
+    order_total: '$99.99',
+    items: [
+      { name: 'Widget', quantity: 2, price: '$49.99' },
+      { name: 'Gadget', quantity: 1, price: '$49.99' }
+    ]
+  }
+});
+```
+
+## Specifying Template Version
+
+Use a specific version of a template:
+
+```javascript
+await lettr.emails.send({
+  from: 'you@example.com',
+  to: ['recipient@example.com'],
+  subject: 'Newsletter',
+  template_slug: 'monthly-newsletter',
+  template_version: 3
+});
+```
+
+<Note>
+  If no version is specified, Lettr uses the latest published version of the template.
+</Note>
+
+## Project-Based Templates
+
+Organize templates by project:
+
+```javascript
+await lettr.emails.send({
+  from: 'you@example.com',
+  to: ['recipient@example.com'],
+  subject: 'Welcome',
+  template_slug: 'welcome',
+  project_id: 'proj_abc123'
+});
+```
+
+## Listing Available Templates
+
+Retrieve templates available for your API key:
+
+```bash
+curl -X GET https://app.lettr.com/api/templates \
+  -H "Authorization: Bearer le_xxxxxxxxxxxx"
+```
+
+Response:
+
+```json
+{
+  "data": [
+    {
+      "slug": "welcome-email",
+      "name": "Welcome Email",
+      "version": 2,
+      "project_id": "proj_abc123"
+    },
+    {
+      "slug": "order-confirmation",
+      "name": "Order Confirmation",
+      "version": 5,
+      "project_id": "proj_abc123"
+    }
+  ]
+}
+```
+
+## Get Template Details
+
+Retrieve a specific template:
+
+```bash
+curl -X GET https://app.lettr.com/api/templates/welcome-email \
+  -H "Authorization: Bearer le_xxxxxxxxxxxx"
+```
+
+## Template vs Inline Content
+
+| Feature | Template | Inline HTML |
+|---------|----------|-------------|
+| Reusability | High - use across multiple sends | Low - embedded in each request |
+| Maintenance | Update once, affects all sends | Update in each integration point |
+| Version control | Built-in versioning | Manual management |
+| Design tools | Visual editor support | Code only |
+| Best for | Recurring emails, campaigns | One-off or dynamic content |
+
+## Content Priority
+
+When both template and inline content are provided:
+
+1. Template content takes precedence
+2. Inline `html`/`text` is used as fallback if template is empty
+3. `subject` from the request overrides template subject
+
+```javascript
+await lettr.emails.send({
+  from: 'you@example.com',
+  to: ['recipient@example.com'],
+  subject: 'Custom Subject', // Overrides template subject
+  template_slug: 'welcome-email',
+  html: '<p>Fallback content</p>' // Used only if template has no HTML
+});
+```
+
+## Template Parameters Reference
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `template_slug` | string | No* | Template identifier |
+| `template_version` | number | No | Specific version (latest if omitted) |
+| `project_id` | string | No | Project containing the template |
+| `substitution_data` | object | No | Variables for template placeholders |
+
+*Required if not providing `html` or `text` content.

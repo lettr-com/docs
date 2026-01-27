@@ -59,6 +59,90 @@
                 "pages": ["quickstart/nodejs/introduction"]
               }
             ]
+          },
+          {
+            "group": "Learn",
+            "pages": [
+              {
+                "group": "API Keys",
+                "pages": [
+                  "learn/api-keys/introduction",
+                  "learn/api-keys/permissions"
+                ]
+              },
+              {
+                "group": "Domains",
+                "pages": [
+                  "learn/domains/introduction",
+                  "learn/domains/sending-domains",
+                  "learn/domains/tracking-domains",
+                  "learn/domains/inbound-domains",
+                  "learn/domains/storage-domains",
+                  "learn/domains/dmarc",
+                  "learn/domains/bimi"
+                ]
+              },
+              {
+                "group": "Sending",
+                "pages": [
+                  "learn/sending/introduction",
+                  "learn/sending/recipients",
+                  "learn/sending/content-types",
+                  "learn/sending/templates",
+                  "learn/sending/variables",
+                  "learn/sending/attachments",
+                  "learn/sending/tracking",
+                  "learn/sending/metadata",
+                  "learn/sending/custom-headers",
+                  "learn/sending/scheduling",
+                  "learn/sending/batch-sending",
+                  "learn/sending/test-emails",
+                  "learn/sending/idempotency",
+                  "learn/sending/rate-limits",
+                  "learn/sending/errors-retries",
+                  "learn/sending/bounces",
+                  "learn/sending/analytics",
+                  "learn/sending/best-practices"
+                ]
+              },
+              {
+                "group": "Receiving",
+                "pages": [
+                  "learn/receiving/introduction"
+                ]
+              },
+              {
+                "group": "Suppressions",
+                "pages": [
+                  "learn/suppressions/introduction",
+                  "learn/suppressions/bounces",
+                  "learn/suppressions/suppression-lists"
+                ]
+              },
+              {
+                "group": "Templates",
+                "pages": [
+                  "learn/templates/topol-editor",
+                  "learn/templates/ai-agents"
+                ]
+              },
+              {
+                "group": "Webhooks",
+                "pages": [
+                  "learn/webhooks/introduction",
+                  "learn/webhooks/event-types",
+                  "learn/webhooks/authorization",
+                  "learn/webhooks/retries"
+                ]
+              },
+              {
+                "group": "Settings",
+                "pages": [
+                  "learn/settings/teams",
+                  "learn/settings/billing"
+                ]
+              }
+            ]
           }
         ]
       },
@@ -90,10 +174,10 @@
         ]
       },
       {
-        "tab": "Knowledgebase",
+        "tab": "Knowledge Base",
         "groups": [
           {
-            "group": "Getting Started",
+            "group": "Knowledge Base",
             "pages": ["knowledge-base/introduction"]
           },
           {

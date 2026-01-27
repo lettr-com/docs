@@ -1,0 +1,248 @@
+---
+title: Best Practices
+description: "Email sending best practices for deliverability and reliability"
+---
+
+# Email Sending Best Practices
+
+Follow these best practices to maximize deliverability, maintain sender reputation, and build reliable email integrations.
+
+## Sender Reputation
+
+### Warm Up New Domains
+
+Gradually increase sending volume when using a new domain:
+
+| Week | Daily Volume |
+|------|--------------|
+| 1 | 50-100 |
+| 2 | 200-500 |
+| 3 | 500-1,000 |
+| 4 | 1,000-5,000 |
+| 5+ | Scale as needed |
+
+<Warning>
+  Sending high volumes immediately from a new domain can trigger spam filters and damage your reputation.
+</Warning>
+
+### Monitor Key Metrics
+
+Track these metrics to maintain good deliverability:
+
+| Metric | Target | Action if Exceeded |
+|--------|--------|-------------------|
+| Bounce rate | < 2% | Clean your lists |
+| Spam complaint rate | < 0.1% | Review content, add unsubscribe |
+| Open rate | > 15% | Improve subject lines, sender name |
+
+## List Hygiene
+
+### Validate Email Addresses
+
+```javascript
+// Validate before adding to your list
+function isValidEmail(email) {
+  const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return re.test(email);
+}
+
+// Remove invalid addresses before sending
+const validRecipients = recipients.filter(isValidEmail);
+```
+
+### Use Double Opt-In
+
+Confirm subscriptions to ensure valid, engaged recipients:
+
+```javascript
+// Step 1: Send confirmation email
+await lettr.emails.send({
+  from: 'noreply@example.com',
+  to: [newSubscriber.email],
+  subject: 'Confirm your subscription',
+  template_slug: 'subscription-confirmation',
+  substitution_data: {
+    confirmation_url: `https://example.com/confirm?token=${token}`
+  }
+});
+
+// Step 2: Only add to list after confirmation
+```
+
+### Handle Bounces Promptly
+
+```javascript
+app.post('/webhooks/lettr', (req, res) => {
+  const event = req.body;
+
+  if (event.type === 'email.bounced') {
+    const { to, bounceType } = event.data;
+
+    if (bounceType === 'hard') {
+      // Remove from all lists immediately
+      removeFromAllLists(to);
+    }
+  }
+
+  res.sendStatus(200);
+});
+```
+
+## Content Best Practices
+
+### Include Unsubscribe Links
+
+Required by law (CAN-SPAM, GDPR) and improves deliverability:
+
+```html
+<p style="font-size: 12px; color: #666;">
+  You're receiving this because you signed up at example.com.
+  <a href="{{unsubscribe_url}}">Unsubscribe</a> |
+  <a href="{{preferences_url}}">Manage preferences</a>
+</p>
+```
+
+### Use Clear Sender Information
+
+```javascript
+await lettr.emails.send({
+  from: 'updates@yourcompany.com',
+  from_name: 'Your Company',  // Clear, recognizable name
+  reply_to: 'support@yourcompany.com',
+  // ...
+});
+```
+
+### Optimize Subject Lines
+
+- Keep under 50 characters for mobile
+- Avoid spam trigger words (FREE, URGENT, ACT NOW)
+- Personalize when possible
+
+```javascript
+// Good
+subject: 'Your order #12345 has shipped'
+
+// Avoid
+subject: 'FREE OFFER!!! ACT NOW!!!'
+```
+
+## Technical Best Practices
+
+### Implement Idempotency
+
+Prevent duplicate sends:
+
+```javascript
+async function sendOnce(emailData, idempotencyKey) {
+  const existing = await lettr.emails.list({
+    metadata: { idempotency_key: idempotencyKey }
+  });
+
+  if (existing.data.length > 0) {
+    return existing.data[0];
+  }
+
+  return lettr.emails.send({
+    ...emailData,
+    metadata: { ...emailData.metadata, idempotency_key: idempotencyKey }
+  });
+}
+```
+
+### Use Webhooks Instead of Polling
+
+```javascript
+// Instead of polling for delivery status
+// Bad:
+while (status !== 'delivered') {
+  const email = await lettr.emails.get(emailId);
+  status = email.status;
+  await sleep(1000);
+}
+
+// Use webhooks
+// Good:
+app.post('/webhooks/lettr', (req, res) => {
+  if (req.body.type === 'email.delivered') {
+    updateDeliveryStatus(req.body.data);
+  }
+  res.sendStatus(200);
+});
+```
+
+### Handle Errors Gracefully
+
+```javascript
+try {
+  await lettr.emails.send(emailData);
+} catch (error) {
+  if (error.status === 429) {
+    // Queue for retry
+    await queue.add('send-email', emailData, {
+      delay: error.retryAfter * 1000
+    });
+  } else if (error.status === 422) {
+    // Log validation error, don't retry
+    logger.error('Invalid email data', { error: error.errors });
+  } else {
+    // Retry server errors
+    await queue.add('send-email', emailData, {
+      attempts: 3,
+      backoff: { type: 'exponential', delay: 1000 }
+    });
+  }
+}
+```
+
+## Authentication Setup
+
+### Complete Domain Authentication
+
+Set up all authentication records:
+
+<Steps>
+  <Step title="SPF Record">
+    Authorizes Lettr to send on your behalf
+  </Step>
+  <Step title="DKIM Signing">
+    Cryptographically signs your emails
+  </Step>
+  <Step title="DMARC Policy">
+    Protects against spoofing
+  </Step>
+  <Step title="Custom Tracking Domain">
+    Improves deliverability for tracked links
+  </Step>
+</Steps>
+
+<Card title="Domain Setup Guide" icon="globe" href="/learn/domains/introduction">
+  Complete guide to domain authentication
+</Card>
+
+## Checklist
+
+<AccordionGroup>
+  <Accordion title="Before First Send">
+    - [ ] Verify sending domain
+    - [ ] Set up DKIM and SPF
+    - [ ] Configure DMARC
+    - [ ] Set up tracking domain (optional)
+    - [ ] Configure webhooks
+    - [ ] Test with small batch
+  </Accordion>
+  <Accordion title="For Each Send">
+    - [ ] Validate recipient addresses
+    - [ ] Include unsubscribe link
+    - [ ] Include plain text version
+    - [ ] Test email rendering
+    - [ ] Check subject line length
+  </Accordion>
+  <Accordion title="Ongoing Maintenance">
+    - [ ] Monitor bounce rates
+    - [ ] Remove hard bounces immediately
+    - [ ] Review spam complaints
+    - [ ] Clean inactive subscribers
+    - [ ] Update DNS records if needed
+  </Accordion>
+</AccordionGroup>

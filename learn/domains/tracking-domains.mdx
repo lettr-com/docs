@@ -1,101 +1,411 @@
 ---
 title: Tracking Domains
-description: "Set up custom tracking domains for opens and clicks"
+description: "Set up custom domains for click and open tracking with automatic SSL certificates"
 ---
 
 # Tracking Domains
 
-Use custom domains for tracking links and pixels to maintain brand consistency.
+A tracking domain is a custom subdomain used for click tracking links and open tracking pixels in your emails. Instead of using Lettr's default tracking URLs, you can configure your own branded domain like `links.yourcompany.com`. Setting up a tracking domain improves recipient trust, maintains brand consistency, and can help with deliverability since links point to your own domain rather than a third-party service.
 
-## Why Custom Tracking Domains?
+## Why Use Custom Tracking Domains?
 
-By default, tracking links use Lettr's domain. Custom tracking domains:
+By default, tracking links in your emails use Lettr's domain:
 
-- **Brand Consistency** - Links show your domain, not Lettr's
-- **Improved Deliverability** - Some spam filters trust custom domains more
-- **User Trust** - Recipients see familiar links
+```
+https://track.lettr.dev/c/abc123
+```
+
+With a custom tracking domain, links use your brand:
+
+```
+https://links.yourcompany.com/c/abc123
+```
+
+### Benefits
+
+- **Brand Consistency** - Links show your domain, reinforcing brand recognition
+- **Improved Trust** - Recipients are more likely to click familiar links
+- **Better Deliverability** - Some spam filters favor custom tracking domains
+- **Professional Appearance** - Emails look more polished and legitimate
 
 ## Default vs Custom Tracking
 
-| Type | Link Example |
-|------|--------------|
-| Default | `https://track.lettr.dev/c/abc123` |
-| Custom | `https://links.example.com/c/abc123` |
+| Feature | Default | Custom |
+|---------|---------|--------|
+| Click links | `track.lettr.dev/c/...` | `links.example.com/c/...` |
+| Open pixels | `track.lettr.dev/o/...` | `links.example.com/o/...` |
+| SSL | Automatic | Automatic |
+| Setup | None required | DNS configuration |
 
-## Setup Custom Tracking Domain
+## Adding a Tracking Domain
+
+### Via Dashboard
 
 <Steps>
-  <Step title="Choose a Subdomain">
-    Pick a subdomain like `links`, `track`, or `click`.
+  <Step title="Navigate to Tracking Domains">
+    Go to **Domains** → **Tracking** in your dashboard.
   </Step>
-  <Step title="Add DNS Record">
-    Add a CNAME record pointing to Lettr.
+  <Step title="Add Domain">
+    Click **Add Domain** and enter your tracking subdomain (e.g., `links.example.com`).
   </Step>
-  <Step title="Configure in Dashboard">
-    Set the tracking domain in your domain settings.
+  <Step title="Add DNS Records">
+    Add the provided DNS records to your domain. You'll need:
+    - A CNAME record pointing to Lettr's tracking server
+    - TXT records for SSL certificate validation
+  </Step>
+  <Step title="Verify Domain">
+    Click **Verify** to check DNS configuration and provision your SSL certificate.
   </Step>
 </Steps>
 
+### Via API
+
+Create a tracking domain:
+
+```bash
+curl -X POST https://app.lettr.com/api/domains/tracking \
+  -H "Authorization: Bearer le_xxxxxxxxxxxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "domain": "links.example.com"
+  }'
+```
+
+Response:
+
+```json
+{
+  "success": true,
+  "data": {
+    "domain": "links.example.com",
+    "status": "pending_ssl",
+    "cname_status": "unverified",
+    "ssl_status": "pending",
+    "dns_records": {
+      "cname": {
+        "type": "CNAME",
+        "name": "links",
+        "value": "proxy.lettr-tracking.io"
+      },
+      "ssl_txt": {
+        "type": "TXT",
+        "name": "_acme-challenge.links",
+        "value": "abc123xyz..."
+      },
+      "ownership_txt": {
+        "type": "TXT",
+        "name": "_cf-custom-hostname.links",
+        "value": "def456..."
+      }
+    },
+    "created_at": "2024-01-15T10:30:00Z"
+  }
+}
+```
+
 ## DNS Configuration
 
-Add this CNAME record:
+After adding your tracking domain, configure these DNS records:
 
+### CNAME Record
+
+Points your subdomain to Lettr's tracking servers:
+
+| Field | Value |
+|-------|-------|
+| Type | CNAME |
+| Name | `links` (your chosen subdomain) |
+| Value | `proxy.lettr-tracking.io` |
+
+### SSL Validation TXT Record
+
+Required for automatic SSL certificate provisioning:
+
+| Field | Value |
+|-------|-------|
+| Type | TXT |
+| Name | `_acme-challenge.links` |
+| Value | (provided by Lettr) |
+
+### Ownership TXT Record
+
+Verifies domain ownership:
+
+| Field | Value |
+|-------|-------|
+| Type | TXT |
+| Name | `_cf-custom-hostname.links` |
+| Value | (provided by Lettr) |
+
+<Note>
+  The exact TXT record values are unique to your domain and will be provided when you add your tracking domain. Copy them exactly as shown.
+</Note>
+
+## Choosing a Subdomain
+
+Common choices for tracking subdomains:
+
+| Subdomain | Full Domain |
+|-----------|-------------|
+| `links` | `links.example.com` |
+| `track` | `track.example.com` |
+| `click` | `click.example.com` |
+| `go` | `go.example.com` |
+| `e` | `e.example.com` |
+
+<Tip>
+  Keep the subdomain short and generic. Avoid words like "tracking" or "analytics" that might trigger spam filters.
+</Tip>
+
+## SSL Certificates
+
+Lettr automatically provisions and renews SSL certificates for your tracking domain. This ensures all tracking links use HTTPS.
+
+### Certificate Status
+
+| Status | Description |
+|--------|-------------|
+| `active` | SSL certificate provisioned and active |
+| `pending` | Certificate being provisioned |
+| `initializing` | Initial setup in progress |
+
+SSL provisioning typically completes within a few minutes after DNS verification.
+
+## Verifying Your Tracking Domain
+
+### Via Dashboard
+
+1. Go to **Domains** → **Tracking**
+2. Find your domain and click **Verify**
+3. Wait for both CNAME and SSL verification to complete
+
+### Via API
+
+```bash
+curl -X POST https://app.lettr.com/api/domains/tracking/links.example.com/verify \
+  -H "Authorization: Bearer le_xxxxxxxxxxxx"
 ```
-Type: CNAME
-Host: links (or your chosen subdomain)
-Value: track.lettr.dev
+
+Response:
+
+```json
+{
+  "success": true,
+  "data": {
+    "domain": "links.example.com",
+    "status": "active",
+    "cname_status": "valid",
+    "cname_verified": true,
+    "ssl_status": "active",
+    "ssl_verified": true
+  }
+}
 ```
 
-## Via API
+## Tracking Domain Status
 
-```javascript
-const domain = await lettr.domains.update('dom_123', {
-  trackingDomain: 'links.example.com'
-});
-```
+| Status | Description | CNAME | SSL |
+|--------|-------------|-------|-----|
+| `active` | Fully verified and operational | Valid | Active |
+| `pending_cname` | Waiting for CNAME verification | Pending | Active |
+| `pending_ssl` | Waiting for SSL certificate | Valid | Pending |
 
-## SSL Certificate
+## Linking to a Sending Domain
 
-Lettr automatically provisions SSL certificates for custom tracking domains. This process takes a few minutes after DNS verification.
+Associate your tracking domain with a sending domain so all emails from that domain use your custom tracking links:
 
-## Verify Setup
+### Via Dashboard
 
-```javascript
-const domain = await lettr.domains.get('dom_123');
+1. Go to **Domains** → **Sending**
+2. Select your sending domain
+3. Choose your tracking domain from the dropdown
 
-console.log({
-  trackingDomain: domain.trackingDomain,
-  trackingDomainStatus: domain.trackingDomainStatus,
-  sslStatus: domain.trackingSslStatus
-});
+### Via API
+
+```bash
+curl -X PATCH https://app.lettr.com/api/domains/example.com \
+  -H "Authorization: Bearer le_xxxxxxxxxxxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "tracking_domain": "links.example.com"
+  }'
 ```
 
 ## Using Custom Tracking
 
-Once configured, all tracking links automatically use your custom domain:
+Once configured, all tracking automatically uses your custom domain. No code changes needed.
 
-```javascript
-await lettr.emails.send({
-  from: 'you@example.com',
-  to: ['recipient@example.com'],
-  subject: 'Newsletter',
-  html: '<p>Click <a href="https://example.com/offer">here</a></p>',
-  tracking: { clicks: true }
-});
+### Click Tracking
 
-// Link in email becomes: https://links.example.com/c/abc123
+When you enable click tracking, links in your email:
+
+**Original link in your email:**
+```html
+<a href="https://example.com/offer">View Offer</a>
 ```
 
-## Open Tracking Pixel
+**Link in delivered email (with tracking):**
+```html
+<a href="https://links.example.com/c/abc123">View Offer</a>
+```
 
-The open tracking pixel also uses your custom domain:
+When clicked, the recipient is redirected to `https://example.com/offer` and the click is recorded.
+
+### Open Tracking
+
+When you enable open tracking, a tracking pixel is added:
 
 ```html
-<!-- In the email -->
 <img src="https://links.example.com/o/xyz789" width="1" height="1" />
 ```
+
+## Enabling Tracking in Emails
+
+Enable tracking when sending emails:
+
+```bash
+curl -X POST https://app.lettr.com/api/emails \
+  -H "Authorization: Bearer le_xxxxxxxxxxxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "from": "hello@example.com",
+    "to": ["recipient@example.com"],
+    "subject": "Check out our new features",
+    "html": "<p>Click <a href=\"https://example.com/features\">here</a> to learn more.</p>",
+    "options": {
+      "click_tracking": true,
+      "open_tracking": true
+    }
+  }'
+```
+
+## Check Tracking Domain Status
+
+### Via API
+
+```bash
+curl https://app.lettr.com/api/domains/tracking/links.example.com \
+  -H "Authorization: Bearer le_xxxxxxxxxxxx"
+```
+
+```json
+{
+  "success": true,
+  "data": {
+    "domain": "links.example.com",
+    "status": "active",
+    "cname_status": "valid",
+    "ssl_status": "active",
+    "cname_verified": true,
+    "ssl_verified": true,
+    "created_at": "2024-01-15T10:30:00Z"
+  }
+}
+```
+
+## List All Tracking Domains
+
+```bash
+curl https://app.lettr.com/api/domains/tracking \
+  -H "Authorization: Bearer le_xxxxxxxxxxxx"
+```
+
+```json
+{
+  "success": true,
+  "data": {
+    "domains": [
+      {
+        "domain": "links.example.com",
+        "status": "active",
+        "cname_status": "valid",
+        "ssl_status": "active"
+      },
+      {
+        "domain": "track.othersite.com",
+        "status": "pending_ssl",
+        "cname_status": "valid",
+        "ssl_status": "pending"
+      }
+    ]
+  }
+}
+```
+
+## Delete a Tracking Domain
+
+<Warning>
+  Deleting a tracking domain will cause tracking links in previously sent emails to stop working. Recipients clicking those links will see an error.
+</Warning>
+
+### Via Dashboard
+
+1. Go to **Domains** → **Tracking**
+2. Find the domain and click **Delete**
+3. Confirm deletion
+
+### Via API
+
+```bash
+curl -X DELETE https://app.lettr.com/api/domains/tracking/links.example.com \
+  -H "Authorization: Bearer le_xxxxxxxxxxxx"
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="CNAME not verified">
+    - Verify the CNAME record is pointing to `proxy.lettr-tracking.io`
+    - Check that you added the record to the correct subdomain
+    - DNS propagation can take up to 48 hours, though usually completes in minutes
+    - Some DNS providers require the full domain in the name field (e.g., `links.example.com` instead of `links`)
+  </Accordion>
+
+  <Accordion title="SSL certificate pending">
+    - Ensure both TXT records are added correctly
+    - TXT record values must match exactly (including any trailing characters)
+    - Certificate provisioning can take up to 24 hours in rare cases
+    - If stuck, try removing and re-adding the tracking domain
+  </Accordion>
+
+  <Accordion title="Tracking links not using custom domain">
+    - Verify the tracking domain is linked to your sending domain
+    - Check that tracking domain status is `active`
+    - Only emails sent after configuration will use the custom domain
+  </Accordion>
+
+  <Accordion title="Certificate renewal issues">
+    - SSL certificates auto-renew before expiration
+    - If renewal fails, check that TXT records are still in place
+    - Contact support if certificates expire unexpectedly
+  </Accordion>
+</AccordionGroup>
 
 <Note>
   Changing your tracking domain won't affect previously sent emails. Only new emails will use the updated tracking domain.
 </Note>
 
+## Best Practices
+
+1. **Use a dedicated subdomain** - Don't use your root domain for tracking
+2. **Keep subdomains short** - Shorter URLs look cleaner in emails
+3. **Avoid suspicious words** - Skip words like "tracking" or "click" in the subdomain
+4. **Set up before sending** - Configure tracking domains before email campaigns
+5. **Monitor SSL status** - Ensure certificates stay active
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Sending Domains" icon="paper-plane" href="/learn/domains/sending-domains">
+    Configure domains for sending
+  </Card>
+  <Card title="Tracking" icon="chart-line" href="/learn/sending/tracking">
+    Learn about click and open tracking
+  </Card>
+  <Card title="Analytics" icon="chart-bar" href="/learn/sending/analytics">
+    View tracking analytics
+  </Card>
+  <Card title="Storage Domains" icon="hard-drive" href="/learn/domains/storage-domains">
+    Custom domains for email assets
+  </Card>
+</CardGroup>
