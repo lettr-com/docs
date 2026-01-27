@@ -1,0 +1,246 @@
+---
+title: Inbound Domains
+description: "Configure domains to receive emails and process them via webhooks"
+---
+
+# Inbound Domains
+
+Inbound domains allow you to receive emails at your domain and process them programmatically through Lettr. When someone sends an email to an address on your inbound domain, Lettr receives it and forwards the content to your application via webhooks.
+
+## Use Cases
+
+Inbound email processing enables powerful features:
+
+- **Reply Handling** - Process replies to your outgoing emails
+- **Support Tickets** - Automatically create tickets from incoming emails
+- **Email Parsing** - Extract data from incoming emails (invoices, receipts, etc.)
+- **Forward Processing** - Handle forwarded emails from users
+- **Automation Triggers** - Start workflows based on incoming emails
+
+## How Inbound Works
+
+```
+┌──────────────┐         ┌──────────────┐         ┌──────────────┐
+│   Sender     │ ──────▶ │    Lettr     │ ──────▶ │  Your App    │
+│ Sends Email  │   MX    │  Receives    │ Webhook │  Processes   │
+└──────────────┘         └──────────────┘         └──────────────┘
+```
+
+1. Configure your domain's MX records to point to Lettr
+2. Emails sent to any address `*@yourdomain.com` are received by Lettr
+3. Lettr parses the email and sends a webhook to your application
+4. Your application processes the email data
+
+## Setup Inbound Domain
+
+<Steps>
+  <Step title="Add Domain in Dashboard">
+    Go to **Domains → Add Domain**, enter your domain, and select **Inbound** as the type.
+  </Step>
+  <Step title="Add MX Record">
+    Add the MX record to your domain's DNS settings.
+  </Step>
+  <Step title="Configure Webhook">
+    Set up a webhook endpoint to receive incoming emails.
+  </Step>
+  <Step title="Verify Domain">
+    Click **Verify** to confirm DNS propagation.
+  </Step>
+</Steps>
+
+## DNS Configuration
+
+Add this MX record to your domain:
+
+```
+Type:     MX
+Host:     @ (or subdomain like 'inbound')
+Value:    inbound.lettr.dev
+Priority: 10
+```
+
+<Tip>
+  We recommend using a subdomain like `inbound.example.com` to keep your main domain's MX records separate for your regular email.
+</Tip>
+
+## Via API
+
+```javascript
+// Create inbound domain
+const domain = await lettr.domains.create({
+  name: 'inbound.example.com',
+  type: 'inbound'
+});
+
+// Set up webhook for incoming emails
+await lettr.webhooks.create({
+  url: 'https://yourapp.com/webhooks/inbound-email',
+  events: ['inbound.email.received']
+});
+```
+
+## Webhook Payload
+
+When an email is received, Lettr sends a webhook with the following structure:
+
+```json
+{
+  "event": "inbound.email.received",
+  "timestamp": "2024-01-15T10:30:00Z",
+  "data": {
+    "id": "inb_abc123",
+    "from": {
+      "email": "sender@example.org",
+      "name": "John Doe"
+    },
+    "to": [
+      {
+        "email": "support@inbound.example.com",
+        "name": ""
+      }
+    ],
+    "cc": [],
+    "bcc": [],
+    "subject": "Question about my order",
+    "text": "Plain text content...",
+    "html": "<html>HTML content...</html>",
+    "headers": {
+      "message-id": "<abc123@example.org>",
+      "in-reply-to": "<original-message-id>",
+      "references": "<thread-message-ids>"
+    },
+    "attachments": [
+      {
+        "filename": "document.pdf",
+        "contentType": "application/pdf",
+        "size": 102400,
+        "url": "https://inbound.lettr.dev/attachments/xyz789"
+      }
+    ],
+    "spam_score": 0.2,
+    "spf_result": "pass",
+    "dkim_result": "pass"
+  }
+}
+```
+
+## Handling Incoming Emails
+
+Example webhook handler:
+
+```javascript
+app.post('/webhooks/inbound-email', async (req, res) => {
+  const { event, data } = req.body;
+
+  if (event === 'inbound.email.received') {
+    const { from, subject, text, attachments } = data;
+
+    // Create support ticket
+    await createTicket({
+      email: from.email,
+      subject: subject,
+      body: text,
+      attachments: attachments
+    });
+
+    // Send auto-reply
+    await lettr.emails.send({
+      from: 'support@example.com',
+      to: [from.email],
+      subject: `Re: ${subject}`,
+      text: 'Thanks for contacting us! We\'ll respond within 24 hours.'
+    });
+  }
+
+  res.status(200).send('OK');
+});
+```
+
+## Catch-All Addresses
+
+With an inbound domain, all addresses are automatically catch-all:
+
+- `support@inbound.example.com` ✓
+- `sales@inbound.example.com` ✓
+- `anything@inbound.example.com` ✓
+
+You can route emails based on the recipient address in your webhook handler.
+
+## Spam Filtering
+
+Lettr automatically scans incoming emails for spam. The `spam_score` field indicates the likelihood of spam (0-10, higher = more likely spam).
+
+```javascript
+if (data.spam_score > 5) {
+  // Handle as spam
+  await moveToSpam(data.id);
+} else {
+  // Process normally
+  await processEmail(data);
+}
+```
+
+## Reply Tracking
+
+To match incoming replies to original outgoing emails, use the `in-reply-to` and `references` headers:
+
+```javascript
+const inReplyTo = data.headers['in-reply-to'];
+
+if (inReplyTo) {
+  // Find the original email
+  const originalEmail = await findEmailByMessageId(inReplyTo);
+
+  // Link reply to conversation
+  await addReplyToConversation(originalEmail.conversationId, data);
+}
+```
+
+## Attachment Handling
+
+Attachments are stored temporarily and accessible via URL:
+
+```javascript
+for (const attachment of data.attachments) {
+  // Download attachment
+  const response = await fetch(attachment.url);
+  const buffer = await response.buffer();
+
+  // Save to your storage
+  await saveAttachment(attachment.filename, buffer);
+}
+```
+
+<Warning>
+  Attachment URLs expire after 7 days. Download and store attachments in your own storage if you need long-term access.
+</Warning>
+
+## Email Validation
+
+Lettr validates incoming emails and provides authentication results:
+
+| Field | Values | Description |
+|-------|--------|-------------|
+| `spf_result` | pass, fail, softfail, neutral, none | SPF check result |
+| `dkim_result` | pass, fail, none | DKIM signature verification |
+| `spam_score` | 0-10 | Spam likelihood score |
+
+## Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| Not receiving emails | Verify MX record points to `inbound.lettr.dev` |
+| Webhook not called | Check webhook URL is accessible and returns 2xx |
+| Missing attachments | Ensure attachment URLs are downloaded before expiry |
+| High spam scores | Check sender's SPF/DKIM configuration |
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Webhooks" icon="webhook" href="/learn/webhooks/introduction">
+    Learn more about webhook configuration
+  </Card>
+  <Card title="Storage Domains" icon="image" href="/learn/domains/storage-domains">
+    Set up image hosting for your emails
+  </Card>
+</CardGroup>

@@ -1,0 +1,236 @@
+---
+title: Storage Domains
+description: "Configure custom domains for hosting images embedded in your emails"
+---
+
+# Storage Domains
+
+Storage domains allow you to serve images embedded in your email HTML from your own custom domain instead of Lettr's default CDN domain. This improves brand consistency and can enhance deliverability.
+
+## Why Use Storage Domains?
+
+When you include images in your emails, they need to be hosted somewhere accessible. By default, Lettr hosts images on its CDN (`cdn.lettr.dev`). Custom storage domains provide:
+
+- **Brand Consistency** - Image URLs show your domain, not Lettr's
+- **Improved Deliverability** - Some spam filters prefer images from the sender's domain
+- **User Trust** - Recipients see familiar domains when hovering over images
+- **Professional Appearance** - Consistent branding across all email elements
+
+## Default vs Custom Storage
+
+| Type | Image URL Example |
+|------|------------------|
+| Default | `https://cdn.lettr.dev/images/abc123/hero.png` |
+| Custom | `https://images.example.com/abc123/hero.png` |
+
+## How It Works
+
+```
+┌──────────────┐         ┌──────────────┐         ┌──────────────┐
+│  Your Email  │         │ Custom Domain│         │  Lettr CDN   │
+│  <img src=   │ ──────▶ │  (CNAME)     │ ──────▶ │  (Serves     │
+│   "images.   │         │              │         │   Image)     │
+│   example.   │         │              │         │              │
+│   com/...">  │         │              │         │              │
+└──────────────┘         └──────────────┘         └──────────────┘
+```
+
+1. You configure a subdomain with a CNAME pointing to Lettr's CDN
+2. When sending emails, Lettr rewrites image URLs to use your storage domain
+3. Recipients load images from your domain, which proxies to Lettr's CDN
+4. Lettr automatically provisions SSL certificates for your domain
+
+## Setup Storage Domain
+
+<Steps>
+  <Step title="Choose a Subdomain">
+    Pick a subdomain like `images`, `assets`, or `cdn` for your storage domain.
+  </Step>
+  <Step title="Add Domain in Dashboard">
+    Go to **Domains → Add Domain**, enter your subdomain, and select **Storage** as the type.
+  </Step>
+  <Step title="Add DNS Record">
+    Add the CNAME record to your domain's DNS settings.
+  </Step>
+  <Step title="Verify Domain">
+    Click **Verify** to confirm DNS propagation and SSL provisioning.
+  </Step>
+</Steps>
+
+## DNS Configuration
+
+Add this CNAME record to your domain:
+
+```
+Type:  CNAME
+Host:  images (or your chosen subdomain)
+Value: cdn.lettr.dev
+```
+
+## Via API
+
+```javascript
+// Create storage domain
+const domain = await lettr.domains.create({
+  name: 'images.example.com',
+  type: 'storage'
+});
+
+console.log(domain.dnsRecords);
+// [{ type: 'CNAME', host: 'images', value: 'cdn.lettr.dev' }]
+```
+
+## SSL Certificate
+
+Lettr automatically provisions and manages SSL certificates for your storage domain. This ensures all image URLs use HTTPS.
+
+```javascript
+const domain = await lettr.domains.get('dom_123');
+
+console.log({
+  storageDomain: domain.name,
+  sslStatus: domain.sslStatus,     // 'provisioning', 'active', 'failed'
+  sslExpiresAt: domain.sslExpiresAt
+});
+```
+
+<Info>
+  SSL provisioning typically takes 5-10 minutes after DNS verification. During this time, images will continue to be served from the default Lettr CDN.
+</Info>
+
+## Using Storage Domains
+
+Once configured, Lettr automatically rewrites image URLs in your emails:
+
+### Inline Images
+
+```javascript
+await lettr.emails.send({
+  from: 'news@example.com',
+  to: ['subscriber@example.com'],
+  subject: 'Weekly Newsletter',
+  html: `
+    <img src="https://yoursite.com/uploads/hero.png" alt="Hero" />
+    <p>Check out our latest products!</p>
+  `
+});
+
+// In the sent email, the image URL becomes:
+// https://images.example.com/abc123/hero.png
+```
+
+### Template Images
+
+Images in templates are also automatically rewritten:
+
+```javascript
+await lettr.emails.send({
+  from: 'news@example.com',
+  to: ['subscriber@example.com'],
+  templateId: 'tmpl_newsletter',
+  variables: {
+    heroImage: 'https://yoursite.com/uploads/hero.png'
+  }
+});
+```
+
+## Image Optimization
+
+Lettr's CDN automatically optimizes images served through storage domains:
+
+| Feature | Description |
+|---------|-------------|
+| **Format Conversion** | Automatically serves WebP to supported browsers |
+| **Compression** | Optimizes file size without visible quality loss |
+| **Caching** | Global CDN caching for fast delivery |
+| **Resizing** | On-the-fly resizing via URL parameters |
+
+### Image Resizing
+
+Append size parameters to image URLs:
+
+```html
+<!-- Original size -->
+<img src="https://images.example.com/abc123/hero.png" />
+
+<!-- Resized to 300px width -->
+<img src="https://images.example.com/abc123/hero.png?w=300" />
+
+<!-- Resized with specific dimensions -->
+<img src="https://images.example.com/abc123/hero.png?w=600&h=400" />
+```
+
+## Upload Images via API
+
+You can upload images directly to your storage domain:
+
+```javascript
+const image = await lettr.storage.upload({
+  file: fs.readFileSync('./hero.png'),
+  filename: 'hero.png',
+  contentType: 'image/png'
+});
+
+console.log(image.url);
+// https://images.example.com/abc123/hero.png
+
+// Use in email
+await lettr.emails.send({
+  from: 'news@example.com',
+  to: ['subscriber@example.com'],
+  subject: 'Newsletter',
+  html: `<img src="${image.url}" alt="Hero" />`
+});
+```
+
+## Storage Limits
+
+| Plan | Storage Limit | Max File Size |
+|------|---------------|---------------|
+| Free | 100 MB | 5 MB |
+| Pro | 10 GB | 25 MB |
+| Enterprise | Unlimited | 100 MB |
+
+## Multiple Storage Domains
+
+You can configure multiple storage domains for different purposes:
+
+| Domain | Use Case |
+|--------|----------|
+| `images.example.com` | Marketing email images |
+| `assets.product.com` | Product-specific images |
+| `cdn.newsletter.com` | Newsletter assets |
+
+## Verify Setup
+
+```javascript
+const domain = await lettr.domains.get('dom_123');
+
+console.log({
+  name: domain.name,
+  type: domain.type,           // 'storage'
+  status: domain.status,       // 'verified'
+  sslStatus: domain.sslStatus, // 'active'
+  cdnEndpoint: domain.cdnEndpoint
+});
+```
+
+## Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| Images not loading | Verify CNAME points to `cdn.lettr.dev` |
+| SSL errors | Wait for SSL provisioning (check `sslStatus`) |
+| 404 errors | Ensure image was uploaded before sending |
+| Slow loading | Images are cached globally, first load may be slower |
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Sending Domains" icon="paper-plane" href="/learn/domains/sending-domains">
+    Configure your sending domain
+  </Card>
+  <Card title="Tracking Domains" icon="chart-line" href="/learn/domains/tracking-domains">
+    Set up custom tracking domains
+  </Card>
+</CardGroup>

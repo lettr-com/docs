@@ -1,52 +1,114 @@
 ---
-title: Domains Introduction
-description: "Configure domains for sending emails"
+title: Managing Domains
+description: "Configure and verify domains for email sending, tracking, receiving, and storage"
 ---
 
-# Domains
+# Managing Domains
 
-Configure and verify domains to send emails with Lettr.
+Domains are the foundation of your email infrastructure in Lettr. Properly configured domains ensure your emails reach the inbox, maintain your brand identity, and comply with email authentication standards.
 
-## Why Verify Domains?
+<Warning>
+  Domain not verifying? Check our [troubleshooting guide](/knowledge-base/troubleshooting/authentication) for common DNS issues.
+</Warning>
 
-Domain verification is essential for:
+## Types of Domains
 
-- **Deliverability** - Properly authenticated emails reach the inbox
-- **Brand Trust** - Send from your own domain, not a shared one
+Lettr supports four types of domains, each serving a specific purpose:
+
+<CardGroup cols={2}>
+  <Card title="Sending Domains" icon="paper-plane" href="/learn/domains/sending-domains">
+    Primary domains used for sending emails. Requires SPF and DKIM authentication.
+  </Card>
+  <Card title="Tracking Domains" icon="chart-line" href="/learn/domains/tracking-domains">
+    Custom domains for click and open tracking links instead of using Lettr's default tracking domain.
+  </Card>
+  <Card title="Inbound Domains" icon="inbox" href="/learn/domains/inbound-domains">
+    Domains configured to receive emails and process them via webhooks.
+  </Card>
+  <Card title="Storage Domains" icon="image" href="/learn/domains/storage-domains">
+    Custom domains for hosting images embedded in your email HTML.
+  </Card>
+</CardGroup>
+
+## Domain Comparison
+
+| Domain Type | Purpose | Required DNS Records |
+|-------------|---------|---------------------|
+| Sending | Send emails from your domain | SPF (TXT), DKIM (CNAME), optional DMARC |
+| Tracking | Custom tracking links | CNAME pointing to Lettr |
+| Inbound | Receive emails | MX record pointing to Lettr |
+| Storage | Host email images | CNAME pointing to Lettr CDN |
+
+## Why Use Custom Domains?
+
+Using your own domains instead of shared Lettr domains provides:
+
+- **Brand Consistency** - All links and addresses use your domain
+- **Improved Deliverability** - Authenticated emails from your domain build reputation
+- **User Trust** - Recipients see familiar domains in links and sender addresses
 - **Compliance** - Meet email authentication requirements (SPF, DKIM, DMARC)
+- **Reputation Isolation** - Your sending reputation is separate from other senders
 
-## Add a Domain
+## Email Authentication
+
+Email authentication protocols verify that emails are legitimately sent by the domain owner. Lettr requires proper authentication for all sending domains.
+
+<CardGroup cols={2}>
+  <Card title="SPF" icon="list-check" href="/learn/domains/spf">
+    Sender Policy Framework - Authorize Lettr's servers to send on your behalf.
+  </Card>
+  <Card title="DKIM" icon="key" href="/learn/domains/dkim">
+    DomainKeys Identified Mail - Cryptographically sign emails to prove authenticity.
+  </Card>
+  <Card title="DMARC" icon="shield" href="/learn/domains/dmarc">
+    Domain-based Message Authentication - Define policies for failed authentication.
+  </Card>
+  <Card title="BIMI" icon="image" href="/learn/domains/bimi">
+    Brand Indicators for Message Identification - Display your logo in email clients.
+  </Card>
+</CardGroup>
+
+## Quick Setup
 
 <Steps>
   <Step title="Add Domain in Dashboard">
-    Go to Domains → Add Domain and enter your domain name.
+    Go to **Domains → Add Domain** and enter your domain name. Choose the domain type based on your needs.
   </Step>
   <Step title="Add DNS Records">
-    Add the provided DNS records to your domain.
+    Add the provided DNS records to your domain's DNS settings. Records vary by domain type.
   </Step>
   <Step title="Verify Domain">
-    Click Verify to confirm DNS propagation.
+    Click **Verify** to confirm DNS propagation. Verification typically takes a few minutes but can take up to 48 hours.
   </Step>
 </Steps>
 
-## Via API
+## Add Domain via API
 
 ```javascript
 const domain = await lettr.domains.create({
-  name: 'example.com'
+  name: 'example.com',
+  type: 'sending' // 'sending', 'tracking', 'inbound', or 'storage'
 });
 
 // Get DNS records to add
 console.log(domain.dnsRecords);
 ```
 
-## Required DNS Records
+## Domain Status
 
-| Type | Name | Value | Purpose |
-|------|------|-------|---------|
-| TXT | `@` | `v=spf1 include:spf.lettr.dev ~all` | SPF authentication |
-| CNAME | `lettr._domainkey` | `dkim.lettr.dev` | DKIM signing |
-| TXT | `_dmarc` | `v=DMARC1; p=none;` | DMARC policy |
+Domains can have different statuses during and after verification:
+
+| Status | Description |
+|--------|-------------|
+| `not_started` | Domain added but verification not initiated |
+| `pending` | DNS records not yet detected, verification in progress |
+| `verified` | All records verified and domain is active |
+| `failed` | Verification failed after 72 hours (check DNS records) |
+| `temporary_failure` | Previously verified domain with DNS issues detected |
+
+<Info>
+  For `temporary_failure` status, Lettr will recheck DNS records for 72 hours. If records are detected, status returns to `verified`. Otherwise, it changes to `failed`.
+</Info>
 
 ## Check Domain Status
 
@@ -54,34 +116,36 @@ console.log(domain.dnsRecords);
 const domain = await lettr.domains.get('dom_123');
 
 console.log({
-  spfStatus: domain.spfStatus,    // 'verified', 'pending', 'failed'
-  dkimStatus: domain.dkimStatus,  // 'verified', 'pending', 'failed'
-  dmarcStatus: domain.dmarcStatus // 'verified', 'pending', 'failed'
+  name: domain.name,
+  type: domain.type,
+  status: domain.status,
+  spfStatus: domain.spfStatus,
+  dkimStatus: domain.dkimStatus,
+  dmarcStatus: domain.dmarcStatus
 });
 ```
 
-## Domain Status
+## Subdomains vs Root Domains
 
-| Status | Description |
-|--------|-------------|
-| `pending` | DNS records not yet detected |
-| `verified` | All records verified and active |
-| `failed` | Verification failed (check DNS) |
+We recommend using subdomains for sending emails to isolate your sending reputation:
 
-## Learn More
+| Subdomain | Use Case |
+|-----------|----------|
+| `mail.example.com` | Transactional emails |
+| `news.example.com` | Marketing newsletters |
+| `updates.example.com` | Product updates |
+
+<Tip>
+  Using subdomains protects your root domain's reputation. If one subdomain experiences deliverability issues, your other subdomains remain unaffected.
+</Tip>
+
+## Next Steps
 
 <CardGroup cols={2}>
-  <Card title="Sending Domains" icon="paper-plane" href="/learn/domains/sending-domains">
-    Configure domains for sending
+  <Card title="Set Up Sending Domain" icon="paper-plane" href="/learn/domains/sending-domains">
+    Configure your first sending domain
   </Card>
-  <Card title="Tracking Domains" icon="chart-line" href="/learn/domains/tracking-domains">
-    Custom tracking domains
-  </Card>
-  <Card title="DMARC" icon="shield" href="/learn/domains/dmarc">
-    Set up DMARC policies
-  </Card>
-  <Card title="BIMI" icon="image" href="/learn/domains/bimi">
-    Display your logo in email clients
+  <Card title="Understand SPF" icon="list-check" href="/learn/domains/spf">
+    Learn about SPF authentication
   </Card>
 </CardGroup>
-

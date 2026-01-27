@@ -1,0 +1,167 @@
+---
+title: SPF Records
+description: "Configure SPF to authorize Lettr to send emails on your behalf"
+---
+
+# SPF (Sender Policy Framework)
+
+SPF is an email authentication standard that allows you to specify which mail servers are authorized to send email on behalf of your domain. When an email server receives a message, it can check the SPF record to verify the sender is legitimate.
+
+## How SPF Works
+
+1. You publish a TXT record in your domain's DNS listing authorized sending servers
+2. When a recipient's server receives an email claiming to be from your domain, it looks up your SPF record
+3. The server checks if the sending IP is listed in your SPF record
+4. Based on the result, the email is accepted, marked as suspicious, or rejected
+
+```
+                                                    ┌─────────────────┐
+┌──────────┐         ┌──────────┐                   │  DNS Server     │
+│  Sender  │ ──────▶ │  Lettr   │ ──────────────▶   │  (SPF Lookup)   │
+└──────────┘         └──────────┘                   └────────┬────────┘
+                           │                                 │
+                           │         ┌───────────────────────┘
+                           ▼         ▼
+                     ┌───────────────────┐
+                     │ Recipient Server  │
+                     │ (Checks SPF)      │
+                     └───────────────────┘
+```
+
+## Adding SPF for Lettr
+
+Add a TXT record to your domain's DNS:
+
+```
+Type:  TXT
+Host:  @ (or leave blank for root domain)
+Value: v=spf1 include:spf.lettr.dev ~all
+```
+
+### SPF Record Breakdown
+
+| Component | Meaning |
+|-----------|---------|
+| `v=spf1` | SPF version 1 (required) |
+| `include:spf.lettr.dev` | Authorize Lettr's mail servers |
+| `~all` | Soft fail for unauthorized senders |
+
+## SPF Qualifiers
+
+The qualifier at the end of your SPF record determines how receiving servers handle emails from unauthorized sources:
+
+| Qualifier | Symbol | Action | Recommendation |
+|-----------|--------|--------|----------------|
+| Pass | `+all` | Accept all (defeats SPF purpose) | Never use |
+| Soft Fail | `~all` | Accept but mark suspicious | **Recommended** |
+| Hard Fail | `-all` | Reject unauthorized emails | Use after testing |
+| Neutral | `?all` | No policy | Not recommended |
+
+<Tip>
+  Start with `~all` (soft fail) while setting up, then move to `-all` (hard fail) once you've confirmed all legitimate sending sources are included.
+</Tip>
+
+## Merging SPF Records
+
+You can only have **one SPF record** per domain. If you use multiple email services, merge them into a single record:
+
+### Example: Lettr + Google Workspace
+
+```
+v=spf1 include:spf.lettr.dev include:_spf.google.com ~all
+```
+
+### Example: Lettr + Microsoft 365 + Mailchimp
+
+```
+v=spf1 include:spf.lettr.dev include:spf.protection.outlook.com include:servers.mcsv.net ~all
+```
+
+<Warning>
+  Having multiple SPF records will cause authentication failures. Always merge into a single TXT record.
+</Warning>
+
+## SPF Lookup Limit
+
+SPF has a limit of **10 DNS lookups** per record. Each `include:` statement counts as at least one lookup.
+
+### Check Your SPF Lookups
+
+```javascript
+const domain = await lettr.domains.get('dom_123');
+
+console.log({
+  spfStatus: domain.spfStatus,
+  spfLookups: domain.spfLookups, // Number of DNS lookups
+  spfValid: domain.spfValid
+});
+```
+
+If you exceed 10 lookups, consider:
+
+- Removing unused email services from your SPF
+- Using SPF flattening services that replace includes with IP addresses
+
+## Custom Return-Path
+
+By default, Lettr uses the `send` subdomain for the Return-Path address (e.g., `send.example.com`). You can customize this:
+
+### Via Dashboard
+
+When adding a domain, expand **Advanced options** and set your custom return path.
+
+### Via API
+
+```javascript
+const domain = await lettr.domains.create({
+  name: 'example.com',
+  customReturnPath: 'bounce' // Results in bounce.example.com
+});
+```
+
+### Return-Path DNS Record
+
+When using a custom return-path, add this CNAME record:
+
+```
+Type:  CNAME
+Host:  bounce (or your chosen subdomain)
+Value: bounce.lettr.dev
+```
+
+<Note>
+  Custom return paths must be 63 characters or less, start with a letter, end with a letter or number, and contain only letters, numbers, and hyphens.
+</Note>
+
+## Verify SPF Setup
+
+```javascript
+const domain = await lettr.domains.get('dom_123');
+
+if (domain.spfStatus === 'verified') {
+  console.log('SPF is correctly configured!');
+} else {
+  console.log('SPF status:', domain.spfStatus);
+  console.log('Expected record:', domain.expectedSpfRecord);
+}
+```
+
+## Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| SPF not verifying | Ensure TXT record is on root domain, not a subdomain |
+| Multiple SPF records | Merge all services into one TXT record |
+| Too many lookups | Remove unused includes or use SPF flattening |
+| Emails still failing | Check that Lettr's include is present: `include:spf.lettr.dev` |
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="DKIM" icon="key" href="/learn/domains/dkim">
+    Set up DKIM signing for your domain
+  </Card>
+  <Card title="DMARC" icon="shield" href="/learn/domains/dmarc">
+    Configure DMARC policies
+  </Card>
+</CardGroup>

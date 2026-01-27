@@ -66,6 +66,25 @@
         ]
       },
       {
+        "tab": "Learn",
+        "groups": [
+          {
+            "group": "Domains",
+            "pages": [
+              "learn/domains/introduction",
+              "learn/domains/sending-domains",
+              "learn/domains/tracking-domains",
+              "learn/domains/inbound-domains",
+              "learn/domains/storage-domains",
+              "learn/domains/spf",
+              "learn/domains/dkim",
+              "learn/domains/dmarc",
+              "learn/domains/bimi"
+            ]
+          }
+        ]
+      },
+      {
         "tab": "API Reference",
         "groups": [
           {

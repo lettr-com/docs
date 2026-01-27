@@ -1,0 +1,164 @@
+---
+title: DKIM Records
+description: "Configure DKIM to cryptographically sign your emails"
+---
+
+# DKIM (DomainKeys Identified Mail)
+
+DKIM is an email authentication method that allows the recipient to verify that an email was indeed sent and authorized by the owner of that domain. It works by adding a digital signature to the email header that can be verified using a public key published in your DNS.
+
+## How DKIM Works
+
+1. Lettr signs your outgoing emails with a private key
+2. The signature is added to the email header as `DKIM-Signature`
+3. You publish the corresponding public key in your domain's DNS
+4. Recipient servers use the public key to verify the signature
+5. If verification passes, the email is confirmed as authentic and unmodified
+
+```
+┌──────────────┐     Signs with      ┌──────────────┐
+│    Email     │ ─────────────────▶  │   Signed     │
+│   Content    │   Private Key       │    Email     │
+└──────────────┘                     └──────┬───────┘
+                                            │
+                                            ▼
+┌──────────────┐     Verifies with   ┌──────────────┐
+│   DNS TXT    │ ◀───────────────── │  Recipient   │
+│  Public Key  │                     │   Server     │
+└──────────────┘                     └──────────────┘
+```
+
+## Adding DKIM for Lettr
+
+Add a CNAME record to your domain's DNS:
+
+```
+Type:  CNAME
+Host:  lettr._domainkey
+Value: dkim.lettr.dev
+```
+
+<Info>
+  Lettr uses CNAME records for DKIM to simplify key management. This allows automatic key rotation without requiring you to update DNS records.
+</Info>
+
+## DKIM Record Explained
+
+A DKIM public key record contains:
+
+```
+v=DKIM1;           # DKIM version
+k=rsa;             # Key type (RSA)
+p=MIGfMA0GCS...    # Public key (base64 encoded)
+```
+
+| Field | Description |
+|-------|-------------|
+| `v` | DKIM version (always DKIM1) |
+| `k` | Key type (rsa or ed25519) |
+| `p` | Public key in base64 format |
+| `t` | Optional flags (e.g., `t=s` for strict mode) |
+
+## DKIM Signature Header
+
+When Lettr sends an email, it adds a DKIM-Signature header:
+
+```
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+  d=example.com; s=lettr;
+  h=from:to:subject:date:message-id;
+  bh=abc123...;
+  b=xyz789...
+```
+
+| Field | Description |
+|-------|-------------|
+| `v` | Signature version |
+| `a` | Signing algorithm |
+| `c` | Canonicalization method |
+| `d` | Signing domain |
+| `s` | Selector (identifies which key to use) |
+| `h` | Headers included in signature |
+| `bh` | Body hash |
+| `b` | Signature |
+
+## Multiple DKIM Keys
+
+You can have multiple DKIM keys for different purposes (e.g., different email services). Each key uses a different selector:
+
+| Service | Selector | DNS Record Host |
+|---------|----------|-----------------|
+| Lettr | `lettr` | `lettr._domainkey` |
+| Google | `google` | `google._domainkey` |
+| Mailchimp | `k1` | `k1._domainkey` |
+
+<Tip>
+  Unlike SPF, you can have multiple DKIM records. Each service uses its own selector, so they don't conflict.
+</Tip>
+
+## DKIM Key Rotation
+
+Lettr automatically rotates DKIM keys to maintain security. Because you use a CNAME record pointing to `dkim.lettr.dev`, key rotation happens seamlessly without any DNS changes on your end.
+
+## Verify DKIM Setup
+
+```javascript
+const domain = await lettr.domains.get('dom_123');
+
+if (domain.dkimStatus === 'verified') {
+  console.log('DKIM is correctly configured!');
+} else {
+  console.log('DKIM status:', domain.dkimStatus);
+  console.log('Expected record host:', domain.dkimRecordHost);
+  console.log('Expected record value:', domain.dkimRecordValue);
+}
+```
+
+## DKIM Alignment for DMARC
+
+For DMARC to pass based on DKIM, the domain in the `d=` tag of the DKIM signature must align with the `From:` header domain.
+
+Lettr automatically signs emails with your domain, ensuring DKIM alignment:
+
+```javascript
+// Email sent from: hello@example.com
+// DKIM signature d= tag: example.com
+// Result: Aligned ✓
+```
+
+## Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| DKIM not verifying | Ensure CNAME record is exactly `lettr._domainkey` |
+| CNAME not resolving | Check for typos in the value: `dkim.lettr.dev` |
+| Signature invalid | Ensure email content isn't modified after sending |
+| DMARC failing despite DKIM pass | Check DKIM alignment (d= domain matches From domain) |
+
+## Testing DKIM
+
+Send a test email and check the headers:
+
+1. Send an email to your personal account
+2. View the email headers/source
+3. Look for `DKIM-Signature:` header
+4. Check for `dkim=pass` in the `Authentication-Results` header
+
+Example passing result:
+
+```
+Authentication-Results: mx.google.com;
+  dkim=pass header.d=example.com header.s=lettr;
+  spf=pass smtp.mailfrom=example.com
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="DMARC" icon="shield" href="/learn/domains/dmarc">
+    Configure DMARC to tie SPF and DKIM together
+  </Card>
+  <Card title="BIMI" icon="image" href="/learn/domains/bimi">
+    Display your brand logo in email clients
+  </Card>
+</CardGroup>
