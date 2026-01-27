@@ -1,0 +1,454 @@
+---
+title: Attachments
+description: "Handle file attachments in incoming emails"
+---
+
+# Handling Inbound Attachments
+
+When someone sends an email with attachments to your inbound domain, Lettr extracts and stores the attachments temporarily, providing secure URLs for you to download them.
+
+## Attachment Data Structure
+
+Each attachment in the webhook payload includes:
+
+```json
+{
+  "attachments": [
+    {
+      "filename": "invoice.pdf",
+      "contentType": "application/pdf",
+      "size": 245678,
+      "url": "https://inbound.lettr.com/attachments/abc123def456"
+    },
+    {
+      "filename": "screenshot.png",
+      "contentType": "image/png",
+      "size": 89012,
+      "url": "https://inbound.lettr.com/attachments/xyz789ghi012"
+    }
+  ]
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `filename` | string | Original filename of the attachment |
+| `contentType` | string | MIME type of the file |
+| `size` | number | File size in bytes |
+| `url` | string | Temporary URL to download the attachment |
+
+## Downloading Attachments
+
+Download attachments using the provided URLs:
+
+```javascript
+app.post('/webhooks/inbound', async (req, res) => {
+  const { attachments, from, subject } = req.body.data;
+
+  // Process each attachment
+  for (const attachment of attachments) {
+    // Download the file
+    const response = await fetch(attachment.url);
+    const buffer = await response.arrayBuffer();
+
+    // Save to your storage
+    await saveToStorage({
+      filename: attachment.filename,
+      contentType: attachment.contentType,
+      data: Buffer.from(buffer)
+    });
+
+    console.log(`Saved: ${attachment.filename} (${attachment.size} bytes)`);
+  }
+
+  res.sendStatus(200);
+});
+```
+
+## Attachment URL Expiration
+
+<Warning>
+  Attachment URLs are valid for **24 hours** after the email is received. Download and store attachments if you need them longer.
+</Warning>
+
+Handle expiration gracefully:
+
+```javascript
+async function downloadAttachment(attachment) {
+  const response = await fetch(attachment.url);
+
+  if (response.status === 404 || response.status === 410) {
+    throw new Error(`Attachment URL expired: ${attachment.filename}`);
+  }
+
+  if (!response.ok) {
+    throw new Error(`Failed to download: ${response.statusText}`);
+  }
+
+  return response.arrayBuffer();
+}
+```
+
+## Storing Attachments
+
+### Save to Local Filesystem
+
+```javascript
+import fs from 'fs/promises';
+import path from 'path';
+
+async function saveAttachmentLocally(attachment, directory = './attachments') {
+  const response = await fetch(attachment.url);
+  const buffer = await response.arrayBuffer();
+
+  // Create safe filename
+  const safeFilename = sanitizeFilename(attachment.filename);
+  const filepath = path.join(directory, `${Date.now()}-${safeFilename}`);
+
+  await fs.writeFile(filepath, Buffer.from(buffer));
+
+  return filepath;
+}
+
+function sanitizeFilename(filename) {
+  return filename
+    .replace(/[^a-zA-Z0-9.-]/g, '_')
+    .substring(0, 255);
+}
+```
+
+### Save to Cloud Storage (AWS S3)
+
+```javascript
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+
+const s3 = new S3Client({ region: 'us-east-1' });
+
+async function saveToS3(attachment, emailId) {
+  const response = await fetch(attachment.url);
+  const buffer = await response.arrayBuffer();
+
+  const key = `inbound/${emailId}/${attachment.filename}`;
+
+  await s3.send(new PutObjectCommand({
+    Bucket: 'your-bucket',
+    Key: key,
+    Body: Buffer.from(buffer),
+    ContentType: attachment.contentType,
+    Metadata: {
+      'original-filename': attachment.filename,
+      'email-id': emailId
+    }
+  }));
+
+  return `s3://your-bucket/${key}`;
+}
+```
+
+### Save to Cloud Storage (Google Cloud)
+
+```javascript
+import { Storage } from '@google-cloud/storage';
+
+const storage = new Storage();
+const bucket = storage.bucket('your-bucket');
+
+async function saveToGCS(attachment, emailId) {
+  const response = await fetch(attachment.url);
+  const buffer = await response.arrayBuffer();
+
+  const filename = `inbound/${emailId}/${attachment.filename}`;
+  const file = bucket.file(filename);
+
+  await file.save(Buffer.from(buffer), {
+    contentType: attachment.contentType,
+    metadata: {
+      originalFilename: attachment.filename
+    }
+  });
+
+  return `gs://your-bucket/${filename}`;
+}
+```
+
+## Validating Attachments
+
+Always validate attachments before processing:
+
+```javascript
+const ALLOWED_TYPES = [
+  'application/pdf',
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'text/plain',
+  'text/csv',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+];
+
+const MAX_SIZE = 25 * 1024 * 1024; // 25 MB
+
+function validateAttachment(attachment) {
+  const errors = [];
+
+  // Check content type
+  if (!ALLOWED_TYPES.includes(attachment.contentType)) {
+    errors.push(`Unsupported file type: ${attachment.contentType}`);
+  }
+
+  // Check file size
+  if (attachment.size > MAX_SIZE) {
+    errors.push(`File too large: ${attachment.size} bytes (max ${MAX_SIZE})`);
+  }
+
+  // Check filename
+  if (!attachment.filename || attachment.filename.length > 255) {
+    errors.push('Invalid filename');
+  }
+
+  return {
+    valid: errors.length === 0,
+    errors
+  };
+}
+
+app.post('/webhooks/inbound', async (req, res) => {
+  const { attachments } = req.body.data;
+
+  for (const attachment of attachments) {
+    const validation = validateAttachment(attachment);
+
+    if (!validation.valid) {
+      console.warn(`Skipping attachment: ${validation.errors.join(', ')}`);
+      continue;
+    }
+
+    await processAttachment(attachment);
+  }
+
+  res.sendStatus(200);
+});
+```
+
+## Security Considerations
+
+<Warning>
+  Never trust attachment filenames or content types from emails. Always validate and sanitize before processing.
+</Warning>
+
+### Virus Scanning
+
+Scan attachments for malware before storing:
+
+```javascript
+import ClamScan from 'clamscan';
+
+const clamscan = await new ClamScan().init({
+  clamdscan: {
+    host: 'localhost',
+    port: 3310
+  }
+});
+
+async function scanAndSave(attachment) {
+  const response = await fetch(attachment.url);
+  const buffer = Buffer.from(await response.arrayBuffer());
+
+  // Scan for viruses
+  const { isInfected, viruses } = await clamscan.scanBuffer(buffer);
+
+  if (isInfected) {
+    console.error(`Infected file detected: ${viruses.join(', ')}`);
+    await quarantineAttachment(attachment, viruses);
+    return { saved: false, reason: 'malware_detected' };
+  }
+
+  // Safe to save
+  await saveToStorage(attachment.filename, buffer);
+  return { saved: true };
+}
+```
+
+### File Type Verification
+
+Verify file contents match the declared content type:
+
+```javascript
+import { fileTypeFromBuffer } from 'file-type';
+
+async function verifyFileType(attachment) {
+  const response = await fetch(attachment.url);
+  const buffer = Buffer.from(await response.arrayBuffer());
+
+  const detected = await fileTypeFromBuffer(buffer);
+
+  if (detected && detected.mime !== attachment.contentType) {
+    console.warn(
+      `Content type mismatch: declared ${attachment.contentType}, detected ${detected.mime}`
+    );
+    return false;
+  }
+
+  return true;
+}
+```
+
+## Processing Specific File Types
+
+### PDF Documents
+
+```javascript
+import pdf from 'pdf-parse';
+
+async function extractPdfText(attachment) {
+  const response = await fetch(attachment.url);
+  const buffer = Buffer.from(await response.arrayBuffer());
+
+  const data = await pdf(buffer);
+
+  return {
+    text: data.text,
+    pages: data.numpages,
+    info: data.info
+  };
+}
+```
+
+### Images
+
+```javascript
+import sharp from 'sharp';
+
+async function processImage(attachment) {
+  const response = await fetch(attachment.url);
+  const buffer = Buffer.from(await response.arrayBuffer());
+
+  // Get image metadata
+  const metadata = await sharp(buffer).metadata();
+
+  // Create thumbnail
+  const thumbnail = await sharp(buffer)
+    .resize(200, 200, { fit: 'inside' })
+    .jpeg({ quality: 80 })
+    .toBuffer();
+
+  return {
+    metadata,
+    thumbnail
+  };
+}
+```
+
+### CSV Files
+
+```javascript
+import { parse } from 'csv-parse/sync';
+
+async function parseCsv(attachment) {
+  const response = await fetch(attachment.url);
+  const text = await response.text();
+
+  const records = parse(text, {
+    columns: true,
+    skip_empty_lines: true
+  });
+
+  return records;
+}
+```
+
+## Attachment Limits
+
+| Limit | Value |
+|-------|-------|
+| Max attachment size | 25 MB per file |
+| Max total attachments | 100 MB per email |
+| URL validity | 24 hours |
+| Max attachments per email | 50 files |
+
+## Complete Example
+
+```javascript
+import express from 'express';
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+
+const app = express();
+const s3 = new S3Client({ region: 'us-east-1' });
+
+const ALLOWED_TYPES = ['application/pdf', 'image/jpeg', 'image/png'];
+const MAX_SIZE = 10 * 1024 * 1024; // 10 MB
+
+app.post('/webhooks/inbound', express.json(), async (req, res) => {
+  const { id, from, subject, attachments } = req.body.data;
+
+  const savedAttachments = [];
+
+  for (const attachment of attachments) {
+    // Validate
+    if (!ALLOWED_TYPES.includes(attachment.contentType)) {
+      console.warn(`Skipping unsupported type: ${attachment.contentType}`);
+      continue;
+    }
+
+    if (attachment.size > MAX_SIZE) {
+      console.warn(`Skipping large file: ${attachment.filename}`);
+      continue;
+    }
+
+    try {
+      // Download
+      const response = await fetch(attachment.url);
+      if (!response.ok) throw new Error('Download failed');
+
+      const buffer = Buffer.from(await response.arrayBuffer());
+
+      // Upload to S3
+      const key = `inbound/${id}/${attachment.filename}`;
+      await s3.send(new PutObjectCommand({
+        Bucket: 'my-bucket',
+        Key: key,
+        Body: buffer,
+        ContentType: attachment.contentType
+      }));
+
+      savedAttachments.push({
+        filename: attachment.filename,
+        s3Key: key,
+        size: attachment.size
+      });
+    } catch (error) {
+      console.error(`Failed to process ${attachment.filename}:`, error);
+    }
+  }
+
+  // Store email record with attachment references
+  await saveEmailRecord({
+    externalId: id,
+    from,
+    subject,
+    attachments: savedAttachments
+  });
+
+  res.sendStatus(200);
+});
+```
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Webhooks" icon="webhook" href="/learn/receiving/webhooks">
+    Webhook payload structure
+  </Card>
+  <Card title="Security" icon="shield" href="/learn/receiving/security">
+    Security best practices
+  </Card>
+  <Card title="Best Practices" icon="star" href="/learn/receiving/best-practices">
+    Receiving best practices
+  </Card>
+  <Card title="Sending Attachments" icon="paperclip" href="/learn/sending/attachments">
+    Attach files to outgoing emails
+  </Card>
+</CardGroup>

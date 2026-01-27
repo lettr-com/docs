@@ -144,7 +144,16 @@
               {
                 "group": "Receiving",
                 "pages": [
-                  "learn/receiving/introduction"
+                  "learn/receiving/introduction",
+                  "learn/receiving/setup",
+                  "learn/receiving/webhooks",
+                  "learn/receiving/routing",
+                  "learn/receiving/attachments",
+                  "learn/receiving/spam-filtering",
+                  "learn/receiving/reply-tracking",
+                  "learn/receiving/parsing",
+                  "learn/receiving/security",
+                  "learn/receiving/best-practices"
                 ]
               },
               {
