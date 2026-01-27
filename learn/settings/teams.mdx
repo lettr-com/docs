@@ -1,133 +1,95 @@
 ---
 title: Teams
-description: "Manage team members and access"
+description: "Manage team members, roles, and security settings"
 ---
 
-# Team Management
+Teams in Lettr allow you to collaborate with colleagues on your email infrastructure. Each team has its own domains, templates, API keys, and billing, making it easy to separate projects or manage multiple organizations from a single account.
 
-Invite team members and manage access to your Lettr account.
+## Team Roles
 
-## Invite Team Members
+Lettr uses three role levels to control what team members can do.
 
-```javascript
-await lettr.team.invite({
-  email: 'colleague@company.com',
-  role: 'developer'
-});
-```
+**Owner** has complete control over the team. This includes managing billing and subscriptions, deleting the team, and configuring security settings like two-factor authentication requirements. Each team has exactly one owner, and ownership cannot be transferred through the UI.
 
-Or invite from the dashboard:
+**Admin** can manage day-to-day team operations. Admins can invite new members, change member roles (except promoting to owner), remove members, and update team settings like the team name. However, admins cannot access billing, delete the team, or change security settings.
 
-1. Go to **Settings** → **Team**
-2. Click **Invite Member**
-3. Enter email and select role
-4. Send invitation
+**Member** has access to the team's resources for their work but cannot manage the team itself. Members can use domains, send emails, view analytics, and work with templates, but they cannot invite others, change roles, or modify team settings.
 
-## Roles
+### Permissions Overview
 
-| Role | Permissions |
-|------|-------------|
-| **Owner** | Full access, billing, can delete account |
-| **Admin** | Full access except billing and account deletion |
-| **Developer** | API keys, domains, webhooks, sending |
-| **Analyst** | Read-only access to analytics and logs |
-| **Billing** | Billing and invoices only |
+| Permission | Owner | Admin | Member |
+|------------|-------|-------|--------|
+| Send emails and use API | Yes | Yes | Yes |
+| View analytics and logs | Yes | Yes | Yes |
+| Manage domains and templates | Yes | Yes | Yes |
+| Update team name | Yes | Yes | No |
+| Invite members | Yes | Yes | No |
+| Change member roles | Yes | Yes | No |
+| Remove members | Yes | Yes | No |
+| Require two-factor authentication | Yes | No | No |
+| Manage billing | Yes | No | No |
+| Delete team | Yes | No | No |
 
-## Role Permissions Matrix
+## Inviting Team Members
 
-| Permission | Owner | Admin | Developer | Analyst | Billing |
-|------------|-------|-------|-----------|---------|---------|
-| Send emails | ✅ | ✅ | ✅ | ❌ | ❌ |
-| View analytics | ✅ | ✅ | ✅ | ✅ | ❌ |
-| Manage domains | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Manage API keys | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Manage team | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Manage billing | ✅ | ❌ | ❌ | ❌ | ✅ |
-| Delete account | ✅ | ❌ | ❌ | ❌ | ❌ |
+To invite someone to your team, go to **Settings** → **Team** and click **Invite Member**. Enter their email address and select the role they should have when they join. You can invite members as either Admin or Member—the Owner role cannot be assigned through invitations.
 
-## List Team Members
+When you send an invitation, Lettr emails the recipient with a link to join your team. If they already have a Lettr account with that email address, they can accept the invitation after signing in. If they don't have an account, they'll be prompted to create one first, then automatically join your team.
 
-```javascript
-const members = await lettr.team.list();
+Pending invitations appear in the invite dialog on your team settings page. You can cancel any pending invitation if you change your mind or sent it to the wrong address. The recipient can also decline the invitation from their own **Settings** → **Invitations** page.
 
-members.forEach(member => {
-  console.log({
-    email: member.email,
-    role: member.role,
-    status: member.status,  // 'active', 'pending'
-    joinedAt: member.createdAt
-  });
-});
-```
+If you send a new invitation to an email address that already has a pending invitation, the new invitation replaces the old one with the updated role.
 
-## Update Member Role
+## Managing Team Members
 
-```javascript
-await lettr.team.update('member_123', {
-  role: 'admin'
-});
-```
+The team settings page displays all current members with their roles and two-factor authentication status. A green shield icon indicates a member has two-factor authentication enabled, while a gray shield with an alert indicates they haven't set it up yet.
 
-## Remove Team Member
+### Changing Roles
 
-```javascript
-await lettr.team.remove('member_123');
-```
+Owners can change any member's role between Admin and Member using the dropdown next to their name. The owner's role cannot be changed, and no one can be promoted directly to owner.
+
+When you change someone's role, the change takes effect immediately. If you demote an admin to member, they'll lose the ability to manage the team on their next page load.
+
+### Removing Members
+
+To remove someone from your team, click the trash icon next to their name. This is immediate and cannot be undone. The removed member loses access to all team resources instantly.
+
+If a removed member doesn't belong to any other teams, Lettr automatically creates a new personal team for them so they can continue using the service.
+
+## Security Settings
+
+### Requiring Two-Factor Authentication
+
+Team owners can require all members to have two-factor authentication enabled. When this setting is turned on, any team member without two-factor authentication will be redirected to set it up before they can access team resources.
+
+To enable this requirement, go to **Settings** → **Team** and toggle on **Require Two-Factor Authentication** in the Security section. If any members don't have two-factor authentication enabled, you'll see an alert showing how many need to set it up.
+
+Members who haven't configured two-factor authentication can still log in, but they'll be directed to the two-factor setup page and won't be able to access the dashboard until they complete the setup.
+
+## Working with Multiple Teams
+
+You can belong to multiple teams and switch between them using the team switcher in the sidebar. Click on your current team name to see all teams you're part of, then select a different team to switch to it.
+
+Each team is completely separate—switching teams changes which domains, templates, API keys, and billing you're working with. Your personal settings like password and two-factor authentication remain the same across all teams.
+
+### Creating Additional Teams
+
+To create a new team, click on the team switcher in the sidebar and select **Create Team**. Enter a name for your new team and click Create. You'll automatically become the owner of the new team and can start inviting members right away.
+
+New teams get their own email sending infrastructure, storage, and billing. This makes it easy to separate projects, clients, or business units while managing everything from a single Lettr account.
+
+## Accepting Team Invitations
+
+When someone invites you to their team, you'll receive an email with a link to accept. If you're already signed in to Lettr, clicking the link adds you to the team immediately. If you're not signed in, you'll be prompted to sign in first (or create an account if you don't have one).
+
+You can also view and manage pending invitations at **Settings** → **Invitations**. This page shows all teams you've been invited to, along with the role you'll have if you accept. You can accept invitations to join teams or decline them if you're not interested.
+
+## Deleting a Team
+
+Only the team owner can delete a team. To delete your team, go to **Settings** → **Team** and scroll to the Delete Team section. You'll need to confirm by entering your password.
 
 <Warning>
-  Removing a team member is immediate. They will lose access to all account resources.
+Deleting a team is permanent and cannot be undone. All team data including domains, templates, API keys, email logs, and configuration will be permanently removed.
 </Warning>
 
-## Transfer Ownership
-
-Transfer account ownership to another admin:
-
-```javascript
-await lettr.team.transferOwnership({
-  newOwnerId: 'member_456',
-  confirmPassword: 'your-password'
-});
-```
-
-## Single Sign-On (SSO)
-
-Enterprise plans support SSO integration:
-
-- SAML 2.0
-- OpenID Connect
-- Google Workspace
-- Okta
-- Azure AD
-
-Contact support to configure SSO for your organization.
-
-## Audit Log
-
-View team activity:
-
-```javascript
-const logs = await lettr.auditLogs.list({
-  startDate: '2024-01-01',
-  actorId: 'member_123'  // Optional: filter by member
-});
-
-logs.forEach(log => {
-  console.log({
-    action: log.action,
-    actor: log.actorEmail,
-    resource: log.resource,
-    timestamp: log.createdAt
-  });
-});
-```
-
-## Two-Factor Authentication
-
-Require 2FA for all team members:
-
-```javascript
-await lettr.team.updateSettings({
-  require2FA: true
-});
-```
-
+Before deleting a team, consider whether you want to preserve any templates or configuration. Once deleted, there's no way to recover the data.
