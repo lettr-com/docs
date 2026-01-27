@@ -1,188 +1,573 @@
 ---
 title: Event Types
-description: "All available webhook event types"
+description: "Complete reference of all webhook event types and their payloads"
 ---
 
 # Webhook Event Types
 
-Complete reference of all webhook events Lettr can send.
+This page provides a complete reference of all webhook events that Lettr can send, including detailed payload structures and field descriptions.
 
-## Email Events
+## Outbound Email Events
+
+These events are triggered by emails you send through Lettr. They help you track the delivery lifecycle and recipient engagement.
 
 ### email.sent
 
-Triggered when an email is accepted by Lettr for delivery.
+Triggered when an email is accepted by Lettr and queued for delivery. This confirms the email has been received and will be processed.
 
 ```json
 {
+  "id": "evt_abc123",
   "type": "email.sent",
+  "createdAt": "2024-01-15T10:30:00Z",
   "data": {
     "emailId": "email_123",
+    "requestId": "req_456",
     "from": "you@example.com",
     "to": ["recipient@example.com"],
-    "subject": "Hello World",
-    "sentAt": "2024-01-15T10:30:00Z"
+    "cc": ["copy@example.com"],
+    "subject": "Welcome to Our Service",
+    "sentAt": "2024-01-15T10:30:00Z",
+    "metadata": {
+      "userId": "user_789",
+      "campaign": "onboarding"
+    }
   }
 }
 ```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `emailId` | string | Unique identifier for the email |
+| `requestId` | string | The request ID from your API call |
+| `from` | string | Sender email address |
+| `to` | string[] | Recipient email addresses |
+| `cc` | string[] | CC recipients (if any) |
+| `subject` | string | Email subject line |
+| `sentAt` | string | ISO 8601 timestamp when accepted |
+| `metadata` | object | Custom metadata you attached to the email |
 
 ### email.delivered
 
-Triggered when an email is successfully delivered to the recipient's mail server.
+Triggered when an email is successfully delivered to the recipient's mail server. This is the most reliable indicator that the email reached its destination.
 
 ```json
 {
+  "id": "evt_def456",
   "type": "email.delivered",
+  "createdAt": "2024-01-15T10:30:05Z",
   "data": {
     "emailId": "email_123",
+    "requestId": "req_456",
     "to": "recipient@example.com",
-    "deliveredAt": "2024-01-15T10:30:05Z"
+    "deliveredAt": "2024-01-15T10:30:05Z",
+    "smtpResponse": "250 OK",
+    "metadata": {
+      "userId": "user_789"
+    }
   }
 }
 ```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `emailId` | string | Unique identifier for the email |
+| `requestId` | string | The original request ID |
+| `to` | string | Recipient who received the email |
+| `deliveredAt` | string | ISO 8601 timestamp of delivery |
+| `smtpResponse` | string | Response from the receiving mail server |
+| `metadata` | object | Custom metadata from the original send |
+
+<Note>
+  A `delivered` status means the recipient's mail server accepted the email. It doesn't guarantee the email reached the inbox—it could be filtered to spam or quarantined by the recipient's email provider.
+</Note>
 
 ### email.bounced
 
-Triggered when an email bounces (hard or soft).
+Triggered when an email cannot be delivered. Bounces can be "hard" (permanent failure) or "soft" (temporary issue).
 
 ```json
 {
+  "id": "evt_ghi789",
   "type": "email.bounced",
+  "createdAt": "2024-01-15T10:30:05Z",
   "data": {
     "emailId": "email_123",
+    "requestId": "req_456",
     "to": "invalid@example.com",
     "bounceType": "hard",
     "bounceCategory": "invalid_address",
-    "message": "550 5.1.1 User unknown",
-    "bouncedAt": "2024-01-15T10:30:05Z"
+    "bounceCode": "550",
+    "message": "550 5.1.1 The email account that you tried to reach does not exist",
+    "bouncedAt": "2024-01-15T10:30:05Z",
+    "metadata": {
+      "userId": "user_789"
+    }
   }
 }
 ```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `emailId` | string | Unique identifier for the email |
+| `requestId` | string | The original request ID |
+| `to` | string | Recipient address that bounced |
+| `bounceType` | string | `hard` (permanent) or `soft` (temporary) |
+| `bounceCategory` | string | Category of bounce (see below) |
+| `bounceCode` | string | SMTP error code |
+| `message` | string | Full bounce message from mail server |
+| `bouncedAt` | string | ISO 8601 timestamp of bounce |
+| `metadata` | object | Custom metadata from the original send |
+
+**Bounce Categories:**
+
+| Category | Description | Action |
+|----------|-------------|--------|
+| `invalid_address` | Email address doesn't exist | Remove from list |
+| `mailbox_full` | Recipient's mailbox is full | Retry later |
+| `blocked` | Recipient server blocked delivery | Check reputation |
+| `spam_related` | Rejected due to spam detection | Review content |
+| `policy_related` | Rejected due to server policy | Contact recipient |
+| `protocol_error` | Technical delivery error | Retry automatically |
+| `unknown` | Unclassified bounce | Review manually |
+
+<Warning>
+  Always handle hard bounces by removing the address from your mailing list. Continuing to send to hard-bounced addresses damages your sender reputation.
+</Warning>
 
 ### email.deferred
 
-Triggered when email delivery is temporarily delayed.
+Triggered when email delivery is temporarily delayed. Lettr will continue retrying delivery automatically.
 
 ```json
 {
+  "id": "evt_jkl012",
   "type": "email.deferred",
+  "createdAt": "2024-01-15T10:30:05Z",
   "data": {
     "emailId": "email_123",
+    "requestId": "req_456",
     "to": "recipient@example.com",
-    "reason": "Server temporarily unavailable",
+    "reason": "421 Server temporarily unavailable",
     "retryCount": 1,
-    "nextRetryAt": "2024-01-15T10:45:00Z"
+    "nextRetryAt": "2024-01-15T10:45:00Z",
+    "deferredAt": "2024-01-15T10:30:05Z",
+    "metadata": {
+      "userId": "user_789"
+    }
   }
 }
 ```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `emailId` | string | Unique identifier for the email |
+| `to` | string | Recipient address |
+| `reason` | string | Reason for deferral |
+| `retryCount` | number | Number of delivery attempts so far |
+| `nextRetryAt` | string | When the next retry will occur |
+| `deferredAt` | string | ISO 8601 timestamp of deferral |
 
 ### email.opened
 
-Triggered when a recipient opens an email (requires open tracking).
+Triggered when a recipient opens an email. Requires open tracking to be enabled.
 
 ```json
 {
+  "id": "evt_mno345",
   "type": "email.opened",
+  "createdAt": "2024-01-15T11:00:00Z",
   "data": {
     "emailId": "email_123",
+    "requestId": "req_456",
     "to": "recipient@example.com",
     "openedAt": "2024-01-15T11:00:00Z",
-    "userAgent": "Mozilla/5.0...",
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
     "ipAddress": "203.0.113.50",
-    "isFirstOpen": true
+    "location": {
+      "city": "San Francisco",
+      "region": "California",
+      "country": "US"
+    },
+    "isFirstOpen": true,
+    "openCount": 1,
+    "metadata": {
+      "userId": "user_789"
+    }
   }
 }
 ```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `emailId` | string | Unique identifier for the email |
+| `to` | string | Recipient who opened the email |
+| `openedAt` | string | ISO 8601 timestamp of the open |
+| `userAgent` | string | Browser/client user agent string |
+| `ipAddress` | string | IP address of the recipient |
+| `location` | object | Approximate geographic location |
+| `isFirstOpen` | boolean | Whether this is the first open |
+| `openCount` | number | Total number of opens for this email |
+
+<Note>
+  Open tracking works by embedding a tiny invisible image in the email. Some email clients block images by default, so open rates may be underreported. Apple Mail Privacy Protection and similar features can also affect tracking accuracy.
+</Note>
 
 ### email.clicked
 
-Triggered when a recipient clicks a link (requires click tracking).
+Triggered when a recipient clicks a link in an email. Requires click tracking to be enabled.
 
 ```json
 {
+  "id": "evt_pqr678",
   "type": "email.clicked",
+  "createdAt": "2024-01-15T11:05:00Z",
   "data": {
     "emailId": "email_123",
+    "requestId": "req_456",
     "to": "recipient@example.com",
-    "url": "https://example.com/offer",
+    "url": "https://example.com/special-offer?utm_campaign=welcome",
     "clickedAt": "2024-01-15T11:05:00Z",
-    "userAgent": "Mozilla/5.0...",
-    "ipAddress": "203.0.113.50"
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+    "ipAddress": "203.0.113.50",
+    "location": {
+      "city": "San Francisco",
+      "region": "California",
+      "country": "US"
+    },
+    "metadata": {
+      "userId": "user_789"
+    }
   }
 }
 ```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `emailId` | string | Unique identifier for the email |
+| `to` | string | Recipient who clicked |
+| `url` | string | The URL that was clicked (original, untracked URL) |
+| `clickedAt` | string | ISO 8601 timestamp of the click |
+| `userAgent` | string | Browser user agent string |
+| `ipAddress` | string | IP address of the recipient |
+| `location` | object | Approximate geographic location |
 
 ### email.complained
 
-Triggered when a recipient marks an email as spam.
+Triggered when a recipient marks an email as spam. This is a serious signal that should trigger immediate suppression.
 
 ```json
 {
+  "id": "evt_stu901",
   "type": "email.complained",
+  "createdAt": "2024-01-15T12:00:00Z",
   "data": {
     "emailId": "email_123",
+    "requestId": "req_456",
     "to": "recipient@example.com",
-    "complainedAt": "2024-01-15T12:00:00Z"
+    "complainedAt": "2024-01-15T12:00:00Z",
+    "feedbackType": "abuse",
+    "metadata": {
+      "userId": "user_789"
+    }
   }
 }
 ```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `emailId` | string | Unique identifier for the email |
+| `to` | string | Recipient who complained |
+| `complainedAt` | string | ISO 8601 timestamp of the complaint |
+| `feedbackType` | string | Type of feedback (usually `abuse`) |
+
+<Warning>
+  Spam complaints severely impact your sender reputation. Always immediately suppress addresses that generate complaints and never send to them again. High complaint rates can result in your sending being suspended.
+</Warning>
 
 ### email.unsubscribed
 
-Triggered when a recipient unsubscribes.
+Triggered when a recipient unsubscribes via the List-Unsubscribe header or an unsubscribe link.
 
 ```json
 {
+  "id": "evt_vwx234",
   "type": "email.unsubscribed",
+  "createdAt": "2024-01-15T12:00:00Z",
   "data": {
     "emailId": "email_123",
+    "requestId": "req_456",
     "to": "recipient@example.com",
     "unsubscribedAt": "2024-01-15T12:00:00Z",
-    "reason": "user_request"
+    "method": "list_unsubscribe",
+    "metadata": {
+      "userId": "user_789"
+    }
   }
 }
 ```
 
-## Inbound Events
+| Field | Type | Description |
+|-------|------|-------------|
+| `emailId` | string | Unique identifier for the email |
+| `to` | string | Recipient who unsubscribed |
+| `unsubscribedAt` | string | ISO 8601 timestamp |
+| `method` | string | How they unsubscribed: `list_unsubscribe` or `link_unsubscribe` |
+
+---
+
+## Inbound Email Events
+
+These events are triggered when emails are received on your configured inbound domains.
 
 ### email.received
 
-Triggered when an email is received on your inbound domain.
+Triggered when an email is received and parsed on your inbound domain. This is the primary event for processing incoming emails.
 
 ```json
 {
+  "id": "evt_xyz567",
   "type": "email.received",
+  "createdAt": "2024-01-15T10:30:15Z",
   "data": {
-    "id": "inbound_123",
+    "id": "inbound_123abc",
     "from": "sender@example.com",
-    "to": ["support@yourdomain.com"],
-    "subject": "Help request",
-    "text": "I need help...",
-    "html": "<p>I need help...</p>",
-    "receivedAt": "2024-01-15T10:30:00Z"
+    "fromName": "John Sender",
+    "to": ["support@mail.example.com"],
+    "cc": ["team@mail.example.com"],
+    "bcc": [],
+    "replyTo": "sender@example.com",
+    "subject": "Help with my order #12345",
+    "text": "Hi,\n\nI need help with order #12345. The package hasn't arrived yet.\n\nThanks,\nJohn",
+    "html": "<p>Hi,</p><p>I need help with order #12345. The package hasn't arrived yet.</p><p>Thanks,<br>John</p>",
+    "attachments": [
+      {
+        "filename": "screenshot.png",
+        "contentType": "image/png",
+        "size": 24680,
+        "url": "https://inbound.lettr.com/attachments/abc123def456"
+      },
+      {
+        "filename": "receipt.pdf",
+        "contentType": "application/pdf",
+        "size": 102400,
+        "url": "https://inbound.lettr.com/attachments/ghi789jkl012"
+      }
+    ],
+    "headers": {
+      "message-id": "<abc123@example.com>",
+      "date": "Mon, 15 Jan 2024 10:30:00 +0000",
+      "in-reply-to": "<original123@yourapp.com>",
+      "references": "<original123@yourapp.com>"
+    },
+    "receivedAt": "2024-01-15T10:30:15Z",
+    "spamScore": 0.2,
+    "domain": "mail.example.com"
   }
 }
 ```
 
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Unique identifier for the inbound email |
+| `from` | string | Sender's email address |
+| `fromName` | string | Sender's display name (if provided) |
+| `to` | string[] | Recipient addresses on your domain |
+| `cc` | string[] | CC recipients |
+| `bcc` | string[] | BCC recipients (if visible) |
+| `replyTo` | string | Reply-to address (if set) |
+| `subject` | string | Email subject line |
+| `text` | string | Plain text body of the email |
+| `html` | string | HTML body of the email |
+| `attachments` | array | List of file attachments (see below) |
+| `headers` | object | Raw email headers |
+| `receivedAt` | string | ISO 8601 timestamp when received |
+| `spamScore` | number | Spam score from 0-10 (lower is better) |
+| `domain` | string | Your inbound domain that received the email |
+
+**Attachment Fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `filename` | string | Original filename |
+| `contentType` | string | MIME type of the file |
+| `size` | number | File size in bytes |
+| `url` | string | Temporary URL to download the file |
+
+<Warning>
+  Attachment URLs expire after 24 hours. Download and store attachments promptly if you need to keep them.
+</Warning>
+
+**Useful Headers:**
+
+| Header | Description |
+|--------|-------------|
+| `message-id` | Unique identifier assigned by the sender's mail server |
+| `date` | Date the email was sent |
+| `in-reply-to` | Message-ID of the email being replied to |
+| `references` | Chain of Message-IDs in the conversation thread |
+
+The `in-reply-to` and `references` headers are valuable for threading conversations. If you send emails with a `Reply-To` address on your inbound domain, you can use these headers to match replies to original messages.
+
+---
+
 ## Subscribing to Events
 
+You can subscribe to events individually, by category, or all at once:
+
 ```javascript
-// Subscribe to specific events
+// Specific events only
 const webhook = await lettr.webhooks.create({
   url: 'https://example.com/webhooks',
-  events: ['email.delivered', 'email.bounced']
+  events: ['email.delivered', 'email.bounced', 'email.received']
 });
 
-// Subscribe to all events
+// All events in a category using wildcards
+const webhook = await lettr.webhooks.create({
+  url: 'https://example.com/webhooks',
+  events: ['email.*']  // All email events
+});
+
+// All events
 const webhook = await lettr.webhooks.create({
   url: 'https://example.com/webhooks',
   events: ['*']
 });
-
-// Subscribe to all email events
-const webhook = await lettr.webhooks.create({
-  url: 'https://example.com/webhooks',
-  events: ['email.*']
-});
 ```
 
+## Event Processing Examples
+
+### Tracking Email Delivery Status
+
+```javascript
+async function handleDeliveryEvents(event) {
+  const { emailId, requestId } = event.data;
+
+  switch (event.type) {
+    case 'email.sent':
+      await db.emails.update(requestId, {
+        status: 'sent',
+        sentAt: event.data.sentAt
+      });
+      break;
+
+    case 'email.delivered':
+      await db.emails.update(requestId, {
+        status: 'delivered',
+        deliveredAt: event.data.deliveredAt
+      });
+      break;
+
+    case 'email.bounced':
+      await db.emails.update(requestId, {
+        status: 'bounced',
+        bounceType: event.data.bounceType,
+        bounceReason: event.data.message
+      });
+      // Add to suppression list for hard bounces
+      if (event.data.bounceType === 'hard') {
+        await db.suppressions.add(event.data.to, 'hard_bounce');
+      }
+      break;
+  }
+}
+```
+
+### Processing Inbound Emails
+
+```javascript
+async function handleInboundEmail(event) {
+  const {
+    id,
+    from,
+    fromName,
+    to,
+    subject,
+    text,
+    html,
+    attachments,
+    headers,
+    spamScore
+  } = event.data;
+
+  // Skip high spam score emails
+  if (spamScore > 5) {
+    console.log(`Skipping spam email from ${from}`);
+    return;
+  }
+
+  // Check if this is a reply to an existing conversation
+  const inReplyTo = headers['in-reply-to'];
+  if (inReplyTo) {
+    const originalEmail = await db.emails.findByMessageId(inReplyTo);
+    if (originalEmail) {
+      await addReplyToConversation(originalEmail.conversationId, {
+        from,
+        subject,
+        body: text || html,
+        attachments
+      });
+      return;
+    }
+  }
+
+  // Create new support ticket
+  await createSupportTicket({
+    externalId: id,
+    sender: from,
+    senderName: fromName,
+    recipients: to,
+    subject,
+    body: html || text,
+    attachments: await downloadAttachments(attachments),
+    messageId: headers['message-id']
+  });
+}
+```
+
+### Handling Engagement Events
+
+```javascript
+async function handleEngagementEvents(event) {
+  switch (event.type) {
+    case 'email.opened':
+      await analytics.track('email_opened', {
+        emailId: event.data.emailId,
+        userId: event.data.metadata?.userId,
+        isFirstOpen: event.data.isFirstOpen,
+        location: event.data.location
+      });
+      break;
+
+    case 'email.clicked':
+      await analytics.track('email_clicked', {
+        emailId: event.data.emailId,
+        userId: event.data.metadata?.userId,
+        url: event.data.url,
+        location: event.data.location
+      });
+      // Trigger follow-up action based on clicked URL
+      if (event.data.url.includes('/pricing')) {
+        await salesNotification.send(event.data.metadata?.userId);
+      }
+      break;
+  }
+}
+```
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Handling Webhooks" icon="code" href="/learn/webhooks/handling">
+    Best practices for processing webhooks reliably
+  </Card>
+  <Card title="Authorization" icon="lock" href="/learn/webhooks/authorization">
+    Verify webhook signatures for security
+  </Card>
+  <Card title="Retries" icon="rotate" href="/learn/webhooks/retries">
+    Understand retry behavior and delivery guarantees
+  </Card>
+  <Card title="Testing" icon="flask" href="/learn/webhooks/testing">
+    Test webhooks in development and production
+  </Card>
+</CardGroup>

@@ -110,7 +110,6 @@
                 "pages": [
                   "learn/receiving/introduction",
                   "learn/receiving/setup",
-                  "learn/receiving/webhooks",
                   "learn/receiving/routing",
                   "learn/receiving/attachments",
                   "learn/receiving/spam-filtering",
@@ -140,8 +139,10 @@
                 "pages": [
                   "learn/webhooks/introduction",
                   "learn/webhooks/event-types",
+                  "learn/webhooks/handling",
                   "learn/webhooks/authorization",
-                  "learn/webhooks/retries"
+                  "learn/webhooks/retries",
+                  "learn/webhooks/testing"
                 ]
               },
               {
