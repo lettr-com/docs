@@ -20,6 +20,9 @@
     "light": "#818CF8",
     "dark": "#4F46E5"
   },
+  "appearance": {
+    "default": "dark"
+  },
   "topbarLinks": [
     {
       "name": "Support",
