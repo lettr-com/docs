@@ -1,0 +1,365 @@
+---
+title: Complaints & Unsubscribes
+description: "Handle spam complaints and unsubscribe requests to maintain deliverability"
+---
+
+# Complaints & Unsubscribes
+
+Beyond bounces, spam complaints and unsubscribes are critical signals that affect your sender reputation. Handling these events properly is essential for maintaining deliverability and legal compliance.
+
+## Spam Complaints
+
+A spam complaint occurs when a recipient clicks "Report Spam" or "Mark as Junk" in their email client. This is one of the most damaging signals for your sender reputation.
+
+### Understanding Complaints
+
+When a recipient complains, their email provider sends a feedback report to Lettr. The address is automatically suppressed and you receive a webhook notification.
+
+```json
+{
+  "id": "evt_stu901",
+  "type": "email.complained",
+  "createdAt": "2024-01-15T12:00:00Z",
+  "data": {
+    "emailId": "email_123",
+    "requestId": "req_456",
+    "to": "recipient@example.com",
+    "complainedAt": "2024-01-15T12:00:00Z",
+    "feedbackType": "abuse",
+    "metadata": {
+      "userId": "user_789"
+    }
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `emailId` | string | Unique identifier for the email |
+| `to` | string | Recipient who complained |
+| `complainedAt` | string | ISO 8601 timestamp of the complaint |
+| `feedbackType` | string | Type of feedback (typically `abuse`) |
+| `metadata` | object | Custom metadata from the original send |
+
+### Complaint Rate Guidelines
+
+| Complaint Rate | Status | Action |
+|----------------|--------|--------|
+| < 0.1% | Healthy | Maintain current practices |
+| 0.1-0.3% | Warning | Review targeting and content |
+| > 0.3% | Critical | Pause sending and investigate |
+
+<Warning>
+  A complaint rate above 0.1% is considered high by most email providers. Rates above 0.3% can result in your emails being blocked entirely.
+</Warning>
+
+### Handling Complaints
+
+```javascript
+app.post('/webhooks/lettr', async (req, res) => {
+  const event = req.body;
+
+  if (event.type === 'email.complained') {
+    const { to, emailId, metadata } = event.data;
+
+    // Immediately suppress in your system
+    await db.subscribers.update({
+      where: { email: to },
+      data: {
+        status: 'complained',
+        canEmail: false,
+        complainedAt: new Date()
+      }
+    });
+
+    // Log for analysis
+    await logComplaint({
+      email: to,
+      emailId: emailId,
+      userId: metadata?.userId,
+      timestamp: new Date()
+    });
+
+    // Alert team - complaints are serious
+    await alertTeam({
+      type: 'spam_complaint',
+      email: to,
+      emailId: emailId,
+      severity: 'high'
+    });
+  }
+
+  res.sendStatus(200);
+});
+```
+
+### Reducing Complaints
+
+<AccordionGroup>
+  <Accordion title="Only Email Subscribers">
+    Never email people who haven't explicitly opted in to receive your emails. Purchased lists have extremely high complaint rates.
+  </Accordion>
+  <Accordion title="Set Clear Expectations">
+    Tell subscribers what kind of emails they'll receive and how often. Unexpected emails lead to complaints.
+  </Accordion>
+  <Accordion title="Make Unsubscribing Easy">
+    A visible unsubscribe link gives recipients an alternative to marking you as spam. Don't hide it.
+  </Accordion>
+  <Accordion title="Honor Frequency Preferences">
+    If someone signs up for weekly updates, don't email them daily. Respect the frequency they agreed to.
+  </Accordion>
+  <Accordion title="Send Relevant Content">
+    Irrelevant emails frustrate recipients. Segment your list and send targeted content.
+  </Accordion>
+</AccordionGroup>
+
+## Unsubscribes
+
+Unsubscribes occur when recipients opt out of receiving your emails. Lettr supports two unsubscribe methods:
+
+### List-Unsubscribe
+
+Modern email clients show an "Unsubscribe" button in their interface. When clicked, this triggers a List-Unsubscribe request directly to Lettr.
+
+```json
+{
+  "id": "evt_vwx234",
+  "type": "email.unsubscribed",
+  "createdAt": "2024-01-15T12:00:00Z",
+  "data": {
+    "emailId": "email_123",
+    "requestId": "req_456",
+    "to": "recipient@example.com",
+    "unsubscribedAt": "2024-01-15T12:00:00Z",
+    "method": "list_unsubscribe",
+    "metadata": {
+      "userId": "user_789"
+    }
+  }
+}
+```
+
+### Link Unsubscribe
+
+When a recipient clicks an unsubscribe link in your email body, this triggers a link unsubscribe event.
+
+```json
+{
+  "id": "evt_abc567",
+  "type": "email.unsubscribed",
+  "createdAt": "2024-01-15T12:00:00Z",
+  "data": {
+    "emailId": "email_123",
+    "requestId": "req_456",
+    "to": "recipient@example.com",
+    "unsubscribedAt": "2024-01-15T12:00:00Z",
+    "method": "link_unsubscribe",
+    "metadata": {
+      "userId": "user_789"
+    }
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `emailId` | string | Unique identifier for the email |
+| `to` | string | Recipient who unsubscribed |
+| `unsubscribedAt` | string | ISO 8601 timestamp |
+| `method` | string | `list_unsubscribe` or `link_unsubscribe` |
+| `metadata` | object | Custom metadata from the original send |
+
+### Handling Unsubscribes
+
+```javascript
+app.post('/webhooks/lettr', async (req, res) => {
+  const event = req.body;
+
+  if (event.type === 'email.unsubscribed') {
+    const { to, method, metadata } = event.data;
+
+    // Update subscription status
+    await db.subscribers.update({
+      where: { email: to },
+      data: {
+        status: 'unsubscribed',
+        canEmail: false,
+        unsubscribedAt: new Date(),
+        unsubscribeMethod: method
+      }
+    });
+
+    // Log for analytics
+    await analytics.track('unsubscribe', {
+      email: to,
+      method: method,
+      userId: metadata?.userId
+    });
+  }
+
+  res.sendStatus(200);
+});
+```
+
+### Legal Requirements
+
+<Note>
+  Unsubscribe requests must be honored. Both CAN-SPAM (US) and GDPR (EU) require you to stop emailing someone who has unsubscribed. Violations can result in significant fines.
+</Note>
+
+**CAN-SPAM Requirements:**
+- Process unsubscribe requests within 10 business days
+- Don't charge a fee or require personal information to unsubscribe
+- Don't transfer or sell the email address after unsubscribe
+
+**GDPR Requirements:**
+- Process unsubscribe requests without delay
+- Provide clear and accessible unsubscribe mechanisms
+- Maintain records of consent and withdrawal
+
+## Managing Your Suppression Data
+
+While Lettr automatically suppresses addresses that bounce, complain, or unsubscribe, you should also maintain your own records for several reasons:
+
+### Why Maintain Your Own Records
+
+1. **Prevent re-adding suppressed addresses**: When someone unsubscribes or complains, you shouldn't re-add them to your list
+2. **Cross-platform consistency**: If you use multiple email providers, share suppression data between them
+3. **Compliance auditing**: Maintain proof that you honored unsubscribe requests
+4. **List hygiene**: Track patterns to improve your email program
+
+### Building a Suppression System
+
+```javascript
+// Example suppression record schema
+const suppressionSchema = {
+  email: String,           // The suppressed email address
+  type: String,            // 'bounce', 'complaint', or 'unsubscribe'
+  reason: String,          // Detailed reason (e.g., 'invalid_address')
+  source: String,          // Where suppression originated
+  emailId: String,         // Related email ID if applicable
+  createdAt: Date,         // When suppression was added
+  metadata: Object         // Additional context
+};
+
+// Check before sending
+async function canSendTo(email) {
+  const suppression = await db.suppressions.findOne({ email });
+  return !suppression;
+}
+
+// Add suppression from webhook
+async function addSuppression(event) {
+  let type, reason;
+
+  switch (event.type) {
+    case 'email.bounced':
+      if (event.data.bounceType !== 'hard') return; // Only suppress hard bounces
+      type = 'bounce';
+      reason = event.data.bounceCategory;
+      break;
+    case 'email.complained':
+      type = 'complaint';
+      reason = event.data.feedbackType;
+      break;
+    case 'email.unsubscribed':
+      type = 'unsubscribe';
+      reason = event.data.method;
+      break;
+    default:
+      return;
+  }
+
+  await db.suppressions.upsert({
+    where: { email: event.data.to },
+    create: {
+      email: event.data.to,
+      type,
+      reason,
+      source: 'lettr_webhook',
+      emailId: event.data.emailId,
+      createdAt: new Date(),
+      metadata: event.data.metadata
+    },
+    update: {
+      type,
+      reason,
+      updatedAt: new Date()
+    }
+  });
+}
+```
+
+### Pre-Send Validation
+
+Before sending emails, validate addresses against your suppression list:
+
+```javascript
+async function sendEmail(to, subject, html) {
+  // Check suppression status
+  const canSend = await canSendTo(to);
+
+  if (!canSend) {
+    console.log(`Skipping suppressed address: ${to}`);
+    return { status: 'suppressed' };
+  }
+
+  // Proceed with sending
+  const response = await fetch('https://app.lettr.com/api/emails', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${API_KEY}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      from: 'you@example.com',
+      to: [to],
+      subject,
+      html
+    })
+  });
+
+  return response.json();
+}
+```
+
+## Webhook Event Summary
+
+Subscribe to these events to track all suppression-related activity:
+
+| Event | Trigger | Suppression Type |
+|-------|---------|------------------|
+| `email.bounced` (hard) | Permanent delivery failure | Automatic |
+| `email.complained` | Spam complaint | Automatic |
+| `email.unsubscribed` | List-Unsubscribe or link | Automatic |
+
+Configure your webhook to receive these events:
+
+```javascript
+// When creating a webhook, include these event types
+const webhookConfig = {
+  url: 'https://your-app.com/webhooks/lettr',
+  events: [
+    'email.bounced',
+    'email.complained',
+    'email.unsubscribed'
+  ]
+};
+```
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Bounces" icon="arrow-rotate-left" href="/learn/suppressions/bounces">
+    Understanding and handling email bounces
+  </Card>
+  <Card title="Webhook Events" icon="bell" href="/learn/webhooks/event-types">
+    Complete reference for all webhook events
+  </Card>
+  <Card title="Handling Webhooks" icon="code" href="/learn/webhooks/handling">
+    Best practices for webhook implementation
+  </Card>
+  <Card title="Best Practices" icon="star" href="/learn/sending/best-practices">
+    Tips for maintaining good deliverability
+  </Card>
+</CardGroup>
