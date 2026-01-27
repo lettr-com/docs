@@ -1,0 +1,591 @@
+---
+title: Handling Webhooks
+description: "Best practices for processing webhooks reliably"
+---
+
+# Handling Webhooks
+
+Building a reliable webhook handler requires careful attention to response timing, idempotency, error handling, and asynchronous processing. This guide covers best practices to ensure you never miss an event and process each one exactly once.
+
+## Quick Response Pattern
+
+The most critical rule for webhook handling: **respond immediately, process asynchronously**. Lettr waits up to 30 seconds for your endpoint to respond. If processing takes longer, the webhook is considered failed and will be retried.
+
+```javascript
+import express from 'express';
+import { verifyWebhook } from 'lettr';
+
+const app = express();
+
+app.post('/webhooks/lettr', express.raw({ type: 'application/json' }), (req, res) => {
+  try {
+    // Verify signature first
+    const event = verifyWebhook(
+      req.body,
+      req.headers['lettr-signature'],
+      process.env.LETTR_WEBHOOK_SECRET
+    );
+
+    // Acknowledge receipt immediately
+    res.sendStatus(200);
+
+    // Process asynchronously (after response is sent)
+    setImmediate(() => {
+      processEvent(event).catch(err => {
+        console.error('Failed to process event:', event.id, err);
+      });
+    });
+  } catch (err) {
+    console.error('Webhook verification failed:', err.message);
+    res.sendStatus(400);
+  }
+});
+```
+
+<Warning>
+  Never perform long-running operations before responding. Database writes, external API calls, and complex processing should happen after you've acknowledged the webhook.
+</Warning>
+
+## Idempotency
+
+Webhooks may be delivered more than once due to retries, network issues, or edge cases. Your handler must be idempotent—processing the same event twice should have the same effect as processing it once.
+
+### Using Event IDs
+
+Every webhook event has a unique `id`. Store processed event IDs to detect and skip duplicates:
+
+```javascript
+import { Redis } from 'ioredis';
+
+const redis = new Redis(process.env.REDIS_URL);
+
+async function processEventIdempotently(event) {
+  const eventKey = `webhook:processed:${event.id}`;
+
+  // Try to set the key with NX (only if not exists) and EX (expiry)
+  const isNew = await redis.set(eventKey, '1', 'NX', 'EX', 86400); // 24 hour expiry
+
+  if (!isNew) {
+    console.log(`Event ${event.id} already processed, skipping`);
+    return;
+  }
+
+  // Process the event
+  await processEvent(event);
+}
+```
+
+### Database-Based Idempotency
+
+For applications without Redis, use your database:
+
+```javascript
+async function processEventIdempotently(event) {
+  // Use a transaction with a unique constraint
+  try {
+    await db.transaction(async (trx) => {
+      // This will fail if event already exists
+      await trx('processed_webhooks').insert({
+        event_id: event.id,
+        event_type: event.type,
+        processed_at: new Date()
+      });
+
+      // Process the event within the transaction
+      await processEvent(event, trx);
+    });
+  } catch (err) {
+    if (err.code === '23505') { // PostgreSQL unique violation
+      console.log(`Event ${event.id} already processed`);
+      return;
+    }
+    throw err;
+  }
+}
+```
+
+### Idempotency with Business Logic
+
+Sometimes you need idempotency at the business level, not just event level:
+
+```javascript
+async function handleEmailBounced(data) {
+  const { to, bounceType, emailId } = data;
+
+  if (bounceType !== 'hard') {
+    return; // Only suppress hard bounces
+  }
+
+  // Idempotent operation: adding to suppression list
+  // If already suppressed, this is a no-op
+  await db.suppressions.upsert({
+    email: to,
+    reason: 'hard_bounce',
+    source_email_id: emailId,
+    suppressed_at: new Date()
+  }, {
+    conflictFields: ['email'],
+    updateFields: [] // Don't update if exists
+  });
+}
+```
+
+## Queue-Based Processing
+
+For high-volume applications or complex processing, use a message queue to decouple webhook receipt from processing:
+
+```javascript
+import { Queue } from 'bullmq';
+
+const webhookQueue = new Queue('webhooks', {
+  connection: { host: 'localhost', port: 6379 }
+});
+
+// Webhook endpoint - just enqueue and respond
+app.post('/webhooks/lettr', express.raw({ type: 'application/json' }), async (req, res) => {
+  try {
+    const event = verifyWebhook(
+      req.body,
+      req.headers['lettr-signature'],
+      process.env.LETTR_WEBHOOK_SECRET
+    );
+
+    // Add to queue with deduplication
+    await webhookQueue.add(event.type, event, {
+      jobId: event.id, // Prevents duplicate jobs
+      attempts: 3,
+      backoff: {
+        type: 'exponential',
+        delay: 1000
+      }
+    });
+
+    res.sendStatus(200);
+  } catch (err) {
+    console.error('Webhook error:', err.message);
+    res.sendStatus(400);
+  }
+});
+
+// Worker - processes events from the queue
+import { Worker } from 'bullmq';
+
+const worker = new Worker('webhooks', async (job) => {
+  const event = job.data;
+
+  switch (event.type) {
+    case 'email.delivered':
+      await handleEmailDelivered(event.data);
+      break;
+    case 'email.bounced':
+      await handleEmailBounced(event.data);
+      break;
+    case 'email.received':
+      await handleInboundEmail(event.data);
+      break;
+    // ... handle other events
+  }
+}, {
+  connection: { host: 'localhost', port: 6379 },
+  concurrency: 10
+});
+```
+
+## Error Handling
+
+Proper error handling ensures you don't lose events and can debug issues effectively.
+
+### Categorizing Errors
+
+```javascript
+async function processEvent(event) {
+  try {
+    await handleEvent(event);
+  } catch (err) {
+    // Determine if error is retryable
+    if (isRetryableError(err)) {
+      // Log and let the webhook retry mechanism handle it
+      console.error(`Retryable error for event ${event.id}:`, err.message);
+      throw err; // Will trigger webhook retry
+    }
+
+    // Non-retryable errors - log and store for manual review
+    console.error(`Non-retryable error for event ${event.id}:`, err);
+    await storeFailedEvent(event, err);
+  }
+}
+
+function isRetryableError(err) {
+  // Network errors, timeouts, temporary database issues
+  const retryableCodes = ['ECONNRESET', 'ETIMEDOUT', 'ENOTFOUND', '503', '429'];
+  return retryableCodes.some(code =>
+    err.code === code || err.message?.includes(code)
+  );
+}
+
+async function storeFailedEvent(event, error) {
+  await db.failedWebhooks.insert({
+    event_id: event.id,
+    event_type: event.type,
+    payload: JSON.stringify(event),
+    error_message: error.message,
+    error_stack: error.stack,
+    failed_at: new Date()
+  });
+
+  // Optionally alert your team
+  await slack.send({
+    channel: '#webhook-failures',
+    text: `Webhook failed: ${event.type} (${event.id})\nError: ${error.message}`
+  });
+}
+```
+
+### Graceful Degradation
+
+When external dependencies fail, don't block the entire webhook:
+
+```javascript
+async function handleEmailDelivered(data) {
+  const { emailId, to, metadata } = data;
+
+  // Critical operation - must succeed
+  await db.emails.update(emailId, {
+    status: 'delivered',
+    delivered_at: new Date()
+  });
+
+  // Non-critical operations - fail gracefully
+  try {
+    await analytics.track('email_delivered', { emailId, to });
+  } catch (err) {
+    console.warn('Analytics tracking failed:', err.message);
+    // Don't throw - the critical operation succeeded
+  }
+
+  try {
+    if (metadata?.notifyOnDelivery) {
+      await notifications.send(metadata.userId, 'Your email was delivered');
+    }
+  } catch (err) {
+    console.warn('Notification failed:', err.message);
+    // Don't throw - still a success
+  }
+}
+```
+
+## Handling Inbound Emails
+
+Inbound email webhooks (`email.received`) require special consideration for attachments, threading, and routing.
+
+### Processing Attachments
+
+Attachment URLs are temporary. Download them promptly:
+
+```javascript
+async function handleInboundEmail(data) {
+  const { id, from, subject, text, html, attachments } = data;
+
+  // Download attachments in parallel
+  const downloadedAttachments = await Promise.all(
+    attachments.map(async (att) => {
+      try {
+        const response = await fetch(att.url);
+        if (!response.ok) {
+          throw new Error(`Failed to download: ${response.status}`);
+        }
+
+        const buffer = Buffer.from(await response.arrayBuffer());
+
+        // Store in your preferred storage (S3, local, etc.)
+        const storedUrl = await storage.upload(
+          `inbound/${id}/${att.filename}`,
+          buffer,
+          att.contentType
+        );
+
+        return {
+          filename: att.filename,
+          contentType: att.contentType,
+          size: att.size,
+          url: storedUrl
+        };
+      } catch (err) {
+        console.error(`Failed to download attachment ${att.filename}:`, err);
+        return {
+          filename: att.filename,
+          error: err.message
+        };
+      }
+    })
+  );
+
+  // Create ticket with stored attachments
+  await createTicket({
+    externalId: id,
+    from,
+    subject,
+    body: html || text,
+    attachments: downloadedAttachments.filter(a => !a.error)
+  });
+}
+```
+
+### Routing Inbound Emails
+
+Route emails to different handlers based on recipient address:
+
+```javascript
+async function handleInboundEmail(data) {
+  const { to, from, subject, text, html } = data;
+  const recipient = to[0].toLowerCase();
+
+  // Extract the local part (before @)
+  const [localPart, domain] = recipient.split('@');
+
+  // Variable address routing (e.g., reply+ticket123@mail.example.com)
+  const variableMatch = localPart.match(/^(\w+)\+(.+)$/);
+  if (variableMatch) {
+    const [, prefix, identifier] = variableMatch;
+    return await routeVariableAddress(prefix, identifier, data);
+  }
+
+  // Standard address routing
+  const routes = {
+    'support': handleSupportEmail,
+    'sales': handleSalesEmail,
+    'feedback': handleFeedbackEmail,
+    'billing': handleBillingEmail
+  };
+
+  const handler = routes[localPart] || handleUnknownRecipient;
+  await handler(data);
+}
+
+async function routeVariableAddress(prefix, identifier, data) {
+  switch (prefix) {
+    case 'reply':
+      // identifier is a ticket ID
+      await addReplyToTicket(identifier, data);
+      break;
+    case 'unsubscribe':
+      // identifier is a user ID or token
+      await processUnsubscribe(identifier, data);
+      break;
+    case 'confirm':
+      // identifier is a confirmation token
+      await processConfirmation(identifier, data);
+      break;
+    default:
+      console.log(`Unknown variable address prefix: ${prefix}`);
+  }
+}
+```
+
+### Threading Conversations
+
+Use email headers to thread conversations:
+
+```javascript
+async function handleInboundEmail(data) {
+  const { headers, from, subject, text, html } = data;
+
+  // Check if this is a reply to an existing thread
+  const inReplyTo = headers['in-reply-to'];
+  const references = headers['references'];
+
+  if (inReplyTo) {
+    // Find the original message
+    const originalMessage = await db.messages.findOne({
+      message_id: inReplyTo
+    });
+
+    if (originalMessage) {
+      // Add to existing conversation
+      await db.messages.insert({
+        conversation_id: originalMessage.conversation_id,
+        message_id: headers['message-id'],
+        in_reply_to: inReplyTo,
+        from,
+        subject,
+        body: text || html,
+        received_at: new Date()
+      });
+
+      // Notify relevant parties
+      await notifyConversationParticipants(originalMessage.conversation_id);
+      return;
+    }
+  }
+
+  // No thread found - create new conversation
+  const conversation = await db.conversations.insert({
+    subject,
+    started_by: from,
+    created_at: new Date()
+  });
+
+  await db.messages.insert({
+    conversation_id: conversation.id,
+    message_id: headers['message-id'],
+    from,
+    subject,
+    body: text || html,
+    received_at: new Date()
+  });
+}
+```
+
+## Handling Multiple Recipients
+
+When an email is sent to multiple addresses on your domain, handle each appropriately:
+
+```javascript
+async function handleInboundEmail(data) {
+  const { to, cc, from, subject, text } = data;
+
+  // Process each direct recipient
+  for (const recipient of to) {
+    await routeToRecipient(recipient, {
+      from,
+      subject,
+      body: text,
+      isDirectRecipient: true
+    });
+  }
+
+  // Optionally process CC recipients differently
+  for (const recipient of cc || []) {
+    // Only process if it's one of our domains
+    if (isOurDomain(recipient)) {
+      await routeToRecipient(recipient, {
+        from,
+        subject,
+        body: text,
+        isDirectRecipient: false,
+        isCc: true
+      });
+    }
+  }
+}
+```
+
+## Monitoring and Observability
+
+Track webhook processing health with metrics and logging:
+
+```javascript
+import { Counter, Histogram } from 'prom-client';
+
+const webhooksReceived = new Counter({
+  name: 'webhooks_received_total',
+  help: 'Total webhooks received',
+  labelNames: ['event_type', 'status']
+});
+
+const webhookProcessingTime = new Histogram({
+  name: 'webhook_processing_seconds',
+  help: 'Webhook processing time',
+  labelNames: ['event_type']
+});
+
+async function processEvent(event) {
+  const timer = webhookProcessingTime.startTimer({ event_type: event.type });
+
+  try {
+    await handleEvent(event);
+    webhooksReceived.inc({ event_type: event.type, status: 'success' });
+  } catch (err) {
+    webhooksReceived.inc({ event_type: event.type, status: 'error' });
+    throw err;
+  } finally {
+    timer();
+  }
+}
+```
+
+## Framework-Specific Examples
+
+### Next.js App Router
+
+```typescript
+// app/api/webhooks/lettr/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+import { verifyWebhook } from 'lettr';
+
+export async function POST(request: NextRequest) {
+  const body = await request.text();
+  const signature = request.headers.get('lettr-signature');
+
+  if (!signature) {
+    return NextResponse.json({ error: 'Missing signature' }, { status: 400 });
+  }
+
+  try {
+    const event = verifyWebhook(
+      body,
+      signature,
+      process.env.LETTR_WEBHOOK_SECRET!
+    );
+
+    // Queue for async processing (e.g., using Vercel's waitUntil)
+    // @ts-ignore - waitUntil is available in edge runtime
+    const ctx = (globalThis as any).__nextHandlerContext;
+    ctx?.waitUntil?.(processEvent(event));
+
+    return NextResponse.json({ received: true });
+  } catch (err) {
+    console.error('Webhook error:', err);
+    return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
+  }
+}
+```
+
+### Express with TypeScript
+
+```typescript
+import express, { Request, Response } from 'express';
+import { verifyWebhook, WebhookEvent } from 'lettr';
+
+const app = express();
+
+app.post(
+  '/webhooks/lettr',
+  express.raw({ type: 'application/json' }),
+  async (req: Request, res: Response) => {
+    const signature = req.headers['lettr-signature'] as string;
+
+    try {
+      const event: WebhookEvent = verifyWebhook(
+        req.body,
+        signature,
+        process.env.LETTR_WEBHOOK_SECRET!
+      );
+
+      res.sendStatus(200);
+
+      // Process async
+      setImmediate(() => processEvent(event));
+    } catch (err) {
+      res.sendStatus(400);
+    }
+  }
+);
+```
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Authorization" icon="lock" href="/learn/webhooks/authorization">
+    Secure your endpoints with signature verification
+  </Card>
+  <Card title="Retries" icon="rotate" href="/learn/webhooks/retries">
+    Understand retry behavior and failure handling
+  </Card>
+  <Card title="Event Types" icon="list" href="/learn/webhooks/event-types">
+    Complete reference of all webhook events
+  </Card>
+  <Card title="Testing" icon="flask" href="/learn/webhooks/testing">
+    Test webhooks in development and production
+  </Card>
+</CardGroup>
