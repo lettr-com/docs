@@ -1,27 +1,176 @@
 ---
-title: API Keys Introduction
-description: "Manage API keys for authentication"
+title: API Keys
+description: "Manage API keys for programmatic access to your Lettr account"
 ---
 
 # API Keys
 
-API keys authenticate your requests to the Lettr API.
+API keys are secret tokens used to authenticate your requests to the Lettr API. They are unique to your account and should be kept confidential.
 
-## Creating API Keys
+## Overview
 
-Create keys in the dashboard or via API:
+Access your API keys from the [API Keys page](https://app.lettr.com/api-keys) in the dashboard. The page displays all your API keys with the following information:
 
-```javascript
-const apiKey = await lettr.apiKeys.create({
-  name: 'Production Server',
-  permissions: ['emails:send', 'emails:read']
-});
+| Column | Description |
+|--------|-------------|
+| **Name** | The descriptive name you gave the key |
+| **API Key** | The key value (masked for security, click to copy) |
+| **Permissions** | Full access or Sending only |
+| **Status** | Active or Inactive |
+| **Actions** | Edit or delete the key |
 
-console.log(apiKey.key); // le_xxxxxxxxxxxx
-// Store this key securely - it won't be shown again!
+## Create an API Key
+
+<Steps>
+  <Step title="Open API Keys Page">
+    Go to **API Keys** in the dashboard sidebar.
+  </Step>
+  <Step title="Click New API Key">
+    Click the **+ New API Key** button in the top right.
+  </Step>
+  <Step title="Configure the Key">
+    - Enter a descriptive **Name** for the key (e.g., "Production Server", "Marketing App")
+    - Select the **Permission** level
+    - Optionally, add **Allowed IPs** to restrict access
+  </Step>
+  <Step title="Copy Your Key">
+    Copy the API key immediately and store it securely. You won't be able to see the full key again.
+  </Step>
+</Steps>
+
+<Warning>
+  For security reasons, you can only view the full API key once when it's created. Store it securely immediately. If you lose the key, you'll need to create a new one.
+</Warning>
+
+## Permissions
+
+Lettr offers two permission levels:
+
+| Permission | Description | Use Case |
+|------------|-------------|----------|
+| **Full access** | Grants access to all API endpoints: send emails, manage domains, create API keys, configure webhooks, and more | Backend servers, admin tools |
+| **Sending only** | Only allows sending emails via the API | Application servers that only need to send emails |
+
+### Full Access Capabilities
+
+| Category | Capabilities |
+|----------|--------------|
+| **Emails** | Send emails, view email details, list emails, cancel scheduled emails |
+| **Domains** | Add, verify, configure, and delete domains |
+| **Templates** | Create, edit, and delete email templates |
+| **Webhooks** | Create, configure, and delete webhooks |
+| **API Keys** | Create and delete API keys |
+| **Analytics** | View all analytics and reports |
+
+### Sending Only Capabilities
+
+| Allowed | Not Allowed |
+|---------|-------------|
+| Send emails | Manage domains |
+| | Manage templates |
+| | Manage webhooks |
+| | Create/delete API keys |
+| | View analytics |
+
+<Tip>
+  Use the principle of least privilege. If an application only needs to send emails, use a **Sending only** key. This limits potential damage if the key is compromised.
+</Tip>
+
+## IP Restrictions
+
+For enhanced security, you can restrict API key usage to specific IP addresses. This ensures the key only works from your servers.
+
+In the **Allowed IPs** field, enter one or more IP addresses or CIDR ranges:
+
+```
+10.20.30.40, 10.20.30.0/24
 ```
 
-## Key Format
+| Format | Example | Description |
+|--------|---------|-------------|
+| Single IP | `10.20.30.40` | Allow one specific IP |
+| CIDR range | `10.20.30.0/24` | Allow a range of 256 IPs |
+| Multiple | `10.20.30.40, 10.20.30.0/24` | Combine with commas |
+
+<Info>
+  Leave the **Allowed IPs** field blank to allow access from any IP address.
+</Info>
+
+### Common CIDR Examples
+
+| CIDR | IPs Included | Use Case |
+|------|--------------|----------|
+| `/32` | 1 IP | Single server |
+| `/24` | 256 IPs | Small network |
+| `/16` | 65,536 IPs | Large network |
+
+## Edit an API Key
+
+You can update an API key's settings after creation:
+
+1. Find the key in the API Keys list
+2. Click the **...** (more options) button in the Actions column
+3. Select **Edit API Key**
+4. Update the **Name**, **Permissions**, or **Allowed IPs**
+5. Click **Save changes**
+
+<Note>
+  You cannot view or change the API key value itself after creation. If you need a new key value, create a new API key.
+</Note>
+
+## Delete an API Key
+
+To delete an API key:
+
+1. Click the **...** (more options) button for the key
+2. Select **Delete API Key**
+3. Confirm the deletion
+
+<Warning>
+  Deleting an API key is immediate and permanent. Any applications using the key will immediately stop working.
+</Warning>
+
+## Using API Keys
+
+### In HTTP Headers
+
+Include the API key in the `Authorization` header using Bearer authentication:
+
+```bash
+curl https://app.lettr.com/api/emails \
+  -H "Authorization: Bearer le_xxxxxxxxxxxx" \
+  -H "Content-Type: application/json" \
+  -d '{"from": "hello@example.com", "to": ["user@example.com"], "subject": "Hello"}'
+```
+
+### In SDKs
+
+All Lettr SDKs accept the API key during initialization:
+
+<CodeGroup>
+
+```javascript Node.js
+import { Lettr } from 'lettr';
+
+const lettr = new Lettr(process.env.LETTR_API_KEY);
+```
+
+```php PHP
+use Lettr\Lettr;
+
+$lettr = new Lettr(getenv('LETTR_API_KEY'));
+```
+
+```python Python
+import os
+from lettr import Lettr
+
+lettr = Lettr(os.environ['LETTR_API_KEY'])
+```
+
+</CodeGroup>
+
+## API Key Format
 
 Lettr API keys follow this format:
 
@@ -30,84 +179,72 @@ le_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
 - `le_` prefix identifies it as a Lettr key
-- 36 character random string
-
-## Using API Keys
-
-### In Headers (Recommended)
-
-```bash
-curl https://app.lettr.com/api/emails \
-  -H "Authorization: Bearer le_xxxxxxxxxxxx" \
-  -H "Content-Type: application/json"
-```
-
-### In SDKs
-
-```javascript
-import { Lettr } from 'lettr';
-
-const lettr = new Lettr('le_xxxxxxxxxxxx');
-// or
-const lettr = new Lettr(process.env.LETTR_API_KEY);
-```
-
-## Key Types
-
-| Type | Use Case | Dashboard |
-|------|----------|-----------|
-| Full Access | Server-side applications | ✅ |
-| Restricted | Limited permissions | ✅ |
-| Test | Development/testing | ✅ |
-
-## Test vs Production Keys
-
-| Feature | Test Key | Production Key |
-|---------|----------|----------------|
-| Prefix | `le_test_` | `le_` |
-| Sends real emails | ❌ | ✅ |
-| Rate limits | Lower | Standard |
-| Analytics | Limited | Full |
+- Followed by a 36-character random string
 
 ## Best Practices
 
-<AccordionGroup>
-  <Accordion title="Never expose keys in client-side code">
-    API keys should only be used server-side. Never include them in frontend JavaScript.
-  </Accordion>
-  <Accordion title="Use environment variables">
-    Store keys in environment variables, not in code.
-  </Accordion>
-  <Accordion title="Rotate keys regularly">
-    Create new keys and retire old ones periodically.
-  </Accordion>
-  <Accordion title="Use restricted permissions">
-    Only grant the permissions each key needs.
-  </Accordion>
-</AccordionGroup>
+### Never Expose Keys Client-Side
 
-## List Your Keys
+API keys should **only** be used in server-side code. Never include them in frontend JavaScript, mobile app code, or public repositories.
 
-```javascript
-const keys = await lettr.apiKeys.list();
+### Use Environment Variables
 
-keys.forEach(key => {
-  console.log({
-    id: key.id,
-    name: key.name,
-    lastUsed: key.lastUsedAt,
-    permissions: key.permissions
-  });
-});
+Store API keys in environment variables, not in your code:
+
+```bash
+# .env file (never commit this!)
+LETTR_API_KEY=le_xxxxxxxxxxxx
 ```
 
-## Revoke a Key
+### Use Descriptive Names
 
-```javascript
-await lettr.apiKeys.delete('key_123');
-```
+Name your API keys descriptively to easily identify their purpose:
 
-<Warning>
-  Revoking a key is immediate and permanent. Any applications using the key will stop working.
-</Warning>
+| Good Names | Bad Names |
+|------------|-----------|
+| Production Server | Key 1 |
+| Marketing App | Test |
+| Staging Environment | API Key |
 
+### Separate Keys for Separate Services
+
+Create distinct API keys for different services. This makes it easy to:
+- Identify which service uses which key
+- Revoke one key without affecting others
+- Filter logs by specific key
+
+### Audit and Rotate Keys
+
+- Regularly review your API keys in the dashboard
+- Delete keys that are no longer in use
+- Rotate keys periodically, especially after team member departures
+
+## Troubleshooting
+
+### 401 Unauthorized
+
+The API key is missing, invalid, or malformed.
+
+**Check:**
+- The key is included in the `Authorization` header
+- The format is `Bearer le_xxxxxxxxxxxx` (with space after Bearer)
+- The key hasn't been deleted
+
+### 403 Forbidden
+
+The API key is valid but lacks permission for this action.
+
+**Check:**
+- The key has the required permission level (Full access vs Sending only)
+- If using IP restrictions, your request is coming from an allowed IP
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Send Your First Email" icon="paper-plane" href="/quickstart/php/introduction">
+    Use your API key to send emails
+  </Card>
+  <Card title="API Logs" icon="list" href="/learn/logs/introduction">
+    Monitor API requests made with your keys
+  </Card>
+</CardGroup>

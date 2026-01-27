@@ -83,6 +83,12 @@
             ]
           },
           {
+            "group": "API Keys",
+            "pages": [
+              "learn/api-keys/introduction"
+            ]
+          },
+          {
             "group": "Logs",
             "pages": [
               "learn/logs/introduction",
