@@ -1,0 +1,201 @@
+---
+title: Setup
+description: "Configure your domain to receive emails with Lettr"
+---
+
+# Setting Up Email Receiving
+
+Before you can receive emails with Lettr, you need to configure an inbound domain and set up MX records to route incoming mail to Lettr's servers.
+
+## Prerequisites
+
+Before setting up email receiving, ensure you have:
+
+- A verified Lettr account
+- Access to your domain's DNS settings
+- A webhook endpoint ready to receive inbound email events (recommended)
+
+## Step-by-Step Setup
+
+<Steps>
+  <Step title="Add an Inbound Domain">
+    Navigate to **Domains** → **Inbound** in your dashboard and click **Add Domain**. Enter the domain or subdomain you want to use for receiving emails.
+  </Step>
+  <Step title="Configure MX Records">
+    Add the provided MX records to your domain's DNS settings. These records tell email servers to route mail to Lettr.
+  </Step>
+  <Step title="Verify MX Records">
+    Click **Verify** in the dashboard to confirm your MX records are properly configured.
+  </Step>
+  <Step title="Set Up Webhooks">
+    Configure a webhook endpoint to receive notifications when emails arrive.
+  </Step>
+</Steps>
+
+## Adding an Inbound Domain
+
+### Via Dashboard
+
+1. Go to **Domains** → **Inbound**
+2. Click **Add Domain**
+3. Enter your domain (e.g., `mail.example.com`)
+4. Click **Create**
+
+### Via API
+
+```javascript
+const response = await fetch('https://app.lettr.com/api/domains/inbound', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer le_xxxxxxxxxxxx',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    domain: 'mail.example.com'
+  })
+});
+
+const data = await response.json();
+console.log(data);
+```
+
+Response:
+
+```json
+{
+  "success": true,
+  "data": {
+    "domain": "mail.example.com",
+    "mx_status": "unverified",
+    "mx_records": [
+      { "priority": 5, "hostname": "rx1.sparkpostmail.com" },
+      { "priority": 10, "hostname": "rx2.sparkpostmail.com" },
+      { "priority": 20, "hostname": "rx3.sparkpostmail.com" }
+    ],
+    "created_at": "2024-01-15T10:30:00Z"
+  }
+}
+```
+
+## DNS Configuration
+
+Add these MX records to your domain's DNS settings:
+
+| Type | Host/Name | Priority | Value |
+|------|-----------|----------|-------|
+| MX | `@` or subdomain | 5 | `rx1.sparkpostmail.com` |
+| MX | `@` or subdomain | 10 | `rx2.sparkpostmail.com` |
+| MX | `@` or subdomain | 20 | `rx3.sparkpostmail.com` |
+
+<Note>
+  If you're using a subdomain like `mail.example.com`, set the Host/Name field to `mail` instead of `@`.
+</Note>
+
+### Understanding MX Priority
+
+MX priority determines the order email servers attempt delivery:
+
+| Priority | Server | Purpose |
+|----------|--------|---------|
+| 5 (highest) | `rx1.sparkpostmail.com` | Primary mail server |
+| 10 | `rx2.sparkpostmail.com` | Secondary fallback |
+| 20 (lowest) | `rx3.sparkpostmail.com` | Tertiary fallback |
+
+Lower numbers indicate higher priority. If the primary server is unavailable, sending servers automatically try the next server in order.
+
+## Verifying Your Domain
+
+After adding MX records, verify they're properly configured:
+
+### Via Dashboard
+
+1. Go to **Domains** → **Inbound**
+2. Find your domain and click **Verify**
+3. Wait for the verification to complete
+
+### Via API
+
+```javascript
+const response = await fetch(
+  'https://app.lettr.com/api/domains/inbound/mail.example.com/verify',
+  {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer le_xxxxxxxxxxxx'
+    }
+  }
+);
+
+const data = await response.json();
+console.log(data);
+```
+
+Response:
+
+```json
+{
+  "success": true,
+  "data": {
+    "domain": "mail.example.com",
+    "mx_status": "valid",
+    "mx_records_found": [
+      "rx1.sparkpostmail.com",
+      "rx2.sparkpostmail.com",
+      "rx3.sparkpostmail.com"
+    ]
+  }
+}
+```
+
+## Domain Status
+
+| Status | Description |
+|--------|-------------|
+| `valid` | All MX records found and configured correctly |
+| `unverified` | MX records not yet detected or incomplete |
+
+## Using Subdomains vs Root Domain
+
+We recommend using a subdomain for inbound email:
+
+| Configuration | Use Case |
+|---------------|----------|
+| `mail.example.com` | General inbound processing |
+| `reply.example.com` | Reply tracking for transactional emails |
+| `support.example.com` | Customer support emails |
+| `inbound.example.com` | Webhook-triggered workflows |
+
+<Tip>
+  Using subdomains lets you keep your root domain's MX records pointing to your regular email provider (Gmail, Microsoft 365, etc.) while routing specific addresses through Lettr.
+</Tip>
+
+## DNS Propagation
+
+DNS changes can take time to propagate:
+
+| Typical Time | Description |
+|--------------|-------------|
+| 5 minutes | Most DNS providers |
+| 1-4 hours | Some registrars |
+| Up to 48 hours | Worst case |
+
+<Warning>
+  If verification fails immediately after adding records, wait 15-30 minutes and try again. Use a tool like [MXToolbox](https://mxtoolbox.com/) to check your MX records externally.
+</Warning>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Webhooks" icon="webhook" href="/learn/receiving/webhooks">
+    Receive notifications when emails arrive
+  </Card>
+  <Card title="Routing" icon="route" href="/learn/receiving/routing">
+    Route emails to different handlers
+  </Card>
+  <Card title="Attachments" icon="paperclip" href="/learn/receiving/attachments">
+    Handle incoming attachments
+  </Card>
+  <Card title="Inbound Domains" icon="globe" href="/learn/domains/inbound-domains">
+    Learn more about domain configuration
+  </Card>
+</CardGroup>

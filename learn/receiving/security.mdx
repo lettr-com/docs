@@ -1,0 +1,545 @@
+---
+title: Security
+description: "Secure your inbound email processing"
+---
+
+# Inbound Email Security
+
+Receiving emails from external sources introduces security considerations. This guide covers best practices for securing your inbound email processing pipeline.
+
+## Webhook Security
+
+### Verify Webhook Signatures
+
+Always verify that webhooks come from Lettr, not malicious actors:
+
+```javascript
+import crypto from 'crypto';
+
+function verifyWebhookSignature(payload, signature, secret) {
+  const elements = signature.split(',');
+  const timestamp = elements.find(e => e.startsWith('t=')).slice(2);
+  const expectedSignature = elements.find(e => e.startsWith('v1=')).slice(3);
+
+  // Reject old timestamps (replay attack protection)
+  const now = Math.floor(Date.now() / 1000);
+  if (Math.abs(now - parseInt(timestamp)) > 300) {
+    throw new Error('Webhook timestamp too old');
+  }
+
+  // Compute expected signature
+  const signedPayload = `${timestamp}.${payload}`;
+  const computedSignature = crypto
+    .createHmac('sha256', secret)
+    .update(signedPayload)
+    .digest('hex');
+
+  // Timing-safe comparison
+  if (!crypto.timingSafeEqual(
+    Buffer.from(expectedSignature),
+    Buffer.from(computedSignature)
+  )) {
+    throw new Error('Invalid webhook signature');
+  }
+
+  return JSON.parse(payload);
+}
+
+app.post('/webhooks/inbound', express.raw({ type: 'application/json' }), (req, res) => {
+  try {
+    const event = verifyWebhookSignature(
+      req.body.toString(),
+      req.headers['lettr-signature'],
+      process.env.LETTR_WEBHOOK_SECRET
+    );
+
+    await processEmail(event);
+    res.sendStatus(200);
+  } catch (err) {
+    console.error('Webhook verification failed:', err.message);
+    res.sendStatus(400);
+  }
+});
+```
+
+### IP Allowlisting
+
+Optionally restrict webhook access to Lettr's IP addresses:
+
+```javascript
+const LETTR_IPS = [
+  '203.0.113.10',
+  '203.0.113.11',
+  '203.0.113.12'
+];
+
+function ipAllowlist(req, res, next) {
+  const clientIP = req.ip || req.connection.remoteAddress;
+
+  if (!LETTR_IPS.includes(clientIP)) {
+    console.warn(`Rejected webhook from unauthorized IP: ${clientIP}`);
+    return res.sendStatus(403);
+  }
+
+  next();
+}
+
+app.post('/webhooks/inbound', ipAllowlist, webhookHandler);
+```
+
+<Note>
+  Contact Lettr support for the current list of webhook source IP addresses, as they may change over time.
+</Note>
+
+## Input Validation
+
+### Validate Email Addresses
+
+Never trust email addresses from inbound emails:
+
+```javascript
+function validateEmailAddress(email) {
+  if (!email || typeof email !== 'string') {
+    return false;
+  }
+
+  // Basic format check
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return false;
+  }
+
+  // Length limits
+  if (email.length > 254) {
+    return false;
+  }
+
+  const [localPart, domain] = email.split('@');
+  if (localPart.length > 64 || domain.length > 255) {
+    return false;
+  }
+
+  return true;
+}
+```
+
+### Sanitize Email Content
+
+Sanitize HTML content before displaying or storing:
+
+```javascript
+import DOMPurify from 'isomorphic-dompurify';
+
+function sanitizeHtml(html) {
+  return DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: [
+      'p', 'br', 'b', 'i', 'u', 'strong', 'em',
+      'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+      'ul', 'ol', 'li', 'a', 'img', 'blockquote',
+      'table', 'thead', 'tbody', 'tr', 'th', 'td',
+      'span', 'div'
+    ],
+    ALLOWED_ATTR: ['href', 'src', 'alt', 'class', 'style'],
+    ALLOW_DATA_ATTR: false,
+    FORBID_TAGS: ['script', 'iframe', 'object', 'embed', 'form'],
+    FORBID_ATTR: ['onerror', 'onload', 'onclick']
+  });
+}
+
+app.post('/webhooks/inbound', async (req, res) => {
+  const { html, text } = req.body.data;
+
+  // Sanitize before storing
+  const safeHtml = html ? sanitizeHtml(html) : null;
+  const safeText = text ? escapeHtml(text) : null;
+
+  await storeEmail({ html: safeHtml, text: safeText });
+  res.sendStatus(200);
+});
+```
+
+### Validate and Sanitize Filenames
+
+Never use attachment filenames directly:
+
+```javascript
+import path from 'path';
+
+function sanitizeFilename(filename) {
+  if (!filename || typeof filename !== 'string') {
+    return 'unnamed_file';
+  }
+
+  // Remove directory traversal attempts
+  let safe = path.basename(filename);
+
+  // Remove dangerous characters
+  safe = safe.replace(/[<>:"/\\|?*\x00-\x1f]/g, '_');
+
+  // Limit length
+  safe = safe.substring(0, 200);
+
+  // Ensure not empty
+  if (!safe || safe === '.' || safe === '..') {
+    safe = 'unnamed_file';
+  }
+
+  return safe;
+}
+
+// Generate unique filenames to prevent overwrites
+function generateSafeFilename(originalFilename) {
+  const safe = sanitizeFilename(originalFilename);
+  const ext = path.extname(safe);
+  const base = path.basename(safe, ext);
+  const timestamp = Date.now();
+  const random = crypto.randomBytes(4).toString('hex');
+
+  return `${base}_${timestamp}_${random}${ext}`;
+}
+```
+
+## Attachment Security
+
+### Validate File Types
+
+Never trust the declared content type:
+
+```javascript
+import { fileTypeFromBuffer } from 'file-type';
+
+const ALLOWED_TYPES = new Map([
+  ['application/pdf', ['.pdf']],
+  ['image/jpeg', ['.jpg', '.jpeg']],
+  ['image/png', ['.png']],
+  ['image/gif', ['.gif']],
+  ['text/plain', ['.txt']],
+  ['text/csv', ['.csv']]
+]);
+
+async function validateAttachment(attachment) {
+  const response = await fetch(attachment.url);
+  const buffer = Buffer.from(await response.arrayBuffer());
+
+  // Detect actual file type from content
+  const detected = await fileTypeFromBuffer(buffer);
+
+  if (!detected) {
+    // Could be text file
+    if (attachment.contentType.startsWith('text/')) {
+      return { valid: true, type: attachment.contentType };
+    }
+    return { valid: false, reason: 'Unknown file type' };
+  }
+
+  // Check if type is allowed
+  if (!ALLOWED_TYPES.has(detected.mime)) {
+    return { valid: false, reason: `File type not allowed: ${detected.mime}` };
+  }
+
+  // Verify declared type matches detected type
+  if (detected.mime !== attachment.contentType) {
+    console.warn(
+      `Content-Type mismatch: declared ${attachment.contentType}, detected ${detected.mime}`
+    );
+    // Use detected type, not declared type
+  }
+
+  return { valid: true, type: detected.mime, buffer };
+}
+```
+
+### Scan for Malware
+
+Integrate with a virus scanner:
+
+```javascript
+import ClamScan from 'clamscan';
+
+const clamscan = await new ClamScan().init({
+  clamdscan: {
+    host: process.env.CLAMAV_HOST || 'localhost',
+    port: 3310
+  }
+});
+
+async function scanForMalware(buffer, filename) {
+  try {
+    const { isInfected, viruses } = await clamscan.scanBuffer(buffer);
+
+    if (isInfected) {
+      console.error(`Malware detected in ${filename}: ${viruses.join(', ')}`);
+      return {
+        safe: false,
+        threats: viruses
+      };
+    }
+
+    return { safe: true };
+  } catch (error) {
+    console.error('Virus scan failed:', error);
+    // Fail closed - treat as unsafe if scanning fails
+    return { safe: false, error: 'Scan failed' };
+  }
+}
+```
+
+### Limit File Sizes
+
+Enforce size limits to prevent resource exhaustion:
+
+```javascript
+const MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024; // 10 MB
+const MAX_TOTAL_SIZE = 25 * 1024 * 1024; // 25 MB
+
+function validateAttachmentSizes(attachments) {
+  let totalSize = 0;
+
+  for (const attachment of attachments) {
+    if (attachment.size > MAX_ATTACHMENT_SIZE) {
+      return {
+        valid: false,
+        reason: `Attachment ${attachment.filename} exceeds size limit`
+      };
+    }
+    totalSize += attachment.size;
+  }
+
+  if (totalSize > MAX_TOTAL_SIZE) {
+    return {
+      valid: false,
+      reason: `Total attachment size exceeds limit`
+    };
+  }
+
+  return { valid: true };
+}
+```
+
+## Content Security
+
+### Prevent XSS in Displayed Emails
+
+When displaying email content in a web interface:
+
+```javascript
+// Use CSP headers
+app.use((req, res, next) => {
+  res.setHeader(
+    'Content-Security-Policy',
+    "default-src 'self'; img-src 'self' https:; style-src 'self' 'unsafe-inline'"
+  );
+  next();
+});
+
+// Render emails in sandboxed iframe
+function renderEmailHtml(sanitizedHtml) {
+  return `
+    <iframe
+      sandbox="allow-same-origin"
+      srcdoc="${escapeAttribute(sanitizedHtml)}"
+      style="width: 100%; height: 500px; border: none;"
+    ></iframe>
+  `;
+}
+```
+
+### Block Tracking Pixels
+
+Strip tracking pixels from received emails:
+
+```javascript
+function removeTrackingPixels(html) {
+  // Remove 1x1 images (common tracking pixels)
+  html = html.replace(
+    /<img[^>]*(?:width|height)\s*=\s*["']?1["']?[^>]*>/gi,
+    ''
+  );
+
+  // Remove images from known tracking domains
+  const trackingDomains = [
+    'mailtrack.io',
+    'pixel.watch',
+    'track.customer.io',
+    'open.convertkit.com'
+  ];
+
+  for (const domain of trackingDomains) {
+    const regex = new RegExp(`<img[^>]*${domain}[^>]*>`, 'gi');
+    html = html.replace(regex, '');
+  }
+
+  return html;
+}
+```
+
+## Rate Limiting
+
+Protect against email flooding:
+
+```javascript
+import { RateLimiterRedis } from 'rate-limiter-flexible';
+import Redis from 'ioredis';
+
+const redis = new Redis(process.env.REDIS_URL);
+
+const senderLimiter = new RateLimiterRedis({
+  storeClient: redis,
+  keyPrefix: 'inbound_sender',
+  points: 100, // 100 emails
+  duration: 3600 // per hour
+});
+
+const domainLimiter = new RateLimiterRedis({
+  storeClient: redis,
+  keyPrefix: 'inbound_domain',
+  points: 500,
+  duration: 3600
+});
+
+const globalLimiter = new RateLimiterRedis({
+  storeClient: redis,
+  keyPrefix: 'inbound_global',
+  points: 10000,
+  duration: 3600
+});
+
+async function checkRateLimits(email) {
+  const sender = email.from.toLowerCase();
+  const domain = sender.split('@')[1];
+
+  try {
+    await Promise.all([
+      senderLimiter.consume(sender),
+      domainLimiter.consume(domain),
+      globalLimiter.consume('global')
+    ]);
+    return { allowed: true };
+  } catch (error) {
+    return {
+      allowed: false,
+      reason: 'Rate limit exceeded',
+      retryAfter: Math.ceil(error.msBeforeNext / 1000)
+    };
+  }
+}
+```
+
+## Logging and Monitoring
+
+### Audit Logging
+
+Log all inbound email processing:
+
+```javascript
+async function logInboundEmail(email, result) {
+  await auditLog.create({
+    type: 'inbound_email',
+    emailId: email.id,
+    from: email.from,
+    to: email.to,
+    subject: email.subject?.substring(0, 100),
+    attachmentCount: email.attachments?.length || 0,
+    spamScore: email.spamScore,
+    result: result.status,
+    processingTime: result.duration,
+    timestamp: new Date()
+  });
+}
+```
+
+### Anomaly Detection
+
+Monitor for suspicious patterns:
+
+```javascript
+class AnomalyDetector {
+  constructor() {
+    this.senderHistory = new Map();
+  }
+
+  async analyze(email) {
+    const sender = email.from.toLowerCase();
+    const alerts = [];
+
+    // Track sender frequency
+    const history = this.senderHistory.get(sender) || { count: 0, firstSeen: Date.now() };
+    history.count++;
+    this.senderHistory.set(sender, history);
+
+    // New sender sending many emails quickly
+    if (history.count > 10 && Date.now() - history.firstSeen < 60000) {
+      alerts.push({
+        type: 'rapid_sender',
+        sender,
+        count: history.count,
+        duration: Date.now() - history.firstSeen
+      });
+    }
+
+    // Unusual attachment patterns
+    if (email.attachments?.length > 5) {
+      alerts.push({
+        type: 'many_attachments',
+        sender,
+        count: email.attachments.length
+      });
+    }
+
+    return alerts;
+  }
+}
+```
+
+## Security Checklist
+
+<AccordionGroup>
+  <Accordion title="Webhook Security">
+    - [ ] Verify webhook signatures on every request
+    - [ ] Reject requests with old timestamps (> 5 minutes)
+    - [ ] Use timing-safe string comparison
+    - [ ] Consider IP allowlisting
+  </Accordion>
+
+  <Accordion title="Input Validation">
+    - [ ] Validate all email addresses
+    - [ ] Sanitize HTML content before storage/display
+    - [ ] Sanitize filenames before use
+    - [ ] Validate attachment content types
+  </Accordion>
+
+  <Accordion title="Attachment Security">
+    - [ ] Verify file types from content, not headers
+    - [ ] Scan attachments for malware
+    - [ ] Enforce size limits
+    - [ ] Store attachments outside web root
+  </Accordion>
+
+  <Accordion title="Monitoring">
+    - [ ] Log all inbound email processing
+    - [ ] Monitor for rate limit violations
+    - [ ] Alert on anomalous patterns
+    - [ ] Track spam score distributions
+  </Accordion>
+</AccordionGroup>
+
+<Warning>
+  Never trust any data from inbound emails. Senders can forge headers, spoof addresses, and include malicious content. Always validate and sanitize everything.
+</Warning>
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Webhook Authorization" icon="lock" href="/learn/webhooks/authorization">
+    Secure webhook endpoints
+  </Card>
+  <Card title="Spam Filtering" icon="shield" href="/learn/receiving/spam-filtering">
+    Filter spam emails
+  </Card>
+  <Card title="Attachments" icon="paperclip" href="/learn/receiving/attachments">
+    Handle attachments safely
+  </Card>
+  <Card title="Best Practices" icon="star" href="/learn/receiving/best-practices">
+    Overall best practices
+  </Card>
+</CardGroup>
