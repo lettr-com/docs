@@ -1,0 +1,262 @@
+---
+title: API Logs
+description: "View and troubleshoot API requests in the Lettr Dashboard"
+---
+
+# API Logs
+
+The Logs page provides detailed information about every API request made to Lettr, helping you monitor activity, debug integrations, and troubleshoot issues quickly.
+
+## Overview
+
+Access your logs from the [Logs page](https://app.lettr.com/logs) in the dashboard. The API Logs view shows a comprehensive table of all API requests with the following information:
+
+| Column | Description |
+|--------|-------------|
+| **Timestamp** | When the request was made |
+| **Method** | The HTTP method used (GET, POST, DELETE, etc.) |
+| **Path** | The API endpoint called (e.g., `api/emails`, `api/domains`) |
+| **Status** | The HTTP response status code |
+| **IP Address** | The IP address that made the request |
+| **API Key** | Which API key was used (if applicable) |
+| **Details** | Click to view full request and response details |
+
+<Info>
+  API logs are retained for **30 days**. After this period, logs are automatically deleted.
+</Info>
+
+## Filtering Logs
+
+Use the filter controls at the top of the page to narrow down your search.
+
+### Date Range
+
+Select a custom date range to view logs from a specific period. The default view shows the last 7 days.
+
+### API Keys
+
+Filter logs by specific API key to see requests made by a particular integration:
+
+- **All API Keys** - View logs from all API keys
+- **Specific key** - Select a named API key to filter
+
+This is useful when debugging a specific integration or tracking usage per application.
+
+### User Agents
+
+Filter by the SDK or client used to make requests:
+
+| User Agent | Description |
+|------------|-------------|
+| **SMTP** | Requests via SMTP relay |
+| **Node.js** | Lettr Node.js SDK |
+| **PHP** | Lettr PHP SDK |
+| **Python** | Lettr Python SDK |
+| **Ruby** | Lettr Ruby SDK |
+| **Go** | Lettr Go SDK |
+| **Rust** | Lettr Rust SDK |
+| **Java** | Lettr Java SDK |
+| **.NET** | Lettr .NET SDK |
+| **cURL** | Direct cURL requests |
+| **Other** | Other HTTP clients |
+
+### Status Codes
+
+Filter by HTTP response status to quickly identify successful requests or errors:
+
+| Status | Description |
+|--------|-------------|
+| **All Statuses** | Show all requests |
+| **200 - Ok** | Successful GET requests |
+| **201 - Created** | Successful POST requests (resource created) |
+| **400 - Bad Request** | Invalid request format or parameters |
+| **401 - Unauthorized** | Missing or invalid API key |
+| **403 - Forbidden** | API key lacks required permissions |
+| **404 - Not Found** | Requested resource doesn't exist |
+| **422 - Unprocessable Content** | Request validation failed |
+| **429 - Too Many Requests** | Rate limit exceeded |
+| **451 - Unavailable For Legal Reasons** | Content blocked for legal compliance |
+| **500 - Internal Server Error** | Server-side error |
+
+<Tip>
+  To quickly find failed requests, filter by 4xx and 5xx status codes. This helps you identify integration issues that need attention.
+</Tip>
+
+## Searching Logs
+
+Click the **Search** button after applying filters to refresh the results. The search respects all active filters including date range, API key, user agent, and status code selections.
+
+## Log Details
+
+Click the details icon (or anywhere on a row) to open the full log detail view for any request.
+
+### Request Information
+
+The detail view shows:
+
+- **Method & Path** - The HTTP method and API endpoint (e.g., `POST api/emails`)
+- **Status Code** - The response status with color indicator (green for success, red for errors)
+- **Timestamp** - Exact date and time of the request
+- **Request Body** - The full JSON payload sent to the API
+
+**Example request body:**
+
+```json
+{
+  "from": "sender@example.com",
+  "to": [
+    "recipient@example.com"
+  ],
+  "subject": "Test send",
+  "text": "Plain-text body",
+  "html": "<p>HTML body</p> And click here: <a href=\"https://example.com\">Link</a>"
+}
+```
+
+### Response Information
+
+- **Response Body** - The complete API response
+
+**Example response body:**
+
+```json
+{
+  "message": "Email queued for delivery.",
+  "data": {
+    "request_id": "759976368330071843",
+    "accepted": 1,
+    "rejected": 0
+  }
+}
+```
+
+### Metadata
+
+Additional information about the request:
+
+- **IP Address** - The source IP address
+- **API Key** - The API key name used (with the key itself partially masked for security)
+- **User Agent** - The client or SDK used (e.g., `bruno-runtime/3.0.2`, `lettr-node/1.0.0`)
+
+## Truncated Fields
+
+To optimize storage and display, some large fields are truncated in the logs:
+
+| Field | Behavior |
+|-------|----------|
+| **HTML body** | Truncated after 1,000 characters |
+| **Plain text body** | Truncated after 1,000 characters |
+| **AMP HTML body** | Truncated after 1,000 characters |
+| **Attachments** | File metadata shown, content not stored |
+| **Recipient Metadata** | Truncated for large recipient lists |
+
+<Note>
+  Truncation only affects log display. The actual email sent contains the full content.
+</Note>
+
+## Common Status Codes
+
+### Success Codes
+
+| Code | Meaning | Typical Cause |
+|------|---------|---------------|
+| 200 | OK | GET request successful |
+| 201 | Created | POST request successful, resource created |
+
+### Client Error Codes
+
+| Code | Meaning | How to Fix |
+|------|---------|------------|
+| 400 | Bad Request | Check request body format and required fields |
+| 401 | Unauthorized | Verify your API key is correct and active |
+| 403 | Forbidden | Check API key permissions for this endpoint |
+| 404 | Not Found | Verify the resource ID exists |
+| 422 | Unprocessable | Check validation errors in response body |
+| 429 | Too Many Requests | Implement rate limiting, wait before retrying |
+| 451 | Legal Block | Content flagged for compliance reasons |
+
+### Server Error Codes
+
+| Code | Meaning | What to Do |
+|------|---------|------------|
+| 500 | Internal Error | Retry the request; contact support if persistent |
+
+## Troubleshooting with Logs
+
+### Finding Failed Requests
+
+1. Set the **Status** filter to show only error codes (4xx, 5xx)
+2. Click **Search** to filter results
+3. Click on a failed request to view details
+4. Check the **Response Body** for error messages
+
+### Debugging a Specific Integration
+
+1. Filter by the **API Key** used by that integration
+2. Optionally filter by **User Agent** if using an SDK
+3. Review recent requests for patterns or errors
+
+### Tracking Rate Limit Issues
+
+1. Filter by status code **429 - Too Many Requests**
+2. Note the timestamps to identify when limits are being hit
+3. Review the IP addresses to see if requests are distributed
+4. Implement exponential backoff in your integration
+
+<!-- 
+## Exporting Logs
+
+Admins can export log data in CSV format for external analysis or compliance purposes.
+
+<Steps>
+  <Step title="Apply Filters">
+    Set your desired filters (date range, status, API key, etc.).
+  </Step>
+  <Step title="Click Export">
+    Click the **Export** button in the logs view.
+  </Step>
+  <Step title="Confirm Export">
+    Review your filter selection and confirm.
+  </Step>
+  <Step title="Download">
+    For small exports (≤1,000 rows), the file downloads immediately. For larger exports, you'll receive an email with a download link.
+  </Step>
+</Steps>
+
+<Info>
+  Exports are available for 7 days. All team admins can access exports from **Settings → Team → Exports**.
+</Info>
+-->
+
+## Best Practices
+
+### Monitor Regularly
+
+- Check logs periodically for unexpected errors
+- Set up alerts for high error rates using webhooks
+- Review 429 errors to optimize your rate limiting
+
+### Use Descriptive API Key Names
+
+Name your API keys descriptively (e.g., "Production Server", "Staging Environment", "Marketing Integration") to easily identify which system made each request.
+
+### Correlate with Email Events
+
+When troubleshooting email delivery issues:
+
+1. Find the send request in logs using the timestamp
+2. Note the `request_id` from the response
+3. Use this ID to track the email in the Emails dashboard
+
+## Next Steps
+
+<!-- 
+<CardGroup cols={2}>
+  <Card title="API Keys" icon="key" href="/learn/api-keys/introduction">
+    Manage your API keys and permissions
+  </Card>
+  <Card title="Rate Limits" icon="gauge" href="/knowledge-base/troubleshooting/rate-limits">
+    Understand and handle rate limits
+  </Card>
+</CardGroup>
+-->

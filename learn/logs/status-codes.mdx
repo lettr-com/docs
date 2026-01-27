@@ -1,0 +1,383 @@
+---
+title: HTTP Status Codes
+description: "Understanding API response status codes and how to handle them"
+---
+
+# HTTP Status Codes
+
+When making API requests to Lettr, the response includes an HTTP status code indicating the result. Understanding these codes helps you handle responses correctly and troubleshoot issues.
+
+## Success Codes (2xx)
+
+These codes indicate the request was successful.
+
+### 200 - OK
+
+The request succeeded. Used for successful GET, PUT, PATCH, and DELETE operations.
+
+```json
+{
+  "data": {
+    "id": "dom_123",
+    "name": "example.com",
+    "status": "verified"
+  }
+}
+```
+
+### 201 - Created
+
+The request succeeded and a new resource was created. Used for successful POST operations.
+
+```json
+{
+  "message": "Email queued for delivery.",
+  "data": {
+    "request_id": "759976368330071843",
+    "accepted": 1,
+    "rejected": 0
+  }
+}
+```
+
+## Client Error Codes (4xx)
+
+These codes indicate an error with the request. Review the error message and fix the request before retrying.
+
+### 400 - Bad Request
+
+The request was malformed or contains invalid data.
+
+**Common causes:**
+- Invalid JSON syntax
+- Missing required fields
+- Wrong data types
+
+**Example response:**
+
+```json
+{
+  "error": {
+    "code": "bad_request",
+    "message": "Invalid JSON in request body"
+  }
+}
+```
+
+**How to fix:**
+- Validate your JSON syntax
+- Check all required fields are present
+- Verify data types match the API specification
+
+### 401 - Unauthorized
+
+Authentication failed. The API key is missing, invalid, or expired.
+
+**Example response:**
+
+```json
+{
+  "error": {
+    "code": "unauthorized",
+    "message": "Invalid API key"
+  }
+}
+```
+
+**How to fix:**
+- Verify the API key is correct
+- Check the key hasn't been revoked
+- Ensure the `Authorization` header is formatted correctly: `Bearer your_api_key`
+
+### 403 - Forbidden
+
+The API key is valid but lacks permission for this operation.
+
+**Common causes:**
+- API key doesn't have access to this endpoint
+- API key is restricted to specific domains
+- Attempting to access another team's resources
+
+**Example response:**
+
+```json
+{
+  "error": {
+    "code": "forbidden",
+    "message": "API key does not have permission to send emails"
+  }
+}
+```
+
+**How to fix:**
+- Check the API key's permissions in the dashboard
+- Create a new API key with the required permissions
+- Verify you're accessing resources within your team
+
+### 404 - Not Found
+
+The requested resource doesn't exist.
+
+**Common causes:**
+- Resource ID is incorrect
+- Resource was deleted
+- Typo in the endpoint URL
+
+**Example response:**
+
+```json
+{
+  "error": {
+    "code": "not_found",
+    "message": "Email not found"
+  }
+}
+```
+
+**How to fix:**
+- Verify the resource ID is correct
+- Check if the resource still exists
+- Review the API endpoint URL
+
+### 422 - Unprocessable Content
+
+The request format is valid, but the content failed validation.
+
+**Common causes:**
+- Invalid email address format
+- Domain not verified
+- Template variable missing
+- Field value out of allowed range
+
+**Example response:**
+
+```json
+{
+  "error": {
+    "code": "validation_error",
+    "message": "Validation failed",
+    "details": [
+      {
+        "field": "from",
+        "message": "Domain 'unverified.com' is not verified"
+      },
+      {
+        "field": "to[0]",
+        "message": "Invalid email address format"
+      }
+    ]
+  }
+}
+```
+
+**How to fix:**
+- Review the `details` array for specific field errors
+- Validate email addresses before sending
+- Ensure domains are verified
+- Check field values are within acceptable ranges
+
+### 429 - Too Many Requests
+
+You've exceeded the rate limit. Slow down your requests.
+
+**Example response:**
+
+```json
+{
+  "error": {
+    "code": "rate_limit_exceeded",
+    "message": "Rate limit exceeded. Try again in 60 seconds.",
+    "retry_after": 60
+  }
+}
+```
+
+**Headers included:**
+
+```
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 0
+X-RateLimit-Reset: 1705320000
+Retry-After: 60
+```
+
+**How to fix:**
+- Implement exponential backoff
+- Respect the `Retry-After` header
+- Batch requests where possible
+- Consider upgrading your plan for higher limits
+
+See [Rate Limits](/knowledge-base/troubleshooting/rate-limits) for detailed guidance.
+
+### 451 - Unavailable For Legal Reasons
+
+The request was blocked for legal or compliance reasons.
+
+**Common causes:**
+- Content flagged as prohibited
+- Recipient on a suppression list due to legal requirements
+- Sending to a restricted region
+
+**Example response:**
+
+```json
+{
+  "error": {
+    "code": "legal_block",
+    "message": "This request cannot be processed for legal compliance reasons"
+  }
+}
+```
+
+**How to fix:**
+- Review your email content
+- Check if recipients are on suppression lists
+- Contact support if you believe this is an error
+
+## Server Error Codes (5xx)
+
+These codes indicate a server-side error. These are typically temporary and can be retried.
+
+### 500 - Internal Server Error
+
+An unexpected error occurred on the server.
+
+**Example response:**
+
+```json
+{
+  "error": {
+    "code": "internal_error",
+    "message": "An unexpected error occurred. Please try again."
+  }
+}
+```
+
+**How to handle:**
+- Retry the request with exponential backoff
+- If the error persists, contact support
+- Include the request timestamp when reporting issues
+
+## Handling Errors in Code
+
+### Node.js Example
+
+```javascript
+try {
+  const response = await lettr.emails.send({
+    from: 'hello@example.com',
+    to: ['recipient@example.com'],
+    subject: 'Hello',
+    html: '<p>Hello!</p>'
+  });
+  
+  console.log('Email sent:', response.data.request_id);
+} catch (error) {
+  if (error.status === 429) {
+    // Rate limited - wait and retry
+    const retryAfter = error.headers?.['retry-after'] || 60;
+    console.log(`Rate limited. Retrying in ${retryAfter} seconds`);
+    await sleep(retryAfter * 1000);
+    // Retry the request
+  } else if (error.status === 422) {
+    // Validation error - log details
+    console.error('Validation failed:', error.details);
+  } else if (error.status >= 500) {
+    // Server error - retry with backoff
+    console.error('Server error, retrying...');
+  } else {
+    // Other client error - don't retry
+    console.error('Request failed:', error.message);
+  }
+}
+```
+
+### PHP Example
+
+```php
+try {
+    $response = $lettr->emails->send([
+        'from' => 'hello@example.com',
+        'to' => ['recipient@example.com'],
+        'subject' => 'Hello',
+        'html' => '<p>Hello!</p>'
+    ]);
+    
+    echo 'Email sent: ' . $response->data->request_id;
+} catch (LettrException $e) {
+    switch ($e->getCode()) {
+        case 429:
+            // Rate limited
+            $retryAfter = $e->getRetryAfter() ?? 60;
+            sleep($retryAfter);
+            // Retry
+            break;
+        case 422:
+            // Validation error
+            error_log('Validation failed: ' . json_encode($e->getDetails()));
+            break;
+        default:
+            error_log('Request failed: ' . $e->getMessage());
+    }
+}
+```
+
+## Retry Strategy
+
+For transient errors (429, 500, 502, 503, 504), implement exponential backoff:
+
+```javascript
+async function sendWithRetry(request, maxRetries = 3) {
+  let lastError;
+  
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await lettr.emails.send(request);
+    } catch (error) {
+      lastError = error;
+      
+      // Don't retry client errors (except 429)
+      if (error.status >= 400 && error.status < 500 && error.status !== 429) {
+        throw error;
+      }
+      
+      // Calculate delay with exponential backoff
+      const baseDelay = error.status === 429 
+        ? (error.headers?.['retry-after'] || 60) * 1000
+        : 1000;
+      const delay = baseDelay * Math.pow(2, attempt);
+      
+      console.log(`Attempt ${attempt + 1} failed. Retrying in ${delay}ms`);
+      await sleep(delay);
+    }
+  }
+  
+  throw lastError;
+}
+```
+
+## Status Code Summary
+
+| Code | Name | Retryable | Action |
+|------|------|-----------|--------|
+| 200 | OK | N/A | Success |
+| 201 | Created | N/A | Success |
+| 400 | Bad Request | No | Fix request |
+| 401 | Unauthorized | No | Check API key |
+| 403 | Forbidden | No | Check permissions |
+| 404 | Not Found | No | Verify resource exists |
+| 422 | Unprocessable | No | Fix validation errors |
+| 429 | Too Many Requests | Yes | Wait and retry |
+| 451 | Legal Block | No | Review content |
+| 500 | Internal Error | Yes | Retry with backoff |
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="API Logs" icon="list" href="/learn/logs/introduction">
+    View and filter your API request logs
+  </Card>
+  <Card title="Rate Limits" icon="gauge" href="/knowledge-base/troubleshooting/rate-limits">
+    Understand rate limiting
+  </Card>
+</CardGroup>

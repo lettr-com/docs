@@ -1,101 +1,304 @@
 ---
 title: Tracking Domains
-description: "Set up custom tracking domains for opens and clicks"
+description: "Set up custom domains for click and open tracking in your emails"
 ---
 
 # Tracking Domains
 
-Use custom domains for tracking links and pixels to maintain brand consistency.
+Tracking domains allow you to use your own custom domain for click and open tracking links instead of Lettr's default tracking domain. This improves brand consistency and can enhance deliverability.
 
-## Why Custom Tracking Domains?
+## What is Email Tracking?
 
-By default, tracking links use Lettr's domain. Custom tracking domains:
+Lettr can track two types of email engagement:
 
-- **Brand Consistency** - Links show your domain, not Lettr's
-- **Improved Deliverability** - Some spam filters trust custom domains more
-- **User Trust** - Recipients see familiar links
+| Type | How It Works | What You Learn |
+|------|--------------|----------------|
+| **Click Tracking** | Links are rewritten to go through a tracking server | Which links recipients clicked |
+| **Open Tracking** | A tiny invisible image is embedded in the email | When and how often emails are opened |
 
 ## Default vs Custom Tracking
 
-| Type | Link Example |
-|------|--------------|
-| Default | `https://track.lettr.dev/c/abc123` |
-| Custom | `https://links.example.com/c/abc123` |
+| Type | Example URL |
+|------|-------------|
+| Default Click | `https://track.lettr.dev/c/abc123` |
+| Custom Click | `https://links.example.com/c/abc123` |
+| Default Open | `https://track.lettr.dev/o/xyz789` |
+| Custom Open | `https://links.example.com/o/xyz789` |
+
+## Why Use Custom Tracking Domains?
+
+Custom tracking domains provide several benefits:
+
+- **Brand Consistency** - All links show your domain, not Lettr's
+- **Improved Deliverability** - Some spam filters are more lenient with first-party tracking domains
+- **User Trust** - Recipients see familiar domains when hovering over links
+- **Professional Appearance** - Consistent branding across all email elements
+- **Bypasses Link Blockers** - Some security tools block known tracking domains
 
 ## Setup Custom Tracking Domain
 
 <Steps>
   <Step title="Choose a Subdomain">
-    Pick a subdomain like `links`, `track`, or `click`.
+    Select a subdomain for tracking, such as:
+    - `links.example.com`
+    - `track.example.com`
+    - `click.example.com`
+    - `go.example.com`
   </Step>
   <Step title="Add DNS Record">
-    Add a CNAME record pointing to Lettr.
+    Add a CNAME record pointing your subdomain to Lettr.
   </Step>
   <Step title="Configure in Dashboard">
-    Set the tracking domain in your domain settings.
+    Go to **Domains → Add Domain**, enter your subdomain, and select **Tracking** as the type.
+  </Step>
+  <Step title="Verify Domain">
+    Click **Verify** to confirm DNS propagation and SSL provisioning.
   </Step>
 </Steps>
 
 ## DNS Configuration
 
-Add this CNAME record:
+Add this CNAME record to your domain's DNS:
 
 ```
-Type: CNAME
-Host: links (or your chosen subdomain)
+Type:  CNAME
+Host:  links (or your chosen subdomain)
 Value: track.lettr.dev
 ```
 
 ## Via API
 
 ```javascript
-const domain = await lettr.domains.update('dom_123', {
+// Create tracking domain
+const domain = await lettr.domains.create({
+  name: 'links.example.com',
+  type: 'tracking'
+});
+
+console.log(domain.dnsRecords);
+// [{ type: 'CNAME', host: 'links', value: 'track.lettr.dev' }]
+```
+
+### Associate with Sending Domain
+
+Link your tracking domain to a sending domain:
+
+```javascript
+await lettr.domains.update('dom_sending_123', {
   trackingDomain: 'links.example.com'
 });
 ```
 
 ## SSL Certificate
 
-Lettr automatically provisions SSL certificates for custom tracking domains. This process takes a few minutes after DNS verification.
-
-## Verify Setup
+Lettr automatically provisions and renews SSL certificates for your tracking domain. All tracking URLs use HTTPS for security and compatibility.
 
 ```javascript
 const domain = await lettr.domains.get('dom_123');
 
 console.log({
-  trackingDomain: domain.trackingDomain,
-  trackingDomainStatus: domain.trackingDomainStatus,
-  sslStatus: domain.trackingSslStatus
+  trackingDomain: domain.name,
+  sslStatus: domain.sslStatus,       // 'provisioning', 'active', 'failed'
+  sslExpiresAt: domain.sslExpiresAt
 });
 ```
+
+<Info>
+  SSL provisioning typically takes 5-10 minutes after DNS verification. During this time, tracking will use Lettr's default domain.
+</Info>
 
 ## Using Custom Tracking
 
 Once configured, all tracking links automatically use your custom domain:
 
+### Click Tracking
+
 ```javascript
 await lettr.emails.send({
-  from: 'you@example.com',
-  to: ['recipient@example.com'],
-  subject: 'Newsletter',
-  html: '<p>Click <a href="https://example.com/offer">here</a></p>',
-  tracking: { clicks: true }
+  from: 'news@example.com',
+  to: ['subscriber@example.com'],
+  subject: 'Check out our new features',
+  html: `
+    <p>We've just launched exciting new features!</p>
+    <a href="https://example.com/features">Learn More</a>
+  `,
+  tracking: {
+    clicks: true
+  }
 });
 
-// Link in email becomes: https://links.example.com/c/abc123
+// The link in the email becomes:
+// https://links.example.com/c/abc123
+// Which redirects to: https://example.com/features
 ```
 
-## Open Tracking Pixel
+### Open Tracking
 
-The open tracking pixel also uses your custom domain:
+```javascript
+await lettr.emails.send({
+  from: 'news@example.com',
+  to: ['subscriber@example.com'],
+  subject: 'Weekly Newsletter',
+  html: '<p>This week\'s updates...</p>',
+  tracking: {
+    opens: true
+  }
+});
+
+// A tracking pixel is added:
+// <img src="https://links.example.com/o/xyz789" width="1" height="1" />
+```
+
+### Enable Both
+
+```javascript
+await lettr.emails.send({
+  from: 'news@example.com',
+  to: ['subscriber@example.com'],
+  subject: 'Newsletter',
+  html: '<p>Content with <a href="https://example.com">links</a></p>',
+  tracking: {
+    clicks: true,
+    opens: true
+  }
+});
+```
+
+## Tracking Settings
+
+### Domain-Level Defaults
+
+Set default tracking behavior for all emails from a domain:
+
+```javascript
+await lettr.domains.update('dom_123', {
+  defaultTracking: {
+    clicks: true,
+    opens: false  // Disable open tracking by default
+  }
+});
+```
+
+### Per-Email Override
+
+Override domain defaults for individual emails:
+
+```javascript
+await lettr.emails.send({
+  from: 'support@example.com',
+  to: ['customer@example.com'],
+  subject: 'Password Reset',
+  html: '<p>Click <a href="https://example.com/reset">here</a> to reset...</p>',
+  tracking: {
+    clicks: false,  // Disable for this sensitive email
+    opens: false
+  }
+});
+```
+
+<Tip>
+  For sensitive transactional emails (password resets, security alerts), consider disabling tracking to improve deliverability and user trust.
+</Tip>
+
+## How Click Tracking Works
+
+When click tracking is enabled:
+
+1. Lettr scans your HTML for `<a href="...">` links
+2. Each link is replaced with a tracking URL that includes a unique identifier
+3. When a recipient clicks, they hit your tracking domain first
+4. Lettr logs the click event and immediately redirects to the original URL
+5. The redirect is fast (typically <50ms) and transparent to users
+
+### Excluded Links
+
+Some links are automatically excluded from tracking:
+
+- `mailto:` links
+- `tel:` links
+- Anchor links (`#section`)
+- Links with `data-no-track` attribute
 
 ```html
-<!-- In the email -->
-<img src="https://links.example.com/o/xyz789" width="1" height="1" />
+<!-- This link won't be tracked -->
+<a href="https://example.com" data-no-track>Untracked Link</a>
 ```
 
-<Note>
-  Changing your tracking domain won't affect previously sent emails. Only new emails will use the updated tracking domain.
-</Note>
+## How Open Tracking Works
 
+When open tracking is enabled:
+
+1. Lettr adds a 1x1 transparent pixel image at the end of your email
+2. When the email is opened and images are loaded, the pixel is requested
+3. Lettr logs the open event with timestamp and metadata
+
+### Limitations
+
+Open tracking has inherent limitations:
+
+| Limitation | Description |
+|------------|-------------|
+| Image blocking | Many email clients block images by default |
+| Prefetching | Some clients prefetch images, logging false opens |
+| Plain text | Only works in HTML emails |
+| Privacy features | Apple Mail Privacy Protection hides opens |
+
+## Verify Setup
+
+Send a test email and verify tracking is working:
+
+```javascript
+// Send test email
+const email = await lettr.emails.send({
+  from: 'test@example.com',
+  to: ['your-email@example.com'],
+  subject: 'Tracking Test',
+  html: '<p>Click <a href="https://example.com">this link</a></p>',
+  tracking: { clicks: true, opens: true }
+});
+
+// Wait for engagement, then check events
+const events = await lettr.emails.getEvents(email.id);
+
+for (const event of events) {
+  console.log(`${event.type}: ${event.timestamp}`);
+}
+// Output:
+// email.delivered: 2024-01-15T10:00:00Z
+// email.opened: 2024-01-15T10:05:00Z
+// email.clicked: 2024-01-15T10:05:30Z
+```
+
+## Multiple Tracking Domains
+
+You can use different tracking domains for different purposes:
+
+| Domain | Associated Sending Domain | Use Case |
+|--------|--------------------------|----------|
+| `links.example.com` | `example.com` | Main website |
+| `go.product.com` | `mail.product.com` | Product emails |
+| `track.newsletter.com` | `newsletter.com` | Marketing |
+
+## Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| Links not being tracked | Verify `tracking.clicks` is `true` in send options |
+| SSL errors | Wait for SSL provisioning to complete |
+| Old links using default domain | Only new emails use the custom tracking domain |
+| Tracking domain not verifying | Ensure CNAME points to `track.lettr.dev` |
+
+<Warning>
+  Changing your tracking domain won't affect previously sent emails. Only new emails will use the updated tracking domain.
+</Warning>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Storage Domains" icon="image" href="/learn/domains/storage-domains">
+    Host email images on your domain
+  </Card>
+  <Card title="Analytics" icon="chart-bar" href="/learn/sending/analytics">
+    Understand your email analytics
+  </Card>
+</CardGroup>

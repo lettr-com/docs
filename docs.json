@@ -81,6 +81,13 @@
               "learn/domains/dmarc",
               "learn/domains/bimi"
             ]
+          },
+          {
+            "group": "Logs",
+            "pages": [
+              "learn/logs/introduction",
+              "learn/logs/status-codes"
+            ]
           }
         ]
       },

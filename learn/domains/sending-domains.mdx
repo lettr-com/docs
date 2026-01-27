@@ -1,60 +1,109 @@
 ---
 title: Sending Domains
-description: "Configure domains for sending emails"
+description: "Configure and verify domains for sending emails with Lettr"
 ---
 
 # Sending Domains
 
-Set up domains to send emails from your own addresses.
+Sending domains are the primary domains you use to send emails. When you send an email from `hello@example.com`, `example.com` is your sending domain. Proper configuration ensures your emails reach the inbox and are trusted by recipients.
+
+## Why Verify Sending Domains?
+
+Email providers are increasingly strict about authentication. Verified sending domains provide:
+
+- **Deliverability** - Authenticated emails are trusted and reach the inbox
+- **Brand Identity** - Send from your own domain, not a shared one
+- **Reputation Building** - Build a positive sending reputation for your domain
+- **Compliance** - Meet modern email authentication requirements (SPF, DKIM, DMARC)
 
 ## Adding a Sending Domain
+
+<Steps>
+  <Step title="Add Domain in Dashboard">
+    Go to **Domains → Add Domain** and enter your domain name.
+  </Step>
+  <Step title="Configure DNS Records">
+    Add the SPF and DKIM records to your domain's DNS settings.
+  </Step>
+  <Step title="Verify Domain">
+    Click **Verify** to confirm DNS propagation. Verification typically takes a few minutes but can take up to 48 hours.
+  </Step>
+</Steps>
+
+## Via API
 
 ```javascript
 const domain = await lettr.domains.create({
   name: 'example.com',
   type: 'sending'
 });
+
+// View required DNS records
+for (const record of domain.dnsRecords) {
+  console.log(`${record.type} | ${record.host} | ${record.value}`);
+}
 ```
 
-## DNS Records
+## Required DNS Records
 
-After adding a domain, add these DNS records:
+You need to add two DNS records for email authentication:
 
 ### SPF Record
 
-Authorizes Lettr to send on your behalf:
+Authorizes Lettr's servers to send email on behalf of your domain:
 
 ```
-Type: TXT
-Host: @
+Type:  TXT
+Host:  @ (or leave blank for root domain)
 Value: v=spf1 include:spf.lettr.dev ~all
 ```
 
-If you have existing SPF records, merge them:
-
-```
-v=spf1 include:spf.lettr.dev include:_spf.google.com ~all
-```
+<Tip>
+  If you already have an SPF record, merge Lettr's include with your existing record. Learn more in our [SPF guide](/learn/domains/spf).
+</Tip>
 
 ### DKIM Record
 
-Enables email signing for authenticity:
+Enables cryptographic signing to verify email authenticity:
 
 ```
-Type: CNAME
-Host: lettr._domainkey
+Type:  CNAME
+Host:  lettr._domainkey
 Value: dkim.lettr.dev
 ```
 
-### Return-Path (Optional)
+## Optional DNS Records
 
-Custom bounce handling domain:
+### Custom Return-Path
+
+By default, Lettr uses `send.yourdomain.com` for the Return-Path. You can customize this:
 
 ```
-Type: CNAME
-Host: bounce
+Type:  CNAME
+Host:  bounce (or your chosen subdomain)
 Value: bounce.lettr.dev
 ```
+
+Configure via API:
+
+```javascript
+const domain = await lettr.domains.create({
+  name: 'example.com',
+  customReturnPath: 'bounce'
+});
+```
+
+### DMARC Record
+
+While optional, DMARC is highly recommended for additional protection:
+
+```
+Type:  TXT
+Host:  _dmarc
+Value: v=DMARC1; p=none; rua=mailto:dmarc@example.com
+```
+
+See our [DMARC guide](/learn/domains/dmarc) for detailed configuration.
 
 ## Verify DNS Records
 
@@ -64,36 +113,50 @@ const result = await lettr.domains.verify('dom_123');
 if (result.verified) {
   console.log('Domain verified successfully!');
 } else {
-  console.log('Missing records:', result.missingRecords);
+  console.log('Verification status:', result.status);
+  for (const record of result.missingRecords) {
+    console.log(`Missing: ${record.type} record at ${record.host}`);
+  }
 }
 ```
 
 ## Sending From Verified Domains
 
-Once verified, use any address on your domain:
+Once verified, you can send from any email address on your domain:
 
 ```javascript
 await lettr.emails.send({
-  from: 'hello@example.com',      // ✅ Works
-  from: 'support@example.com',    // ✅ Works
-  from: 'team@example.com',       // ✅ Works
+  from: 'hello@example.com',
+  to: ['recipient@other.com'],
+  subject: 'Hello from Lettr',
+  html: '<p>Your email content here.</p>'
+});
+
+// All addresses on the domain work:
+// - hello@example.com ✓
+// - support@example.com ✓
+// - team@example.com ✓
+// - any-address@example.com ✓
+```
+
+## Sender Name
+
+Customize the display name that appears alongside your email address:
+
+```javascript
+// String format
+await lettr.emails.send({
+  from: 'Acme Inc <hello@example.com>',
   to: ['recipient@other.com'],
   subject: 'Hello',
   html: '<p>Hello!</p>'
 });
-```
 
-## From Name
-
-Customize the sender name:
-
-```javascript
+// Object format
 await lettr.emails.send({
-  from: 'Your Company <hello@example.com>',
-  // or
   from: {
     email: 'hello@example.com',
-    name: 'Your Company'
+    name: 'Acme Inc'
   },
   to: ['recipient@other.com'],
   subject: 'Hello',
@@ -101,32 +164,121 @@ await lettr.emails.send({
 });
 ```
 
-## Multiple Domains
+## Subdomains for Sending
 
-You can verify multiple domains for different purposes:
+We recommend using subdomains to isolate different types of email:
 
-| Domain | Use Case |
-|--------|----------|
-| `example.com` | General communications |
-| `mail.example.com` | Marketing emails |
-| `notifications.example.com` | Automated notifications |
+| Subdomain | Use Case | Benefit |
+|-----------|----------|---------|
+| `mail.example.com` | Transactional emails | Isolated reputation |
+| `news.example.com` | Marketing newsletters | Separate reputation |
+| `alerts.example.com` | Automated notifications | Protected main domain |
 
 <Tip>
-  Using subdomains for different email types helps protect your main domain's reputation.
+  If one email type experiences deliverability issues (e.g., high unsubscribes from marketing), it won't affect your transactional emails on a different subdomain.
 </Tip>
+
+### Setting Up a Subdomain
+
+Add the subdomain in Lettr the same way as a root domain:
+
+```javascript
+const domain = await lettr.domains.create({
+  name: 'mail.example.com',
+  type: 'sending'
+});
+```
+
+DNS records for subdomains:
+
+```
+# SPF
+Type:  TXT
+Host:  mail
+Value: v=spf1 include:spf.lettr.dev ~all
+
+# DKIM
+Type:  CNAME
+Host:  lettr._domainkey.mail
+Value: dkim.lettr.dev
+```
+
+## Domain Status
+
+Check your domain's verification status:
+
+```javascript
+const domain = await lettr.domains.get('dom_123');
+
+console.log({
+  name: domain.name,
+  status: domain.status,         // 'pending', 'verified', 'failed'
+  spfStatus: domain.spfStatus,   // 'pending', 'verified', 'failed'
+  dkimStatus: domain.dkimStatus, // 'pending', 'verified', 'failed'
+  createdAt: domain.createdAt
+});
+```
 
 ## Domain Reputation
 
-Monitor your sending domain's reputation:
+Monitor your sending domain's reputation over time:
 
 ```javascript
 const reputation = await lettr.domains.getReputation('dom_123');
 
 console.log({
-  score: reputation.score,        // 0-100
-  status: reputation.status,      // 'good', 'fair', 'poor'
-  bounceRate: reputation.bounceRate,
-  spamRate: reputation.spamRate
+  score: reputation.score,           // 0-100
+  status: reputation.status,         // 'good', 'fair', 'poor'
+  bounceRate: reputation.bounceRate, // Percentage
+  spamRate: reputation.spamRate,     // Percentage
+  openRate: reputation.openRate      // Percentage
 });
 ```
 
+### Reputation Factors
+
+| Factor | Impact | Recommendation |
+|--------|--------|----------------|
+| Bounce Rate | High impact | Keep below 2% |
+| Spam Complaints | Very high impact | Keep below 0.1% |
+| Engagement | Moderate impact | Higher open/click rates help |
+| Volume Consistency | Moderate impact | Avoid sudden spikes |
+
+## Multiple Sending Domains
+
+You can verify multiple domains for different purposes:
+
+```javascript
+// List all domains
+const domains = await lettr.domains.list({ type: 'sending' });
+
+for (const domain of domains.data) {
+  console.log(`${domain.name}: ${domain.status}`);
+}
+```
+
+## Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| SPF not verifying | Ensure TXT record is on root domain (`@`) |
+| DKIM not verifying | Check CNAME record at `lettr._domainkey` |
+| Sending fails | Verify domain status is `verified` |
+| Emails going to spam | Check reputation and ensure DMARC is configured |
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="SPF Configuration" icon="list-check" href="/learn/domains/spf">
+    Learn more about SPF authentication
+  </Card>
+  <Card title="DKIM Configuration" icon="key" href="/learn/domains/dkim">
+    Understand DKIM signing
+  </Card>
+  <Card title="Tracking Domains" icon="chart-line" href="/learn/domains/tracking-domains">
+    Set up custom click tracking
+  </Card>
+  <Card title="DMARC" icon="shield" href="/learn/domains/dmarc">
+    Configure DMARC policies
+  </Card>
+</CardGroup>
