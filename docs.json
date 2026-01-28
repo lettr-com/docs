@@ -138,6 +138,7 @@
                   "learn/sending/errors-retries",
                   "learn/sending/bounces",
                   "learn/sending/analytics",
+                  "learn/sending/email-history",
                   "learn/sending/best-practices"
                 ]
               },
@@ -166,7 +167,12 @@
               {
                 "group": "Templates",
                 "pages": [
+                  "learn/templates/introduction",
                   "learn/templates/topol-editor",
+                  "learn/templates/template-language",
+                  "learn/templates/projects",
+                  "learn/templates/versions",
+                  "learn/templates/saved-blocks",
                   "learn/templates/ai-agents"
                 ]
               },

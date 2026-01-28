@@ -1,145 +1,231 @@
 ---
-title: Topol.io Email Editor
-description: "Create beautiful emails with the Topol.io drag-and-drop editor"
+title: Topol Email Editor
+description: "Create professional email templates with the drag-and-drop visual editor"
 ---
 
-# Topol.io Email Editor
+# Topol Email Editor: Technical Introduction and Core Workflow
 
-Create professional email templates with our integrated Topol.io drag-and-drop editor.
+The Topol Email editor is a visual editor for building responsive HTML email templates using a structured layout system. Instead of editing one big freeform page, you assemble an email from layout sections and reusable content elements, and then adjust styling and behavior through configuration panels. This makes templates easier to keep consistent and more predictable across different email clients.
 
-## Overview
+This article introduces the editor's key concepts, the main UI areas, and the standard workflow for creating and editing templates. It focuses on covering the full surface area you need to get started, without going deep into any one feature.
 
-Topol.io is a powerful email editor that allows you to:
+---
 
-- Design emails visually without coding
-- Create responsive templates
-- Use pre-built blocks and layouts
-- Export production-ready HTML
+## Template model: structures, columns, and blocks
 
-## Access the Editor
+The editor is built around two main building parts: **structures** and **content blocks**.
+
+A **structure** is a layout section, similar to a row in a page layout. Each structure is split into one or more **columns**, which let you place content side-by-side on desktop. On mobile, those columns usually stack vertically to keep the email readable.
+
+A **content block** is an element you place inside a column. Blocks represent the actual content—text, images, buttons, dividers, spacers, social icons, video previews, and sometimes custom HTML. Each block has its own settings so you can configure it without needing to write code.
+
+<Tip>
+A simple way to remember the workflow is: create layout with structures, then add content with blocks, and then fine-tune the design.
+</Tip>
+
+---
+
+## Editor workspace and selection-based editing
+
+The editor changes based on what you have selected on the canvas.
+
+When you select a **structure**, the editor shows layout controls such as the number of columns, background styling, padding and margins, borders, and other section-level options. These settings affect the whole section.
+
+When you select a **content block**, the editor shows block-specific controls. For example, text blocks show formatting and link settings, image blocks show source and sizing settings, and button blocks show label and URL settings.
+
+<Note>
+This is one of the most important habits to build: if you want to change a whole section, select the structure; if you want to change one element, select the block.
+</Note>
+
+---
+
+## Global template configuration via Settings
+
+Alongside per-section and per-block options, the editor includes a **Settings** area for template-wide defaults. These are the values the editor uses automatically as you add new content, helping you keep the template consistent.
+
+Typical settings include:
+
+- **Template width**, which influences how wide the email is on desktop.
+- **Default colors**, such as background colors, text and link colors, and button defaults.
+- **Default fonts and typography**, including heading and paragraph styling.
+- **Preview text (preheader)**, which is the short line many inboxes show next to the subject before the email is opened.
+
+<Tip>
+A useful mindset is to treat Settings as your "baseline design rules," and then use block-level changes only when you need an exception.
+</Tip>
+
+---
+
+## Building the layout with structures
+
+A solid way to build an email is to start with layout sections first. Drag in structures for major parts of the email (a header, a hero area, a content section, a product section, a footer), then decide how many columns each section needs.
+
+Structure-level configuration is where you control things like:
+
+- The section's **background** (color, and sometimes background images depending on your setup).
+- **Spacing** around the section (padding and margins) to keep content readable.
+- **Borders** or framing around a section.
+- Column-level spacing when you need different padding per column.
+
+<Note>
+Complex designs are usually easier to maintain when they're broken into multiple smaller structures rather than one large structure with many local tweaks. That also helps keep mobile stacking behavior more predictable.
+</Note>
+
+---
+
+## Populating columns with content blocks
+
+Once the layout is in place, you fill it with blocks. Blocks are the parts you move around, duplicate, and configure to form the final email.
+
+### Text blocks: writing, formatting, and links
+
+Text blocks are edited directly on the canvas. You can type and then use a text toolbar to adjust formatting such as font size, emphasis (bold/italic), alignment, color, and lists. Links are added by selecting text and setting a link destination.
+
+<Tip>
+For a clean and consistent template, it helps to rely on your global font and style defaults as much as possible, rather than manually formatting every text block differently.
+</Tip>
+
+### Image blocks: sources, sizing, and alt text
+
+Image blocks let you insert and configure images. Depending on your setup, you can upload an image or reference one by URL. You can also set sizing, alignment, margins, and a link target if the image should be clickable.
+
+A key feature to use consistently is **alt text**. Alt text is shown when images are blocked and helps with accessibility. Even short descriptive alt text makes templates more reliable.
+
+<Note>
+Some deployments include an image editor for quick adjustments (like cropping or resizing) without leaving the editor.
+</Note>
+
+### Button blocks: clear calls-to-action
+
+Buttons combine a label and a link with styling controls. You typically configure the text, URL, alignment, and the visual style (background color, text color, corner rounding, and padding). Using a button block is usually more consistent across email clients than trying to style text to "look like" a button.
+
+### Divider and spacer blocks: separation and breathing room
+
+Spacers and dividers help keep layouts clean.
+
+A **spacer** adds vertical space with a set height. A **divider** adds a visible line between sections and usually includes options like thickness, style (solid/dashed/dotted), color, and margins. Using these blocks makes spacing easier to adjust later than relying on repeated manual padding edits.
+
+### Social blocks: icon links
+
+Social blocks provide a set of icons, each linking to a specific URL. You can choose which networks appear, adjust styling (shape/size/spacing), and set the destination links. If custom icons are supported, you can add your own network entry as needed.
+
+### Video blocks: clickable previews
+
+Video blocks are usually designed as a preview image linked to a hosted video, because many email clients do not support embedded video consistently. You configure the target URL and the preview representation rather than expecting in-email playback.
+
+### Custom HTML blocks: when you need something special
+
+Custom HTML blocks let you insert raw markup for cases where a standard block isn't enough. This is powerful, but it also means you should test carefully, because custom HTML can behave differently across email clients and may bypass some of the editor's built-in guardrails.
+
+---
+
+## Responsive behavior: stacking, visibility, and checking your result
+
+Responsive behavior comes mainly from how structures and columns are arranged.
+
+By default, multi-column sections typically **stack** on mobile so content remains readable. Some configurations let you prevent stacking for specific sections when you need columns to stay side-by-side, but that should be used carefully because it can reduce readability on narrow screens.
+
+You can also hide certain elements on mobile when you want a simpler phone layout. When content is hidden, the editor usually provides a way to reveal it while editing, so you can still update it even if it won't show in a given view.
+
+<Tip>
+A practical rule is to check responsiveness as you work. After you make significant layout changes, review both desktop and mobile previews to make sure the stacking order and spacing still look correct.
+</Tip>
+
+---
+
+## Reuse and standardization with saved blocks
+
+Saved blocks let you store a reusable section and insert it into other templates later. This is especially useful for headers, footers, branded call-to-action sections, legal sections, and contact blocks.
+
+Using saved blocks improves consistency and reduces repeated work. Over time, a well-maintained saved-block library becomes a simple component catalog for your team or organization.
+
+For more details, see [Saved Blocks](/learn/templates/saved-blocks).
+
+---
+
+## Personalization tokens and placeholders
+
+Many email sending systems support placeholders (often called tokens, merge tags, or variables) that are replaced at send time. These are commonly used for personalization (like a first name), unsubscribe links, and "view online" links.
+
+In practice, placeholder syntax comes from your sending platform. You insert the exact placeholder text required by that platform into a text block or link field, and it will be replaced later when the email is sent.
+
+For more on variables, see [Variables](/learn/sending/variables).
+
+---
+
+## Export and interoperability: what you get out of the editor
+
+When your template is ready, you typically export it for downstream use. Common outputs include:
+
+- A **rendered HTML package**, intended for systems that accept HTML email templates.
+- A **template definition format** (often JSON-based), intended for re-importing later so you can keep editing the template in the visual editor without losing the structure/block model.
+
+<Note>
+A useful way to think about this is: HTML is the final output used for sending, while the template definition is the editable source representation.
+</Note>
+
+---
+
+## A practical end-to-end workflow
 
 <Steps>
-  <Step title="Navigate to Templates">
-    Go to Templates in your Lettr dashboard.
+  <Step title="Set global defaults">
+    Start by configuring Settings: width, fonts, colors, and preview text. These become your baseline design rules.
   </Step>
-  <Step title="Create New Template">
-    Click "New Template" and select "Visual Editor".
+  <Step title="Build the layout">
+    Add structures for each section of your email and choose the right column arrangements for headers, hero areas, content sections, and footers.
   </Step>
-  <Step title="Design Your Email">
-    Use the drag-and-drop interface to build your template.
+  <Step title="Add content blocks">
+    Fill the columns with content: write text, add images with alt text, add buttons with correct URLs, and use spacers/dividers to keep spacing consistent.
+  </Step>
+  <Step title="Save reusable sections">
+    If you have sections you'll reuse, save them as saved blocks and insert them into future templates.
+  </Step>
+  <Step title="Review responsiveness">
+    Check both desktop and mobile previews to verify stacking, spacing, and visibility rules look correct.
+  </Step>
+  <Step title="Export the template">
+    Export in the format your sending pipeline expects—HTML for sending, or the template definition for continued editing.
   </Step>
 </Steps>
 
-## Editor Features
+---
 
-### Content Blocks
-
-| Block | Description |
-|-------|-------------|
-| Text | Rich text with formatting options |
-| Image | Single images with alt text |
-| Button | Call-to-action buttons |
-| Divider | Visual separators |
-| Spacer | Vertical spacing |
-| Social | Social media icons |
-| Video | Video thumbnails with play buttons |
-| Menu | Navigation menus |
-
-### Layout Blocks
-
-| Block | Description |
-|-------|-------------|
-| 1 Column | Full-width content |
-| 2 Columns | Side-by-side content |
-| 3 Columns | Three-column layout |
-| 4 Columns | Four-column layout |
-
-## Using Variables
-
-Insert dynamic content using variables:
-
-```
-Hello {{name}},
-
-Your order #{{order_id}} has shipped!
-```
-
-In the editor, click "Merge Tags" to insert variables.
-
-## Saving Templates
-
-```javascript
-// Templates are saved to your account
-const templates = await lettr.templates.list();
-
-// Get template HTML
-const template = await lettr.templates.get('tpl_123');
-console.log(template.html);
-```
-
-## Using Templates
-
-Send emails using saved templates:
-
-```javascript
-await lettr.emails.send({
-  from: 'you@example.com',
-  to: ['recipient@example.com'],
-  subject: 'Your Order Update',
-  templateId: 'tpl_123',
-  variables: {
-    name: 'John',
-    order_id: '12345'
-  }
-});
-```
-
-## Exporting Templates
-
-Export templates as HTML for use elsewhere:
-
-```javascript
-const template = await lettr.templates.get('tpl_123');
-
-// Get raw HTML
-const html = template.html;
-
-// Download as file
-await lettr.templates.export('tpl_123', {
-  format: 'html'
-});
-```
-
-## Template Library
-
-Access pre-built templates:
-
-<CardGroup cols={3}>
-  <Card title="Welcome Emails" icon="hand-wave">
-    Onboarding and welcome templates
-  </Card>
-  <Card title="Transactional" icon="receipt">
-    Order confirmations, receipts
-  </Card>
-  <Card title="Marketing" icon="bullhorn">
-    Newsletters and promotions
-  </Card>
-</CardGroup>
-
-## Best Practices
+## Practical tips for reliable templates
 
 <AccordionGroup>
-  <Accordion title="Keep It Simple">
-    Don't overcomplicate designs. Simple layouts render better across clients.
+  <Accordion title="Use standard blocks as your default tools">
+    For predictable results, use standard blocks and structure controls as your default tools, and treat custom HTML as an advanced option that should be tested carefully.
   </Accordion>
-  <Accordion title="Test Across Clients">
-    Preview your template in different email clients before sending.
+
+  <Accordion title="Keep related content together">
+    Keep related content together within a section (for example, image + description + button) so mobile stacking produces a coherent "card."
   </Accordion>
-  <Accordion title="Use Web-Safe Fonts">
-    Stick to fonts that render well in email clients.
+
+  <Accordion title="Rely on global defaults for consistency">
+    Use per-block overrides sparingly to avoid style drift. Your global settings should handle most styling needs.
   </Accordion>
-  <Accordion title="Optimize Images">
-    Compress images for faster loading.
+
+  <Accordion title="Make preview checks a regular habit">
+    Make preview checks a normal part of editing rather than a final step, since email client rendering differences are the main source of surprises.
   </Accordion>
 </AccordionGroup>
 
+---
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Saved Blocks" icon="layer-group" href="/learn/templates/saved-blocks">
+    Create reusable sections and synced content
+  </Card>
+  <Card title="Template Versions" icon="code-branch" href="/learn/templates/versions">
+    Manage versions and track changes
+  </Card>
+  <Card title="Projects & Folders" icon="folder" href="/learn/templates/projects">
+    Organize templates in projects
+  </Card>
+  <Card title="Variables" icon="brackets-curly" href="/learn/sending/variables">
+    Personalize emails with dynamic content
+  </Card>
+</CardGroup>
