@@ -315,6 +315,16 @@
             "pages": ["knowledge-base/introduction"]
           },
           {
+            "group": "DNS Guides",
+            "pages": [
+              "knowledge-base/dns-guides/aws-route53",
+              "knowledge-base/dns-guides/cloudflare",
+              "knowledge-base/dns-guides/godaddy",
+              "knowledge-base/dns-guides/hetzner",
+              "knowledge-base/dns-guides/vercel"
+            ]
+          },
+          {
             "group": "Best Practices",
             "pages": [
               "knowledge-base/best-practices/deliverability",
