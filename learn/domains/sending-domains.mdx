@@ -73,19 +73,11 @@ Response with DNS records to configure:
   "data": {
     "domain": "example.com",
     "status": "pending",
-    "dkim_status": "unverified",
-    "cname_status": "unverified",
+    "status_label": "Pending Review",
     "dkim": {
-      "record_type": "TXT",
-      "hostname": "lettr._domainkey.example.com",
-      "value": "v=DKIM1; k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQ..."
-    },
-    "cname": {
-      "record_type": "CNAME",
-      "hostname": "bounce.example.com",
-      "value": "bounce.lettr.dev"
-    },
-    "created_at": "2024-01-15T10:30:00Z"
+      "selector": "scph0722",
+      "public": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQ..."
+    }
   }
 }
 ```
@@ -94,30 +86,15 @@ Response with DNS records to configure:
 
 After adding your domain, configure these DNS records with your DNS provider:
 
-### SPF Record
+### CNAME Record (Domain Verification)
 
-SPF (Sender Policy Framework) authorizes Lettr to send emails on your behalf.
+The CNAME record verifies domain ownership and enables bounce handling.
 
 | Field | Value |
 |-------|-------|
-| Type | TXT |
-| Host/Name | `@` (or leave blank for root domain) |
-| Value | `v=spf1 include:spf.lettr.dev ~all` |
-
-<Accordion title="Merging with existing SPF records">
-If you already have an SPF record, merge them into a single record. SPF allows only one TXT record per domain.
-
-**Before (two separate records - invalid):**
-```
-v=spf1 include:_spf.google.com ~all
-v=spf1 include:spf.lettr.dev ~all
-```
-
-**After (merged - valid):**
-```
-v=spf1 include:spf.lettr.dev include:_spf.google.com ~all
-```
-</Accordion>
+| Type | CNAME |
+| Host/Name | `@` (root domain) |
+| Value | `sparkpostmail.com` |
 
 ### DKIM Record
 
@@ -126,22 +103,12 @@ DKIM (DomainKeys Identified Mail) enables email signing to verify message authen
 | Field | Value |
 |-------|-------|
 | Type | TXT |
-| Host/Name | `lettr._domainkey` |
-| Value | `v=DKIM1; k=rsa; p=...` (provided by Lettr) |
+| Host/Name | `{selector}._domainkey` (selector provided by Lettr) |
+| Value | `v=DKIM1; k=rsa; h=sha256; p=...` (provided by Lettr) |
 
 <Note>
-  The DKIM value is unique to your domain and will be provided when you add your domain. Copy it exactly as shown since it is a long string.
+  The DKIM selector and public key are unique to your domain and will be provided when you add your domain. The selector might look like `scph0722`, so your full hostname would be `scph0722._domainkey.example.com`. Copy the values exactly as shown.
 </Note>
-
-### CNAME Record (Return-Path)
-
-The CNAME record configures bounce handling for improved deliverability.
-
-| Field | Value |
-|-------|-------|
-| Type | CNAME |
-| Host/Name | `bounce` |
-| Value | `bounce.lettr.dev` |
 
 ### DMARC Record
 
@@ -181,10 +148,10 @@ Response:
   "success": true,
   "data": {
     "domain": "example.com",
-    "dkim_status": "verified",
-    "cname_status": "verified",
-    "dmarc_status": "verified",
-    "ownership_verified": true
+    "dkim_status": "valid",
+    "cname_status": "valid",
+    "dmarc_status": "valid",
+    "ownership_verified": "example.com"
   }
 }
 ```
@@ -197,9 +164,10 @@ Each DNS record has its own verification status:
 
 | Status | Description |
 |--------|-------------|
-| `verified` | Record found and valid |
+| `valid` | Record found and valid |
 | `unverified` | Record not yet detected |
-| `pending` | Verification in progress |
+| `invalid` | Record found but invalid |
+| `missing` | No record found (DMARC only) |
 
 ### Approval Status
 
@@ -230,10 +198,10 @@ curl https://app.lettr.com/api/domains/example.com \
   "data": {
     "domain": "example.com",
     "status": "approved",
-    "dkim_status": "verified",
-    "cname_status": "verified",
-    "dmarc_status": "verified",
-    "tracking_domain": "links.example.com",
+    "status_label": "Approved",
+    "can_send": true,
+    "dkim_status": "valid",
+    "cname_status": "valid",
     "created_at": "2024-01-15T10:30:00Z",
     "updated_at": "2024-01-15T10:35:00Z"
   }
@@ -326,20 +294,24 @@ curl https://app.lettr.com/api/domains \
       {
         "domain": "example.com",
         "status": "approved",
-        "dkim_status": "verified",
-        "cname_status": "verified",
-        "dmarc_status": "verified",
-        "tracking_domain": "links.example.com"
+        "status_label": "Approved",
+        "can_send": true,
+        "dkim_status": "valid",
+        "cname_status": "valid",
+        "created_at": "2024-01-15T10:30:00Z",
+        "updated_at": "2024-01-15T10:35:00Z"
       },
       {
         "domain": "notifications.example.com",
         "status": "approved",
-        "dkim_status": "verified",
-        "cname_status": "verified",
-        "dmarc_status": "missing"
+        "status_label": "Approved",
+        "can_send": true,
+        "dkim_status": "valid",
+        "cname_status": "valid",
+        "created_at": "2024-01-15T11:00:00Z",
+        "updated_at": "2024-01-15T11:05:00Z"
       }
-    ],
-    "total": 2
+    ]
   }
 }
 ```
@@ -376,14 +348,15 @@ curl -X DELETE https://app.lettr.com/api/domains/example.com \
 
   <Accordion title="DKIM verification failing">
     - Ensure the entire DKIM value is copied (it's a long string)
-    - Check that the hostname is exactly `lettr._domainkey` (not `lettr._domainkey.example.com` in the host field)
+    - Check that the hostname uses the correct selector (e.g., `scph0722._domainkey`, not just `_domainkey`)
     - Some DNS providers require you to remove quotes from the value
+    - Verify the record type is TXT, not CNAME
   </Accordion>
 
-  <Accordion title="SPF record issues">
-    - You can only have one SPF record per domain. Merge multiple includes into one record.
-    - Ensure the record starts with `v=spf1`
-    - Check that `include:spf.lettr.dev` is present
+  <Accordion title="CNAME verification failing">
+    - Ensure the CNAME record points to `sparkpostmail.com`
+    - The CNAME should be set on your root domain
+    - Some DNS providers don't allow CNAME on root domains - contact support for alternatives
   </Accordion>
 
   <Accordion title="Domain stuck in pending status">

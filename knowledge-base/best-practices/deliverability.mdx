@@ -12,22 +12,23 @@ Ensure your emails reach the inbox, not spam.
 ### Complete DNS Configuration
 
 <Steps>
-  <Step title="SPF Record">
-    Authorizes Lettr to send on your behalf.
+  <Step title="CNAME Record">
+    Verifies domain ownership.
     ```
-    v=spf1 include:spf.lettr.dev ~all
+    CNAME: @ → sparkpostmail.com
     ```
   </Step>
   <Step title="DKIM Record">
     Signs emails cryptographically.
     ```
-    CNAME: lettr._domainkey → dkim.lettr.dev
+    TXT: {selector}._domainkey → v=DKIM1; k=rsa; h=sha256; p=...
     ```
+    The selector and public key are provided when you add your domain.
   </Step>
   <Step title="DMARC Record">
     Sets policy for failed authentication.
     ```
-    v=DMARC1; p=quarantine; rua=mailto:dmarc@yourdomain.com
+    TXT: _dmarc → v=DMARC1; p=quarantine; rua=mailto:dmarc@yourdomain.com
     ```
   </Step>
 </Steps>

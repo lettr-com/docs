@@ -81,23 +81,11 @@ Response:
     "status": "pending_ssl",
     "cname_status": "unverified",
     "ssl_status": "pending",
-    "dns_records": {
-      "cname": {
-        "type": "CNAME",
-        "name": "links",
-        "value": "proxy.lettr-tracking.io"
-      },
-      "ssl_txt": {
-        "type": "TXT",
-        "name": "_acme-challenge.links",
-        "value": "abc123xyz..."
-      },
-      "ownership_txt": {
-        "type": "TXT",
-        "name": "_cf-custom-hostname.links",
-        "value": "def456..."
-      }
-    },
+    "ssl_txt_name": "_acme-challenge.links.example.com",
+    "ssl_txt_value": "abc123xyz...",
+    "ownership_txt_name": "_cf-custom-hostname.links.example.com",
+    "ownership_txt_value": "def456...",
+    "cname_target": "proxy.lettr-tracking.io",
     "created_at": "2024-01-15T10:30:00Z"
   }
 }
@@ -167,6 +155,7 @@ Lettr automatically provisions and renews SSL certificates for your tracking dom
 |--------|-------------|
 | `active` | SSL certificate provisioned and active |
 | `pending` | Certificate being provisioned |
+| `pending_validation` | Waiting for TXT record validation |
 | `initializing` | Initial setup in progress |
 
 SSL provisioning typically completes within a few minutes after DNS verification.
@@ -306,8 +295,11 @@ curl https://app.lettr.com/api/domains/tracking/links.example.com \
     "status": "active",
     "cname_status": "valid",
     "ssl_status": "active",
-    "cname_verified": true,
-    "ssl_verified": true,
+    "ssl_txt_name": "_acme-challenge.links.example.com",
+    "ssl_txt_value": "abc123xyz...",
+    "ownership_txt_name": "_cf-custom-hostname.links.example.com",
+    "ownership_txt_value": "def456...",
+    "cname_target": "proxy.lettr-tracking.io",
     "created_at": "2024-01-15T10:30:00Z"
   }
 }

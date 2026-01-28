@@ -143,13 +143,38 @@ For more details, see [Saved Blocks](/learn/templates/saved-blocks).
 
 ---
 
-## Personalization tokens and placeholders
+## Personalization with Merge Tags
 
-Many email sending systems support placeholders (often called tokens, merge tags, or variables) that are replaced at send time. These are commonly used for personalization (like a first name), unsubscribe links, and "view online" links.
+Lettr templates support merge tags—placeholders that are replaced with actual values at send time. Use merge tags for personalization (like recipient names), dynamic content, and custom links.
 
-In practice, placeholder syntax comes from your sending platform. You insert the exact placeholder text required by that platform into a text block or link field, and it will be replaced later when the email is sent.
+In the visual editor, type merge tags directly into text blocks using double curly brace syntax:
 
-For more on variables, see [Variables](/learn/sending/variables).
+```
+Hello {{first_name}}, welcome to {{company}}!
+```
+
+Merge tags work in:
+- **Text blocks**: Personalize greetings, body content, and CTAs
+- **Link URLs**: Create personalized tracking links with query parameters
+- **Image alt text**: Dynamic accessibility text
+- **Button labels**: Personalized call-to-action text
+
+When you send an email, provide the data via `substitution_data` in your API request:
+
+```javascript
+await lettr.emails.send({
+  from: 'you@example.com',
+  to: ['recipient@example.com'],
+  subject: 'Welcome!',
+  template_slug: 'welcome-email',
+  substitution_data: {
+    first_name: 'Jane',
+    company: 'Acme Inc'
+  }
+});
+```
+
+For the complete merge tag syntax including conditionals, loops, and defaults, see [Template Language](/learn/templates/template-language).
 
 ---
 
@@ -225,7 +250,7 @@ A useful way to think about this is: HTML is the final output used for sending, 
   <Card title="Projects & Folders" icon="folder" href="/learn/templates/projects">
     Organize templates in projects
   </Card>
-  <Card title="Variables" icon="brackets-curly" href="/learn/sending/variables">
-    Personalize emails with dynamic content
+  <Card title="Template Language" icon="brackets-curly" href="/learn/templates/template-language">
+    Merge tags, conditionals, and loops
   </Card>
 </CardGroup>

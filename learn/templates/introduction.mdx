@@ -51,6 +51,72 @@ await lettr.emails.send({
 });
 ```
 
+### Specifying a Template Version
+
+By default, Lettr uses the **active version** of the template. To use a specific version:
+
+```javascript
+await lettr.emails.send({
+  from: 'you@example.com',
+  to: ['recipient@example.com'],
+  subject: 'Newsletter',
+  template_slug: 'monthly-newsletter',
+  template_version: 3
+});
+```
+
+### Project-Scoped Templates
+
+If your template is in a specific project, include the `project_id`:
+
+```javascript
+await lettr.emails.send({
+  from: 'you@example.com',
+  to: ['recipient@example.com'],
+  subject: 'Welcome',
+  template_slug: 'welcome',
+  project_id: 123
+});
+```
+
+<Note>
+  If no `project_id` is specified, Lettr uses your team's default project.
+</Note>
+
+## Template vs Inline Content
+
+Choose the approach that fits your use case:
+
+| Feature | Template | Inline HTML |
+|---------|----------|-------------|
+| Reusability | High—use across multiple sends | Low—embedded in each request |
+| Maintenance | Update once, affects all sends | Update in each integration point |
+| Version control | Built-in versioning | Manual management required |
+| Design tools | Visual editor support | Code only |
+| Best for | Recurring emails, campaigns | One-off or highly dynamic content |
+
+## Content Priority
+
+When both a template and inline content are provided in the same request:
+
+1. **Template content takes precedence**—the template's HTML replaces any `html` parameter
+2. The `subject` parameter in your request **overrides** the template's subject
+3. Inline `html` or `text` is only used when no `template_slug` is provided
+
+```javascript
+await lettr.emails.send({
+  from: 'you@example.com',
+  to: ['recipient@example.com'],
+  subject: 'Custom Subject', // Overrides template subject
+  template_slug: 'welcome-email',
+  html: '<p>This HTML is ignored when template_slug is provided</p>'
+});
+```
+
+<Warning>
+  If you provide both `template_slug` and `html`, the template HTML will be used. The inline HTML is not a fallback—it is ignored entirely.
+</Warning>
+
 ## Template Organization
 
 Lettr provides a hierarchical system to organize templates:
@@ -82,8 +148,8 @@ Team
   <Card title="Saved Blocks" icon="layer-group" href="/learn/templates/saved-blocks">
     Create reusable sections and synced content
   </Card>
-  <Card title="Variables" icon="brackets-curly" href="/learn/sending/variables">
-    Personalize emails with dynamic content
+  <Card title="Template Language" icon="brackets-curly" href="/learn/templates/template-language">
+    Personalize emails with merge tags and dynamic content
   </Card>
   <Card title="AI Agents" icon="robot" href="/learn/templates/ai-agents">
     Generate content with AI assistance
@@ -123,6 +189,24 @@ Lettr supports two editing modes:
 
 You can switch between modes or use both—design visually and fine-tune with code.
 
+## Template Parameters Reference
+
+When sending with templates, these parameters control template behavior:
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `template_slug` | string | No* | Template identifier (slug name) |
+| `template_version` | integer | No | Specific version number (uses active version if omitted) |
+| `project_id` | integer | No | Project containing the template (uses default project if omitted) |
+| `substitution_data` | object | No | Key-value data for template variable substitution |
+| `metadata` | object | No | Key-value data passed to webhooks (not used in templates) |
+
+*Required if not providing `html` or `text` content directly.
+
+<Note>
+  `substitution_data` is used to populate merge tags in your template (like `{{name}}`). `metadata` is passed through to webhooks for tracking but is not rendered in the email content.
+</Note>
+
 ## Template API
 
 List and retrieve templates programmatically:
@@ -131,8 +215,32 @@ List and retrieve templates programmatically:
 # List all templates
 curl https://app.lettr.com/api/templates \
   -H "Authorization: Bearer le_xxxxxxxxxxxx"
+```
 
-# Get a specific template
+Response:
+
+```json
+{
+  "data": [
+    {
+      "slug": "welcome-email",
+      "name": "Welcome Email",
+      "version": 2,
+      "project_id": 123
+    },
+    {
+      "slug": "order-confirmation",
+      "name": "Order Confirmation",
+      "version": 5,
+      "project_id": 123
+    }
+  ]
+}
+```
+
+Get a specific template:
+
+```bash
 curl https://app.lettr.com/api/templates/welcome-email \
   -H "Authorization: Bearer le_xxxxxxxxxxxx"
 ```
@@ -148,8 +256,8 @@ curl https://app.lettr.com/api/templates/welcome-email \
 ## Related Topics
 
 <CardGroup cols={2}>
-  <Card title="Sending with Templates" icon="paper-plane" href="/learn/sending/templates">
-    Use templates when sending emails
+  <Card title="Template Language" icon="brackets-curly" href="/learn/templates/template-language">
+    Merge tags, conditionals, and loops
   </Card>
   <Card title="Storage Domains" icon="hard-drive" href="/learn/domains/storage-domains">
     Host template images on your domain

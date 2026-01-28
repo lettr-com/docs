@@ -83,23 +83,11 @@ Response:
     "domain": "assets.example.com",
     "status": "pending",
     "ssl_status": "pending",
-    "dns_records": {
-      "cname": {
-        "type": "CNAME",
-        "name": "assets",
-        "value": "r2-proxy.uselettr.com"
-      },
-      "verification_txt": {
-        "type": "TXT",
-        "name": "_cf-custom-hostname.assets",
-        "value": "abc123..."
-      },
-      "ownership_txt": {
-        "type": "TXT",
-        "name": "_verify.assets",
-        "value": "def456..."
-      }
-    },
+    "verification_txt_name": "_cf-custom-hostname.assets.example.com",
+    "verification_txt_value": "abc123...",
+    "ownership_txt_name": "_ownership.assets.example.com",
+    "ownership_txt_value": "def456...",
+    "cname_target": "r2-proxy.uselettr.com",
     "created_at": "2024-01-15T10:30:00Z"
   }
 }
@@ -119,9 +107,9 @@ Points your subdomain to Lettr's storage servers:
 | Name | `assets` (your chosen subdomain) |
 | Value | `r2-proxy.uselettr.com` |
 
-### Verification TXT Record
+### SSL Validation TXT Record
 
-Proves domain ownership:
+Required for SSL certificate provisioning:
 
 | Field | Value |
 |-------|-------|
@@ -129,14 +117,14 @@ Proves domain ownership:
 | Name | `_cf-custom-hostname.assets` |
 | Value | (provided by Lettr) |
 
-### Ownership TXT Record
+### Ownership TXT Record (if required)
 
-Additional ownership verification:
+Additional ownership verification (may be required by Cloudflare):
 
 | Field | Value |
 |-------|-------|
 | Type | TXT |
-| Name | `_verify.assets` |
+| Name | (provided by Lettr) |
 | Value | (provided by Lettr) |
 
 <Note>
@@ -169,6 +157,7 @@ Lettr automatically provisions SSL certificates for your storage domain. All con
 |--------|-------------|
 | `active` | SSL certificate active, domain ready to use |
 | `pending` | Certificate being provisioned |
+| `initializing` | Initial setup in progress |
 
 Certificate provisioning completes within a few minutes after DNS verification.
 

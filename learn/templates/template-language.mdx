@@ -11,6 +11,75 @@ This guide covers what you need to confidently use merge tags in production temp
 
 ---
 
+## Providing Data at Send Time
+
+To populate merge tags, include a `substitution_data` object in your API request:
+
+```javascript
+await lettr.emails.send({
+  from: 'you@example.com',
+  to: ['recipient@example.com'],
+  subject: 'Your Order Confirmation',
+  template_slug: 'order-confirmation',
+  substitution_data: {
+    customer_name: 'John Smith',
+    order_id: 'ORD-12345',
+    order_total: '$99.99',
+    items: [
+      { name: 'Widget', quantity: 2, price: '$49.99' },
+      { name: 'Gadget', quantity: 1, price: '$49.99' }
+    ]
+  }
+});
+```
+
+The `substitution_data` object can contain:
+- **Strings**: Simple text values
+- **Numbers**: Numeric values for calculations or display
+- **Booleans**: For conditional rendering
+- **Objects**: Nested data accessible via dot notation
+- **Arrays**: For looping through multiple items
+
+<Note>
+  All values in `substitution_data` are converted to strings when rendered. Numbers and booleans work in conditionals but output as text.
+</Note>
+
+---
+
+## Understanding substitution_data vs metadata
+
+Lettr supports two data objects you can include when sending emails:
+
+| Field | Purpose | Used in Templates | Available in Webhooks |
+|-------|---------|-------------------|----------------------|
+| `substitution_data` | Populate merge tags | Yes | No |
+| `metadata` | Custom tracking data | No | Yes |
+
+**Use `substitution_data`** for any values that should appear in your email content (names, order details, personalized URLs, etc.).
+
+**Use `metadata`** for tracking information you want to receive in webhook payloads (internal IDs, campaign codes, A/B test variants, etc.).
+
+```javascript
+await lettr.emails.send({
+  from: 'you@example.com',
+  to: ['recipient@example.com'],
+  subject: 'Welcome!',
+  template_slug: 'welcome-email',
+  // Used in the email template
+  substitution_data: {
+    name: 'Jane',
+    signup_date: 'January 15, 2026'
+  },
+  // Passed to webhooks, NOT rendered in email
+  metadata: {
+    user_id: '12345',
+    campaign: 'jan-2026-promo'
+  }
+});
+```
+
+---
+
 ## Template Variables
 
 Merge tags read values from JSON data provided at send time. The template language supports two common data scopes: **substitution data** and **metadata**. When the same key exists in more than one place, values are resolved using precedence rules: recipient-level data takes priority over transmission-level data, and substitution data takes priority over metadata.
@@ -656,8 +725,8 @@ Remember that URL values are encoded by default inside links, and keep expressio
 ## Related Topics
 
 <CardGroup cols={2}>
-  <Card title="Variables" icon="brackets-curly" href="/learn/sending/variables">
-    Learn about substitution data and metadata
+  <Card title="Templates Introduction" icon="file-lines" href="/learn/templates/introduction">
+    Get started with email templates
   </Card>
   <Card title="Topol Email Editor" icon="paintbrush" href="/learn/templates/topol-editor">
     Design emails with the visual editor
@@ -665,7 +734,7 @@ Remember that URL values are encoded by default inside links, and keep expressio
   <Card title="Test Emails" icon="flask" href="/learn/sending/test-emails">
     Preview templates before sending
   </Card>
-  <Card title="Sending with Templates" icon="paper-plane" href="/learn/sending/templates">
-    Use templates in API calls
+  <Card title="Template Versions" icon="code-branch" href="/learn/templates/versions">
+    Manage template versions
   </Card>
 </CardGroup>
