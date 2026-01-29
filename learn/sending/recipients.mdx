@@ -5,7 +5,7 @@ description: "Configure email recipients including To, CC, BCC, and Reply-To"
 
 # Email Recipients
 
-Learn how to specify recipients and configure sender information for your emails.
+Every email needs a sender and at least one recipient, but transactional emails often involve more complex addressing — copying a manager on an order confirmation, blind-copying a compliance archive, or routing replies to a support team instead of a no-reply address. Lettr gives you full control over To, CC, BCC, Reply-To, and sender display names.
 
 ## To Recipients
 
@@ -31,7 +31,7 @@ await lettr.emails.send({
 
 ## CC Recipients
 
-Add carbon copy recipients who are visible to all recipients:
+CC recipients receive a copy of the email and are visible to all other recipients. Use CC when transparency matters — for example, copying a manager on a project update or keeping a team lead informed about client communications.
 
 ```javascript
 await lettr.emails.send({
@@ -45,7 +45,7 @@ await lettr.emails.send({
 
 ## BCC Recipients
 
-Add blind carbon copy recipients who are hidden from other recipients:
+BCC recipients receive a copy of the email but are hidden from all other recipients. Common uses include compliance archiving (sending a copy to a records system), internal monitoring (copying a sales pipeline tool), or sending to multiple customers who shouldn't see each other's addresses.
 
 ```javascript
 await lettr.emails.send({
@@ -59,7 +59,7 @@ await lettr.emails.send({
 
 ## Reply-To Address
 
-Specify where replies should be sent:
+Reply-To lets you send from one address (like `noreply@example.com`) while directing replies to another (like `support@example.com`). This is useful when your sending address is automated but you want replies to reach a real team.
 
 ```javascript
 await lettr.emails.send({
@@ -107,6 +107,55 @@ Lettr validates all email addresses before sending:
 - Must be valid RFC-compliant email format
 - Domain must exist and accept email
 - Addresses on your suppression list will be rejected
+
+When validation fails, the API returns an error and the email is not sent:
+
+```json
+// Invalid email format
+{
+  "success": false,
+  "error": {
+    "code": "invalid_email",
+    "message": "Invalid email address: 'not-an-email'"
+  }
+}
+
+// Suppressed address
+{
+  "success": false,
+  "error": {
+    "code": "recipient_suppressed",
+    "message": "Recipient 'bounced@example.com' is on your suppression list."
+  }
+}
+
+// Too many recipients
+{
+  "success": false,
+  "error": {
+    "code": "too_many_recipients",
+    "message": "Total recipients (to + cc + bcc) cannot exceed 50."
+  }
+}
+```
+
+## Combined Example
+
+Here's a realistic example that uses multiple recipient features together — an order confirmation sent to the customer, CC'd to their account manager, BCC'd to the order archive, with replies directed to the support team:
+
+```javascript
+await lettr.emails.send({
+  from: 'orders@yourstore.com',
+  from_name: 'YourStore',
+  to: ['customer@example.com'],
+  cc: ['account-manager@yourstore.com'],
+  bcc: ['order-archive@yourstore.com'],
+  reply_to: 'support@yourstore.com',
+  reply_to_name: 'YourStore Support',
+  subject: 'Order #12345 Confirmed',
+  html: '<p>Thank you for your order! Your items will ship within 2 business days.</p>'
+});
+```
 
 ## Recipient Parameters Reference
 

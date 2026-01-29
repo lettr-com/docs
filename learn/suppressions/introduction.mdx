@@ -19,20 +19,57 @@ Addresses can be suppressed for several reasons:
 | **Spam complaint** | Recipient marked your email as spam | Automatically on complaint |
 | **Unsubscribe** | Recipient opted out via List-Unsubscribe | Automatically on unsubscribe |
 
+## How Suppressions Work
+
+When you send an email through Lettr, the suppression system is involved at multiple stages:
+
+```
+  You call the API           Lettr checks           Email is sent         Recipient action
+  to send an email     ──►   suppression list   ──►  to provider     ──►  triggers event
+        │                         │                       │                      │
+        │                    ┌────▼─────┐                 │              ┌───────▼────────┐
+        │                    │ Address  │                  │              │ Hard bounce    │
+        │                    │ blocked? │                  │              │ Spam complaint │
+        │                    └────┬─────┘                  │              │ Unsubscribe    │
+        │                    Yes │ No                      │              └───────┬────────┘
+        │                     │   │                        │                      │
+        │              ┌──────▼┐  └──────►                 │               ┌──────▼───────┐
+        │              │Reject │        Send               │               │ Auto-suppress│
+        │              │(email │                           │               │ address for  │
+        │              │ not   │                           │               │ future sends │
+        │              │ sent) │                           │               └──────────────┘
+        │              └───────┘                           │
+```
+
+1. **Pre-send check** — Before sending, Lettr checks the recipient against your suppression list. If the address is suppressed, the API rejects the request and the email is never sent.
+2. **Delivery attempt** — If the address is not suppressed, Lettr sends the email to the recipient's mail server.
+3. **Post-delivery event** — If the email bounces, the recipient reports spam, or they unsubscribe, Lettr automatically adds the address to your suppression list.
+4. **Future sends blocked** — Any subsequent API calls targeting that address are rejected, preventing further damage to your sender reputation.
+
 ## Why Suppressions Matter
+
+Suppressions directly impact your ability to deliver email. Email providers evaluate your sender reputation based on measurable signals:
+
+| Metric | Danger Threshold | Consequence |
+|--------|-----------------|-------------|
+| **Bounce rate** | > 2% | Providers may throttle or block your sending |
+| **Complaint rate** | > 0.1% | Gmail and other providers move your emails to spam |
+| **Unsubscribe rate** | > 0.5% | Signals low engagement, hurts inbox placement |
+
+Without suppressions, these rates climb quickly. A single batch sent to a stale list can push your bounce rate above safe thresholds, damaging your reputation for weeks.
 
 <AccordionGroup>
   <Accordion title="Protect Sender Reputation">
-    Sending to addresses that have bounced or complained damages your reputation with email providers. High bounce rates or complaint rates can result in your emails being blocked or sent to spam.
+    Sending to addresses that have bounced or complained damages your reputation with email providers. High bounce rates or complaint rates can result in your emails being blocked or sent to spam. Suppressions prevent you from repeatedly hitting known-bad addresses.
   </Accordion>
   <Accordion title="Improve Deliverability">
-    Email providers track your sending patterns. A clean sending history with low bounces and complaints signals that you're a legitimate sender, improving inbox placement.
+    Email providers track your sending patterns. A clean sending history with low bounces and complaints signals that you're a legitimate sender, improving inbox placement for all your emails — not just the ones to clean addresses.
   </Accordion>
   <Accordion title="Legal Compliance">
-    Laws like CAN-SPAM and GDPR require you to honor unsubscribe requests. Suppression lists ensure you don't accidentally email people who have opted out.
+    Laws like CAN-SPAM and GDPR require you to honor unsubscribe requests. Suppression lists ensure you don't accidentally email people who have opted out, which can result in fines and legal liability.
   </Accordion>
   <Accordion title="Reduce Costs">
-    Every email you send costs money. Suppressing invalid addresses prevents wasted sends and keeps your costs predictable.
+    Every email you send counts against your plan quota. Suppressing invalid addresses prevents wasted sends and keeps your costs predictable.
   </Accordion>
 </AccordionGroup>
 

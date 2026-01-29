@@ -5,18 +5,26 @@ description: "Track email performance with analytics"
 
 # Email Analytics
 
-Track opens, clicks, and engagement metrics for your emails.
+Understanding how recipients interact with your emails is essential for optimizing your sending strategy. Analytics help you identify deliverability issues before they escalate, measure engagement to refine your content, and make data-driven decisions about send timing, subject lines, and audience segmentation.
 
-## Overview
+Lettr tracks every email from send to engagement, giving you both per-email and aggregate metrics through the API and dashboard.
 
-Lettr automatically tracks:
+## Key Metrics
 
-- **Deliveries** - Emails successfully delivered
-- **Opens** - When recipients open your email
-- **Clicks** - When recipients click links
-- **Bounces** - Failed deliveries
-- **Spam Reports** - Marked as spam
-- **Unsubscribes** - Opted out of emails
+Lettr automatically tracks the following metrics for every email you send:
+
+| Metric | What It Measures | Healthy Benchmark |
+|--------|-----------------|-------------------|
+| **Delivery Rate** | Percentage of emails accepted by the recipient server | > 95% |
+| **Open Rate** | Percentage of delivered emails opened by recipients | 20–40% (varies by industry) |
+| **Click Rate** | Percentage of delivered emails where a link was clicked | 2–5% |
+| **Bounce Rate** | Percentage of emails that failed to deliver | < 2% |
+| **Complaint Rate** | Percentage of emails reported as spam | < 0.1% |
+| **Unsubscribe Rate** | Percentage of recipients who opted out | < 0.5% |
+
+<Note>
+  These benchmarks are general guidelines. Transactional emails (order confirmations, password resets) typically have higher open and click rates than marketing emails. Track your own baselines over time.
+</Note>
 
 ## Enable Tracking
 
@@ -114,7 +122,7 @@ const clicks = await lettr.analytics.clicks({
 
 ## Dashboard Metrics
 
-Access comprehensive analytics in your Lettr dashboard:
+The Lettr dashboard provides visual analytics you can use without writing any code:
 
 <CardGroup cols={2}>
   <Card title="Real-Time Stats" icon="gauge">
@@ -130,6 +138,35 @@ Access comprehensive analytics in your Lettr dashboard:
     Desktop vs mobile engagement
   </Card>
 </CardGroup>
+
+## Diagnosing Deliverability Issues
+
+Analytics data can help you identify and resolve deliverability problems. Here's an example workflow for investigating a drop in engagement:
+
+```javascript
+// Pull the last 7 days of analytics to spot trends
+const analytics = await lettr.analytics.get({
+  startDate: '2024-01-24',
+  endDate: '2024-01-31',
+  groupBy: 'day'
+});
+
+for (const day of analytics) {
+  const deliveryRate = (day.delivered / day.sent * 100).toFixed(1);
+  const bounceRate = (day.bounced / day.sent * 100).toFixed(1);
+
+  // Flag days with delivery issues
+  if (deliveryRate < 95 || bounceRate > 2) {
+    console.log(`⚠ ${day.date}: ${deliveryRate}% delivery, ${bounceRate}% bounce`);
+  }
+}
+```
+
+**Common patterns and what they mean:**
+
+- **Sudden spike in bounces** — Your mailing list may contain stale addresses. Review your [suppression list](/learn/suppressions/introduction) and clean your recipient data.
+- **Gradual decline in open rates** — Recipients may be losing interest, or your emails are landing in spam. Check your [DMARC reports](/learn/domains/dmarc) and review your content.
+- **High clicks but low conversions** — Your email content is engaging but your landing pages may need work. This is outside Lettr's scope but the click data helps you identify it.
 
 ## Privacy Considerations
 
