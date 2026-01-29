@@ -3,7 +3,18 @@ title: Teams
 description: "Manage team members, roles, and security settings"
 ---
 
+# Teams
+
 Teams in Lettr allow you to collaborate with colleagues on your email infrastructure. Each team has its own domains, templates, API keys, and billing, making it easy to separate projects or manage multiple organizations from a single account.
+
+## When to Use Multiple Teams
+
+Teams provide complete resource isolation, which is useful in several scenarios:
+
+- **Agencies managing multiple clients** — Create a separate team for each client so their domains, templates, and billing are fully independent. One client's sending reputation can't affect another's.
+- **Multi-brand companies** — If your company operates multiple brands (e.g., a parent company with subsidiary products), each brand can have its own team with dedicated sending domains and templates.
+- **Staging vs. production** — Use separate teams to isolate your development and production environments, preventing test emails from affecting production analytics or sender reputation.
+- **Department separation** — Give engineering, marketing, and support their own teams when they need independent API keys, domain configurations, or billing tracking.
 
 ## Team Roles
 
@@ -83,6 +94,28 @@ New teams get their own email sending infrastructure, storage, and billing. This
 When someone invites you to their team, you'll receive an email with a link to accept. If you're already signed in to Lettr, clicking the link adds you to the team immediately. If you're not signed in, you'll be prompted to sign in first (or create an account if you don't have one).
 
 You can also view and manage pending invitations at **Settings** → **Invitations**. This page shows all teams you've been invited to, along with the role you'll have if you accept. You can accept invitations to join teams or decline them if you're not interested.
+
+## Team Isolation
+
+Each team in Lettr is a fully isolated environment. Here's what is separate and what is shared:
+
+### Separate Per Team
+
+- **Domains** — Sending, tracking, and inbound domains are owned by the team
+- **Templates** — Email templates and saved blocks
+- **API keys** — Each team has its own set of API keys
+- **Analytics** — Email logs, events, and metrics
+- **Suppressions** — Bounce and complaint lists
+- **Billing** — Subscription plan, usage, and invoices
+- **Webhooks** — Webhook endpoints and event configuration
+- **Email storage** — Uploaded assets and CDN configuration
+
+### Shared Across Teams
+
+- **User account** — Your login credentials, password, and two-factor authentication settings
+- **User profile** — Your name and email address
+
+This means an API key from one team cannot access another team's resources, and a suppressed address in one team does not affect sending from another team.
 
 ## Deleting a Team
 

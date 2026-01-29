@@ -5,7 +5,7 @@ description: "Add file attachments to your emails"
 
 # Email Attachments
 
-Learn how to attach files to your emails.
+Many transactional emails need to include files — invoices after a purchase, receipts for payments, reports generated on demand, or contracts that need a signature. Lettr supports both inline content (base64-encoded) and URL-based attachments, so you can attach files regardless of where they originate.
 
 ## Basic Attachment
 
@@ -111,6 +111,75 @@ await lettr.emails.send({
 <Warning>
   Large attachments can affect deliverability and may be blocked by recipient email servers. Consider using download links for files over 10 MB.
 </Warning>
+
+## Attachments vs. Download Links
+
+Not every file belongs as an attachment. Consider which approach fits your use case:
+
+| Factor | Attachment | Download Link |
+|--------|-----------|---------------|
+| **File size** | Best for files under 10 MB | Better for large files |
+| **Offline access** | Recipient has the file immediately | Requires internet to download |
+| **Deliverability** | Large attachments may be blocked | No impact on email delivery |
+| **Tracking** | No download tracking | Can track link clicks |
+| **Expiration** | File persists in recipient's inbox | Link can expire for security |
+
+**Use attachments for:** invoices, receipts, tickets, and small documents the recipient needs to keep.
+
+**Use download links for:** large reports, media files, archives, and files that should expire after a set period.
+
+## Base64 vs. URL-Based Attachments
+
+Lettr supports two ways to include attachments:
+
+**Base64 (inline content)** — You encode the file and include it directly in the API request. Use this when the file is generated dynamically (e.g., a PDF invoice created at send time) or when the file isn't hosted at a public URL.
+
+**URL-based** — You provide a URL and Lettr fetches the file at send time. Use this when files are already hosted (e.g., in S3, R2, or your CDN). This keeps your API request payload small and avoids encoding overhead.
+
+```javascript
+// Base64: for dynamically generated files
+attachments: [{ filename: 'invoice.pdf', content: base64String, contentType: 'application/pdf' }]
+
+// URL: for hosted files
+attachments: [{ filename: 'report.pdf', url: 'https://files.example.com/report.pdf' }]
+```
+
+## Error Handling
+
+When an attachment exceeds limits or a URL fetch fails, the API returns an error and the email is not sent:
+
+```json
+// Attachment too large
+{
+  "success": false,
+  "error": {
+    "code": "attachment_too_large",
+    "message": "Attachment 'backup.zip' exceeds the 25 MB limit."
+  }
+}
+
+// Total email size exceeded
+{
+  "success": false,
+  "error": {
+    "code": "email_too_large",
+    "message": "Total email size exceeds the 30 MB limit."
+  }
+}
+
+// URL fetch failed
+{
+  "success": false,
+  "error": {
+    "code": "attachment_fetch_failed",
+    "message": "Failed to fetch attachment from URL: https://example.com/file.pdf"
+  }
+}
+```
+
+<Tip>
+  Validate file sizes before calling the API to avoid failed sends. For URL-based attachments, ensure the URL is publicly accessible and returns a response within 30 seconds.
+</Tip>
 
 ## Common MIME Types
 

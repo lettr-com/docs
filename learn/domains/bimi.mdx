@@ -5,22 +5,20 @@ description: "Display your brand logo next to emails in supported email clients"
 
 # BIMI (Brand Indicators for Message Identification)
 
-BIMI allows your verified brand logo to appear next to your emails in supported email clients. This increases brand recognition, builds trust with recipients, and helps your emails stand out in crowded inboxes.
+Once you've set up your sending domain with SPF, DKIM, and DMARC in Lettr, BIMI is the final step that puts your brand logo next to every email you send. Instead of a generic avatar or blank icon in the recipient's inbox, they see your verified company logo — building instant recognition and trust.
 
-## What is BIMI?
+## What Recipients See
 
-BIMI is an email specification that links your authenticated domain to a verified brand logo. When you send an email, participating email clients display your logo next to your message.
+Without BIMI, your emails appear with a generic icon or the first letter of your sender name. With BIMI, your verified brand logo displays as an avatar next to every message in supported clients like Gmail and Yahoo Mail.
 
-<Info>
-  When BIMI is configured, your brand logo appears as a small avatar or icon next to your emails in supported email clients like Gmail and Yahoo Mail, similar to how a profile picture appears next to messages in a chat application.
-</Info>
+This visual distinction helps your transactional emails (order confirmations, password resets, shipping notifications) stand out from spam and phishing attempts that may impersonate your domain.
 
 ### Benefits
 
-- **Brand Recognition** - Your logo appears prominently in the inbox
-- **Increased Trust** - Recipients know emails are legitimately from you
-- **Higher Engagement** - Branded emails have higher open rates
-- **Spam Differentiation** - Stand out from phishing attempts
+- **Brand Recognition** — Your logo appears prominently in the inbox alongside every email sent through Lettr
+- **Increased Trust** — Recipients can visually confirm emails are legitimately from you
+- **Higher Engagement** — Branded emails see measurably higher open rates
+- **Spam Differentiation** — Legitimate emails stand out from phishing attempts impersonating your domain
 
 ## Requirements
 
@@ -156,6 +154,15 @@ The VMC is provided as a PEM file. Host it at an HTTPS URL:
 https://example.com/bimi/vmc.pem
 ```
 
+### VMC Lifecycle
+
+VMC certificates are typically valid for one year. Plan for renewal:
+
+- **Track expiration** — Set a calendar reminder at least 30 days before your VMC expires. If your VMC lapses, Gmail and Yahoo will stop displaying your logo immediately.
+- **Renew early** — Certificate authorities can take several business days to reissue. Start the renewal process at least 2 weeks before expiration.
+- **Update the hosted file** — After renewal, replace the PEM file at your hosted URL. The BIMI DNS record doesn't need to change as long as the URL remains the same.
+- **Verify after renewal** — Send test emails to Gmail and Yahoo to confirm your logo still displays correctly after replacing the certificate.
+
 ## Configuring BIMI in Lettr
 
 ### Via Dashboard
@@ -223,7 +230,7 @@ BIMI support varies by email client:
 | Microsoft Outlook | Limited | Testing phase |
 
 <Note>
-  Clients without VMC requirement may display logos from the BIMI record even without a certificate, but coverage is limited.
+  BIMI adoption is still growing. Microsoft Outlook has limited support in testing, and many smaller clients don't support BIMI at all. Gmail and Yahoo Mail are the primary clients where BIMI makes a visible difference today. Even without universal support, these two clients cover a large share of most sender audiences.
 </Note>
 
 ## Testing Your BIMI Setup

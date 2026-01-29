@@ -5,7 +5,7 @@ description: "Configure DMARC policies to protect your domain from email spoofin
 
 # DMARC Configuration
 
-DMARC (Domain-based Message Authentication, Reporting, and Conformance) is an email authentication protocol that protects your domain from being used in phishing and spoofing attacks. It tells receiving email servers what to do when messages fail SPF or DKIM authentication.
+After configuring SPF and DKIM for your [sending domain](/learn/domains/sending-domains) in Lettr, DMARC is the final authentication layer that tells receiving servers what to do when emails fail those checks. Without DMARC, a failed SPF or DKIM check is informational only — the receiving server decides on its own whether to deliver, quarantine, or reject the message. With DMARC, you explicitly instruct receivers to quarantine or reject unauthenticated emails claiming to come from your domain.
 
 ## Why DMARC Matters
 
@@ -151,19 +151,32 @@ A gradual rollout minimizes the risk of blocking legitimate emails:
 
 ## DMARC Alignment with Lettr
 
-Lettr automatically configures SPF and DKIM to align with DMARC:
+When you verify a sending domain in Lettr, the SPF and DKIM records are configured to pass DMARC alignment automatically. Here's how Lettr's infrastructure interacts with each check:
 
 ### DKIM Alignment
 
-- Lettr signs emails with your domain's DKIM key
-- The `d=` parameter in the DKIM signature matches your sending domain
-- Supports both relaxed and strict alignment
+- Lettr signs every email with a DKIM key specific to your domain
+- The `d=` parameter in the DKIM signature matches your sending domain (e.g., `d=yourcompany.com`)
+- Supports both relaxed and strict alignment — relaxed allows subdomains to match (e.g., `mail.yourcompany.com` aligns with `yourcompany.com`)
 
 ### SPF Alignment
 
-- Lettr uses a return-path domain that aligns with your sending domain
-- The bounce CNAME record enables SPF alignment
+- Lettr uses a return-path domain (configured via the bounce CNAME record) that aligns with your sending domain
+- This means the envelope sender domain matches your From domain for SPF alignment
 - Supports both relaxed and strict alignment
+
+### What This Means for Your DMARC Policy
+
+Because Lettr handles DKIM signing and SPF return-path alignment for you, emails sent through Lettr will pass DMARC as long as:
+
+1. Your sending domain is **verified** in Lettr (SPF and DKIM DNS records are in place)
+2. Your DMARC record exists at `_dmarc.yourdomain.com`
+
+If you also send email from other services (marketing platforms, CRM tools, help desks), make sure those services are also configured for DMARC alignment. A `p=reject` policy will block emails from any source that fails authentication — not just Lettr.
+
+<Tip>
+  Use `p=none` with aggregate reporting first to verify that all your email sources pass DMARC before moving to enforcement. The DMARC reports will show you exactly which services are passing and failing.
+</Tip>
 
 ## Check DMARC Status
 
