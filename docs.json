@@ -94,11 +94,16 @@
               "learn/logs/introduction",
               "learn/logs/status-codes"
             ]
-          },
+          }
+        ]
+      },
+      {
+        "tab": "MCP",
+        "groups": [
           {
             "group": "MCP",
             "pages": [
-              "learn/mcp/introduction"
+              "mcp/introduction"
             ]
           }
         ]
