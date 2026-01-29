@@ -18,6 +18,8 @@ Lettr allows you to receive and process incoming emails programmatically. By con
 
 ## How It Works
 
+Lettr's inbound email processing follows a four-step flow. You configure DNS to route emails to Lettr's mail servers, and Lettr parses each email into structured data and delivers it to your application via webhook.
+
 <Steps>
   <Step title="Configure Inbound Domain">
     Add an inbound domain in your Lettr dashboard and configure MX records to route incoming emails to Lettr's mail servers.
@@ -32,6 +34,12 @@ Lettr allows you to receive and process incoming emails programmatically. By con
     Route emails, extract data, trigger workflows, and respond programmatically.
   </Step>
 </Steps>
+
+```
+Sender → MX Records → Lettr Mail Servers → Parse & Extract → Webhook → Your Application
+```
+
+Lettr handles the low-level SMTP reception, MIME parsing, attachment extraction, and spam scoring. Your application receives clean, structured JSON with the email's sender, recipients, subject, body (both plain text and HTML), headers, and attachment URLs.
 
 ## Quick Start
 
@@ -61,6 +69,8 @@ Add the provided MX records to your domain:
 | MX | 5 | `rx1.sparkpostmail.com` |
 | MX | 10 | `rx2.sparkpostmail.com` |
 | MX | 20 | `rx3.sparkpostmail.com` |
+
+Multiple MX records with different priorities ensure failover — if the primary server is unavailable, email is delivered to the next priority. See the [Setup Guide](/learn/receiving/setup) for DNS propagation details.
 
 ### 3. Handle Incoming Emails
 
@@ -95,6 +105,10 @@ app.post('/webhooks/inbound', express.raw({ type: 'application/json' }), async (
   res.sendStatus(200);
 });
 ```
+
+<Warning>
+  Always [verify the webhook signature](/learn/receiving/security) before processing incoming emails to ensure requests are genuinely from Lettr.
+</Warning>
 
 ## Webhook Payload
 
@@ -135,6 +149,8 @@ When an email is received, Lettr sends a webhook with fully parsed data:
 }
 ```
 
+Lettr automatically handles MIME decoding, character encoding (converting to UTF-8), and multipart message extraction. For a complete breakdown of each field and how to work with them, see [Email Parsing](/learn/receiving/parsing).
+
 ## Key Capabilities
 
 ### Email Routing
@@ -159,6 +175,8 @@ app.post('/webhooks/inbound', async (req, res) => {
 });
 ```
 
+The `reply+` pattern above is called variable addressing (or plus addressing). It's a common way to encode context in the recipient address so you can route replies back to the right record. See [Routing](/learn/receiving/routing) for more patterns including routing by subject, sender domain, and content.
+
 ### Spam Filtering
 
 Every email includes a spam score, and you can configure automatic filtering:
@@ -176,6 +194,8 @@ await lettr.domains.update('mail.example.com', {
 });
 ```
 
+Spam scores range from 0 to 10 — lower is better. Scores below 3 are generally safe, 3–6 are suspicious, and above 6 are likely spam. See [Spam Filtering](/learn/receiving/spam-filtering) for advanced detection patterns and allowlist/blocklist management.
+
 ### Attachment Handling
 
 Attachments are automatically extracted and made available via secure URLs:
@@ -191,6 +211,8 @@ for (const attachment of email.attachments) {
 <Warning>
   Attachment URLs expire after 24 hours. Download and store attachments promptly if you need them longer.
 </Warning>
+
+Each attachment includes `filename`, `contentType`, `size` (in bytes), and a download `url`. Limits are 25 MB per file, 100 MB per email, and up to 50 attachments per email. See [Attachments](/learn/receiving/attachments) for storage examples (S3, GCS) and security best practices including file type verification and malware scanning.
 
 ### Reply Tracking
 
@@ -214,6 +236,86 @@ if (match) {
 }
 ```
 
+For more advanced threading, use email headers like `Message-ID`, `In-Reply-To`, and `References` to build full conversation threads. See [Reply Tracking](/learn/receiving/reply-tracking) for header-based threading, auto-reply detection, and a complete support ticket example.
+
+## Real-World Examples
+
+### Support Ticket System
+
+Create support tickets from incoming emails and track the conversation thread:
+
+```javascript
+app.post('/webhooks/inbound', async (req, res) => {
+  const email = req.body.data;
+  const recipient = email.to[0].toLowerCase();
+
+  // Check if this is a reply to an existing ticket
+  const replyMatch = recipient.match(/^reply\+ticket_([^@]+)@/);
+
+  if (replyMatch) {
+    // Add reply to existing ticket
+    const ticketId = replyMatch[1];
+    await db.ticketReplies.create({
+      ticketId,
+      from: email.from,
+      body: email.text,
+      receivedAt: email.receivedAt
+    });
+  } else {
+    // Create new ticket
+    const ticket = await db.tickets.create({
+      from: email.from,
+      fromName: email.fromName,
+      subject: email.subject,
+      body: email.text,
+      status: 'open'
+    });
+
+    // Send acknowledgment with reply-to address for threading
+    await lettr.emails.send({
+      from: 'support@example.com',
+      to: [email.from],
+      subject: `Re: ${email.subject}`,
+      html: '<p>We received your request and will respond shortly.</p>',
+      reply_to: `reply+ticket_${ticket.id}@mail.example.com`
+    });
+  }
+
+  res.sendStatus(200);
+});
+```
+
+### Email-to-Task Automation
+
+Parse incoming emails to create tasks in your project management system:
+
+```javascript
+app.post('/webhooks/inbound', async (req, res) => {
+  const { from, subject, text, attachments } = req.body.data;
+
+  // Create task from email
+  const task = await projectManager.createTask({
+    title: subject,
+    description: text,
+    reporter: from,
+    attachments: attachments.map(a => ({
+      name: a.filename,
+      url: a.url  // Download within 24 hours
+    }))
+  });
+
+  // Confirm task creation
+  await lettr.emails.send({
+    from: 'tasks@example.com',
+    to: [from],
+    subject: `Task created: ${subject}`,
+    html: `<p>Task <strong>${task.id}</strong> has been created from your email.</p>`
+  });
+
+  res.sendStatus(200);
+});
+```
+
 ## Using Subdomains
 
 We recommend using a subdomain for inbound email to keep it separate from your primary email:
@@ -226,6 +328,15 @@ We recommend using a subdomain for inbound email to keep it separate from your p
 | `inbound.example.com` | Automated workflow triggers |
 
 This lets you keep your root domain's MX records pointing to your regular email provider while routing specific subdomains through Lettr.
+
+## Processing Best Practices
+
+- **Respond quickly** — Return a `200` status from your webhook endpoint within a few seconds. If processing is complex, accept the webhook and process asynchronously via a queue.
+- **Handle duplicates** — Webhooks may be delivered more than once. Use the event `id` to deduplicate.
+- **Store before processing** — Save the raw webhook payload before doing any processing, so you can replay events if something fails.
+- **Validate attachments** — Verify file types and scan for malware before processing attachments from unknown senders.
+
+See [Best Practices](/learn/receiving/best-practices) for architecture patterns, reliability strategies, and monitoring recommendations.
 
 ## Learn More
 
