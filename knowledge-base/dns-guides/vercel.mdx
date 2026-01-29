@@ -1,8 +1,371 @@
 ---
 title: "Vercel"
-description: "Configure DNS records for Lettr on Vercel"
+description: "Step-by-step guide to configuring DNS records for Lettr on Vercel."
 ---
 
-# Vercel DNS Configuration
+This guide walks you through adding the required DNS records for Lettr using Vercel's DNS management. Vercel is a cloud platform for frontend frameworks and static sites that also provides DNS hosting for domains connected to your projects.
 
-(Content to be added)
+You will configure a **sending domain** (CNAME, DKIM, and DMARC records) and, optionally, an **inbound domain** (MX records), **tracking domain** (CNAME record), and **storage domain** (CNAME and TXT records).
+
+---
+
+## Sending Domain Setup
+
+A sending domain authenticates your outgoing emails with DKIM and DMARC, ensuring they are delivered reliably and not marked as spam. This requires a CNAME record for domain verification, a TXT record for DKIM signing, and a TXT record for DMARC policy.
+
+### Add Domain to Lettr
+
+Log in to your Lettr account and add a domain. Select **Domains** in the navigation panel, or click **Add a domain** on the Dashboard.
+
+<img src="/images/lettr-dashboard-add-domain.png" alt="Lettr dashboard showing the Add Domain option" />
+
+Select **Sending Domains** and click **Create Sending Domain**.
+
+<img src="/images/lettr-create-sending-domain.png" alt="Create Sending Domain button in Lettr" />
+
+In the modal window, enter your domain name and click **Create Domain**.
+
+<Tip>
+Use a subdomain (e.g. `mailing.company.com`) instead of the root domain (`company.com`). A subdomain provides proper reputation segmentation and is required if you also plan to receive emails with Lettr.
+</Tip>
+
+Lettr will display a list of DNS records that need to be configured. Keep this page open — you will need these values in the next steps.
+
+<img src="/images/lettr-mailing-config.png" alt="DNS records displayed in Lettr after creating a sending domain" />
+
+### Configure Vercel DNS
+
+Log in to your Vercel account and select the **Domains** tab. Click **Add new Domain**, enter your domain name, and connect it to an existing project.
+
+<img src="/images/vercel-add-domain.png" alt="Vercel Add new Domain dialog" />
+
+Your domain is now visible in the Domains list. Click the three vertical dots and then **Configure**.
+
+<img src="/images/vercel-configure-domain.png" alt="Configure option in Vercel domain list" />
+
+In the Domain configuration, click **Enable Vercel DNS**. This allows you to manage your domain's DNS records directly in Vercel.
+
+<img src="/images/vercel-enable-dns.png" alt="Enable Vercel DNS button in Vercel domain configuration" />
+
+You will be asked to choose between Vercel's Nameservers or manual DNS configuration.
+
+<img src="/images/vercel-nameservers.png" alt="Vercel nameserver configuration options" />
+
+<Tip>
+**Vercel Nameservers vs. manual configuration:** Using Vercel's Nameservers points all DNS management for this domain to Vercel, which simplifies setup. If your domain's DNS is managed elsewhere (e.g. Cloudflare, Route 53), choose manual configuration and add the records at your existing DNS provider instead.
+</Tip>
+
+Now, copy the DNS records from Lettr to Vercel one by one.
+
+### Add CNAME Record
+
+The CNAME record verifies domain ownership with Lettr's email infrastructure.
+
+Copy the CNAME values from Lettr to Vercel:
+
+1. Copy the **Hostname** from Lettr and paste it into the **Name** field in Vercel.
+2. Expand the **Type** dropdown in Vercel and select **CNAME**.
+3. Copy the **Value** from Lettr and paste it into the **Value** field in Vercel.
+4. Leave **TTL** set to 60 (Vercel default).
+5. Click **Add**.
+
+<Info>
+Omit your domain suffix from the Hostname when pasting into Vercel. For example, instead of `mailing.lettr-demo.com`, paste only `mailing`.
+</Info>
+
+<img src="/images/lettr-mailing-1.png" alt="CNAME record Hostname and Value in Lettr" />
+
+<img src="/images/vercel-mailing-1.png" alt="Adding CNAME record in Vercel DNS settings" />
+
+### Add TXT Record (DKIM)
+
+The DKIM record adds a cryptographic signature to your outgoing emails, allowing recipients to verify they were sent by an authorized sender.
+
+Copy the TXT values from Lettr to Vercel:
+
+1. Copy the **Hostname** from Lettr and paste it into the **Name** field in Vercel.
+2. Expand the **Type** dropdown in Vercel and select **TXT**.
+3. Copy the **Value** from Lettr and paste it into the **Value** field in Vercel.
+4. Leave **TTL** set to 60 (Vercel default).
+5. Click **Add**.
+
+<Info>
+Omit your domain suffix from the Hostname when pasting into Vercel. For example, instead of `scph0126._domainkey.mailing.lettr-demo.com`, paste only `scph0126._domainkey.mailing`.
+</Info>
+
+<img src="/images/lettr-mailing-2.png" alt="DKIM TXT record Hostname and Value in Lettr" />
+
+<img src="/images/vercel-mailing-2.png" alt="Adding DKIM TXT record in Vercel DNS settings" />
+
+### Add TXT Record (DMARC)
+
+The DMARC record tells receiving mail servers how to handle emails that fail authentication checks, protecting your domain from spoofing.
+
+Copy the TXT values from Lettr to Vercel:
+
+1. Copy the **Hostname** from Lettr and paste it into the **Name** field in Vercel.
+2. Expand the **Type** dropdown in Vercel and select **TXT**.
+3. Copy the **Value** from Lettr and paste it into the **Value** field in Vercel.
+4. Leave **TTL** set to 60 (Vercel default).
+5. Click **Add**.
+
+<Info>
+Omit your domain suffix from the Hostname when pasting into Vercel. For example, instead of `_dmarc.mailing.lettr-demo.com`, paste only `_dmarc.mailing`.
+</Info>
+
+<img src="/images/lettr-mailing-3.png" alt="DMARC TXT record Hostname and Value in Lettr" />
+
+<img src="/images/vercel-mailing-3.png" alt="Adding DMARC TXT record in Vercel DNS settings" />
+
+### Verify Your Sending Domain
+
+After adding all three DNS records, go back to Lettr and click **Verify DNS Records**. DNS propagation can take up to 24–48 hours, though it typically completes within a few minutes.
+
+<img src="/images/lettr-verified.png" alt="Sending domain verified successfully in Lettr" />
+
+---
+
+## Inbound Domain Setup
+
+An inbound domain allows Lettr to receive emails on your behalf. This requires three MX records that direct incoming mail to Lettr's mail servers.
+
+### Add Inbound Domain to Lettr
+
+Select **Inbound Domains** when creating a domain in Lettr.
+
+<img src="/images/lettr-inbound-new.png" alt="Creating a new inbound domain in Lettr" />
+
+Click on the name of your new domain in the Inbound Domains list to open the domain details page.
+
+<img src="/images/lettr-inbound-list-new.png" alt="Inbound domain listed in Lettr domain list" />
+
+This will display the MX records that need to be configured. Keep this page open — you will need these values in the next steps.
+
+<img src="/images/lettr-inbound-config.png" alt="MX record configuration displayed in Lettr for inbound domain" />
+
+### Add MX Records
+
+MX records tell other mail servers where to deliver emails addressed to your domain.
+
+Copy the MX values from Lettr to Vercel:
+
+1. Copy the **Hostname** from Lettr and paste it into the **Name** field in Vercel.
+2. Expand the **Type** dropdown in Vercel and select **MX**.
+3. Copy the **Required MX Record** value (without the priority number) from Lettr and paste it into the **Value** field in Vercel.
+4. Copy the **Priority** number (e.g. `10`) from Lettr and paste it into the **Priority** field in Vercel.
+5. Leave **TTL** set to 60 (Vercel default).
+6. Click **Add**.
+7. Repeat this process for the second and third MX records.
+
+<Info>
+Omit your domain suffix from the Hostname when pasting into Vercel. For example, instead of `inbound.lettr-demo.com`, paste only `inbound`.
+</Info>
+
+<img src="/images/lettr-inbound-1.png" alt="MX record values in Lettr for inbound domain" />
+
+<img src="/images/vercel-inbound-1.png" alt="Adding MX record in Vercel DNS settings" />
+
+### Verify Your Inbound Domain
+
+After adding all three MX records, go back to Lettr and click **Verify DNS Records**. DNS propagation can take up to 24–48 hours, though it typically completes within a few minutes.
+
+<img src="/images/lettr-inbound-verified.png" alt="Inbound domain verified successfully in Lettr" />
+
+---
+
+## Tracking Domain Setup
+
+A tracking domain allows Lettr to track email opens and link clicks using your own custom domain instead of the default Lettr tracking domain. This requires a single CNAME record pointing to `proxy.lettr-tracking.io`.
+
+### Add Tracking Domain to Lettr
+
+In the Lettr dashboard, select **Domains** in the navigation panel, then select **Tracking Domains** and click **Create Tracking Domain**. Enter your desired tracking subdomain (e.g. `track.company.com`) and click **Create Tracking Domain**.
+
+<img src="/images/lettr-add-tracking.png" alt="Inbound domain verified successfully in Lettr" />
+
+Click on the name of your new Tracking domain in the list of Tracking Domains.
+
+<img src="/images/lettr-tracking-list.png" alt="Inbound domain verified successfully in Lettr" />
+
+This will display the CNAME records that need to be configured. Keep this page open — you will need these values in the next steps.
+
+### Add SSL Certificate CNAME Record
+
+The SSL Certificate CNAME record routes tracking requests through your custom domain to Lettr's tracking infrastructure.
+
+Add the record in Vercel:
+
+1. Copy the **Hostname** from Lettr and paste it into the **Name** field in Vercel.
+2. Expand the **Type** dropdown in Vercel and select **CNAME**.
+3. Enter `proxy.lettr-tracking.io` in the **Value** field in Vercel.
+4. Leave **TTL** set to 60 (Vercel default).
+5. Click **Add**.
+
+<Info>
+Omit your domain suffix from the Hostname when pasting into Vercel. For example, instead of `track.lettr-demo.com`, paste only `track`.
+</Info>
+
+<img src="/images/lettr-tracking-1.png" alt="Inbound domain verified successfully in Lettr" />
+<img src="/images/vercel-tracking-1.png" alt="Inbound domain verified successfully in Lettr" />
+
+### Add Traffic CNAME Record
+
+The Traffic CNAME record routes tracking requests through your custom domain to Lettr's tracking infrastructure.
+
+Add the record in Vercel:
+
+1. Copy the **Hostname** from Lettr and paste it into the **Name** field in Vercel.
+2. Expand the **Type** dropdown in Vercel and select **CNAME**.
+3. Enter `proxy.lettr-tracking.io` in the **Value** field in Vercel.
+4. Leave **TTL** set to 60 (Vercel default).
+5. Click **Add**.
+
+<Info>
+Omit your domain suffix from the Hostname when pasting into Vercel. For example, instead of `track.lettr-demo.com`, paste only `track`.
+</Info>
+
+<img src="/images/lettr-tracking-2.png" alt="Inbound domain verified successfully in Lettr" />
+<img src="/images/vercel-tracking-2.png" alt="Inbound domain verified successfully in Lettr" />
+
+### Verify Your Tracking Domain
+
+After adding both CNAME records, go back to Lettr and click **Verify DNS Records**.
+
+<img src="/images/lettr-tracking-verified.png" alt="Inbound domain verified successfully in Lettr" />
+
+---
+
+## Storage Domain Setup
+
+A storage domain lets you serve email assets (images, attachments) from your own custom domain instead of the default Lettr storage URL. This requires a CNAME record pointing to `r2-proxy.uselettr.com` and a TXT record for domain ownership verification.
+
+### Add Storage Domain to Lettr
+
+In the Lettr dashboard, navigate to **Email Storage** and click **Add Custom Domain**. Enter your desired storage subdomain (e.g. `assets.company.com`) and click **Create Domain**.
+
+Lettr will display the DNS records that need to be configured. Keep this page open — you will need these values in the next steps.
+
+### Add CNAME Record
+
+The CNAME record routes asset requests through your custom domain to Lettr's storage proxy.
+
+Add the record in Vercel:
+
+1. Copy the **Hostname** from Lettr and paste it into the **Name** field in Vercel.
+2. Expand the **Type** dropdown in Vercel and select **CNAME**.
+3. Enter `r2-proxy.uselettr.com` in the **Value** field in Vercel.
+4. Leave **TTL** set to 60 (Vercel default).
+5. Click **Add**.
+
+<Info>
+Omit your domain suffix from the Hostname when pasting into Vercel. For example, instead of `assets.lettr-demo.com`, paste only `assets`.
+</Info>
+
+### Add TXT Record
+
+The TXT record verifies ownership of the storage domain.
+
+Add the record in Vercel:
+
+1. Copy the **Hostname** from Lettr and paste it into the **Name** field in Vercel.
+2. Expand the **Type** dropdown in Vercel and select **TXT**.
+3. Copy the **Value** from Lettr and paste it into the **Value** field in Vercel.
+4. Leave **TTL** set to 60 (Vercel default).
+5. Click **Add**.
+
+<Info>
+Omit your domain suffix from the Hostname when pasting into Vercel, just as with the CNAME record above.
+</Info>
+
+### Verify Your Storage Domain
+
+After adding both records, go back to Lettr and click **Verify DNS Records**. You can confirm the CNAME is live by running:
+
+```bash
+dig CNAME assets.yourdomain.com +short
+```
+
+The output should return `r2-proxy.uselettr.com`.
+
+---
+
+## Troubleshooting
+
+### Domain Suffix Not Omitted
+
+Vercel automatically appends your domain to the record name. If you paste the full hostname (e.g. `mailing.lettr-demo.com`), the resulting record will be `mailing.lettr-demo.com.lettr-demo.com`, which will fail verification.
+
+Always paste only the subdomain portion (e.g. `mailing`, `scph0126._domainkey.mailing`, `_dmarc.mailing`).
+
+### Records Not Propagating
+
+If verification fails after adding records, check the following:
+
+- **Wait at least 30 minutes** before your first verification attempt. Most records propagate within 1–2 hours.
+- **Confirm the records exist** using command-line tools:
+
+```bash
+# Check CNAME record
+dig CNAME mailing.yourdomain.com +short
+
+# Check DKIM record
+dig TXT scph0126._domainkey.mailing.yourdomain.com +short
+
+# Check DMARC record
+dig TXT _dmarc.mailing.yourdomain.com +short
+
+# Check MX records (inbound)
+dig MX inbound.yourdomain.com +short
+```
+
+- **Use a web tool** like [dnschecker.org](https://dnschecker.org) to verify propagation across multiple DNS servers worldwide.
+
+### Wrong Record Type
+
+A common mistake is selecting the wrong type in Vercel's dropdown:
+
+| Record | Correct Type |
+|--------|-------------|
+| Verification | CNAME |
+| DKIM | TXT |
+| DMARC | TXT |
+| Inbound mail | MX |
+| Tracking domain | CNAME |
+| Storage domain | CNAME + TXT |
+
+### DKIM Value Truncated
+
+The DKIM TXT value is a long string. After saving the record in Vercel, re-open it to confirm the full value was stored. If it appears truncated, try pasting the value again.
+
+### Vercel DNS Not Enabled
+
+If you do not see the option to add DNS records, make sure you clicked **Enable Vercel DNS** in the domain configuration. Without this step, Vercel only manages domain routing, not DNS records.
+
+### When to Contact Support
+
+If your DNS records are correctly configured (confirmed with `dig` or dnschecker.org) and verification still fails after 48 hours, contact Lettr support at **support@lettr.com** or through the in-app chat. Include your domain name and the output of the `dig` commands above.
+
+---
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Sending Domains" icon="paper-plane" href="/learn/domains/sending-domains">
+    Learn about sending domain setup, SPF, DKIM, and DMARC.
+  </Card>
+  <Card title="Inbound Domains" icon="inbox" href="/learn/domains/inbound-domains">
+    Configure MX records to receive emails with Lettr.
+  </Card>
+  <Card title="Tracking Domains" icon="link" href="/learn/domains/tracking-domains">
+    Set up a custom tracking domain for click and open tracking.
+  </Card>
+  <Card title="Storage Domains" icon="hard-drive" href="/learn/domains/storage-domains">
+    Serve email assets from your own custom domain.
+  </Card>
+  <Card title="Domains Overview" icon="globe" href="/learn/domains/introduction">
+    Understand domain types and how they work in Lettr.
+  </Card>
+  <Card title="Domain Verification Failures" icon="circle-exclamation" href="/knowledge-base/troubleshooting/domain-verification">
+    Troubleshoot common DNS configuration and propagation issues.
+  </Card>
+</CardGroup>
