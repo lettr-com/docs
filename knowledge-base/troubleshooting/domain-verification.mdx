@@ -1,0 +1,272 @@
+---
+title: Domain Verification Failures
+description: "Troubleshoot DNS propagation and configuration issues when verifying domains in Lettr"
+---
+
+# Domain Verification Failures
+
+Domain verification confirms that you own the domain and have correctly configured the required DNS records. When verification fails, it is almost always a DNS configuration or propagation issue. This guide walks through the most common causes and how to resolve them.
+
+---
+
+## How Domain Verification Works
+
+<Steps>
+  <Step title="Add Your Domain">
+    Add a domain in the Lettr dashboard or via the API. Lettr generates the DNS records you need to configure.
+  </Step>
+  <Step title="Copy the DNS Records">
+    Lettr provides a CNAME record for verification, a DKIM TXT record for email signing, and a DMARC TXT record for policy enforcement. Copy each value exactly as shown.
+  </Step>
+  <Step title="Add Records to Your DNS Provider">
+    Log in to your DNS provider (Cloudflare, GoDaddy, Namecheap, Route 53, etc.) and create the records with the exact names, types, and values provided.
+  </Step>
+  <Step title="Verify the Domain">
+    Return to Lettr and click **Verify**, or call the verification API endpoint. Lettr queries your DNS records and checks that they match the expected values.
+  </Step>
+  <Step title="Lettr Confirms the Records">
+    Each DNS record receives a status: `valid`, `unverified`, `invalid`, or `missing`. The domain is approved only when all required records are valid.
+  </Step>
+</Steps>
+
+---
+
+## Common Verification Failures
+
+### DNS Records Not Propagated Yet
+
+After adding DNS records, changes do not take effect instantly. Propagation typically takes 15 minutes to 48 hours depending on your DNS provider and TTL settings.
+
+**What to do:**
+
+- Wait at least 30 minutes before your first verification attempt.
+- If verification fails, wait a few hours and try again.
+- Use the commands in [Checking DNS Records Yourself](#checking-dns-records-yourself) to confirm your records are visible before re-verifying.
+
+<Note>
+  Most providers propagate within 1–2 hours. If your records are still not visible after 48 hours, the issue is likely a configuration problem rather than propagation delay.
+</Note>
+
+---
+
+### Incorrect DKIM Record Value
+
+The DKIM record is a long TXT value that must be copied exactly as Lettr provides it. Even a single missing character will cause verification to fail.
+
+**Common mistakes:**
+
+| Mistake | What Goes Wrong |
+|---------|-----------------|
+| Missing `v=DKIM1;` prefix | The record is not recognized as a valid DKIM key |
+| Truncated public key | Some dashboards cut off long values when you paste them |
+| Wrong selector in the record name | The name must be `{selector}._domainkey.yourdomain.com`, using the selector Lettr provides |
+| Extra spaces or line breaks | Some providers insert whitespace that breaks the key |
+
+<Tip>
+  After adding the record, run `dig TXT {selector}._domainkey.yourdomain.com` and compare the output character-by-character with the value shown in your Lettr dashboard.
+</Tip>
+
+---
+
+### CNAME Conflicts
+
+A CNAME record cannot coexist with other record types at the same name (this is a DNS specification requirement). If you already have an A, MX, or TXT record at the root of your domain, adding a CNAME at the root will conflict.
+
+**Solutions:**
+
+- **Use a subdomain** — Add the CNAME to a subdomain (e.g., `mail.yourdomain.com`) instead of the root domain.
+- **Use CNAME flattening** — Some DNS providers (such as Cloudflare) support CNAME flattening, which resolves CNAME records at the root without conflicting with other record types.
+
+---
+
+### DMARC Record Issues
+
+The DMARC TXT record must follow a specific format and be placed at the correct name.
+
+**Common problems:**
+
+- **Wrong record name** — The record must be created at `_dmarc.yourdomain.com`, not `yourdomain.com` or `dmarc.yourdomain.com`.
+- **Multiple DMARC records** — Only one DMARC TXT record should exist at `_dmarc.yourdomain.com`. Multiple records cause unpredictable behavior and verification failures. Remove duplicates.
+- **Invalid format** — A minimal valid DMARC record looks like `v=DMARC1; p=none;`. The `v=DMARC1` tag must come first.
+
+---
+
+### Wrong DNS Record Type
+
+Using the wrong record type is a common mistake, especially when DNS providers present confusing interfaces.
+
+| Record | Correct Type | Common Mistake |
+|--------|-------------|----------------|
+| Verification CNAME | CNAME | Creating an A record instead |
+| DKIM | TXT | Creating a CNAME instead of TXT |
+| DMARC | TXT | Creating a CNAME instead of TXT |
+| Tracking domain | CNAME | Creating an A record instead |
+
+Double-check the record type in your DNS provider matches what Lettr specifies.
+
+---
+
+## Checking DNS Records Yourself
+
+Before re-verifying in Lettr, confirm your records are publicly visible using command-line tools.
+
+**Check the DKIM TXT record:**
+
+```bash
+dig TXT scph0724._domainkey.yourdomain.com +short
+```
+
+You should see the full DKIM key value starting with `v=DKIM1;`.
+
+**Check the CNAME verification record:**
+
+```bash
+dig CNAME yourdomain.com +short
+```
+
+The output should point to `sparkpostmail.com` or the value shown in your dashboard.
+
+**Check the DMARC record:**
+
+```bash
+dig TXT _dmarc.yourdomain.com +short
+```
+
+You should see your DMARC policy (e.g., `v=DMARC1; p=none;`).
+
+**Alternative using nslookup (Windows or macOS):**
+
+```bash
+nslookup -type=TXT scph0724._domainkey.yourdomain.com
+nslookup -type=CNAME yourdomain.com
+nslookup -type=TXT _dmarc.yourdomain.com
+```
+
+<Note>
+  If the commands return no results, the records have not propagated yet or were not created correctly. Verify the record names and values in your DNS provider's dashboard.
+</Note>
+
+---
+
+## Verifying via API
+
+### Trigger Verification
+
+Send a POST request to trigger Lettr to re-check your DNS records:
+
+```bash
+curl -X POST https://app.lettr.com/api/domains/yourdomain.com/verify \
+  -H "Authorization: Bearer le_xxxxxxxxxxxx"
+```
+
+**Response:**
+
+```json
+{
+  "domain": "yourdomain.com",
+  "status": "approved",
+  "dns_records": {
+    "cname": "valid",
+    "dkim": "valid",
+    "dmarc": "valid"
+  }
+}
+```
+
+### Check Domain Status
+
+Retrieve the current status of a domain and its DNS records:
+
+```bash
+curl -X GET https://app.lettr.com/api/domains/yourdomain.com \
+  -H "Authorization: Bearer le_xxxxxxxxxxxx"
+```
+
+**Response when records are still missing:**
+
+```json
+{
+  "domain": "yourdomain.com",
+  "status": "pending",
+  "dns_records": {
+    "cname": "valid",
+    "dkim": "unverified",
+    "dmarc": "missing"
+  }
+}
+```
+
+Each DNS record will have one of these statuses:
+
+| Status | Meaning |
+|--------|---------|
+| `valid` | Record found and matches the expected value |
+| `unverified` | Record found but has not been confirmed yet |
+| `invalid` | Record found but the value does not match |
+| `missing` | Record not found at the expected DNS name |
+
+---
+
+## Provider-Specific Issues
+
+<AccordionGroup>
+  <Accordion title="Cloudflare">
+    Cloudflare's proxy mode (orange cloud) rewrites DNS responses and will cause CNAME verification to fail. When adding CNAME records for Lettr, set the proxy status to **DNS only** (grey cloud).
+
+    1. Go to your domain in Cloudflare.
+    2. Open the **DNS** tab.
+    3. Find the CNAME record you added for Lettr.
+    4. Click the orange cloud icon to toggle it to grey (**DNS only**).
+    5. Re-verify in Lettr.
+
+    TXT records (DKIM and DMARC) are not affected by proxy mode.
+  </Accordion>
+  <Accordion title="GoDaddy">
+    GoDaddy's DNS management interface can truncate long TXT values. DKIM public keys are typically 256+ characters, and GoDaddy may silently cut them off.
+
+    **Workarounds:**
+    - Paste the full value and save, then re-open the record to confirm the complete value was stored.
+    - If GoDaddy splits the value into multiple strings (enclosed in quotes), this is normal and will still validate correctly.
+    - Consider using a different DNS provider (such as Cloudflare) if GoDaddy continues to truncate your records.
+  </Accordion>
+  <Accordion title="Providers That Don't Support Underscore Prefixes">
+    Some DNS providers do not allow record names starting with an underscore (`_`). This is a problem because both `_domainkey` (DKIM) and `_dmarc` (DMARC) require underscore-prefixed names.
+
+    **Workarounds:**
+    - Check if your provider has an "advanced" or "raw" DNS editing mode that allows underscores.
+    - If your provider does not support underscores at all, you will need to move your DNS hosting to a provider that does (Cloudflare, Route 53, Namecheap, and most major providers support underscores).
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## When to Contact Support
+
+If you have confirmed your DNS records are correct using the `dig` commands above and verification still fails, contact Lettr support.
+
+**Contact support when:**
+
+- Your domain has been stuck in `pending` status for more than 48 hours after adding the correct DNS records.
+- Your domain shows a `blocked` status. This may indicate a policy issue that requires manual review.
+- You see `invalid` status on a record that matches the expected value exactly.
+
+Reach out at **support@lettr.com** or through the in-app chat widget with your domain name and the output of the `dig` commands listed above.
+
+---
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Domains Overview" icon="globe" href="/learn/domains/introduction">
+    Learn about domain types and how they work in Lettr.
+  </Card>
+  <Card title="Sending Domains" icon="paper-plane" href="/learn/domains/sending-domains">
+    Full setup guide for configuring a sending domain with SPF, DKIM, and DMARC.
+  </Card>
+  <Card title="Tracking Domains" icon="link" href="/learn/domains/tracking-domains">
+    Set up a custom tracking domain for click and open tracking.
+  </Card>
+  <Card title="Cloudflare DNS Guide" icon="cloud" href="/knowledge-base/dns-guides/cloudflare">
+    Step-by-step DNS configuration for Cloudflare users.
+  </Card>
+</CardGroup>

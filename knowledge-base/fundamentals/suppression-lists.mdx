@@ -1,0 +1,154 @@
+---
+title: "Understanding Suppression Lists"
+description: "What suppression lists are, why they exist, and how addresses get added"
+---
+
+## What Is a Suppression List
+
+A suppression list is a collection of email addresses that your Lettr account will **not** send to, regardless of any API requests you make. When an address is on your suppression list, Lettr blocks the send before the message ever leaves the platform.
+
+Think of it as a safety net. Even if your application attempts to send to a problematic address, Lettr intervenes to protect both your sender reputation and the recipient.
+
+<Note>
+  Suppression lists operate at the account level. Every Lettr account has its own suppression list that is automatically maintained based on sending activity.
+</Note>
+
+---
+
+## Why Suppression Lists Exist
+
+Suppression lists serve several critical purposes:
+
+- **Protect sender reputation** — Repeatedly sending to invalid or hostile addresses damages your domain and IP reputation with mailbox providers.
+- **Prevent repeated delivery failures** — There is no reason to keep sending to an address that has permanently failed.
+- **Comply with unsubscribe requests** — When a recipient opts out, suppression ensures they stop receiving email from your account.
+- **Avoid spam complaints** — Continuing to send to recipients who have complained increases the likelihood of your mail being blocked entirely.
+
+---
+
+## How Addresses Get Suppressed
+
+Addresses can land on your suppression list through several triggers:
+
+| Trigger | Description | Automatic? |
+| --- | --- | --- |
+| **Hard bounce** | The recipient address is permanently undeliverable (e.g., mailbox does not exist). | Yes |
+| **Spam complaint** | The recipient marked your email as spam via their mailbox provider. | Yes |
+| **Unsubscribe** | The recipient clicked an unsubscribe link or used a list-unsubscribe header. | Yes |
+| **Manual addition** | You manually add an address through the Lettr dashboard. | No (manual) |
+| **Repeated soft bounces** | A temporary delivery failure occurred too many times for the same address. | Yes (after threshold) |
+
+<Tip>
+  Lettr retries soft bounces up to 3 times before considering the address for suppression. A single temporary failure will not suppress an address.
+</Tip>
+
+---
+
+## What Happens When You Send to a Suppressed Address
+
+When your application sends an API request targeting a suppressed address, the following occurs:
+
+<Steps>
+  <Step title="API request received">
+    Lettr accepts the API call and returns a successful response. No error is returned to the caller.
+  </Step>
+  <Step title="Suppression check">
+    Before the message is queued for delivery, Lettr checks the recipient against your suppression list.
+  </Step>
+  <Step title="Send blocked">
+    The email is silently blocked. It never leaves the Lettr platform and is not delivered to any mail server.
+  </Step>
+  <Step title="Dashboard reporting">
+    The send appears with a status of **Suppressed** in your Lettr dashboard, giving you visibility into blocked sends.
+  </Step>
+</Steps>
+
+<Warning>
+  Because the API does not return an error for suppressed sends, you should monitor your dashboard or use webhook events to detect when sends are being suppressed.
+</Warning>
+
+---
+
+## Managing Your Suppression List
+
+The suppression list is managed entirely through the Lettr dashboard. There is currently no API endpoint for suppression management.
+
+### Viewing suppressions
+
+Navigate to **Suppressions** in the dashboard sidebar to see all suppressed addresses. Each entry shows the email address, the reason for suppression, and the date it was added.
+
+### Searching for specific addresses
+
+Use the search bar at the top of the suppressions page to look up whether a specific address is on your list.
+
+### Removing a suppression
+
+You can remove an address from your suppression list by selecting it in the dashboard and clicking **Remove suppression**.
+
+<Warning>
+  Only remove a suppression if you have confirmed that the address is valid and that the recipient genuinely wants to receive your email. Removing a suppression for an address that hard bounced or filed a spam complaint will harm your sender reputation.
+</Warning>
+
+---
+
+## Global vs Account-Level Suppressions
+
+Lettr operates two layers of suppression:
+
+- **Global suppression list** — Lettr maintains a platform-wide list of known-bad addresses, such as role addresses that consistently bounce or addresses associated with spam traps. These suppressions apply across all Lettr accounts and cannot be overridden.
+- **Account-level suppression list** — Your account has its own list, populated by your sending activity (bounces, complaints, unsubscribes, and manual additions). You can manage this list through the dashboard.
+
+If an address appears on the global list, it will be suppressed even if it does not appear on your account-level list.
+
+---
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Respect suppressions">
+    Suppressed addresses are suppressed for a reason. Resist the urge to remove addresses from the list without investigating why they were added. Every suppression protects your sender reputation.
+  </Accordion>
+  <Accordion title="Don't bulk-remove suppressions">
+    Removing suppressions in bulk is almost always a mistake. Each removal should be deliberate and justified. Bulk removal can lead to a sudden spike in bounces or complaints that damages your reputation.
+  </Accordion>
+  <Accordion title="Validate before removing">
+    Before removing a suppressed address, verify that the address is valid using an email validation service. For complaint-based suppressions, confirm that the recipient has explicitly re-opted in.
+  </Accordion>
+  <Accordion title="Use webhooks to sync with your database">
+    Subscribe to the `email.bounced` and `email.complained` webhook events to keep your own application database in sync with Lettr's suppression list. This allows you to prevent sending attempts before they even reach the API.
+  </Accordion>
+  <Accordion title="Implement proper unsubscribe handling">
+    Make it easy for recipients to unsubscribe. A visible, functional unsubscribe link reduces spam complaints and ensures that opt-outs are handled cleanly through suppression rather than through mailbox provider complaints.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Impact on Your Metrics
+
+Suppressed sends are **not** counted as bounces in your Lettr analytics. They are tracked separately under the Suppressed category. This means your bounce rate reflects only actual delivery attempts that failed, not pre-blocked sends.
+
+However, a high volume of suppressed sends can indicate list quality issues. If a significant portion of your sends are being suppressed, it is a signal that your mailing list contains stale or problematic addresses and needs cleanup.
+
+<Note>
+  Monitor the ratio of suppressed sends to total sends in your dashboard. A rising suppression rate is an early warning sign that your list hygiene practices need attention.
+</Note>
+
+---
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Bounces" icon="rotate-exclamation" href="/learn/suppressions/bounces">
+    Learn how Lettr handles hard and soft bounces and when they lead to suppression.
+  </Card>
+  <Card title="Complaints & Unsubscribes" icon="flag" href="/learn/suppressions/complaints-unsubscribes">
+    Understand how spam complaints and unsubscribe requests are processed.
+  </Card>
+  <Card title="List Hygiene" icon="broom" href="/knowledge-base/best-practices/list-hygiene">
+    Best practices for maintaining a clean, engaged mailing list.
+  </Card>
+  <Card title="Bounce Codes Reference" icon="book" href="/knowledge-base/fundamentals/bounce-codes-reference">
+    A complete reference of bounce codes and what they mean.
+  </Card>
+</CardGroup>

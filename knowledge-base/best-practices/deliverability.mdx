@@ -5,193 +5,220 @@ description: "Maximize email deliverability and inbox placement"
 
 # Deliverability Best Practices
 
-Ensure your emails reach the inbox, not spam.
+Deliverability is the measure of how successfully your emails reach recipients' inboxes rather than spam folders or getting rejected entirely. Even well-crafted emails fail if they never arrive. This guide covers the foundational practices that keep your emails landing in the inbox.
 
-## Authentication Setup
+---
 
-### Complete DNS Configuration
+## Authentication Is Non-Negotiable
 
-<Steps>
-  <Step title="CNAME Record">
-    Verifies domain ownership.
-    ```
-    CNAME: @ → sparkpostmail.com
-    ```
-  </Step>
-  <Step title="DKIM Record">
-    Signs emails cryptographically.
-    ```
-    TXT: {selector}._domainkey → v=DKIM1; k=rsa; h=sha256; p=...
-    ```
-    The selector and public key are provided when you add your domain.
-  </Step>
-  <Step title="DMARC Record">
-    Sets policy for failed authentication.
-    ```
-    TXT: _dmarc → v=DMARC1; p=quarantine; rua=mailto:dmarc@yourdomain.com
-    ```
-  </Step>
-</Steps>
+Email authentication tells receiving mail servers that you are who you claim to be. Without proper authentication, your emails are far more likely to be filtered or rejected.
 
-## Sender Reputation
+### Complete Your Domain Setup
 
-### Warm Up New Domains
+Every sending domain in Lettr needs three DNS records configured:
 
-Don't send large volumes immediately. Ramp up gradually:
+| Record | Purpose | What It Does |
+|--------|---------|--------------|
+| CNAME | Domain verification | Proves you own the domain and authorizes Lettr to send on your behalf |
+| DKIM (TXT) | Email signing | Adds a cryptographic signature to every email, proving it wasn't altered in transit |
+| DMARC (TXT) | Policy enforcement | Tells receivers what to do when authentication fails, and where to send reports |
 
-| Week | Daily Volume |
-|------|-------------|
-| 1 | 50-100 |
-| 2 | 200-500 |
-| 3 | 1,000-2,000 |
-| 4 | 5,000+ |
+<Note>
+  Lettr provides the exact DNS record values when you add a domain. Copy them precisely — even small differences cause verification failures. See [Sending Domains](/learn/domains/sending-domains) for the full setup guide.
+</Note>
 
-### Monitor Reputation
+### Set Up a Tracking Domain
+
+Using a custom tracking domain (e.g., `track.yourdomain.com`) instead of a shared tracking domain improves deliverability. Links in your emails will use your own domain, which builds reputation under your brand rather than sharing it with other senders.
+
+See [Tracking Domains](/learn/domains/tracking-domains) for setup instructions.
+
+---
+
+## Warm Up New Domains
+
+Mailbox providers treat new sending domains with suspicion. If you send thousands of emails from a domain with no history, spam filters will likely intervene. Warming up means gradually increasing volume so providers can observe consistent, legitimate behavior.
+
+### Recommended Warm-Up Schedule
+
+| Week | Daily Volume | Notes |
+|------|-------------|-------|
+| 1 | 50–100 | Send to your most engaged recipients first |
+| 2 | 200–500 | Monitor bounce and complaint rates closely |
+| 3 | 500–2,000 | Continue only if metrics remain healthy |
+| 4 | 2,000–5,000 | Gradually approach your target volume |
+| 5+ | Scale as needed | Maintain consistent sending patterns |
+
+<Warning>
+  Sending high volumes immediately from a new domain will damage your reputation before you've built one. This damage can take weeks to recover from.
+</Warning>
+
+### Warm-Up Tips
+
+- **Start with engaged recipients**: Send first to users who regularly open and click your emails. Positive engagement signals help establish reputation.
+- **Be consistent**: Send every day during warm-up. Sporadic large sends look suspicious.
+- **Watch your metrics**: If bounce rates exceed 5% or spam complaints exceed 0.3%, slow down and investigate before continuing.
+- **Separate transactional and marketing**: If you send both types, consider using separate subdomains so marketing reputation issues don't affect transactional delivery.
+
+---
+
+## Maintain Clean Recipient Lists
+
+Sending to invalid or unengaged addresses is one of the fastest ways to damage deliverability. Mailbox providers monitor your bounce and complaint rates and will throttle or block senders with poor list hygiene.
+
+### Process Bounces Immediately
+
+Hard bounces mean the address is permanently undeliverable. Continuing to send to hard-bounced addresses signals to mailbox providers that you don't maintain your lists.
+
+Set up a webhook to handle bounce events in real time:
 
 ```javascript
-const reputation = await lettr.domains.getReputation('dom_123');
+app.post('/webhooks/lettr', (req, res) => {
+  const event = req.body;
 
-// Target: score > 80
-console.log({
-  score: reputation.score,
-  bounceRate: reputation.bounceRate,  // Keep < 2%
-  spamRate: reputation.spamRate       // Keep < 0.1%
-});
-```
+  if (event.type === 'email.bounced') {
+    const { to, bounceType } = event.data;
 
-## List Hygiene
-
-### Remove Invalid Addresses
-
-Process bounces immediately:
-
-```javascript
-app.post('/webhooks', (req, res) => {
-  if (req.body.type === 'email.bounced') {
-    const { to, bounceType } = req.body.data;
-    
     if (bounceType === 'hard') {
+      // Remove from your mailing list immediately
       removeFromList(to);
     }
   }
+
   res.sendStatus(200);
 });
 ```
 
+See [Bounces](/learn/suppressions/bounces) for detailed bounce handling guidance.
+
 ### Use Double Opt-In
 
-Confirm subscriptions before sending:
+Confirm subscriptions before adding addresses to your list. This ensures addresses are valid and that the owner actually wants your emails:
 
-```javascript
-// 1. User signs up
-await sendConfirmationEmail(email);
-
-// 2. User clicks link
-await confirmSubscription(email);
-
-// 3. Now safe to send marketing emails
-```
+1. User submits their email address
+2. You send a confirmation email with a unique link
+3. User clicks the link to confirm
+4. Only then add them to your sending list
 
 ### Remove Unengaged Subscribers
 
-Stop sending to users who never open:
+Recipients who never open your emails drag down your engagement metrics. Mailbox providers use engagement signals (opens, clicks) to decide inbox placement. Periodically remove or re-engage subscribers who haven't interacted in 6–12 months.
 
-```javascript
-// Find subscribers with no opens in 6 months
-const unengaged = await db.subscribers.findAll({
-  where: {
-    lastOpenedAt: { $lt: sixMonthsAgo }
-  }
-});
+---
 
-// Remove or re-engage them
-```
+## Content That Avoids Spam Filters
 
-## Content Best Practices
+Even with perfect authentication and a clean list, your email content affects deliverability.
 
 ### Subject Lines
 
-<AccordionGroup>
-  <Accordion title="Do: Be clear and relevant">
-    "Your order #12345 has shipped"
-  </Accordion>
-  <Accordion title="Don't: Use spam triggers">
-    "FREE!!! LIMITED TIME OFFER!!!"
-  </Accordion>
-</AccordionGroup>
+| Do | Don't |
+|----|-------|
+| Be clear and relevant | Use ALL CAPS |
+| Keep under 50 characters | Use excessive punctuation!!! |
+| Personalize when possible | Use spam trigger words (FREE, ACT NOW, URGENT) |
+| Set accurate expectations | Mislead about content |
 
 ### Email Body
 
 | Do | Don't |
 |----|-------|
-| Balance text and images | Use only images |
-| Include plain text version | Send HTML only |
-| Add unsubscribe link | Hide unsubscribe |
-| Use your domain for links | Use URL shorteners |
+| Balance text and images | Send image-only emails |
+| Include a plain text version | Send HTML only |
+| Use your own domain for links | Use URL shorteners (they're associated with spam) |
+| Add a visible unsubscribe link | Hide or omit the unsubscribe option |
+| Include a physical mailing address | Omit required compliance elements |
 
-### Required Elements
+### Required Footer Elements
 
-Always include:
+Every marketing and bulk email should include:
 
-- Physical mailing address
-- Unsubscribe link (one-click preferred)
-- Reply-to address
+- **Unsubscribe link** — One-click unsubscribe is now required by major providers
+- **Physical mailing address** — Required by CAN-SPAM
+- **Reply-to address** — Allows recipients to respond
 
-## Engagement Metrics
+See [CAN-SPAM Requirements](/knowledge-base/compliance/can-spam) for detailed legal requirements.
 
-### Track and Improve
+---
 
-| Metric | Target | Action if Low |
-|--------|--------|---------------|
-| Open Rate | > 20% | Improve subject lines |
-| Click Rate | > 2% | Better CTAs |
-| Bounce Rate | < 2% | Clean list |
-| Spam Rate | < 0.1% | Review content |
+## Monitor Your Metrics
 
-## Testing
+Track these key indicators to catch problems early:
 
-### Before Sending
+| Metric | Healthy Target | Warning Sign | Action |
+|--------|---------------|--------------|--------|
+| Bounce rate | < 2% | > 5% | Clean your list, validate addresses |
+| Spam complaint rate | < 0.1% | > 0.3% | Review content, check unsubscribe visibility |
+| Open rate | > 15% | < 10% | Improve subject lines, check inbox placement |
+| Click rate | > 2% | < 1% | Improve CTAs and content relevance |
 
-1. **Spam check** - Use tools to scan for spam triggers
-2. **Preview** - Check rendering in multiple clients
-3. **Test send** - Send to yourself first
-4. **Links** - Verify all links work
+<Note>
+  Open rates are increasingly unreliable due to Apple Mail Privacy Protection and other privacy features that pre-fetch images. Use click rates and direct engagement as more reliable indicators. See [Open & Click Tracking Accuracy](/knowledge-base/troubleshooting/tracking-accuracy) for details.
+</Note>
 
-### A/B Testing
+---
 
-```javascript
-const campaign = await lettr.campaigns.create({
-  variants: [
-    { subject: 'Version A', weight: 50 },
-    { subject: 'Version B', weight: 50 }
-  ],
-  testSettings: {
-    testPercentage: 20,
-    winnerCriteria: 'open_rate'
-  }
-});
-```
+## Testing Before Sending
+
+### Pre-Send Checklist
+
+1. **Send test emails** — Send to yourself and colleagues across different email clients (Gmail, Outlook, Apple Mail)
+2. **Check rendering** — Verify your email looks correct on both desktop and mobile
+3. **Verify links** — Click every link in the test email to confirm they work
+4. **Review content** — Read through for spam trigger words and formatting issues
+5. **Validate authentication** — Check email headers to confirm DKIM is passing
+
+See [Test Emails](/learn/sending/test-emails) for how to send test emails through Lettr.
+
+---
 
 ## Common Deliverability Issues
 
 <AccordionGroup>
   <Accordion title="Emails going to spam">
-    - Check authentication (SPF, DKIM, DMARC)
-    - Review content for spam triggers
-    - Check domain reputation
-    - Ensure proper unsubscribe mechanism
+    - Verify all authentication records (DKIM, DMARC) are passing
+    - Review your email content for spam triggers
+    - Check that you have a visible unsubscribe link
+    - Ensure your domain has built sufficient reputation (warm up if new)
+    - See [Emails Landing in Spam](/knowledge-base/troubleshooting/spam-placement) for step-by-step diagnosis
   </Accordion>
   <Accordion title="High bounce rate">
-    - Implement double opt-in
-    - Validate emails at signup
-    - Remove inactive subscribers
-    - Process bounces immediately
+    - Implement double opt-in for new subscribers
+    - Validate email addresses at the point of collection
+    - Remove subscribers who haven't engaged in 6+ months
+    - Process bounce webhooks immediately — don't batch them
+    - See [Bounce Diagnosis](/knowledge-base/troubleshooting/bounce-diagnosis) for interpreting bounce codes
   </Accordion>
   <Accordion title="Low open rates">
-    - Improve subject lines
-    - Send at optimal times
-    - Segment your audience
-    - Remove unengaged subscribers
+    - Improve subject lines — test different approaches
+    - Send at times when your audience is most active
+    - Segment your audience for more relevant content
+    - Remove unengaged subscribers to improve overall metrics
+    - Check if Apple MPP is inflating or deflating your numbers
+  </Accordion>
+  <Accordion title="Emails delayed or deferred">
+    - Check if you're sending too fast during domain warm-up
+    - Verify your domain reputation hasn't been damaged
+    - Look for `email.deferred` webhook events for specific reasons
+    - Some delays are normal — receiving servers may throttle new senders
   </Accordion>
 </AccordionGroup>
 
+---
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Sending Reputation" icon="chart-line" href="/knowledge-base/best-practices/sending-reputation">
+    Build and protect your sender reputation
+  </Card>
+  <Card title="List Hygiene" icon="broom" href="/knowledge-base/best-practices/list-hygiene">
+    Maintain healthy recipient lists
+  </Card>
+  <Card title="Domain Setup" icon="globe" href="/learn/domains/introduction">
+    Configure and verify your sending domains
+  </Card>
+  <Card title="Bounces" icon="rotate-left" href="/learn/suppressions/bounces">
+    Understand bounce types and handling
+  </Card>
+</CardGroup>

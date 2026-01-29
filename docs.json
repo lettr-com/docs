@@ -322,19 +322,48 @@
             ]
           },
           {
+            "group": "Email Fundamentals",
+            "pages": [
+              "knowledge-base/fundamentals/how-email-delivery-works",
+              "knowledge-base/fundamentals/spf-dkim-dmarc",
+              "knowledge-base/fundamentals/email-headers",
+              "knowledge-base/fundamentals/bounce-codes-reference",
+              "knowledge-base/fundamentals/suppression-lists",
+              "knowledge-base/fundamentals/content-types",
+              "knowledge-base/fundamentals/subdomain-vs-root"
+            ]
+          },
+          {
             "group": "Best Practices",
             "pages": [
               "knowledge-base/best-practices/deliverability",
+              "knowledge-base/best-practices/sending-reputation",
+              "knowledge-base/best-practices/list-hygiene",
+              "knowledge-base/best-practices/templates",
               "knowledge-base/best-practices/security",
-              "knowledge-base/best-practices/templates"
+              "knowledge-base/best-practices/transactional-vs-marketing"
+            ]
+          },
+          {
+            "group": "Compliance & Regulations",
+            "pages": [
+              "knowledge-base/compliance/google-yahoo-requirements",
+              "knowledge-base/compliance/can-spam",
+              "knowledge-base/compliance/gdpr-email",
+              "knowledge-base/compliance/unsubscribe-best-practices",
+              "knowledge-base/compliance/data-privacy-metadata"
             ]
           },
           {
             "group": "Troubleshooting",
             "pages": [
-              "knowledge-base/troubleshooting/authentication",
               "knowledge-base/troubleshooting/delivery-issues",
-              "knowledge-base/troubleshooting/rate-limits"
+              "knowledge-base/troubleshooting/spam-placement",
+              "knowledge-base/troubleshooting/bounce-diagnosis",
+              "knowledge-base/troubleshooting/authentication",
+              "knowledge-base/troubleshooting/rate-limits",
+              "knowledge-base/troubleshooting/domain-verification",
+              "knowledge-base/troubleshooting/tracking-accuracy"
             ]
           }
         ]

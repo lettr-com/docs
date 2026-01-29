@@ -1,0 +1,188 @@
+---
+title: "How Email Delivery Works"
+description: "End-to-end overview of what happens when you send an email"
+---
+
+## Overview
+
+Email delivery is far more complex than it appears on the surface. Between the moment your application triggers a send and the moment a message appears in a recipient's inbox, multiple servers, protocols, and checks are involved. Understanding this pipeline is essential for diagnosing delivery issues, improving inbox placement, and building reliable email-powered features.
+
+This guide walks through every stage of the journey — from API request to inbox.
+
+---
+
+## The Email Delivery Pipeline
+
+<Steps>
+  <Step title="Submission">
+    Your application sends an API request to Lettr containing the recipient address, subject, content, and any additional parameters such as headers, tags, or metadata. Lettr validates the request, checks your account and domain configuration, and accepts the message into its sending queue.
+  </Step>
+
+  <Step title="Message Assembly">
+    Lettr constructs the full email message. This includes building the RFC 5322-compliant headers (From, To, Subject, Date, Message-ID), encoding the body using MIME (Multipurpose Internet Mail Extensions) to support HTML, plain text, and attachments, and cryptographically signing the message with DKIM using your domain's private key.
+  </Step>
+
+  <Step title="DNS Lookup">
+    Lettr queries DNS for the recipient domain's MX (Mail Exchanger) records. These records specify which mail servers are responsible for accepting email on behalf of that domain and their priority order. If no MX records exist, delivery cannot proceed.
+  </Step>
+
+  <Step title="SMTP Connection">
+    Lettr opens an SMTP (Simple Mail Transfer Protocol) connection to the highest-priority receiving mail server. The two servers perform a handshake, negotiate TLS encryption when available, and Lettr transmits the message envelope and content.
+  </Step>
+
+  <Step title="Authentication Check">
+    The receiving mail server verifies the message's authenticity by checking three authentication mechanisms:
+
+    - **SPF** — Does the sending IP have permission to send on behalf of the From domain?
+    - **DKIM** — Does the cryptographic signature match, proving the message was not altered in transit?
+    - **DMARC** — Do SPF and DKIM results align with the domain owner's published policy?
+  </Step>
+
+  <Step title="Content Filtering">
+    The receiving server scans the message content for spam signals, malware, phishing indicators, and policy violations. This includes checking the sender's IP reputation, analyzing links and attachments, evaluating engagement history, and applying the mailbox provider's proprietary filtering algorithms.
+  </Step>
+
+  <Step title="Delivery Decision">
+    Based on the results of authentication and content filtering, the receiving server makes a final placement decision:
+
+    - **Inbox** — Message passed all checks.
+    - **Spam folder** — Message is suspicious but not outright rejected.
+    - **Quarantine** — Message is held for administrative review (common in enterprise environments).
+    - **Reject** — Message is refused entirely, generating a bounce.
+  </Step>
+
+  <Step title="Feedback">
+    After the delivery decision, feedback flows back to Lettr. This includes SMTP response codes during the connection, bounce notifications for rejected messages, and asynchronous signals like opens, clicks, and spam complaints. Lettr processes these events and makes them available through webhooks and your dashboard.
+  </Step>
+</Steps>
+
+---
+
+## Key Protocols
+
+| Protocol | Purpose |
+| -------- | ------- |
+| **SMTP** | The standard protocol for transmitting email between servers. Operates on ports 25, 465, or 587. |
+| **DNS / MX** | Maps a recipient domain to the mail servers responsible for receiving its email. |
+| **SPF** | A DNS record that lists which IP addresses are authorized to send email for a domain. |
+| **DKIM** | A cryptographic signature embedded in email headers that proves the message has not been tampered with. |
+| **DMARC** | A policy layer that ties SPF and DKIM together and tells receiving servers what to do when authentication fails. |
+| **TLS** | Encrypts the SMTP connection between sending and receiving servers to prevent interception in transit. |
+
+---
+
+## What Can Go Wrong at Each Stage
+
+<AccordionGroup>
+  <Accordion title="Submission Errors">
+    The API request may be rejected before the message ever enters the sending queue. Common causes include invalid recipient addresses, missing required fields, unverified sending domains, or account-level rate limits. Lettr returns an immediate error response with details so your application can handle the failure.
+  </Accordion>
+
+  <Accordion title="DNS Failures">
+    If the recipient domain has no MX records, has misconfigured DNS, or if DNS resolution times out, Lettr cannot determine where to deliver the message. These failures typically result in a bounce with a descriptive error. Transient DNS issues may cause Lettr to retry delivery automatically.
+  </Accordion>
+
+  <Accordion title="SMTP Rejections">
+    The receiving mail server may refuse the connection or reject the message outright. This can happen due to IP blocklisting, the recipient mailbox not existing (hard bounce), or the receiving server being temporarily unavailable (soft bounce). SMTP response codes indicate the specific reason.
+  </Accordion>
+
+  <Accordion title="Authentication Failures">
+    If SPF, DKIM, or DMARC checks fail, the receiving server may reject the message or route it to spam. This typically happens when DNS records are not configured correctly for your sending domain. Lettr provides domain verification tools to help you set up authentication properly.
+  </Accordion>
+
+  <Accordion title="Spam Filtering">
+    Even with perfect authentication, messages can be flagged as spam based on content characteristics, sender reputation, recipient engagement patterns, or a combination of all three. Spam filtering is the least predictable stage because each mailbox provider uses proprietary algorithms.
+  </Accordion>
+
+  <Accordion title="Mailbox Full or Inactive">
+    The recipient's mailbox may be over its storage quota or the account may be inactive or disabled. These are typically reported as soft bounces (temporary) or hard bounces (permanent) depending on the provider's response. Lettr automatically suppresses addresses that repeatedly hard bounce.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Delivery vs Deliverability
+
+These two terms are often confused but represent fundamentally different things.
+
+| Term | Meaning |
+| ---- | ------- |
+| **Delivery** | The message was accepted by the receiving mail server. It did not bounce. |
+| **Deliverability** | The message reached the recipient's **inbox** specifically, rather than the spam folder or another location. |
+
+<Note>
+  A 100% delivery rate does not mean a 100% inbox placement rate. A message can be successfully delivered but still land in spam. Delivery is a technical outcome. Deliverability is a quality outcome.
+</Note>
+
+Improving deliverability requires attention to authentication, sender reputation, list hygiene, content quality, and recipient engagement — not just ensuring messages are accepted by the server.
+
+---
+
+## The Role of an Email Service Provider
+
+Sending email directly from your own servers is technically possible, but introduces significant operational challenges. This is why applications use an email service provider like Lettr.
+
+<CardGroup cols={2}>
+  <Card title="IP Reputation Management">
+    Lettr maintains a pool of sending IPs with established reputations, and provides dedicated IP options for high-volume senders. Building and maintaining IP reputation from scratch takes weeks or months.
+  </Card>
+
+  <Card title="DKIM Infrastructure">
+    Lettr handles key generation, rotation, and signing automatically. You configure a single DNS record and Lettr manages the cryptographic operations for every message.
+  </Card>
+
+  <Card title="Bounce Handling">
+    Lettr parses bounce responses, classifies them by type, automatically suppresses invalid addresses, and surfaces the data through webhooks and your dashboard so your application can respond.
+  </Card>
+
+  <Card title="Compliance">
+    Lettr enforces suppression list processing, provides unsubscribe mechanisms, and handles feedback loops with major mailbox providers — helping you stay compliant with CAN-SPAM, GDPR, and other regulations.
+  </Card>
+</CardGroup>
+
+<Tip>
+  Even if you have the infrastructure to send email yourself, using a dedicated provider lets your engineering team focus on your product rather than on mail server operations and deliverability tuning.
+</Tip>
+
+---
+
+## Email Lifecycle Events
+
+Every message that passes through Lettr generates a series of events that track its progress from submission to final outcome. These events are available through Lettr webhooks.
+
+| Event | Description |
+| ----- | ----------- |
+| **Injected / Queued** | The message has been accepted by Lettr and is queued for sending. |
+| **Delivered** | The receiving mail server accepted the message. |
+| **Bounced** | The message was permanently rejected (hard bounce) or temporarily failed (soft bounce). |
+| **Deferred** | Delivery was temporarily delayed and Lettr will retry automatically. |
+| **Opened** | The recipient opened the message (tracked via pixel, where supported). |
+| **Clicked** | The recipient clicked a link in the message (tracked via redirect, where enabled). |
+| **Complained** | The recipient marked the message as spam via their mailbox provider's feedback loop. |
+| **Unsubscribed** | The recipient used the unsubscribe mechanism (List-Unsubscribe header or in-body link). |
+
+<Warning>
+  Open and click tracking rely on recipient behavior and client support. Some email clients block tracking pixels or pre-fetch links, which can cause under-counting or over-counting. Do not treat these metrics as exact numbers.
+</Warning>
+
+---
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="SPF, DKIM & DMARC" icon="shield-check" href="/knowledge-base/fundamentals/spf-dkim-dmarc">
+    Deep dive into the three email authentication protocols and how to configure them.
+  </Card>
+
+  <Card title="Bounce Codes Reference" icon="circle-exclamation" href="/knowledge-base/fundamentals/bounce-codes-reference">
+    Complete reference of SMTP bounce codes and what they mean for your sending.
+  </Card>
+
+  <Card title="Deliverability Best Practices" icon="inbox" href="/knowledge-base/best-practices/deliverability">
+    Actionable strategies for maximizing inbox placement rates.
+  </Card>
+
+  <Card title="Sending with Lettr" icon="paper-plane" href="/learn/sending/introduction">
+    Get started sending email through the Lettr platform.
+  </Card>
+</CardGroup>

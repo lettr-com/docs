@@ -1,0 +1,249 @@
+---
+title: "Email Headers Explained"
+description: "What common email headers mean and how they affect delivery and display"
+---
+
+## What Are Email Headers
+
+Every email message carries a set of **headers** — structured metadata attached to the top of the message. Most email clients hide headers from view, but they play a critical role in how email is routed, authenticated, and displayed.
+
+Headers tell receiving servers where the message came from, how to verify its authenticity, where to send replies, and how to render the content. Understanding headers is essential for diagnosing delivery problems, verifying authentication, and building reliable sending workflows.
+
+<Note>
+  Headers are added at multiple stages of an email's journey. Some are set by the sender (you, via the Lettr API), some are added by Lettr's sending infrastructure, and some are appended by each server that handles the message along the way.
+</Note>
+
+---
+
+## Essential Headers
+
+These headers appear on virtually every email message.
+
+| Header | Description | Example Value | Who Sets It |
+|---|---|---|---|
+| **From** | The sender's display address | `hello@yourapp.com` | You, via the Lettr API `from` parameter |
+| **To** | The recipient's address | `user@example.com` | You, via the API `to` parameter |
+| **Subject** | The email subject line | `Your invoice is ready` | You, via the API `subject` parameter |
+| **Date** | Timestamp of when the email was sent | `Tue, 28 Jan 2026 14:30:00 +0000` | Lettr, at send time |
+| **Message-ID** | A globally unique identifier for the message | `<abc123@mail.yourapp.com>` | Lettr |
+| **MIME-Version** | MIME protocol version | `1.0` | Lettr |
+| **Content-Type** | Format of the message body | `multipart/alternative; boundary="..."` | Lettr, based on the content you provide |
+
+<Tip>
+  The **Message-ID** header is useful for tracking a specific email across logs, webhooks, and support requests. Lettr includes the Message-ID in webhook payloads so you can correlate events back to the original send.
+</Tip>
+
+---
+
+## Routing and Authentication Headers
+
+These headers control how the message is delivered and whether it passes authentication checks.
+
+### Return-Path
+
+The envelope sender address, also known as the bounce address. When a message bounces, the bounce notification is sent to this address. Lettr sets the Return-Path automatically to capture and process bounces on your behalf.
+
+```
+Return-Path: <bounces+abc123@bounce.lettr.com>
+```
+
+### Received
+
+Each mail server that handles the message appends a `Received` header. Reading these from bottom to top traces the path the email took from sender to recipient.
+
+```
+Received: from mail.lettr.com (mail.lettr.com [198.51.100.10])
+    by mx.example.com with ESMTPS id abc123
+    for <user@example.com>;
+    Tue, 28 Jan 2026 14:30:02 +0000
+```
+
+### DKIM-Signature
+
+A cryptographic signature added by Lettr that allows the receiving server to verify the message was not altered in transit and was authorized by the sending domain.
+
+```
+DKIM-Signature: v=1; a=rsa-sha256; d=yourapp.com; s=lettr;
+    h=from:to:subject:date:message-id;
+    bh=abc123...;
+    b=xyz789...
+```
+
+### Authentication-Results
+
+Added by the **receiving server** after evaluating SPF, DKIM, and DMARC. This header tells you whether your message passed or failed each check.
+
+```
+Authentication-Results: mx.example.com;
+    spf=pass (sender IP is permitted) smtp.mailfrom=bounce.lettr.com;
+    dkim=pass header.d=yourapp.com header.s=lettr;
+    dmarc=pass (policy=reject) header.from=yourapp.com
+```
+
+<Warning>
+  You cannot set the Authentication-Results header yourself. It is always written by the receiving mail server. If you see authentication failures in this header, check your DNS records in the Lettr dashboard.
+</Warning>
+
+---
+
+## Display and Reply Headers
+
+These headers affect what the recipient sees in their email client and where replies are directed.
+
+### Reply-To
+
+Specifies the address that receives replies. If omitted, replies go to the `From` address. In Lettr, set this with the `reply_to` API parameter.
+
+```
+Reply-To: support@yourapp.com
+```
+
+### From Name
+
+The display name shown alongside the sender address. Set via the `from_name` API parameter in Lettr.
+
+```
+From: Your App <hello@yourapp.com>
+```
+
+### List-Unsubscribe
+
+Provides mailbox providers with a machine-readable unsubscribe mechanism. This header is important for deliverability — Gmail and other providers surface it as a visible unsubscribe link in the inbox UI.
+
+```
+List-Unsubscribe: <mailto:unsubscribe@yourapp.com>, <https://yourapp.com/unsubscribe?id=abc123>
+```
+
+### List-Unsubscribe-Post
+
+Works together with List-Unsubscribe to enable RFC 8058 one-click unsubscribe. This allows mailbox providers to process unsubscribe requests with a single POST request, without requiring the recipient to visit a webpage.
+
+```
+List-Unsubscribe-Post: List-Unsubscribe=One-Click
+```
+
+<Note>
+  Lettr automatically adds `List-Unsubscribe` and `List-Unsubscribe-Post` headers when you configure unsubscribe handling for your sending domain. Both headers are strongly recommended for bulk and marketing email.
+</Note>
+
+---
+
+## Custom Headers
+
+Lettr supports custom headers via the `headers` API parameter. Custom headers use the `X-` prefix by convention and are passed through to webhook payloads, making them useful for internal tracking.
+
+**Common use cases:**
+
+- **Internal tracking** — attach an internal reference ID to correlate emails with your application records.
+- **Correlation IDs** — pass a request or transaction ID through the email pipeline for end-to-end observability.
+
+```json
+{
+  "from": "hello@yourapp.com",
+  "to": "user@example.com",
+  "subject": "Your order has shipped",
+  "headers": {
+    "X-Order-ID": "order_8a3f2c",
+    "X-Correlation-ID": "req_91b4e7"
+  }
+}
+```
+
+<Tip>
+  Custom `X-` headers you set via the Lettr API are included in webhook event payloads. This lets you match delivery events, opens, clicks, and bounces back to specific records in your system without maintaining a separate lookup table.
+</Tip>
+
+---
+
+## How to View Email Headers
+
+Most email clients hide headers by default. Here is how to reveal them in common clients:
+
+| Email Client | How to View Headers |
+|---|---|
+| **Gmail** | Open the message, click the three-dot menu, select **Show original** |
+| **Outlook (Web)** | Open the message, click the three-dot menu, select **View** > **View message source** |
+| **Apple Mail** | Open the message, go to **View** > **Message** > **All Headers** |
+| **Thunderbird** | Open the message, go to **View** > **Message Source** (or press `Ctrl+U`) |
+
+---
+
+## Reading Authentication Results
+
+When diagnosing delivery issues, the `Authentication-Results` header is the most important header to check. Here is an example of a fully passing result and what each line means:
+
+```
+Authentication-Results: mx.example.com;
+    spf=pass (sender IP is permitted) smtp.mailfrom=bounce.lettr.com;
+    dkim=pass header.d=yourapp.com header.s=lettr;
+    dmarc=pass (policy=reject) header.from=yourapp.com
+```
+
+| Line | Meaning |
+|---|---|
+| `spf=pass` | The sending IP address is authorized by the domain's SPF record. Lettr's IPs are covered when you add the required SPF include to your DNS. |
+| `dkim=pass` | The DKIM signature is valid. The message was signed by Lettr using the key published at `lettr._domainkey.yourapp.com` and was not modified in transit. |
+| `dmarc=pass` | The message aligns with the domain's DMARC policy. Both SPF and/or DKIM passed and the domains align with the `From` header. |
+
+<Warning>
+  If any of these show `fail` or `none`, your emails may be rejected or sent to spam. Verify your DNS records in the Lettr dashboard under **Domains** > **DNS Settings**.
+</Warning>
+
+---
+
+## Troubleshooting with Headers
+
+<AccordionGroup>
+  <Accordion title="DKIM is failing">
+    A `dkim=fail` result means the cryptographic signature could not be verified. Common causes:
+
+    - **Missing DKIM DNS record** — Ensure the CNAME record for `lettr._domainkey.yourapp.com` is published and has propagated.
+    - **Message modified in transit** — Forwarding services or mailing lists may alter the message body, breaking the signature.
+    - **Wrong signing domain** — The `d=` value in the DKIM-Signature must match your verified sending domain in Lettr.
+
+    Check your domain's DNS configuration in the Lettr dashboard to confirm the DKIM record is correctly published.
+  </Accordion>
+
+  <Accordion title="SPF is failing">
+    A `spf=fail` result means the sending IP is not authorized by your domain's SPF record. Common causes:
+
+    - **Missing Lettr include** — Your SPF record must contain `include:spf.lettr.com`. Without it, Lettr's sending IPs are not authorized.
+    - **Too many DNS lookups** — SPF allows a maximum of 10 DNS lookups. If your record exceeds this limit, SPF evaluation stops and may return `permerror`.
+    - **Incorrect Return-Path domain** — SPF is evaluated against the Return-Path (envelope sender) domain, not the From header domain.
+  </Accordion>
+
+  <Accordion title="Wrong From display name or address">
+    If the recipient sees an unexpected sender name or address:
+
+    - **Check the `from` and `from_name` parameters** in your API request. The `from` must be an address on a verified domain in Lettr.
+    - **Some email clients show the envelope sender** — If the Return-Path domain differs from the From domain and DMARC is not aligned, some clients may display a "via" label (e.g., "via lettr.com").
+    - **Verify domain alignment** — Setting up a custom Return-Path domain in Lettr removes the "via" label.
+  </Accordion>
+
+  <Accordion title="Replies are going to the wrong address">
+    If replies are not reaching the expected inbox:
+
+    - **Check the Reply-To header** — If set, replies go to the Reply-To address, not the From address. Verify the `reply_to` parameter in your API request.
+    - **Reply-To not set** — If you omit `reply_to`, replies default to the From address. Make sure the From address has a working mailbox or forwarding rule.
+    - **Multiple Reply-To addresses** — The Reply-To header supports only one address. If you need replies routed to multiple people, use a shared mailbox or alias.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="SPF, DKIM, and DMARC" icon="shield-check" href="/knowledge-base/fundamentals/spf-dkim-dmarc">
+    Deep dive into the three authentication protocols that protect your sending reputation.
+  </Card>
+  <Card title="How Email Delivery Works" icon="paper-plane" href="/knowledge-base/fundamentals/how-email-delivery-works">
+    Understand the full journey of an email from API call to inbox.
+  </Card>
+  <Card title="Custom Headers" icon="code" href="/learn/sending/custom-headers">
+    Learn how to set custom headers via the Lettr API for tracking and correlation.
+  </Card>
+  <Card title="Sending Introduction" icon="envelope" href="/learn/sending/introduction">
+    Get started with sending email through Lettr.
+  </Card>
+</CardGroup>

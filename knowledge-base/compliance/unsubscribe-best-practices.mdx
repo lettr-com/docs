@@ -1,0 +1,209 @@
+---
+title: "Unsubscribe Best Practices"
+description: "Implementing effective unsubscribe mechanisms for compliance and deliverability"
+---
+
+## Why Unsubscribe Matters
+
+Providing a clear and functional unsubscribe mechanism is not optional — it is a legal requirement under CAN-SPAM, GDPR, and CASL. Beyond compliance, making it easy for recipients to unsubscribe directly benefits your sending reputation.
+
+When recipients cannot find an unsubscribe link, they resort to marking your email as spam. Spam complaints are one of the strongest negative signals mailbox providers use when deciding whether to deliver your email to the inbox or the junk folder.
+
+<Info>
+  Since February 2024, Google and Yahoo require **one-click unsubscribe** support for bulk senders sending 5,000 or more emails per day. Failing to comply can result in your messages being blocked or sent to spam.
+</Info>
+
+---
+
+## One-Click Unsubscribe (RFC 8058)
+
+One-click unsubscribe is defined by [RFC 8058](https://datatracker.ietf.org/doc/html/rfc8058). It uses the `List-Unsubscribe` and `List-Unsubscribe-Post` headers to allow email clients to display a native unsubscribe button directly in their interface — no need for the recipient to open a webpage.
+
+### Why It Matters
+
+Google and Yahoo enforce one-click unsubscribe for bulk senders. Messages that lack the required headers may be throttled, sent to spam, or rejected outright.
+
+### Supported Email Clients
+
+| Email Client | One-Click Unsubscribe Support |
+|---|---|
+| Gmail | Yes |
+| Yahoo Mail | Yes |
+| Apple Mail | Yes |
+| Microsoft Outlook | Yes |
+
+Lettr automatically includes the `List-Unsubscribe` and `List-Unsubscribe-Post` headers on messages sent through marketing streams when an unsubscribe link is present in the body.
+
+---
+
+## Implementing Unsubscribe in Lettr
+
+### In-Body Unsubscribe Link with Tracking
+
+To track unsubscribe events in Lettr, add the `data-msys-unsubscribe="1"` attribute to your unsubscribe link. This tells Lettr to fire an unsubscribe event when the recipient clicks the link.
+
+```html
+<a href="https://example.com/unsubscribe?email={{email}}"
+   data-msys-unsubscribe="1">
+  Unsubscribe from these emails
+</a>
+```
+
+<Warning>
+  Click tracking must be **enabled** on the sending domain for the unsubscribe event to fire. If click tracking is disabled, Lettr cannot detect the click and no unsubscribe webhook event will be generated.
+</Warning>
+
+### Handling Unsubscribe Webhook Events
+
+When a recipient clicks an unsubscribe link tagged with `data-msys-unsubscribe="1"`, Lettr sends a webhook event to your configured endpoint. Use this event to update your suppression list or database.
+
+```json
+{
+  "event": "unsubscribe",
+  "recipient": "recipient@example.com",
+  "timestamp": "2025-03-15T14:22:00Z",
+  "message_id": "abc123",
+  "campaign_id": "welcome_series"
+}
+```
+
+You should process unsubscribe webhook events by immediately removing the recipient from future mailings. Do not delay this action.
+
+---
+
+## Unsubscribe Link Placement and Design
+
+A compliant and user-friendly unsubscribe link follows these principles:
+
+- **Visible** — Do not hide the link in tiny, low-contrast text.
+- **In the footer** — Place the link in a consistent location recipients expect.
+- **No login required** — The recipient must be able to unsubscribe without signing in.
+- **Immediate processing** — CAN-SPAM allows up to 10 business days, but best practice is to process unsubscribes immediately.
+
+### Example: Well-Designed Email Footer
+
+```html
+<table width="100%" cellpadding="0" cellspacing="0" role="presentation"
+       style="background-color: #f4f4f4; padding: 30px 20px; text-align: center;">
+  <tr>
+    <td style="font-family: Arial, sans-serif; font-size: 13px; color: #666666; line-height: 1.6;">
+      <p style="margin: 0 0 8px 0;">
+        You are receiving this email because you signed up at example.com.
+      </p>
+      <p style="margin: 0 0 8px 0;">
+        Example Inc, 123 Main Street, New York, NY 10001
+      </p>
+      <p style="margin: 0;">
+        <a href="https://example.com/preferences?email={{email}}"
+           style="color: #4a90d9; text-decoration: underline;">
+          Manage preferences
+        </a>
+        &nbsp;&bull;&nbsp;
+        <a href="https://example.com/unsubscribe?email={{email}}"
+           data-msys-unsubscribe="1"
+           style="color: #4a90d9; text-decoration: underline;">
+          Unsubscribe
+        </a>
+      </p>
+    </td>
+  </tr>
+</table>
+```
+
+---
+
+## Preference Center vs Full Unsubscribe
+
+A **preference center** lets recipients choose which categories of email they want to receive — for example, product updates but not promotional offers. This reduces unsubscribes by giving recipients control.
+
+A **full unsubscribe** removes the recipient from all marketing communications.
+
+<Tip>
+  Always offer a full unsubscribe option even if you provide a preference center. Regulations require that recipients can opt out of **all** commercial email, not just individual categories.
+</Tip>
+
+A common pattern is to link to a preference center first, with a full unsubscribe option clearly available on that page:
+
+```html
+<p style="font-size: 13px; color: #666666;">
+  <a href="https://example.com/preferences?email={{email}}"
+     style="color: #4a90d9;">
+    Update your email preferences
+  </a>
+  &nbsp;or&nbsp;
+  <a href="https://example.com/unsubscribe?email={{email}}"
+     data-msys-unsubscribe="1"
+     style="color: #4a90d9;">
+    unsubscribe from all emails
+  </a>
+</p>
+```
+
+---
+
+## What NOT to Do
+
+<AccordionGroup>
+  <Accordion title="Require login to unsubscribe">
+    Forcing recipients to log in creates friction and violates the spirit of CAN-SPAM. Many recipients will mark your email as spam instead of logging in. The unsubscribe process must work with a single click or a simple confirmation page.
+  </Accordion>
+  <Accordion title="Make unsubscribe a multi-step process">
+    Do not ask recipients to fill out surveys, confirm via email, or navigate multiple pages before they are unsubscribed. One click should be sufficient.
+  </Accordion>
+  <Accordion title="Hide the unsubscribe link">
+    Using tiny fonts, low-contrast colors, or burying the link in dense text violates CAN-SPAM requirements and frustrates recipients. The link must be clearly visible.
+  </Accordion>
+  <Accordion title="Ignore unsubscribe requests">
+    Continuing to send email to recipients who have unsubscribed is a direct violation of CAN-SPAM and GDPR. Process every unsubscribe request promptly.
+  </Accordion>
+  <Accordion title="Re-subscribe people who unsubscribed">
+    Never add unsubscribed recipients back to your mailing list without their explicit, affirmative consent. This includes importing old lists that contain previously unsubscribed addresses.
+  </Accordion>
+  <Accordion title="Only offer 'reduce frequency' without a full opt-out">
+    While offering frequency options is fine, you must always provide a way to fully unsubscribe. Offering only a "receive fewer emails" option without a complete opt-out does not satisfy legal requirements.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Transactional Email Exception
+
+Transactional emails — such as password resets, order confirmations, and account notifications — are generally exempt from unsubscribe requirements under CAN-SPAM because they are not commercial in nature.
+
+However, if a transactional email contains promotional content (such as product recommendations or upsells), it may be reclassified as a commercial message and become subject to all CAN-SPAM requirements, including unsubscribe.
+
+<Note>
+  When in doubt, include an unsubscribe link. It does no harm in a transactional email, and it protects you if regulators determine the message has commercial intent.
+</Note>
+
+---
+
+## Compliance Summary
+
+| Requirement | CAN-SPAM | GDPR | Google / Yahoo (Bulk Senders) |
+|---|---|---|---|
+| Unsubscribe mechanism required | Yes — every commercial email | Yes — right to withdraw consent at any time | Yes — one-click unsubscribe via List-Unsubscribe header |
+| Maximum processing time | 10 business days | Without undue delay (interpreted as immediately) | Unsubscribe must be processed within 2 days |
+| One-click unsubscribe | Not explicitly required, but recommended | Not explicitly required | Required since February 2024 |
+| List-Unsubscribe header | Not required | Not required | Required for bulk senders (5,000+ emails/day) |
+| Preference center acceptable | Yes, if full opt-out is also available | Yes, if full withdrawal of consent is available | Yes, but one-click full unsubscribe must also be supported |
+| Re-subscribing after opt-out | Only with new, affirmative consent | Only with new, freely given consent | Must honor unsubscribes; re-adding triggers spam filtering |
+
+---
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="CAN-SPAM Compliance" icon="gavel" href="/knowledge-base/compliance/can-spam">
+    Understand the full requirements of the CAN-SPAM Act for commercial email.
+  </Card>
+  <Card title="Google & Yahoo Requirements" icon="envelope-circle-check" href="/knowledge-base/compliance/google-yahoo-requirements">
+    Meet the sender requirements enforced by major mailbox providers.
+  </Card>
+  <Card title="Deliverability Best Practices" icon="inbox" href="/knowledge-base/best-practices/deliverability">
+    Improve inbox placement with proven deliverability strategies.
+  </Card>
+  <Card title="Tracking" icon="chart-line" href="/learn/sending/tracking">
+    Configure click and open tracking for your sending domains.
+  </Card>
+</CardGroup>

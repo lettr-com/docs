@@ -1,0 +1,151 @@
+---
+title: "Open & Click Tracking Accuracy"
+description: "Why engagement metrics may not reflect reality and how to interpret open and click data correctly."
+---
+
+## How Open Tracking Works
+
+Lettr tracks email opens by embedding an invisible tracking pixel (a tiny 1x1 transparent image) into the HTML body of your email. When a recipient opens the email and their email client loads images, a request is made to Lettr's servers, which records an `email.opened` webhook event.
+
+You can enable or disable open tracking on a per-email basis using the `options` object in the API request.
+
+<Note>
+  Open tracking only works for HTML emails. The tracking pixel is an image element, so it requires the recipient's email client to render HTML and load images.
+</Note>
+
+### Limitations
+
+- The pixel only fires when images are loaded — it does not detect whether the recipient actually read the email.
+- A single open may trigger multiple pixel loads (e.g., when scrolling back to an email), though Lettr deduplicates where possible.
+- Forwarded emails can trigger additional opens from recipients who were not on the original send list.
+
+---
+
+## Why Open Rates Are Unreliable
+
+Open rates have become an increasingly unreliable metric due to changes in email client behavior and privacy features. The following factors either inflate or deflate your reported open rate.
+
+| Factor | Effect | Description |
+| --- | --- | --- |
+| Apple Mail Privacy Protection (MPP) | **Inflates** | Pre-fetches all images regardless of whether the recipient reads the email, registering a false open. |
+| Image blocking | **Deflates** | Some email clients (notably Outlook) block images by default. The pixel never loads, so the open is never recorded. |
+| Plain text emails | **Deflates** | No HTML means no tracking pixel. Opens are never recorded. |
+| Preview panes | **Inflates** | Scrolling past an email in a preview pane can trigger the pixel without the recipient intentionally reading the message. |
+| Corporate proxies | **Inflates** | Some corporate email gateways pre-fetch images for security scanning, registering opens before the recipient sees the email. |
+
+<Warning>
+  Apple Mail Privacy Protection affects all users of Apple Mail on iOS 15+, macOS Monterey+, and iPadOS 15+. Depending on your audience, this can impact a significant portion of your list. Open rates for Apple Mail users are effectively meaningless.
+</Warning>
+
+---
+
+## How Click Tracking Works
+
+Lettr tracks clicks by rewriting links in your HTML emails to pass through your configured tracking domain. When a recipient clicks a rewritten link, the request hits Lettr's tracking server, an `email.clicked` webhook event is recorded, and the recipient is immediately redirected to the original destination URL.
+
+You can control click tracking on individual links using the `data-msys-clicktrack` attribute:
+
+```html
+<!-- Click tracking enabled (default) -->
+<a href="https://example.com" data-msys-clicktrack="1">Visit our site</a>
+
+<!-- Click tracking disabled for this link -->
+<a href="https://example.com" data-msys-clicktrack="0">Unsubscribe</a>
+```
+
+---
+
+## Why Click Data Can Be Misleading
+
+While click data is generally more reliable than open data, it is not immune to inaccuracies.
+
+<AccordionGroup>
+  <Accordion title="Security scanners and bot clicks">
+    Corporate email security tools (such as Barracuda, Mimecast, and Proofpoint) often pre-click every link in an email to check for malicious content. This registers click events for links the recipient never actually clicked.
+
+    These bot clicks can significantly inflate click rates, especially for B2B senders whose recipients use enterprise email security.
+  </Accordion>
+
+  <Accordion title="Link prefetching">
+    Some email clients and browsers prefetch links in the background to speed up page loads. This can register a click event without any deliberate action from the recipient.
+  </Accordion>
+
+  <Accordion title="How to identify bot clicks">
+    Bot clicks typically share several characteristics:
+
+    - **Very fast click times** — clicks registered within seconds (or less) of delivery, before a human could reasonably open and read the email.
+    - **Clicks on every link** — bots often click all links in a message, while humans typically click one or two.
+    - **Specific user agents** — security scanners often use identifiable user agent strings.
+    - **No downstream activity** — bot clicks do not result in website engagement, page views, or conversions.
+  </Accordion>
+</AccordionGroup>
+
+<Tip>
+  If you see unusually high click rates from a specific domain or company, investigate whether their email security gateway is pre-clicking links. Filter these out when analyzing true engagement.
+</Tip>
+
+---
+
+## What Metrics to Trust Instead
+
+Rather than relying on raw open and click rates, use metrics that are harder to distort and more closely tied to genuine engagement.
+
+| Metric | Why it is more reliable |
+| --- | --- |
+| **Click-to-open rate (CTOR)** | Measures clicks as a percentage of opens, reducing the impact of inflated open counts on your engagement analysis. |
+| **Unique clicks** | Counts each recipient only once, filtering out repeated or automated clicks from the same source. |
+| **Conversion rate** | Tracks actions on your website (purchases, sign-ups, downloads) that can only be performed by real humans with intent. |
+| **Unsubscribe rate** | A direct, deliberate action that reliably signals disengagement. Unaffected by bots or privacy features. |
+| **Complaint rate (spam reports)** | The strongest negative signal. Mailbox providers surface this data reliably and it directly impacts your sender reputation. |
+
+---
+
+## Practical Recommendations
+
+1. **Don't rely solely on open rates for engagement decisions.** Open data is too unreliable to be your only signal, especially if a large portion of your audience uses Apple Mail.
+
+2. **Use click rates as your primary engagement signal.** While not perfect, clicks require more intentional action and are less affected by privacy features.
+
+3. **Track downstream conversions.** Integrate your email analytics with your website or app analytics to measure real outcomes — page visits, purchases, sign-ups — rather than proxy metrics.
+
+4. **Monitor complaint and unsubscribe rates as negative engagement signals.** These are the most trustworthy indicators that something is wrong with your content, frequency, or targeting.
+
+5. **Segment analysis by email client when possible.** Understanding the breakdown of your audience by email client helps you assess how much open rate inflation or deflation you should expect.
+
+6. **Filter out bot clicks.** When analyzing click data, look for the bot click patterns described above and exclude them from your engagement calculations.
+
+---
+
+## Impact on Deliverability Decisions
+
+<Warning>
+  Do not remove subscribers from your list based solely on zero opens. Recipients who use email clients that block images by default may be actively reading your emails without ever triggering the tracking pixel. Removing these subscribers penalizes engaged users and shrinks your list unnecessarily.
+</Warning>
+
+Instead, use a combination of signals to identify truly inactive subscribers:
+
+- No clicks over an extended period (e.g., 90–180 days)
+- No website visits or conversions attributed to email
+- No replies or forwards
+- Account inactivity outside of email (if applicable)
+
+When in doubt, send a re-engagement campaign before removing subscribers. A well-crafted re-engagement email with a clear call to action gives recipients a chance to confirm their interest through a click — a far more reliable signal than an open.
+
+---
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Tracking" icon="chart-line" href="/learn/sending/tracking">
+    Learn how open and click tracking is configured in Lettr.
+  </Card>
+  <Card title="Analytics" icon="chart-pie" href="/learn/sending/analytics">
+    Explore the analytics dashboard and available engagement reports.
+  </Card>
+  <Card title="Deliverability Best Practices" icon="envelope-circle-check" href="/knowledge-base/best-practices/deliverability">
+    Strategies for maintaining strong inbox placement and sender reputation.
+  </Card>
+  <Card title="List Hygiene" icon="broom" href="/knowledge-base/best-practices/list-hygiene">
+    Keep your subscriber list clean and your engagement metrics accurate.
+  </Card>
+</CardGroup>

@@ -1,0 +1,290 @@
+---
+title: Understanding SPF, DKIM, and DMARC
+description: "How email authentication protocols work together to protect your domain"
+---
+
+# Understanding SPF, DKIM, and DMARC
+
+Email was invented in an era when trust was assumed. The original protocols had no built-in way to verify who actually sent a message — anyone could (and still can) forge the "From" address on an email. SPF, DKIM, and DMARC are three authentication protocols that were developed to fix this problem. Together, they let receiving mail servers verify that an email genuinely comes from the domain it claims to come from.
+
+If you send email through Lettr, these protocols are part of your [sending domain setup](/learn/domains/sending-domains). This guide explains what each one does, how they work, and why they matter.
+
+---
+
+## SPF (Sender Policy Framework)
+
+### What It Does
+
+SPF lets you declare which mail servers are allowed to send email on behalf of your domain. Think of it as a guest list — if a server isn't on the list, receiving mail servers know to be suspicious.
+
+### How It Works
+
+1. You publish a DNS TXT record on your domain listing authorized sending servers.
+2. When a receiving server gets an email claiming to be from your domain, it looks up that TXT record.
+3. The receiving server checks whether the sending server's IP address matches one of the authorized entries.
+4. If it matches, the SPF check passes. If not, it fails.
+
+A typical SPF record looks like this:
+
+```
+v=spf1 include:sparkpostmail.com ~all
+```
+
+- `v=spf1` — identifies this as an SPF record
+- `include:sparkpostmail.com` — authorizes all servers listed in sparkpostmail.com's own SPF record (this is how Lettr's infrastructure is authorized)
+- `~all` — soft-fail any server not on the list (meaning treat it as suspicious but don't outright reject)
+
+### How Lettr Handles SPF
+
+When you add a sending domain in Lettr, you configure a **CNAME record** that delegates SPF verification to Lettr's infrastructure. This approach means you don't need to manually manage IP addresses — Lettr's CNAME points to `sparkpostmail.com`, which maintains the authoritative SPF record for all sending IPs.
+
+<Note>
+  You do not need to create a separate SPF TXT record for Lettr. The CNAME record handles this automatically. If you already have an SPF record for other services, the CNAME delegation works alongside it without conflict.
+</Note>
+
+### Limitations
+
+SPF has one well-known weakness: **it breaks when emails are forwarded.** When a server forwards your email, the forwarding server's IP address is what the next receiver sees — and that IP won't be in your SPF record. This is one of the reasons SPF alone isn't enough, and why DKIM and DMARC exist.
+
+---
+
+## DKIM (DomainKeys Identified Mail)
+
+### What It Does
+
+DKIM adds a cryptographic signature to every outgoing email. This signature proves two things: the email came from an authorized sender, and the message wasn't tampered with in transit. Unlike SPF, DKIM survives email forwarding because the signature travels with the message itself.
+
+### How It Works
+
+1. The sending server signs each email using a **private key** that only it knows.
+2. The signature is added as a header in the email.
+3. The corresponding **public key** is published as a DNS TXT record on your domain.
+4. The receiving server retrieves the public key from DNS and uses it to verify the signature.
+5. If the signature checks out, the receiving server knows the email is authentic and unaltered.
+
+### Lettr Setup
+
+When you add a sending domain in Lettr, you are provided with a **DKIM selector** and a **public key**. You add these to your DNS as a TXT record in the following format:
+
+```
+selector._domainkey.yourdomain.com  TXT  "v=DKIM1; k=rsa; h=sha256; p=MIGf..."
+```
+
+- `selector` — a unique identifier Lettr assigns (used to look up the correct public key)
+- `_domainkey` — a fixed namespace that tells receivers this is a DKIM record
+- `v=DKIM1` — identifies the DKIM version
+- `k=rsa` — the encryption algorithm used
+- `h=sha256` — the hash algorithm used for signing
+- `p=MIGf...` — the public key itself
+
+You can verify your DKIM record is published correctly:
+
+```bash
+dig TXT selector._domainkey.yourdomain.com
+```
+
+Or using `nslookup`:
+
+```bash
+nslookup -type=TXT selector._domainkey.yourdomain.com
+```
+
+<Note>
+  Replace `selector` with the actual selector value Lettr provides, and `yourdomain.com` with your sending domain. Copy the record values exactly as Lettr provides them — even a single missing character will cause verification to fail.
+</Note>
+
+---
+
+## DMARC (Domain-based Message Authentication, Reporting & Conformance)
+
+### What It Does
+
+DMARC builds on top of SPF and DKIM. It does two things:
+
+1. **Policy** — tells receiving servers what to do when an email fails both SPF and DKIM checks (or fails alignment).
+2. **Reporting** — provides a way for receiving servers to send you reports about authentication results, so you can monitor who is sending email using your domain.
+
+### DMARC Policies
+
+| Policy | Value | What Happens |
+|--------|-------|-------------|
+| None | `p=none` | Do nothing — just collect reports. Use this to monitor before enforcing. |
+| Quarantine | `p=quarantine` | Send failing emails to the spam/junk folder. |
+| Reject | `p=reject` | Block failing emails entirely. They are never delivered. |
+
+### Example Record
+
+A DMARC record is a DNS TXT record published at `_dmarc.yourdomain.com`:
+
+```
+v=DMARC1; p=none; rua=mailto:dmarc@yourdomain.com
+```
+
+- `v=DMARC1` — identifies this as a DMARC record
+- `p=none` — the policy (start here)
+- `rua=mailto:dmarc@yourdomain.com` — the email address where aggregate reports are sent
+
+You can verify your DMARC record:
+
+```bash
+dig TXT _dmarc.yourdomain.com
+```
+
+### Recommended Progression
+
+<Warning>
+  Do not start with `p=reject`. If your authentication isn't perfectly configured, legitimate emails will be blocked and your recipients won't receive them.
+</Warning>
+
+Lettr recommends a gradual approach:
+
+| Phase | Policy | Duration | Purpose |
+|-------|--------|----------|---------|
+| 1 | `p=none` | 2–4 weeks | Monitor reports, identify all legitimate senders |
+| 2 | `p=quarantine` | 2–4 weeks | Failing emails go to spam — low risk, good signal |
+| 3 | `p=reject` | Ongoing | Full protection — unauthorized emails are blocked |
+
+Review your DMARC reports at each phase to make sure all legitimate email sources are properly authenticated before tightening the policy.
+
+---
+
+## How They Work Together
+
+SPF, DKIM, and DMARC each handle a different piece of the authentication puzzle:
+
+| Protocol | What It Checks | How It Checks | What It Proves |
+|----------|---------------|---------------|----------------|
+| SPF | Sender server | DNS lookup of authorized IPs | The sending server is permitted to send for your domain |
+| DKIM | Message integrity | Cryptographic signature verification | The email content hasn't been altered and was signed by an authorized sender |
+| DMARC | Policy and alignment | Evaluates SPF and DKIM results against your policy | Tells receivers what to do on failure, and ensures the "From" domain matches |
+
+The flow works like this:
+
+1. An email arrives claiming to be from `you@yourdomain.com`.
+2. The receiving server runs an **SPF check** — is the sending server authorized?
+3. The receiving server runs a **DKIM check** — is the cryptographic signature valid?
+4. The receiving server runs a **DMARC check** — do the SPF or DKIM results align with the "From" domain, and what does the domain's DMARC policy say to do?
+5. Based on the DMARC policy, the email is delivered, quarantined, or rejected.
+
+<Note>
+  DMARC passes if **at least one** of SPF or DKIM passes **and** aligns with the "From" domain. Both don't need to pass — but having both configured gives you redundancy.
+</Note>
+
+---
+
+## Alignment
+
+Alignment is the concept that makes DMARC work. It ensures that the domain a recipient sees in the "From" address actually matches the domain that passed authentication.
+
+### SPF Alignment
+
+The domain in the **envelope from** (also called the return-path — the technical sender address used during SMTP delivery) must match the domain in the **header from** (the address the recipient sees). If your email shows `From: hello@yourdomain.com` but the envelope sender is `bounces@otherdomain.com`, SPF alignment fails even if SPF itself passes.
+
+### DKIM Alignment
+
+The **signing domain** (the `d=` value in the DKIM signature header) must match the domain in the **header from**. When you send through Lettr with a properly configured sending domain, Lettr signs with your domain, so DKIM alignment passes.
+
+### What DMARC Requires
+
+DMARC requires **at least one** of the following to be true:
+
+- SPF passes **and** SPF alignment passes
+- DKIM passes **and** DKIM alignment passes
+
+This is why configuring both SPF and DKIM is recommended — if one fails (for example, SPF breaks during forwarding), the other can still satisfy DMARC.
+
+---
+
+## Common Mistakes
+
+<AccordionGroup>
+  <Accordion title="Publishing multiple SPF records">
+    A domain can only have **one** SPF TXT record. If you add a second one (for example, when configuring a new email service), DNS lookups will return both and SPF validation may fail. Instead, merge all your authorized senders into a single SPF record using multiple `include:` directives:
+
+    ```
+    v=spf1 include:sparkpostmail.com include:_spf.google.com ~all
+    ```
+  </Accordion>
+
+  <Accordion title="Using a DKIM key that is too short">
+    DKIM keys should be at least **1024 bits**, and **2048 bits** is the recommended standard. Keys shorter than 1024 bits are considered insecure and may be rejected by some receiving servers. Lettr provides a 2048-bit key by default when you add a sending domain.
+  </Accordion>
+
+  <Accordion title="Starting with DMARC p=reject">
+    Jumping straight to a reject policy without monitoring first is one of the most common and damaging mistakes. If any legitimate email source isn't properly authenticated — a marketing tool, a ticketing system, a forwarding rule — those emails will be silently blocked. Always start with `p=none`, review reports, and progress gradually.
+  </Accordion>
+
+  <Accordion title="Not monitoring DMARC reports">
+    Setting up DMARC without reading the reports defeats half its purpose. Aggregate reports (`rua`) tell you which servers are sending email as your domain, whether authentication is passing, and if anyone is spoofing you. Use a DMARC reporting service or regularly review the XML reports sent to your `rua` address.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Checking Your Authentication
+
+Use these commands to verify your DNS records are published correctly.
+
+### Check SPF
+
+```bash
+dig TXT yourdomain.com | grep spf
+```
+
+Or check the CNAME record Lettr uses:
+
+```bash
+dig CNAME yourdomain.com
+```
+
+### Check DKIM
+
+```bash
+dig TXT selector._domainkey.yourdomain.com
+```
+
+Replace `selector` with the DKIM selector provided by Lettr.
+
+### Check DMARC
+
+```bash
+dig TXT _dmarc.yourdomain.com
+```
+
+### Reading Email Headers
+
+You can also check authentication results by viewing the headers of a received email. Look for these headers:
+
+- **Authentication-Results** — shows the pass/fail status of SPF, DKIM, and DMARC
+- **Received-SPF** — details of the SPF check
+- **DKIM-Signature** — the DKIM signature that was applied to the message
+
+In most email clients, you can view headers by selecting "Show Original" or "View Source" on a message. Look for lines like:
+
+```
+Authentication-Results: mx.google.com;
+  dkim=pass header.d=yourdomain.com;
+  spf=pass (google.com: domain of bounce@yourdomain.com designates 192.0.2.1 as permitted sender);
+  dmarc=pass (p=REJECT dis=NONE) header.from=yourdomain.com
+```
+
+A result of `pass` for all three protocols means your authentication is fully configured and working.
+
+---
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Sending Domains" icon="globe" href="/learn/domains/sending-domains">
+    Step-by-step guide to adding and verifying a sending domain in Lettr.
+  </Card>
+  <Card title="DMARC" icon="shield-check" href="/learn/domains/dmarc">
+    Detailed guide to configuring DMARC for your domain.
+  </Card>
+  <Card title="How Email Delivery Works" icon="envelope" href="/knowledge-base/fundamentals/how-email-delivery-works">
+    Understand the full journey of an email from send to inbox.
+  </Card>
+  <Card title="Email Headers" icon="code" href="/knowledge-base/fundamentals/email-headers">
+    Learn how to read and interpret email headers for troubleshooting.
+  </Card>
+</CardGroup>

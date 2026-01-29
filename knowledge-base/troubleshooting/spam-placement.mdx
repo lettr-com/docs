@@ -1,0 +1,277 @@
+---
+title: "Emails Landing in Spam"
+description: "Step-by-step diagnosis and fixes when your emails reach the spam folder instead of the inbox."
+---
+
+When recipients report that your emails are going to spam — or you see low open rates that suggest it — work through this guide systematically. Spam placement is almost always caused by authentication gaps, reputation problems, or content issues.
+
+---
+
+## Diagnostic Flowchart
+
+Start here and work through each step in order. Most spam placement issues are resolved within the first three steps.
+
+<Steps>
+  <Step title="Check authentication (DKIM, DMARC)">
+    Send a test email to an account you control. Open the full email headers and look for these results:
+
+    ```
+    Authentication-Results: mx.google.com;
+      dkim=pass header.d=yourdomain.com;
+      dmarc=pass (p=NONE) header.from=yourdomain.com;
+    ```
+
+    If either `dkim` or `dmarc` shows `fail`, jump to [Authentication Checks](#authentication-checks) below.
+
+    <Tip>
+      In Gmail, click the three-dot menu on a message and select **Show original** to view full headers. In Outlook, open the message properties.
+    </Tip>
+  </Step>
+  <Step title="Check domain reputation">
+    Use external tools to evaluate your sending domain:
+
+    - **Google Postmaster Tools** — shows domain reputation, spam rate, and authentication status for Gmail traffic.
+    - **Blocklist check** — search your domain and sending IPs on [MXToolbox](https://mxtoolbox.com/blacklists.aspx) or [MultiRBL](https://multirbl.valli.org/).
+
+    If your domain reputation is **Low** or **Bad** in Google Postmaster Tools, or you appear on a blocklist, jump to [Reputation Issues](#reputation-issues).
+  </Step>
+  <Step title="Review email content">
+    Spam filters analyze your message content. Check for:
+
+    - Spam trigger words in the subject line or body (e.g., "FREE", "ACT NOW", "LIMITED TIME")
+    - Image-heavy emails with little or no text
+    - URL shorteners (bit.ly, tinyurl) — these are heavily associated with phishing
+    - Misleading subject lines that don't match the body content
+
+    See the full list in [Content Issues That Trigger Spam Filters](#content-issues-that-trigger-spam-filters).
+  </Step>
+  <Step title="Check sending practices">
+    Review your sending patterns in the Lettr dashboard under **Analytics**:
+
+    - **Volume spikes** — sudden increases in send volume trigger spam filters, especially for newer domains.
+    - **Bounce rate** — should stay below 2%. High bounce rates signal a dirty list.
+    - **Complaint rate** — must stay below 0.3%. Check this in the dashboard and in Google Postmaster Tools.
+
+    <Warning>
+      A complaint rate above 0.3% will cause serious deliverability problems across all mailbox providers, not just Gmail.
+    </Warning>
+  </Step>
+  <Step title="Verify compliance elements">
+    Every marketing or bulk email must include:
+
+    - A visible, functioning **unsubscribe link** (one-click unsubscribe is required for bulk senders to Gmail and Yahoo since February 2024)
+    - A **physical mailing address**
+    - A valid **From address** that recipients can reply to
+
+    Missing any of these increases the chance of spam classification.
+  </Step>
+</Steps>
+
+---
+
+## Authentication Checks
+
+Authentication failures are the most common cause of spam placement. If DKIM or DMARC is failing, your emails lack the trust signals that mailbox providers require.
+
+### Reading Email Headers
+
+Look for the `Authentication-Results` header in your email source. Here is what passing authentication looks like:
+
+```
+Authentication-Results: mx.google.com;
+  dkim=pass header.d=yourdomain.com header.s=lettr;
+  dmarc=pass (p=REJECT dis=NONE) header.from=yourdomain.com;
+```
+
+And a failing result:
+
+```
+Authentication-Results: mx.google.com;
+  dkim=fail (body hash did not verify) header.d=yourdomain.com;
+  dmarc=fail (p=NONE dis=NONE) header.from=yourdomain.com;
+```
+
+### Verify Your DKIM Record
+
+Use `dig` to confirm the DKIM TXT record is published and correct:
+
+```bash
+dig TXT selector._domainkey.yourdomain.com +short
+```
+
+Replace `selector` with the DKIM selector shown on your Lettr domain settings page. You should see a TXT record containing your public key. If the query returns nothing, the record is missing or misconfigured.
+
+### Common Authentication Failures and Fixes
+
+| Failure | Cause | Fix |
+|---------|-------|-----|
+| `dkim=fail` (body hash) | Email content was modified after signing | Check for email forwarding services or security gateways that alter message bodies |
+| `dkim=fail` (no key) | DKIM TXT record is missing or has a typo | Re-check the DNS record against the value shown in Lettr's domain settings |
+| `dmarc=fail` | The `From` domain doesn't align with the DKIM signing domain | Ensure your sending domain in Lettr matches your `From` address domain |
+| CNAME not resolving | Domain verification CNAME not pointing to `sparkpostmail.com` | Add or correct the CNAME record with your DNS provider |
+
+<Note>
+  DNS changes can take up to 48 hours to propagate, though most update within a few hours. After making changes, re-verify on the [Domains page](https://app.lettr.com/domains).
+</Note>
+
+---
+
+## Gmail-Specific Issues
+
+<AccordionGroup>
+  <Accordion title="DKIM and DMARC are required for bulk senders">
+    Since February 2024, Google requires all senders who send more than 5,000 messages per day to a Gmail domain to have both DKIM and DMARC properly configured. Messages without valid authentication are increasingly rejected or sent to spam.
+
+    Confirm both pass by checking email headers as described above.
+  </Accordion>
+  <Accordion title="Spam complaint rate must stay below 0.3%">
+    Google enforces a strict spam complaint rate threshold. If your complaint rate exceeds **0.1%**, you should take action immediately. If it exceeds **0.3%**, expect significant spam placement.
+
+    Check your complaint rate in [Google Postmaster Tools](https://postmaster.google.com/). Lettr also surfaces complaint webhook events — use these to identify problematic campaigns.
+
+    **To reduce complaints:**
+    - Make your unsubscribe link prominent and easy to find
+    - Only send to recipients who explicitly opted in
+    - Match send frequency to subscriber expectations
+  </Accordion>
+  <Accordion title="One-click unsubscribe is required">
+    Since February 2024, Gmail and Yahoo require a working `List-Unsubscribe` header with one-click unsubscribe support for bulk senders. Lettr automatically adds the correct headers when you include an unsubscribe link in your email.
+
+    <Warning>
+      If you override email headers manually via the API, make sure you do not remove the `List-Unsubscribe` or `List-Unsubscribe-Post` headers.
+    </Warning>
+  </Accordion>
+  <Accordion title="Check Google Postmaster Tools for domain reputation">
+    Google Postmaster Tools provides a reputation rating for your domain: **High**, **Medium**, **Low**, or **Bad**. A reputation of Low or Bad will cause most of your emails to land in spam.
+
+    Set up Google Postmaster Tools at [postmaster.google.com](https://postmaster.google.com/) by verifying your sending domain. Data typically appears within 24–48 hours of sending.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Outlook / Microsoft-Specific Issues
+
+<AccordionGroup>
+  <Accordion title="Use Microsoft SNDS for IP reputation">
+    Microsoft's Smart Network Data Services (SNDS) lets you monitor the reputation of sending IPs. Since Lettr sends on your behalf through shared or dedicated IPs, check with Lettr support if you need IP-level reputation data.
+
+    Sign up at [sendersupport.olc.protection.outlook.com/snds](https://sendersupport.olc.protection.outlook.com/snds/).
+  </Accordion>
+  <Accordion title="Outlook junk filter quirks">
+    Outlook's junk filter is more aggressive than Gmail's in some areas:
+
+    - Emails with **large images and minimal text** are filtered more aggressively
+    - **New sending domains** without history are treated with extra suspicion
+    - Outlook weights **user engagement** heavily — if recipients consistently ignore your emails, future messages are more likely to land in junk
+
+    <Tip>
+      Ask engaged recipients to move your emails from Junk to Inbox and add your address to their contacts. This sends a positive signal to Microsoft's filters.
+    </Tip>
+  </Accordion>
+  <Accordion title="Request delisting from Outlook">
+    If your emails are being blocked or junked by Outlook, you can submit a delisting request:
+
+    1. Go to [sender.office.com](https://sender.office.com/).
+    2. Enter the sending IP address or your sending domain.
+    3. Fill out the form with details about your sending practices.
+    4. Microsoft typically responds within 24–48 hours.
+
+    <Note>
+      Delisting only helps if you have fixed the underlying issue. If your sending practices haven't changed, you will end up blocked again.
+    </Note>
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Content Issues That Trigger Spam Filters
+
+Spam filters analyze your email content in addition to authentication and reputation. Avoid these common triggers:
+
+| Trigger | Why It's a Problem | What to Do Instead |
+|---------|-------------------|-------------------|
+| ALL CAPS in subject or body | Associated with spam and shouting | Use normal sentence case |
+| Excessive punctuation (`!!!`, `???`) | Classic spam pattern | Use a single punctuation mark |
+| Spam trigger words ("FREE", "ACT NOW", "WINNER") | Matches known spam vocabulary | Use natural, conversational language |
+| Image-only emails with no text | Filters can't read images, and spammers use this to evade text-based filters | Maintain at least a 60/40 text-to-image ratio |
+| URL shorteners (bit.ly, tinyurl) | Heavily used in phishing, automatically flagged | Use full URLs or your custom tracking domain |
+| Misleading subject lines | Violates CAN-SPAM and triggers filters | Make subject lines accurately reflect the email content |
+| Missing plain text version | Legitimate senders include both HTML and plain text | Lettr automatically generates a plain text version from your HTML |
+| Too many links | Excessive links signal promotional or spam content | Keep links relevant and limit them to what's necessary |
+
+<Tip>
+  Use a custom tracking domain instead of the shared default. Links rewritten through your own domain (e.g., `track.yourdomain.com`) build reputation under your brand and avoid being associated with other senders. See [Tracking Domains](/learn/domains/tracking-domains) for setup.
+</Tip>
+
+---
+
+## Reputation Issues
+
+Domain reputation is built over time based on your sending behavior. These are the most common reputation problems that cause spam placement:
+
+- **New domain without warm-up** — Mailbox providers have no history for your domain. Sending large volumes immediately signals spam. Gradually increase volume over 2–4 weeks.
+- **High bounce rate** — A bounce rate above 2% tells providers your list is outdated or purchased. Clean your list and remove invalid addresses.
+- **High complaint rate** — Complaints above 0.1% are a warning sign. Above 0.3% causes active spam filtering. Use Lettr's complaint webhook events to identify and remove recipients who mark your emails as spam.
+- **Sending to purchased or scraped lists** — These lists contain spam traps, invalid addresses, and uninterested recipients. Never use them.
+- **Inconsistent sending patterns** — Long periods of silence followed by large blasts trigger filters. Maintain a consistent sending schedule.
+
+For a complete guide on building and maintaining sender reputation, see [Sending Reputation Best Practices](/knowledge-base/best-practices/sending-reputation).
+
+---
+
+## Quick Fixes Checklist
+
+<AccordionGroup>
+  <Accordion title="Verify all DNS records are correct">
+    Open the [Domains page](https://app.lettr.com/domains) and confirm your CNAME, DKIM, and DMARC records all show as **valid**. Run a manual check:
+
+    ```bash
+    # Check CNAME verification record
+    dig CNAME yourdomain.com +short
+
+    # Check DKIM record
+    dig TXT selector._domainkey.yourdomain.com +short
+
+    # Check DMARC record
+    dig TXT _dmarc.yourdomain.com +short
+    ```
+  </Accordion>
+  <Accordion title="Set up a custom tracking domain">
+    If you are using the default shared tracking domain, set up a custom one under [Tracking Domains](/learn/domains/tracking-domains). This immediately improves link reputation.
+  </Accordion>
+  <Accordion title="Add a visible unsubscribe link">
+    Make sure every marketing email has a clear, easy-to-find unsubscribe link. Lettr adds the required `List-Unsubscribe` header automatically, but the visible link in the email body matters too.
+  </Accordion>
+  <Accordion title="Include a physical mailing address">
+    CAN-SPAM and GDPR both require a physical mailing address in marketing emails. Add it to your email footer.
+  </Accordion>
+  <Accordion title="Check your complaint rate">
+    Review complaint data in the Lettr dashboard under **Analytics** and in [Google Postmaster Tools](https://postmaster.google.com/). If the rate is above 0.1%, take immediate steps to reduce it.
+  </Accordion>
+  <Accordion title="Remove invalid addresses from your list">
+    Go to **Suppressions** in the Lettr dashboard and review bounce entries. Set up a bounce webhook to automatically handle hard bounces going forward.
+  </Accordion>
+  <Accordion title="Send a test email and check headers">
+    Send a test to your own Gmail and Outlook accounts. Check that `dkim=pass` and `dmarc=pass` appear in the headers before sending to your full list.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Deliverability Best Practices" icon="inbox" href="/knowledge-base/best-practices/deliverability">
+    Foundational practices for maximizing inbox placement.
+  </Card>
+  <Card title="Sending Reputation" icon="chart-line" href="/knowledge-base/best-practices/sending-reputation">
+    How to build and maintain a strong sender reputation.
+  </Card>
+  <Card title="Google & Yahoo Requirements" icon="envelope-circle-check" href="/knowledge-base/compliance/google-yahoo-requirements">
+    Authentication and unsubscribe requirements for bulk senders.
+  </Card>
+  <Card title="Sending Domains" icon="globe" href="/learn/domains/sending-domains">
+    Set up and verify your sending domain with DNS records.
+  </Card>
+</CardGroup>
