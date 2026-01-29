@@ -169,8 +169,7 @@
                   "learn/templates/template-language",
                   "learn/templates/projects",
                   "learn/templates/versions",
-                  "learn/templates/saved-blocks",
-                  "learn/templates/ai-agents"
+                  "learn/templates/saved-blocks"
                 ]
               },
               {
