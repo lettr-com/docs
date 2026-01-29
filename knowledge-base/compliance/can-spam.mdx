@@ -1,0 +1,271 @@
+---
+title: "CAN-SPAM Requirements"
+description: "What the CAN-SPAM Act requires for commercial email and how to comply"
+---
+
+## What Is CAN-SPAM?
+
+The **CAN-SPAM Act** (Controlling the Assault of Non-Solicited Pornography And Marketing Act) is a United States federal law enacted in 2003 that sets the rules for commercial email. It is enforced by the **Federal Trade Commission (FTC)** and establishes requirements for commercial messages, gives recipients the right to stop receiving emails, and spells out penalties for violations.
+
+<Warning>
+  CAN-SPAM applies to **any commercial email sent to US recipients**, regardless of where the sender is located. If you send marketing emails to people in the United States, you must comply.
+</Warning>
+
+---
+
+## Who Must Comply
+
+CAN-SPAM applies to any sender of **"commercial electronic mail messages"** — any email whose primary purpose is the commercial advertisement or promotion of a product or service. This includes:
+
+- Marketing and promotional emails
+- Newsletters with commercial content
+- Transactional emails that contain significant commercial content beyond the transaction itself
+
+<Note>
+  Even if your business is based outside the United States, CAN-SPAM applies to you if your emails reach US recipients.
+</Note>
+
+---
+
+## The Seven Requirements
+
+<Steps>
+  <Step title="Don't use false or misleading header information">
+    Your **From**, **To**, **Reply-To**, and routing information must be accurate and identify the person or business that initiated the message. In Lettr, always send from a verified domain that belongs to your organization.
+
+    ```html
+    <!-- Correct: Accurate sender information -->
+    From: Sarah Johnson <sarah@yourcompany.com>
+    Reply-To: support@yourcompany.com
+
+    <!-- Violation: Misleading sender -->
+    From: Account Security <alerts@bigbank-security.com>
+    ```
+  </Step>
+
+  <Step title="Don't use deceptive subject lines">
+    The subject line must accurately reflect the content of the message. Do not use misleading language to trick recipients into opening the email.
+
+    ```
+    ✓  "25% off all shoes this weekend"
+    ✓  "Your monthly product newsletter"
+    ✗  "Re: Your account has been compromised"
+    ✗  "You have a new message from a friend"
+    ```
+  </Step>
+
+  <Step title="Identify the message as an ad">
+    If your email is commercial or promotional in nature, you must clearly and conspicuously disclose that the message is an advertisement. The law gives you flexibility in how to do this, but it must be clear.
+
+    ```html
+    <p style="font-size: 12px; color: #888888;">
+      This email is a promotional message from Your Company Name.
+    </p>
+    ```
+  </Step>
+
+  <Step title="Include your physical postal address">
+    Every commercial email must include your valid **physical postal address**. This can be a street address, a PO Box registered with the US Postal Service, or a private mailbox registered with a commercial mail receiving agency.
+
+    ```html
+    <footer style="text-align: center; padding: 20px 0; font-size: 12px; color: #666666;">
+      <p>Your Company Name</p>
+      <p>123 Main Street, Suite 400</p>
+      <p>New York, NY 10001</p>
+    </footer>
+    ```
+  </Step>
+
+  <Step title="Tell recipients how to opt out">
+    You must provide a **clear and conspicuous** mechanism for recipients to opt out of future commercial emails. The opt-out process must be easy to find, easy to use, and available for at least 30 days after the message is sent.
+
+    ```html
+    <p style="text-align: center; font-size: 12px; color: #666666;">
+      Don't want to receive these emails?
+      <a href="https://your-unsubscribe-url.com" data-msys-unsubscribe="1"
+         style="color: #0066cc; text-decoration: underline;">
+        Unsubscribe here
+      </a>
+    </p>
+    ```
+
+    <Tip>
+      Lettr handles unsubscribe processing automatically when you use the `data-msys-unsubscribe="1"` attribute on your unsubscribe link. The recipient is added to your suppression list and no further action is needed on your part.
+    </Tip>
+  </Step>
+
+  <Step title="Honor opt-out requests within 10 business days">
+    Once a recipient opts out, you must stop sending them commercial email within **10 business days**. You cannot charge a fee, require any information beyond an email address, or make the recipient take any step other than sending a reply email or visiting a single web page.
+
+    <Note>
+      When using Lettr's built-in unsubscribe mechanism, opt-outs are processed **immediately** — well within the 10-business-day requirement. You can monitor unsubscribe activity through the `unsubscribe` webhook event.
+    </Note>
+  </Step>
+
+  <Step title="Monitor what others do on your behalf">
+    Even if you hire another company to handle your email marketing, **you are still legally responsible** for compliance. Both the company whose product is promoted and the company that sends the message can be held liable.
+  </Step>
+</Steps>
+
+---
+
+## Transactional vs Commercial Email
+
+CAN-SPAM treats transactional and commercial emails differently. Transactional emails have lighter requirements but must still meet basic honesty standards.
+
+| Requirement | Commercial Email | Transactional Email |
+| --- | --- | --- |
+| Accurate header information | Required | Required |
+| Non-deceptive subject line | Required | Required |
+| Identify as advertisement | Required | Not required |
+| Physical postal address | Required | Not required |
+| Unsubscribe mechanism | Required | Not required |
+| Honor opt-out requests | Required | Not required |
+
+<Note>
+  A **transactional email** is one that facilitates an already agreed-upon transaction, provides warranty or product information, updates account status, or delivers goods or services. Examples include order confirmations, shipping notifications, and password resets. If a transactional email contains significant commercial content, it may be reclassified as commercial.
+</Note>
+
+---
+
+## Implementation in Lettr
+
+### Physical Address in the Footer
+
+Include your physical address in every commercial email template:
+
+```html
+<table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+  <tr>
+    <td align="center" style="padding: 30px 20px; font-family: Arial, sans-serif; font-size: 12px; color: #999999;">
+      <p style="margin: 0 0 10px 0;">
+        This email was sent by <strong>{{company_name or 'Your Company'}}</strong>
+      </p>
+      <p style="margin: 0 0 10px 0;">
+        {{company_address or '123 Main Street, Suite 400, New York, NY 10001'}}
+      </p>
+      <p style="margin: 0;">
+        <a href="https://unsubscribe.example.com" data-msys-unsubscribe="1"
+           style="color: #0066cc; text-decoration: underline;">
+          Unsubscribe
+        </a>
+        &nbsp;|&nbsp;
+        <a href="https://preferences.example.com"
+           style="color: #0066cc; text-decoration: underline;">
+          Email Preferences
+        </a>
+      </p>
+    </td>
+  </tr>
+</table>
+```
+
+### Unsubscribe Link
+
+Use the `data-msys-unsubscribe="1"` attribute on any link to enable Lettr's automatic unsubscribe processing:
+
+```html
+<a href="https://your-unsubscribe-url.com" data-msys-unsubscribe="1">
+  Unsubscribe from these emails
+</a>
+```
+
+When a recipient clicks this link, Lettr will:
+1. Add the recipient to your suppression list
+2. Fire an `unsubscribe` webhook event
+3. Prevent future emails from being delivered to that address
+
+### Accurate From Address
+
+Always send from a verified domain in Lettr. Use a From address that clearly identifies your business:
+
+```html
+From: Your Company <newsletter@yourcompany.com>
+```
+
+### Honest Subject Lines
+
+Use Lettr's template variables to create dynamic but accurate subject lines:
+
+```
+{{if sale_active}}{{discount_percent}}% off — this weekend only{{end}}
+{{if order_shipped}}Your order #{{order_id}} has shipped{{end}}
+```
+
+---
+
+## Penalties
+
+<Warning>
+  Violations of the CAN-SPAM Act can result in fines of up to **$50,120 per email** per violation. Both the sender and the company whose product is promoted can be held liable. In severe cases, criminal penalties including imprisonment may apply.
+</Warning>
+
+Multiple parties can be held responsible for a single violation:
+
+- The **company** whose product or service is promoted
+- The **individual** who originated or transmitted the message
+- Any **third party** that assists in the transmission
+
+---
+
+## Common Mistakes
+
+<AccordionGroup>
+  <Accordion title="Hiding the unsubscribe link">
+    Making the unsubscribe link tiny, low-contrast, or buried in dense text violates the requirement that the opt-out mechanism be "clear and conspicuous." Place the unsubscribe link in a visible location, typically the email footer, with legible text and adequate contrast.
+  </Accordion>
+
+  <Accordion title="Slow opt-out processing">
+    CAN-SPAM requires opt-outs to be honored within 10 business days. Some senders use manual processes that cause delays. With Lettr's `data-msys-unsubscribe="1"` attribute, unsubscribes are processed instantly, eliminating this risk.
+  </Accordion>
+
+  <Accordion title="Missing physical address">
+    Every commercial email must include a valid physical postal address. This is one of the most commonly overlooked requirements. Add your address to your email templates and ensure it is present in every commercial send.
+  </Accordion>
+
+  <Accordion title="Misleading subject lines">
+    Using subject lines like "Re:" or "Fwd:" on emails that are not replies or forwards is deceptive. Similarly, implying urgency or personal familiarity that does not exist violates the Act. Keep subject lines honest and reflective of the email content.
+  </Accordion>
+
+  <Accordion title="Using purchased lists without understanding the law">
+    CAN-SPAM does not require prior consent to send commercial email — it follows an **opt-out** model. However, purchased lists are still risky because they often contain invalid addresses, spam traps, and unengaged recipients, which will damage your deliverability. Even though sending to a purchased list may technically comply with CAN-SPAM, it is strongly discouraged.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## CAN-SPAM vs GDPR
+
+If you send email to recipients in both the US and the EU/EEA, you need to understand the differences between these two frameworks.
+
+| | CAN-SPAM (US) | GDPR (EU/EEA) |
+| --- | --- | --- |
+| **Consent model** | Opt-out — you can email until they unsubscribe | Opt-in — you need explicit consent before sending |
+| **Geographic scope** | Applies to emails sent to US recipients | Applies to emails sent to EU/EEA residents |
+| **Consent standard** | No prior consent required for commercial email | Freely given, specific, informed, and unambiguous consent required |
+| **Unsubscribe requirement** | Must provide opt-out mechanism in every email | Must provide opt-out, and consent must be as easy to withdraw as to give |
+| **Record keeping** | No specific consent record requirements | Must maintain records proving valid consent |
+| **Maximum penalties** | Up to $50,120 per violation per email | Up to 4% of annual global turnover or €20 million |
+
+<Tip>
+  If you send to both US and EU audiences, the simplest approach is to comply with GDPR for all recipients, since its requirements are stricter and encompass CAN-SPAM compliance.
+</Tip>
+
+---
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="GDPR Email Compliance" icon="shield-halved" href="/knowledge-base/compliance/gdpr-email">
+    Understand GDPR requirements for email marketing to EU recipients.
+  </Card>
+  <Card title="Unsubscribe Best Practices" icon="envelope-circle-check" href="/knowledge-base/compliance/unsubscribe-best-practices">
+    Implement effective unsubscribe flows that keep you compliant and protect your reputation.
+  </Card>
+  <Card title="Google & Yahoo Requirements" icon="inbox" href="/knowledge-base/compliance/google-yahoo-requirements">
+    Meet the sender requirements enforced by major mailbox providers.
+  </Card>
+  <Card title="Deliverability Best Practices" icon="paper-plane" href="/knowledge-base/best-practices/deliverability">
+    Optimize your sending practices for maximum inbox placement.
+  </Card>
+</CardGroup>

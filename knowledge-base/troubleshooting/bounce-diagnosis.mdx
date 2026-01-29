@@ -1,0 +1,301 @@
+---
+title: Bounce Diagnosis
+description: "Interpret bounce codes and categories to take the right action for each delivery failure"
+---
+
+# Bounce Diagnosis
+
+When an email bounces, Lettr provides structured data about the failure — including a bounce type, category, SMTP response code, and human-readable message. This guide explains how to read that data and respond appropriately.
+
+---
+
+## Hard vs Soft Bounces
+
+Lettr classifies every bounce as either **hard** or **soft**. The distinction determines how the platform handles the failure automatically and what action you should take.
+
+### Hard Bounces
+
+A hard bounce is a permanent delivery failure. The recipient's mail server has definitively rejected the email, and retrying will not succeed. Lettr automatically suppresses hard-bounced addresses so you never send to them again.
+
+**Examples:** The email address does not exist, the domain has no mail server, or the recipient has permanently blocked your sender.
+
+### Soft Bounces
+
+A soft bounce is a temporary delivery failure. The email may be deliverable if retried later. Lettr automatically retries soft bounces up to 3 times with exponential backoff before giving up.
+
+**Examples:** The recipient's mailbox is full, the server is temporarily unavailable, or the message was rate-limited.
+
+<Note>
+  If a soft bounce continues to fail after all retry attempts, Lettr records a final bounce event. Addresses that repeatedly soft bounce over time may eventually be suppressed.
+</Note>
+
+---
+
+## Bounce Categories Reference
+
+Every bounce event includes a `bounceCategory` that describes the specific reason for the failure. Use this table to determine the correct response for each category.
+
+| Category | Type | Description | Recommended Action |
+|----------|------|-------------|-------------------|
+| `invalid_address` | Hard | The email address does not exist or is permanently invalid | Remove from your list immediately |
+| `domain_not_found` | Hard | The domain does not exist or has no configured mail server | Remove from your list immediately |
+| `mailbox_full` | Soft | The recipient's mailbox has exceeded its storage quota | Wait for automatic retry; no immediate action needed |
+| `blocked` | Hard | The recipient or their mail server has blocked delivery from your sender | Investigate the cause and remove the address |
+| `spam_related` | Hard | The message was rejected by spam filters or content policies | Review your email content and sender reputation |
+| `policy_related` | Hard | The receiving server rejected the message due to administrative policy | Contact the recipient through another channel if needed |
+| `server_error` | Soft | A temporary server-side issue prevented delivery | Wait for automatic retry; no immediate action needed |
+| `protocol_error` | Soft | A technical problem occurred during the SMTP transaction | Wait for automatic retry; no immediate action needed |
+| `unknown` | Varies | The bounce could not be classified into a known category | Review the `bounceCode` and `message` fields manually |
+
+---
+
+## SMTP Response Code Reference
+
+The `bounceCode` field in bounce events contains the SMTP response code returned by the recipient's mail server. These codes provide additional detail beyond the bounce category.
+
+### Temporary Failures (4xx)
+
+These codes indicate a temporary issue. Lettr automatically retries delivery for these responses.
+
+| Code | Meaning | Typical Cause |
+|------|---------|---------------|
+| `421` | Server temporarily unavailable | The receiving server is down, overloaded, or restarting |
+| `450` | Mailbox unavailable (busy) | The mailbox exists but is temporarily locked or in use |
+| `452` | Insufficient storage | The recipient's mailbox is full or the server is out of disk space |
+
+### Permanent Failures (5xx)
+
+These codes indicate a permanent failure. The address should be removed from your list or the issue investigated.
+
+| Code | Meaning | Typical Cause |
+|------|---------|---------------|
+| `550 5.1.1` | User unknown / mailbox not found | The email address does not exist on the receiving server |
+| `550 5.1.2` | Bad destination domain | The domain exists but is not configured to receive email |
+| `550 5.7.1` | Message rejected (policy/spam) | The message was blocked due to content filtering or sender policy |
+| `551` | User not local | The recipient is not hosted on that server and forwarding was refused |
+| `552` | Message too large | The email exceeded the recipient server's size limit |
+| `553` | Invalid mailbox name | The email address format is syntactically invalid |
+| `554` | Transaction failed | A general rejection — check the full `message` field for details |
+
+<Warning>
+  SMTP response codes alone do not tell the full story. Always read the `message` field in the bounce event for the specific reason provided by the receiving server.
+</Warning>
+
+---
+
+## Reading Bounce Webhook Events
+
+The most reliable way to monitor bounces is through webhooks. When an email bounces, Lettr sends an `email.bounced` event to your configured webhook endpoint.
+
+### Event Payload
+
+```json
+{
+  "id": "evt_abc123",
+  "type": "email.bounced",
+  "createdAt": "2024-01-15T10:30:05Z",
+  "data": {
+    "emailId": "email_123",
+    "requestId": "req_456",
+    "to": "invalid@nonexistent.com",
+    "bounceType": "hard",
+    "bounceCategory": "invalid_address",
+    "bounceCode": "550",
+    "message": "550 5.1.1 The email account that you tried to reach does not exist",
+    "bouncedAt": "2024-01-15T10:30:05Z"
+  }
+}
+```
+
+### Webhook Handler
+
+This handler processes bounce events, updates your subscriber records, and alerts your team when reputation-threatening bounces occur:
+
+```javascript
+app.post('/webhooks/lettr', async (req, res) => {
+  const event = req.body;
+
+  if (event.type === 'email.bounced') {
+    const { to, bounceType, bounceCategory, bounceCode, message } = event.data;
+
+    // Log every bounce for analysis
+    await logBounce({
+      email: to,
+      type: bounceType,
+      category: bounceCategory,
+      code: bounceCode,
+      message: message,
+      timestamp: new Date()
+    });
+
+    if (bounceType === 'hard') {
+      // Mark the subscriber as bounced in your database
+      await db.subscribers.update({
+        where: { email: to },
+        data: {
+          status: 'bounced',
+          bounceCategory: bounceCategory,
+          lastBounceAt: new Date()
+        }
+      });
+
+      // Alert the team for spam or block bounces
+      if (bounceCategory === 'spam_related' || bounceCategory === 'blocked') {
+        await notifyTeam({
+          type: 'reputation_concern',
+          email: to,
+          reason: message
+        });
+      }
+    }
+
+    if (bounceType === 'soft') {
+      // Track soft bounces — suppress after repeated failures
+      await db.subscribers.update({
+        where: { email: to },
+        data: {
+          softBounceCount: { increment: 1 },
+          lastSoftBounceAt: new Date()
+        }
+      });
+    }
+  }
+
+  res.sendStatus(200);
+});
+```
+
+---
+
+## Out-of-Band Bounces
+
+Some bounces arrive asynchronously, well after the initial delivery attempt appeared to succeed. These are called out-of-band (OOB) bounces. They occur when the receiving server initially accepts the message but later discovers it cannot be delivered — for example, when a forwarding address turns out to be invalid.
+
+Lettr sends these as `email.out_of_band` events:
+
+```json
+{
+  "id": "evt_oob789",
+  "type": "email.out_of_band",
+  "createdAt": "2024-01-15T11:00:00Z",
+  "data": {
+    "emailId": "email_123",
+    "requestId": "req_456",
+    "to": "recipient@example.com",
+    "reason": "552 5.2.2 Mailbox full",
+    "bouncedAt": "2024-01-15T11:00:00Z"
+  }
+}
+```
+
+Handle out-of-band bounces the same way you handle regular bounces. Update your subscriber records and suppress the address if the failure is permanent:
+
+```javascript
+if (event.type === 'email.out_of_band') {
+  const { to, reason } = event.data;
+
+  await logBounce({
+    email: to,
+    type: 'out_of_band',
+    message: reason,
+    timestamp: new Date()
+  });
+
+  // Treat as a hard bounce — update your records
+  await db.subscribers.update({
+    where: { email: to },
+    data: {
+      status: 'bounced',
+      lastBounceAt: new Date()
+    }
+  });
+}
+```
+
+---
+
+## Deferred Emails
+
+A deferred email is not a bounce — it is a temporary delay. The receiving server has asked Lettr to try again later, usually because of rate limiting or temporary unavailability. Lettr tracks these as `email.deferred` events.
+
+```json
+{
+  "id": "evt_jkl012",
+  "type": "email.deferred",
+  "createdAt": "2024-01-15T10:30:05Z",
+  "data": {
+    "emailId": "email_123",
+    "requestId": "req_456",
+    "to": "recipient@example.com",
+    "reason": "421 Server temporarily unavailable",
+    "retryCount": 1,
+    "nextRetryAt": "2024-01-15T10:45:00Z",
+    "deferredAt": "2024-01-15T10:30:05Z"
+  }
+}
+```
+
+Lettr handles retries automatically with exponential backoff. You do not need to take action on individual deferral events.
+
+**When to investigate deferrals:**
+
+- A large number of emails to the same domain are being deferred — this may indicate that the receiving server is throttling you due to reputation concerns or volume limits.
+- Emails to a specific recipient are deferred repeatedly across multiple sends — the receiving server may have a persistent issue.
+- Your overall deferral rate spikes suddenly — check whether you recently increased sending volume or changed your content.
+
+---
+
+## Reducing Your Bounce Rate
+
+<AccordionGroup>
+  <Accordion title="Validate email addresses at collection">
+    Check for valid syntax, common typos (e.g., `gmial.com`), and disposable email providers at the point of signup. Catching invalid addresses before they enter your list prevents bounces entirely.
+  </Accordion>
+  <Accordion title="Use double opt-in">
+    Require new subscribers to confirm their email address by clicking a link in a verification email. This ensures the address is real, reachable, and owned by the person who signed up.
+  </Accordion>
+  <Accordion title="Handle bounces in real time">
+    Set up webhook handlers to process `email.bounced` and `email.out_of_band` events as they arrive. Remove hard-bounced addresses from your sending lists immediately rather than waiting for a batch cleanup.
+  </Accordion>
+  <Accordion title="Clean inactive addresses">
+    Remove subscribers who have not opened or clicked any email in the past 6 to 12 months. Inactive addresses are more likely to become invalid over time as people abandon mailboxes.
+  </Accordion>
+  <Accordion title="Monitor your bounce rate continuously">
+    Track your bounce rate in the Lettr dashboard after every send. If you notice an upward trend, investigate immediately rather than waiting for it to reach critical levels.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Bounce Rate Guidelines
+
+Use these thresholds to assess the health of your sending practices:
+
+| Bounce Rate | Status | What to Do |
+|-------------|--------|------------|
+| Below 2% | Healthy | Your list hygiene is good. Continue current practices and monitor regularly. |
+| 2% to 5% | Warning | Review your list for stale or unvalidated addresses. Implement double opt-in if you haven't already. Check recent list imports for quality issues. |
+| Above 5% | Critical | Stop sending to unverified segments immediately. Clean your entire list by removing unengaged and invalid addresses. Investigate the source of bad addresses before resuming normal volume. |
+
+<Warning>
+  ISPs closely monitor bounce rates. A bounce rate consistently above 5% can result in your domain being throttled or blocked entirely. Address bounce rate problems before they escalate.
+</Warning>
+
+---
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Bounces" icon="rotate-left" href="/learn/suppressions/bounces">
+    Bounce types, categories, and automatic handling
+  </Card>
+  <Card title="Webhook Event Types" icon="bell" href="/learn/webhooks/event-types">
+    Complete reference for all webhook events
+  </Card>
+  <Card title="List Hygiene" icon="broom" href="/knowledge-base/best-practices/list-hygiene">
+    Maintain healthy recipient lists
+  </Card>
+  <Card title="Delivery Issues" icon="circle-exclamation" href="/knowledge-base/troubleshooting/delivery-issues">
+    Troubleshoot common delivery problems
+  </Card>
+</CardGroup>

@@ -1,0 +1,355 @@
+---
+title: List Hygiene
+description: "Maintain healthy recipient lists for optimal email deliverability"
+---
+
+# List Hygiene
+
+A clean recipient list is the foundation of good deliverability. Every email you send to an invalid, disengaged, or unwilling recipient damages your sender reputation and makes it harder for your legitimate emails to reach the inbox. This guide walks through the practices that keep your lists healthy.
+
+---
+
+## Why List Hygiene Matters
+
+Mailbox providers like Gmail, Outlook, and Yahoo continuously evaluate your sending behavior. They use signals from your recipient list quality to decide whether your emails deserve the inbox or the spam folder.
+
+Poor list hygiene leads to a compounding cycle of damage:
+
+| Problem | Consequence |
+|---------|-------------|
+| High bounce rates | Providers flag you as a careless sender |
+| Spam complaints | Providers actively block your emails |
+| Low engagement | Providers deprioritize your messages |
+| Spam traps on your list | Immediate reputation damage and potential blocklisting |
+
+<Warning>
+  A single send to a poorly maintained list can undo months of reputation building. Sender reputation is slow to build and fast to destroy.
+</Warning>
+
+---
+
+## Validate at the Point of Collection
+
+The best time to prevent a bad address from entering your list is before it gets there.
+
+### Client-Side Format Validation
+
+Catch obvious typos and formatting errors before the address is submitted:
+
+```javascript
+function isValidEmailFormat(email) {
+  const pattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return pattern.test(email);
+}
+
+// Example usage in a signup form
+const emailInput = document.getElementById('email');
+emailInput.addEventListener('blur', () => {
+  if (!isValidEmailFormat(emailInput.value)) {
+    showError('Please enter a valid email address.');
+  }
+});
+```
+
+<Note>
+  Client-side validation catches formatting mistakes but cannot confirm the address actually exists. Always pair it with a confirmation email.
+</Note>
+
+### Confirmation Emails
+
+After a user submits their address, send an immediate confirmation email to verify it is real and reachable:
+
+```javascript
+const response = await fetch('https://api.lettr.com/api/emails', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_API_KEY',
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    from: 'noreply@yourdomain.com',
+    to: 'new-subscriber@example.com',
+    subject: 'Confirm your subscription',
+    html: '<p>Click the link below to confirm your email address:</p><a href="https://yourdomain.com/confirm?token=abc123">Confirm Subscription</a>',
+  }),
+});
+```
+
+### Double Opt-In Flow
+
+Double opt-in is the gold standard for list quality. It ensures every address on your list is valid, reachable, and belongs to someone who genuinely wants your emails.
+
+<Steps>
+  <Step title="User submits email address">
+    Collect the address through your signup form with client-side validation.
+  </Step>
+  <Step title="Send confirmation email">
+    Use the Lettr API to send an email containing a unique confirmation link.
+  </Step>
+  <Step title="User clicks the confirmation link">
+    This proves the address is valid and the owner consented to receive emails.
+  </Step>
+  <Step title="Add to your active sending list">
+    Only after confirmation should the address be eligible for marketing emails.
+  </Step>
+</Steps>
+
+<Tip>
+  Double opt-in typically results in a smaller list, but the engagement rates are significantly higher. A list of 5,000 confirmed subscribers will outperform a list of 50,000 unverified addresses.
+</Tip>
+
+---
+
+## Handle Bounces in Real Time
+
+When an email bounces, you need to act immediately. Continuing to send to bounced addresses tells mailbox providers that you are not maintaining your list.
+
+### Bounce Types
+
+| Type | Meaning | Action |
+|------|---------|--------|
+| Hard bounce | Address is permanently invalid (e.g., doesn't exist) | Remove from your list immediately |
+| Soft bounce | Temporary issue (e.g., mailbox full, server down) | Retry automatically; remove after repeated failures |
+
+### Webhook Handler for Bounces
+
+Set up a webhook endpoint to process bounce events from Lettr as they happen:
+
+```javascript
+app.post('/webhooks/lettr', (req, res) => {
+  const event = req.body;
+
+  if (event.type === 'email.bounced') {
+    const { to, bounceType } = event.data;
+
+    if (bounceType === 'hard') {
+      // Permanently remove from all mailing lists
+      removeFromAllLists(to);
+      logBounce(to, 'hard', event.data.reason);
+    }
+
+    if (bounceType === 'soft') {
+      // Track soft bounces — remove after 3 consecutive failures
+      incrementSoftBounceCount(to);
+      const count = getSoftBounceCount(to);
+
+      if (count >= 3) {
+        removeFromAllLists(to);
+        logBounce(to, 'soft_permanent', event.data.reason);
+      }
+    }
+  }
+
+  res.sendStatus(200);
+});
+```
+
+### Lettr Auto-Suppression
+
+Lettr automatically adds hard-bounced addresses to your account's suppression list. Even if the address remains in your application database, Lettr will not attempt delivery to a suppressed address.
+
+<Note>
+  Lettr's auto-suppression protects you from repeated hard bounces, but you should still update your own database to keep your list accurate. You can view and manage your suppression list in the [Lettr dashboard](https://app.lettr.com).
+</Note>
+
+---
+
+## Process Spam Complaints
+
+Spam complaints are more damaging than bounces. A bounce means the address is bad. A complaint means a real person is telling their mailbox provider that your email is unwanted. Providers weigh complaints heavily.
+
+### Why Complaints Are Worse Than Bounces
+
+- A hard bounce is a technical failure — providers understand addresses go stale.
+- A spam complaint is a human judgment — providers interpret it as evidence that you send unwanted email.
+- Even a complaint rate of 0.3% can trigger spam filtering for your entire sending domain.
+
+### Webhook Handler for Complaints
+
+Remove complainants from your list immediately and never email them again:
+
+```javascript
+app.post('/webhooks/lettr', (req, res) => {
+  const event = req.body;
+
+  if (event.type === 'email.complained') {
+    const { to } = event.data;
+
+    // Remove from all lists immediately — do not email this person again
+    removeFromAllLists(to);
+    addToInternalBlocklist(to);
+
+    // Log for analysis — high complaint rates need investigation
+    logComplaint(to, event.data);
+  }
+
+  res.sendStatus(200);
+});
+```
+
+<Warning>
+  Never re-add a complainant to your list, even if they later submit their email through a signup form. Once someone marks your email as spam, sending to them again risks further reputation damage and potential legal issues.
+</Warning>
+
+---
+
+## Re-Engage or Remove Inactive Subscribers
+
+Subscribers who never open or click your emails are dead weight on your list. Mailbox providers notice when a large portion of your recipients ignore your emails, and they use that as a signal to deprioritize your messages for everyone.
+
+### Define Your Inactivity Window
+
+A subscriber is typically considered inactive if they have not opened or clicked any email in the past **6 to 12 months**. The right window depends on your sending frequency:
+
+| Sending Frequency | Recommended Inactivity Window |
+|-------------------|-------------------------------|
+| Daily | 3–6 months |
+| Weekly | 6–9 months |
+| Monthly | 9–12 months |
+
+### Re-Engagement Campaign Strategy
+
+Before removing inactive subscribers, give them a chance to re-engage:
+
+<Steps>
+  <Step title="Segment inactive subscribers">
+    Identify subscribers with no opens or clicks within your inactivity window.
+  </Step>
+  <Step title="Send a re-engagement email">
+    Use a clear subject line like "We miss you — do you still want to hear from us?" Include a prominent call-to-action to confirm their interest.
+  </Step>
+  <Step title="Wait 7–14 days">
+    Give recipients time to see and act on the re-engagement email.
+  </Step>
+  <Step title="Send a final reminder">
+    For those who didn't respond, send one last email explaining they will be removed unless they take action.
+  </Step>
+  <Step title="Remove non-responders">
+    Anyone who did not engage with either email should be removed from your active list.
+  </Step>
+</Steps>
+
+### Sunset Policy
+
+A sunset policy is a standing rule that automatically removes subscribers after a defined period of inactivity. Implement this as an automated process rather than relying on manual cleanup:
+
+```javascript
+async function applySunsetPolicy() {
+  const inactiveWindow = 270; // days (9 months)
+  const cutoffDate = new Date(Date.now() - inactiveWindow * 24 * 60 * 60 * 1000);
+
+  const inactiveSubscribers = await db.subscribers.findMany({
+    where: {
+      lastEngagement: { lt: cutoffDate },
+      status: 'active',
+    },
+  });
+
+  for (const subscriber of inactiveSubscribers) {
+    await db.subscribers.update({
+      where: { id: subscriber.id },
+      data: { status: 'sunset_removed' },
+    });
+  }
+
+  console.log(`Sunset policy removed ${inactiveSubscribers.length} inactive subscribers.`);
+}
+```
+
+<Tip>
+  Run your sunset policy on a regular schedule — monthly or quarterly. Automate it so it doesn't depend on someone remembering to do it.
+</Tip>
+
+---
+
+## Avoid Purchased or Scraped Lists
+
+Sending to purchased, rented, or scraped email lists is one of the fastest ways to destroy your sender reputation and get blocked.
+
+### Why Purchased Lists Are Harmful
+
+- **No consent**: Recipients never asked for your emails. Expect high complaint rates.
+- **Spam traps**: Purchased lists frequently contain spam trap addresses maintained by mailbox providers and blocklist operators. Hitting a spam trap leads to immediate blocklisting.
+- **Invalid addresses**: These lists are rarely maintained and are full of outdated, invalid addresses that produce hard bounces.
+- **Low engagement**: Even valid addresses will not engage with emails they did not ask for, dragging down your sender reputation.
+
+### Legal Risks
+
+| Regulation | Risk |
+|------------|------|
+| CAN-SPAM (US) | Fines up to $51,744 per email sent to recipients who did not opt in. Requires functioning unsubscribe and physical address. |
+| GDPR (EU/UK) | Fines up to 4% of annual global revenue or 20 million EUR. Requires explicit consent before sending marketing emails. |
+| CASL (Canada) | Fines up to $10 million CAD per violation. Requires express or implied consent. |
+
+<Warning>
+  There is no legitimate shortcut to building an email list. Every address on your list should belong to someone who explicitly chose to receive your emails.
+</Warning>
+
+---
+
+## Regular List Audits
+
+Don't wait for deliverability problems to appear. Schedule a quarterly audit to proactively identify and resolve list quality issues.
+
+### Quarterly Review Checklist
+
+<Steps>
+  <Step title="Review bounce rates">
+    Pull your bounce data for the past quarter. If your hard bounce rate is above 2%, investigate the source of bad addresses and tighten your collection process.
+  </Step>
+  <Step title="Review complaint rates">
+    Check your spam complaint rate. If it's above 0.1%, review your email content, frequency, and whether your unsubscribe link is clearly visible.
+  </Step>
+  <Step title="Identify inactive subscribers">
+    Segment subscribers with no engagement in the past 6–12 months. Run a re-engagement campaign or apply your sunset policy.
+  </Step>
+  <Step title="Check for role-based addresses">
+    Remove or suppress role-based addresses like `info@`, `admin@`, `support@` — these often go to shared inboxes and generate complaints.
+  </Step>
+  <Step title="Verify list growth sources">
+    Review where new subscribers are coming from. Ensure every source uses proper opt-in and validation.
+  </Step>
+  <Step title="Review suppression list">
+    Check your suppression list in the Lettr dashboard. Ensure suppressed addresses have not been accidentally re-added to active lists in your application.
+  </Step>
+  <Step title="Document findings and actions">
+    Record what you found and what you changed. This creates an audit trail and helps you spot trends over time.
+  </Step>
+</Steps>
+
+---
+
+## Key Metrics to Monitor
+
+Track these metrics consistently to gauge the health of your recipient list:
+
+| Metric | Healthy Target | Warning Threshold | What It Tells You |
+|--------|---------------|-------------------|-------------------|
+| Bounce rate | < 2% | > 5% | Whether your list contains invalid addresses |
+| Complaint rate | < 0.1% | > 0.3% | Whether recipients consider your emails unwanted |
+| Unsubscribe rate | < 0.5% | > 1% | Whether your content and frequency match expectations |
+| List growth rate | Positive | Negative (shrinking) | Whether you are acquiring subscribers faster than losing them |
+| Engagement rate (opens + clicks) | > 15% | < 10% | Whether your list is active and interested |
+
+<Note>
+  If you notice any metric crossing into the warning threshold, investigate immediately. Small problems become big ones quickly in email deliverability. If you need help diagnosing an issue, contact [support@lettr.com](mailto:support@lettr.com).
+</Note>
+
+---
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Deliverability Best Practices" icon="inbox" href="/knowledge-base/best-practices/deliverability">
+    Foundational practices for reaching the inbox
+  </Card>
+  <Card title="Bounces" icon="rotate-left" href="/learn/suppressions/bounces">
+    Understand bounce types and handling
+  </Card>
+  <Card title="Complaints & Unsubscribes" icon="flag" href="/learn/suppressions/complaints-unsubscribes">
+    Handle spam complaints and unsubscribe requests
+  </Card>
+  <Card title="CAN-SPAM Compliance" icon="scale-balanced" href="/knowledge-base/compliance/can-spam">
+    Legal requirements for commercial email
+  </Card>
+</CardGroup>

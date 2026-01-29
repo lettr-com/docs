@@ -1,111 +1,143 @@
 ---
 title: Template Best Practices
-description: "Design effective and deliverable email templates"
+description: "Design effective, accessible, and deliverable email templates"
 ---
 
 # Template Best Practices
 
-Create email templates that look great and deliver reliably.
+A well-built email template looks great in every inbox, renders correctly on every device, and delivers reliably. This guide covers the design principles, coding techniques, and compliance requirements that make that possible.
+
+---
 
 ## Design Principles
 
 ### Mobile-First
 
-Over 60% of emails are opened on mobile:
+Over 60% of emails are opened on mobile devices. Design for small screens first, then let the layout expand gracefully on desktop.
 
 ```html
-<!-- Responsive container -->
-<table width="100%" style="max-width: 600px;">
+<!-- Responsive container: fluid width, capped at 600px -->
+<table width="100%" cellpadding="0" cellspacing="0" role="presentation">
   <tr>
-    <td style="padding: 20px;">
-      <!-- Content -->
+    <td align="center">
+      <table width="100%" style="max-width: 600px;" cellpadding="0" cellspacing="0" role="presentation">
+        <tr>
+          <td style="padding: 20px;">
+            <!-- Content goes here -->
+          </td>
+        </tr>
+      </table>
     </td>
   </tr>
 </table>
 ```
+
+<Tip>
+  Use `width="100%"` with `max-width` in an inline style. The percentage keeps the layout fluid on mobile, and the max-width prevents it from stretching too wide on desktop.
+</Tip>
 
 ### Single-Column Layout
 
-Simpler layouts render better across clients:
+Simpler layouts render more reliably across email clients. Multi-column designs frequently break in Outlook and older clients.
 
 ```html
-<!-- ✅ Good - Single column -->
-<table width="100%" style="max-width: 600px;">
-  <tr><td>Header</td></tr>
-  <tr><td>Content</td></tr>
-  <tr><td>Footer</td></tr>
-</table>
-
-<!-- ⚠️ Caution - Multi-column (may break) -->
-<table>
-  <tr>
-    <td width="50%">Left</td>
-    <td width="50%">Right</td>
-  </tr>
+<!-- Single column: works everywhere -->
+<table width="100%" style="max-width: 600px;" cellpadding="0" cellspacing="0" role="presentation">
+  <tr><td style="padding: 20px;">Header</td></tr>
+  <tr><td style="padding: 20px;">Body content</td></tr>
+  <tr><td style="padding: 20px;">Footer</td></tr>
 </table>
 ```
 
+If you need a multi-column section (e.g., product cards), use separate stacked tables so each column can collapse to full width on narrow screens.
+
 ### Accessible Design
 
-- Use sufficient color contrast (4.5:1 ratio)
-- Include alt text for images
-- Use semantic HTML when possible
-- Don't rely on color alone to convey meaning
+Accessible emails reach more people and tend to perform better overall.
 
-## Code Practices
+- **Color contrast** -- Maintain a minimum 4.5:1 contrast ratio between text and background
+- **Alt text** -- Every image needs a descriptive `alt` attribute. Decorative images should use `alt=""`
+- **Semantic structure** -- Use heading tags (`<h1>`, `<h2>`) for hierarchy, not just font size changes
+- **Don't rely on color alone** -- Use text labels, icons, or patterns alongside color cues
+- **Font size** -- Keep body text at 14px minimum and line height at 1.5 for readability
+
+---
+
+## HTML & CSS for Email
+
+Email HTML is not web HTML. Email clients strip, rewrite, or ignore modern CSS and HTML elements. These practices ensure your templates render consistently.
 
 ### Use Tables for Layout
 
-Tables render consistently across email clients:
+Tables are the only layout method that works reliably across all major email clients, including every version of Outlook.
 
 ```html
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
   <tr>
-    <td align="center" style="padding: 20px;">
-      <h1 style="margin: 0; color: #333;">Welcome!</h1>
+    <td align="center" style="padding: 40px 20px;">
+      <h1 style="margin: 0; font-size: 24px; color: #1a1a2e;">
+        Welcome to Lettr
+      </h1>
+      <p style="margin: 16px 0 0; font-size: 16px; line-height: 1.5; color: #4a4a68;">
+        We're glad you're here.
+      </p>
     </td>
   </tr>
 </table>
 ```
 
+<Note>
+  Always add `role="presentation"` to layout tables. This tells screen readers the table is for layout, not data, and prevents confusing announcements.
+</Note>
+
 ### Inline All CSS
 
-Email clients strip `<style>` tags:
+Many email clients strip `<style>` blocks entirely. Always apply styles inline to ensure they survive.
 
 ```html
-<!-- ❌ Bad -->
+<!-- Unreliable: style block may be stripped -->
 <style>
-  .heading { color: blue; }
+  .heading { color: #1a1a2e; font-size: 24px; }
 </style>
 <h1 class="heading">Hello</h1>
 
-<!-- ✅ Good -->
-<h1 style="color: blue;">Hello</h1>
+<!-- Reliable: inline styles always work -->
+<h1 style="color: #1a1a2e; font-size: 24px; margin: 0;">Hello</h1>
 ```
+
+<Tip>
+  If you use the [Topol editor](/learn/templates/topol-editor) to build your templates, it handles CSS inlining automatically. This is one of the major benefits of using a visual editor.
+</Tip>
 
 ### Use Web-Safe Fonts
 
-Fall back to system fonts:
+Custom web fonts are unsupported in most email clients. Always specify a fallback stack ending with a generic family.
 
 ```html
-<p style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-  Your text here
+<p style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.5;">
+  Your email content here.
 </p>
 ```
 
 ### Set Image Dimensions
 
-Prevent layout shifts:
+Always specify `width` and `height` attributes on images. This prevents layout shifts when images load slowly or are blocked by the client.
 
 ```html
-<img 
-  src="https://example.com/image.png" 
-  alt="Description" 
-  width="600" 
-  height="300"
-  style="max-width: 100%; height: auto;"
+<img
+  src="https://yourdomain.com/images/hero.png"
+  alt="Monthly product update"
+  width="560"
+  height="280"
+  style="display: block; max-width: 100%; height: auto; border: 0;"
 />
 ```
+
+<Warning>
+  Some email clients block images by default. Never put critical information (like a discount code or CTA) only in an image. Always include a text equivalent.
+</Warning>
+
+---
 
 ## Content Guidelines
 
@@ -115,142 +147,269 @@ Prevent layout shifts:
 |----|-------|
 | Keep under 50 characters | Use ALL CAPS |
 | Be specific and relevant | Use excessive punctuation!!! |
-| Create urgency naturally | Use spammy words (FREE, ACT NOW) |
-| Test with A/B testing | Mislead recipients |
+| Create urgency naturally | Use spam trigger words (FREE, ACT NOW) |
+| Personalize with merge tags | Mislead about the email's content |
 
 ### Preheader Text
 
-The preview text shown after the subject:
+The preheader is the preview text shown next to or below the subject line in the inbox. Use it to complement your subject line rather than repeat it.
 
 ```html
-<!-- Hidden preheader -->
-<div style="display: none; max-height: 0; overflow: hidden;">
-  Your preview text here (40-130 characters)
+<!-- Hidden preheader: 40-130 characters for best results -->
+<div style="display: none; max-height: 0; overflow: hidden; mso-hide: all;">
+  Your preview text goes here. Make it compelling and specific.
+</div>
+<!-- Prevent leftover body text from appearing in the preview -->
+<div style="display: none; max-height: 0; overflow: hidden; mso-hide: all;">
+  &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
 </div>
 ```
 
 ### Call-to-Action Buttons
 
+Use bulletproof buttons built with HTML and CSS rather than images. This ensures they display even when images are blocked.
+
 ```html
-<table role="presentation" cellpadding="0" cellspacing="0">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0">
   <tr>
-    <td style="background: #6366F1; border-radius: 6px;">
-      <a href="https://example.com" style="
-        display: inline-block;
-        padding: 14px 28px;
-        color: #ffffff;
-        text-decoration: none;
-        font-weight: bold;
-      ">
-        Click Here
+    <td align="center" style="background-color: #6366F1; border-radius: 6px;">
+      <a href="https://example.com/action"
+         target="_blank"
+         style="display: inline-block; padding: 14px 32px; color: #ffffff; text-decoration: none; font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 16px; font-weight: bold;">
+        Get Started
       </a>
     </td>
   </tr>
 </table>
 ```
 
+<Tip>
+  Keep CTA text short and action-oriented: "Get Started", "View Your Order", "Confirm Email". Avoid vague labels like "Click Here" or "Learn More".
+</Tip>
+
+---
+
 ## Required Elements
+
+Every marketing and bulk email must include these elements to comply with anti-spam laws and maintain good deliverability.
 
 ### Unsubscribe Link
 
+Use the `data-msys-unsubscribe` attribute to let Lettr handle unsubscribe processing automatically. When a recipient clicks this link, Lettr adds them to your suppression list.
+
 ```html
-<p style="font-size: 12px; color: #666;">
-  <a href="{{unsubscribe_url}}" style="color: #666;">Unsubscribe</a>
+<p style="font-size: 12px; line-height: 1.5; color: #6b7280;">
+  Don't want these emails?
+  <a href="#" data-msys-unsubscribe="1" style="color: #6b7280; text-decoration: underline;">
+    Unsubscribe
+  </a>
 </p>
 ```
 
-### Physical Address
+<Warning>
+  The `data-msys-unsubscribe="1"` attribute is required for unsubscribe links. Lettr replaces the `href` at send time with a working unsubscribe URL. Do not remove this attribute or replace it with a static URL.
+</Warning>
 
-Required by CAN-SPAM:
+### Physical Mailing Address
+
+Required by CAN-SPAM, CASL, and GDPR. Include your company's valid postal address in every email footer.
 
 ```html
-<p style="font-size: 12px; color: #666;">
-  Company Name<br>
-  123 Main Street<br>
-  City, State 12345
+<p style="font-size: 12px; line-height: 1.5; color: #6b7280; text-align: center;">
+  Your Company Name<br />
+  123 Main Street, Suite 100<br />
+  City, State 12345, Country
 </p>
 ```
 
-### View in Browser Link
+### Reply-To Address
 
-```html
-<p style="font-size: 12px;">
-  <a href="{{view_in_browser_url}}">View in browser</a>
-</p>
-```
+Use a monitored reply-to address. Emails that come from "no-reply" addresses feel impersonal and can hurt engagement. A real reply address also helps with deliverability because mailbox providers treat it as a trust signal.
 
-## Using Variables
+---
+
+## Using Merge Tags
+
+Lettr's [template language](/learn/templates/template-language) lets you personalize emails with dynamic content using merge tags.
 
 ### Basic Variables
 
+Merge tags use double curly braces. Variables are HTML-escaped by default when used in HTML content, which protects against cross-site scripting.
+
 ```html
-<p>Hello {{name}},</p>
-<p>Your order #{{order_id}} is confirmed.</p>
+<p>Hello {{ name }},</p>
+<p>Your order #{{ order_id }} has shipped.</p>
+<p>Tracking number: {{ tracking_number }}</p>
 ```
 
-### Conditional Content
+To output raw, unescaped HTML, use triple curly braces:
 
 ```html
-{{#if premium}}
-  <p>Thank you for being a premium member!</p>
-{{else}}
-  <p>Upgrade to premium for exclusive benefits.</p>
-{{/if}}
+<!-- Unescaped output: use only with trusted data -->
+<div>{{{ custom_html_block }}}</div>
 ```
 
 ### Default Values
 
+Use the `or` keyword to provide a fallback when a variable is missing or empty:
+
 ```html
-<p>Hello {{name|default:"there"}},</p>
+<p>Hello {{ name or 'Customer' }},</p>
+<p>Your {{ plan_name or 'current' }} plan renews on {{ renewal_date or 'your next billing date' }}.</p>
 ```
+
+<Note>
+  Always provide defaults for personalization fields like names and dates. An email that reads "Hello ," with a missing name looks broken and unprofessional.
+</Note>
+
+### Conditional Content
+
+Use `{{if}}`, `{{elseif}}`, `{{else}}`, and `{{end}}` to show different content based on conditions:
+
+```html
+{{if premium}}
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+    <tr>
+      <td style="padding: 16px; background-color: #eef2ff; border-radius: 8px;">
+        <p style="margin: 0; color: #4338ca; font-weight: bold;">
+          Premium Member Exclusive
+        </p>
+        <p style="margin: 8px 0 0; color: #4a4a68;">
+          Thank you for being a premium member. Enjoy 20% off your next purchase.
+        </p>
+      </td>
+    </tr>
+  </table>
+{{elseif trial}}
+  <p style="color: #4a4a68;">
+    Your trial ends in {{ days_remaining or 'a few' }} days.
+    <a href="https://example.com/upgrade" style="color: #6366F1;">Upgrade now</a>
+    to keep access.
+  </p>
+{{else}}
+  <p style="color: #4a4a68;">
+    <a href="https://example.com/pricing" style="color: #6366F1;">Upgrade to Premium</a>
+    for exclusive benefits and discounts.
+  </p>
+{{end}}
+```
+
+### Loops
+
+Use `{{each}}` and `{{end}}` to iterate over arrays:
+
+```html
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+  {{each items}}
+  <tr>
+    <td style="padding: 12px 0; border-bottom: 1px solid #e5e7eb;">
+      <p style="margin: 0; font-weight: bold;">{{ name }}</p>
+      <p style="margin: 4px 0 0; color: #6b7280;">Qty: {{ quantity }} - ${{ price }}</p>
+    </td>
+  </tr>
+  {{end}}
+</table>
+```
+
+### Disabling Link Tracking
+
+If you need to exclude a specific link from click tracking (e.g., an unsubscribe link already tracked by Lettr, or a sensitive URL), use the `data-msys-clicktrack` attribute:
+
+```html
+<a href="https://example.com/sensitive-page" data-msys-clicktrack="0">
+  This link won't be tracked
+</a>
+```
+
+---
 
 ## Testing
 
 ### Preview Across Clients
 
-Test in:
-- Gmail (web and mobile)
-- Outlook (desktop and web)
-- Apple Mail (macOS and iOS)
-- Yahoo Mail
+Email rendering varies dramatically between clients. Test in all of these before sending to your list:
 
-### Dark Mode
+- **Gmail** -- Web, Android, and iOS
+- **Outlook** -- Desktop (Windows), Outlook.com, and the Outlook mobile app
+- **Apple Mail** -- macOS and iOS
+- **Yahoo Mail** -- Web and mobile
 
-Ensure readability in dark mode:
+<Tip>
+  Use Lettr's [test email](/learn/sending/test-emails) feature to send to your own addresses across different clients. Send a test to yourself every time you make template changes.
+</Tip>
+
+### Dark Mode Considerations
+
+Most email clients now offer a dark mode that can invert or alter your email's colors. Design defensively:
 
 ```html
-<!-- Use both background-color and bgcolor -->
-<td bgcolor="#ffffff" style="background-color: #ffffff;">
-  <!-- Content -->
+<!-- Use both bgcolor (for Outlook) and background-color (for others) -->
+<td bgcolor="#ffffff" style="background-color: #ffffff; color: #1a1a2e;">
+  <p style="color: #1a1a2e;">
+    Explicit text color prevents dark mode from making text invisible.
+  </p>
 </td>
 ```
 
+- Always set explicit text colors rather than relying on defaults
+- Avoid transparent backgrounds on images -- add a white or appropriate background
+- Test with dark mode enabled on both iOS Mail and Gmail
+
 ### Accessibility Testing
 
-- Screen reader compatibility
-- Keyboard navigation
-- Color contrast checkers
+- **Screen reader** -- Send a test email and read it with VoiceOver (Mac/iOS) or NVDA (Windows)
+- **Keyboard navigation** -- Tab through all links and buttons to verify they are reachable
+- **Color contrast** -- Use a tool like the WebAIM Contrast Checker to verify 4.5:1 minimum ratio
+- **Image-off test** -- Disable image loading in your email client to confirm the email is still understandable
+
+---
 
 ## Template Checklist
 
+Run through these checks before finalizing any template:
+
 <Steps>
   <Step title="Mobile Responsive">
-    Renders well on small screens.
+    Open the email on a mobile device or narrow your browser window. Content should be readable without horizontal scrolling, and buttons should be tappable.
   </Step>
   <Step title="Inline CSS">
-    All styles are inline.
+    Confirm all styles are applied inline. If you used the Topol editor, this is handled for you. If you wrote HTML manually, run it through a CSS inliner.
   </Step>
-  <Step title="Alt Text">
-    All images have alt attributes.
+  <Step title="Images Have Alt Text">
+    Every `img` tag includes a descriptive `alt` attribute. Decorative images use `alt=""`.
   </Step>
-  <Step title="Unsubscribe Link">
-    Visible and functional.
+  <Step title="Unsubscribe Link Present">
+    The footer contains a working unsubscribe link with the `data-msys-unsubscribe="1"` attribute.
   </Step>
-  <Step title="Physical Address">
-    Included in footer.
+  <Step title="Physical Address Included">
+    A valid postal address appears in the email footer.
   </Step>
-  <Step title="Tested">
-    Previewed in major email clients.
+  <Step title="Merge Tags Have Defaults">
+    All personalization variables use the `or` keyword to provide fallback values for missing data.
+  </Step>
+  <Step title="Links Verified">
+    Every link points to the correct URL. No placeholder or broken links remain.
+  </Step>
+  <Step title="Tested Across Clients">
+    Send test emails to Gmail, Outlook, and Apple Mail. Check both light and dark mode.
   </Step>
 </Steps>
 
+---
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Template Language" icon="code" href="/learn/templates/template-language">
+    Full reference for merge tags, conditionals, loops, and filters
+  </Card>
+  <Card title="Topol Editor" icon="pen-ruler" href="/learn/templates/topol-editor">
+    Build templates visually with drag-and-drop
+  </Card>
+  <Card title="Template Versions" icon="code-branch" href="/learn/templates/versions">
+    Manage and publish template versions
+  </Card>
+  <Card title="Test Emails" icon="flask-vial" href="/learn/sending/test-emails">
+    Send test emails before going live
+  </Card>
+</CardGroup>

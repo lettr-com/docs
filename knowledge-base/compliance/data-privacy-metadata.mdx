@@ -1,0 +1,205 @@
+---
+title: Data Privacy in Email Metadata
+description: "What data is stored when sending emails and how to protect sensitive information"
+---
+
+# Data Privacy in Email Metadata
+
+When you send an email through Lettr, several pieces of data are stored to ensure reliable delivery, enable analytics, and support debugging. Understanding what is stored and how to keep sensitive information out of your email data is essential for maintaining compliance and protecting your users.
+
+---
+
+## What Data Lettr Stores
+
+Every email sent through Lettr results in the following data being stored:
+
+| Data | Description |
+|------|-------------|
+| Sender address | The `from` address used to send the email |
+| Recipient address | The `to`, `cc`, and `bcc` addresses |
+| Subject line | The subject of the email |
+| Email content | The full HTML or text body of the email |
+| Metadata | Custom key-value pairs you attach to the request |
+| Delivery events | Timestamps for injection, delivery, bounces, opens, clicks, and other events |
+| Tracking data | Open and click tracking information when enabled |
+
+This data is visible in the Lettr dashboard under your email history and is used for analytics, debugging, and webhook delivery.
+
+---
+
+## Understanding Metadata vs Substitution Data
+
+Lettr provides two distinct objects when sending an email, and it is important to understand the difference between them.
+
+### `metadata`
+
+Custom key-value pairs passed alongside the email for **your** tracking purposes. Metadata is not rendered into the email content. It is stored by Lettr and included in webhook event payloads so your systems can correlate events back to your internal records.
+
+### `substitution_data`
+
+Template variables that are rendered **into** the email content. These are used for personalization — things like the recipient's name, order details, or any dynamic content in your template.
+
+<Note>
+  Both `metadata` and `substitution_data` are stored by Lettr and visible in the dashboard. Treat both as data that will be persisted and accessible to your team members with dashboard access.
+</Note>
+
+---
+
+## What NOT to Include in Email Data
+
+<Warning>
+  Never include the following in `metadata`, `substitution_data`, or email content:
+
+  - **Passwords, tokens, or credentials** — use secure, time-limited links instead
+  - **Social security numbers or national IDs**
+  - **Credit card numbers or financial account details**
+  - **Health information** (PHI under HIPAA)
+  - **Full API keys or secrets**
+
+  This data is stored by Lettr and visible in the dashboard. Including it creates a compliance risk and exposes sensitive information to anyone with account access.
+</Warning>
+
+---
+
+## Safe Metadata Practices
+
+Use opaque identifiers in metadata instead of personally identifiable information (PII). Your internal systems can resolve these identifiers when processing webhook events.
+
+```bash
+# Bad — PII in metadata
+curl -X POST https://api.lettr.com/api/emails \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "from": "orders@shop.com",
+    "to": "customer@example.com",
+    "subject": "Your order confirmation",
+    "template_id": "order-confirmation",
+    "metadata": {
+      "customer_name": "Jane Smith",
+      "customer_email": "jane.smith@example.com",
+      "customer_ssn": "123-45-6789"
+    }
+  }'
+
+# Good — opaque identifiers only
+curl -X POST https://api.lettr.com/api/emails \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "from": "orders@shop.com",
+    "to": "customer@example.com",
+    "subject": "Your order confirmation",
+    "template_id": "order-confirmation",
+    "metadata": {
+      "user_id": "usr_8a3f2b",
+      "order_id": "ord_19x7k4",
+      "campaign": "summer-sale-2025"
+    }
+  }'
+```
+
+<Tip>
+  Keep metadata minimal. Only include what you need for webhook processing and internal tracking. Every key-value pair is stored and delivered to all configured webhook endpoints.
+</Tip>
+
+---
+
+## Safe Substitution Data Practices
+
+Remember that `substitution_data` is rendered directly into the email content. Whatever you pass becomes part of the email body that is sent to the recipient and stored by Lettr.
+
+Do not pass sensitive data through `substitution_data` that should not appear in the email itself.
+
+```javascript
+// Safe personalization with substitution_data
+const response = await fetch("https://api.lettr.com/api/emails", {
+  method: "POST",
+  headers: {
+    "Authorization": "Bearer YOUR_API_KEY",
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    from: "support@yourapp.com",
+    to: "user@example.com",
+    subject: "Your password reset request",
+    template_id: "password-reset",
+    substitution_data: {
+      first_name: "Jane",
+      reset_link: "https://yourapp.com/reset?token=abc123",
+      expiry_hours: "24",
+    },
+    metadata: {
+      user_id: "usr_8a3f2b",
+      request_id: "req_44fn29",
+    },
+  }),
+});
+```
+
+<Note>
+  Notice that the password reset token lives in a URL, not as a standalone value. The token itself is time-limited and single-use, so even if the email content is stored, the token expires and cannot be reused.
+</Note>
+
+---
+
+## Email Content Considerations
+
+Email content — the full HTML or text body — is stored by Lettr to support delivery history and debugging. Keep this in mind when building your templates:
+
+- **Do not embed sensitive data in HTML** that you would not want stored or visible in the dashboard.
+- **Use secure links** for sensitive actions like password resets and account verification instead of embedding sensitive data directly in the email body.
+- **Avoid including full account details** in transactional emails. Show partial or masked information (e.g., "card ending in 4242") rather than complete values.
+
+---
+
+## Data Retention
+
+Lettr retains email data — including content, metadata, and delivery events — according to its data retention policy.
+
+If you need to comply with data deletion requests, such as the GDPR right to erasure, contact [support@lettr.com](mailto:support@lettr.com) to discuss your requirements.
+
+---
+
+## Practical Guidelines
+
+<AccordionGroup>
+  <Accordion title="Use user IDs instead of email addresses in metadata">
+    Your metadata should reference internal identifiers that only your systems can resolve. Instead of passing `customer_email` in metadata, pass a `user_id`. Your webhook consumers can look up the email address from your own database when needed.
+  </Accordion>
+
+  <Accordion title="Generate time-limited tokens for sensitive email actions">
+    Password resets, account verifications, and other sensitive actions should use tokens that expire. Even if the email content is stored indefinitely, an expired token poses no security risk. Set expiry times as short as practical — 24 hours or less for password resets.
+  </Accordion>
+
+  <Accordion title="Don't store PII in campaign_id or custom headers">
+    It is tempting to encode useful information into identifiers, but values like `campaign_id` are stored and visible across your team. Use opaque identifiers and resolve them in your own systems.
+  </Accordion>
+
+  <Accordion title="Audit what data you're passing to the API periodically">
+    As your integration evolves, new fields may get added to metadata or substitution data without a privacy review. Schedule periodic audits of your API calls to ensure no sensitive data has crept into your payloads.
+  </Accordion>
+
+  <Accordion title="Consider what webhook consumers can see">
+    Metadata flows to all configured webhook endpoints. If you have multiple services consuming webhooks, every one of them receives the full metadata object. Only include data that all consumers are authorized to see.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="GDPR and Email" icon="shield-halved" href="/knowledge-base/compliance/gdpr-email">
+    Understand GDPR requirements for email communications.
+  </Card>
+  <Card title="Email Metadata" icon="tags" href="/learn/sending/metadata">
+    Learn how to use metadata when sending emails through Lettr.
+  </Card>
+  <Card title="Template Language" icon="code" href="/learn/templates/template-language">
+    Use substitution data effectively in your email templates.
+  </Card>
+  <Card title="Security Best Practices" icon="lock" href="/knowledge-base/best-practices/security">
+    Secure your Lettr integration and protect your sending infrastructure.
+  </Card>
+</CardGroup>

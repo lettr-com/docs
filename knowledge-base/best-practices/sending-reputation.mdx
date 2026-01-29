@@ -1,0 +1,303 @@
+---
+title: Sending Reputation
+description: "Build and protect your sender reputation to maximize inbox placement"
+---
+
+# Sending Reputation
+
+Your sender reputation is the single most important factor in whether your emails reach the inbox or get filtered to spam. Mailbox providers like Gmail, Outlook, and Yahoo assign a reputation to every sender based on observed behavior, and that reputation determines how your future emails are treated.
+
+---
+
+## What Is Sender Reputation
+
+Every time you send an email, the receiving mail server evaluates your reputation before deciding what to do with the message. This evaluation happens in milliseconds and draws on data the provider has collected about your sending domain and the IP addresses your emails come from.
+
+### How ISPs Evaluate Senders
+
+Mailbox providers build a profile of each sender over time. They track:
+
+- **Bounce rates** — How often your emails fail to deliver
+- **Complaint rates** — How often recipients mark your emails as spam
+- **Engagement signals** — Whether recipients open, click, or reply to your emails
+- **Authentication results** — Whether your DKIM, SPF, and DMARC records pass
+- **Sending patterns** — Whether your volume is consistent or erratic
+- **Spam trap hits** — Whether you send to addresses that exist solely to catch spammers
+
+### Domain vs IP Reputation
+
+There are two distinct components to sender reputation:
+
+| Component | What It Is | Who Controls It |
+|-----------|-----------|-----------------|
+| Domain reputation | Reputation tied to your sending domain (e.g., `mail.example.com`) | You — through your sending practices |
+| IP reputation | Reputation tied to the IP address that delivers your email | Shared across all senders using the same IP infrastructure |
+
+<Note>
+  Lettr sends via shared IP infrastructure powered by SparkPost. This means your domain reputation is the primary lever you control. Domain reputation has become the dominant signal for most major mailbox providers, making it more important than IP reputation in most cases.
+</Note>
+
+### Why It Matters
+
+A strong reputation means your emails are delivered to the inbox quickly and reliably. A damaged reputation means your emails may be:
+
+- Deferred (delayed by hours or days)
+- Sent to the spam folder
+- Silently dropped without any bounce notification
+- Blocked outright by the receiving server
+
+---
+
+## Building Reputation from Scratch
+
+New domains have no reputation history. Mailbox providers treat unknown senders with caution, so you need to build trust gradually through consistent, low-volume sending to engaged recipients.
+
+### Warm-Up Schedule
+
+| Week | Daily Volume | Who to Send To | What to Monitor |
+|------|-------------|----------------|-----------------|
+| 1 | 50–100 | Your most engaged recipients — users who have opened or clicked recently | Bounce rate, complaint rate |
+| 2 | 200–500 | Expand to recipients who have engaged in the last 30 days | Bounce rate, complaint rate, deferrals |
+| 3 | 500–2,000 | Include recipients who have engaged in the last 90 days | All metrics, inbox placement |
+| 4 | 2,000–5,000 | Broader audience, still excluding long-dormant addresses | All metrics |
+| 5+ | Scale toward target volume | Full list, excluding suppressed and unengaged addresses | All metrics |
+
+<Warning>
+  Skipping the warm-up period and sending high volumes immediately from a new domain is one of the most common causes of long-term reputation damage. The damage can take weeks or months to recover from, and some providers may block your domain entirely.
+</Warning>
+
+### Key Principles During Warm-Up
+
+- **Send to engaged users first.** Positive engagement signals (opens, clicks, replies) teach mailbox providers that recipients want your emails. Start with your most active subscribers and expand outward.
+- **Be consistent.** Send every day during warm-up. Sporadic bursts of volume look suspicious to spam filters.
+- **Monitor metrics after every send.** If your bounce rate exceeds 5% or spam complaint rate exceeds 0.3%, stop and investigate before continuing.
+- **Use authentication from day one.** Ensure your CNAME, DKIM, and DMARC records are all verified and passing before you send a single email. See [Sending Domains](/learn/domains/sending-domains) for setup instructions.
+
+---
+
+## Protecting Established Reputation
+
+Once you've built a solid reputation, maintaining it requires ongoing attention. Reputation can erode gradually or collapse suddenly depending on what goes wrong.
+
+### Monitor Bounce and Complaint Rates
+
+Check your sending metrics in the Lettr dashboard regularly. The two most critical numbers are:
+
+- **Bounce rate** — Keep below 2%. Investigate immediately if it exceeds 5%.
+- **Spam complaint rate** — Keep below 0.1%. Major providers like Gmail will throttle or block senders who exceed 0.3%.
+
+<Tip>
+  Set up webhook endpoints for `email.bounced` and `email.complained` events to catch problems in real time rather than waiting to check the dashboard.
+</Tip>
+
+### Handle Bounces Immediately via Webhooks
+
+Hard bounces indicate permanently invalid addresses. Every email you send to a hard-bounced address damages your reputation. Process bounces the moment they occur:
+
+```javascript
+app.post('/webhooks/lettr', (req, res) => {
+  const event = req.body;
+
+  switch (event.type) {
+    case 'email.bounced': {
+      const { to, bounceType, bounceCode } = event.data;
+
+      if (bounceType === 'hard') {
+        // Permanently invalid — remove immediately
+        suppressRecipient(to, 'hard_bounce');
+      } else if (bounceType === 'soft') {
+        // Temporary issue — track consecutive soft bounces
+        incrementSoftBounceCount(to);
+
+        // Suppress after 3 consecutive soft bounces
+        if (getSoftBounceCount(to) >= 3) {
+          suppressRecipient(to, 'repeated_soft_bounce');
+        }
+      }
+      break;
+    }
+
+    case 'email.complained': {
+      const { to } = event.data;
+      // Recipient marked your email as spam — never send to them again
+      suppressRecipient(to, 'spam_complaint');
+      break;
+    }
+  }
+
+  res.sendStatus(200);
+});
+```
+
+You can verify your webhook endpoint receives events correctly using curl:
+
+```bash
+curl -X POST https://yourdomain.com/webhooks/lettr \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "email.bounced",
+    "data": {
+      "to": "test@example.com",
+      "bounceType": "hard",
+      "bounceCode": "550"
+    }
+  }'
+```
+
+### Sunset Unengaged Subscribers
+
+Recipients who haven't opened or clicked any of your emails in 6–12 months are hurting your reputation. Mailbox providers track whether recipients engage with your emails, and consistently low engagement tells them your emails aren't wanted.
+
+<Steps>
+  <Step title="Identify unengaged subscribers">
+    Query your database for recipients who haven't opened or clicked any email in the last 6–12 months. Use `email.opened` and `email.clicked` webhook events to track engagement over time.
+  </Step>
+  <Step title="Send a re-engagement campaign">
+    Send a targeted email asking if they still want to hear from you. Make it easy to confirm or unsubscribe.
+  </Step>
+  <Step title="Remove non-responders">
+    Anyone who doesn't engage with the re-engagement email within 2 weeks should be removed from your active sending list.
+  </Step>
+</Steps>
+
+---
+
+## Reputation Signals ISPs Monitor
+
+Mailbox providers weigh multiple signals when evaluating your reputation. Here's what they look at and what healthy values look like:
+
+| Signal | What It Measures | Healthy Range | Danger Zone |
+|--------|-----------------|---------------|-------------|
+| Bounce rate | Percentage of emails that fail to deliver | < 2% | > 5% |
+| Complaint rate | Percentage of recipients who report spam | < 0.1% | > 0.3% |
+| Spam trap hits | Emails sent to known trap addresses | 0 | Any hits |
+| Open rate | Percentage of recipients who open | > 15% | < 10% |
+| Click rate | Percentage of recipients who click | > 2% | < 1% |
+| Authentication pass rate | Percentage of emails passing DKIM/DMARC | 100% | < 95% |
+| Sending consistency | Regularity and predictability of volume | Stable day-to-day | Sudden spikes or gaps |
+
+<Note>
+  You won't find a single "reputation score" in Lettr — no such API exists. Instead, monitor the individual signals above through your Lettr dashboard and webhook data. The combination of these metrics is what mailbox providers use to evaluate you.
+</Note>
+
+---
+
+## Domain Reputation vs IP Reputation
+
+### Shared IP Infrastructure
+
+Lettr sends emails through shared IP infrastructure powered by SparkPost. This means your emails share IP addresses with other Lettr customers. While SparkPost actively manages the reputation of these shared IPs, it also means your domain reputation is the factor you have the most control over.
+
+### Domain Reputation Is What You Control
+
+Major mailbox providers — especially Gmail — have shifted heavily toward domain-based reputation. This is actually advantageous for Lettr senders because:
+
+- Your reputation is entirely in your hands, not affected by other senders on the same IP
+- You can build reputation independently by following good sending practices
+- Authentication (DKIM, DMARC) ties directly to your domain
+
+### Why Subdomain Isolation Matters
+
+If you send both transactional and marketing emails from the same domain, a reputation problem with your marketing sends can delay password resets, order confirmations, and other critical transactional emails. Using separate subdomains isolates these reputations from each other.
+
+---
+
+## Subdomain Strategy
+
+Separating your email streams by subdomain is one of the most effective ways to protect your sender reputation. Each subdomain builds its own independent reputation with mailbox providers.
+
+### Recommended Setup
+
+| Email Type | Subdomain Example | Purpose |
+|------------|------------------|---------|
+| Transactional | `mail.example.com` | Password resets, order confirmations, account alerts |
+| Marketing | `news.example.com` | Newsletters, promotions, product updates |
+| Automated / Drip | `updates.example.com` | Onboarding sequences, re-engagement campaigns |
+
+### How to Implement
+
+1. Add each subdomain as a separate sending domain in Lettr
+2. Configure CNAME, DKIM, and DMARC records for each subdomain
+3. Wait for all domains to reach **approved** status before sending
+4. Route each email type through its corresponding subdomain
+
+<Tip>
+  At a minimum, separate transactional and marketing email onto different subdomains. If your marketing reputation takes a hit, your transactional emails (password resets, receipts) will still deliver reliably. See [Subdomain vs Root Domain](/knowledge-base/fundamentals/subdomain-vs-root) for more guidance.
+</Tip>
+
+---
+
+## Recovery from Reputation Damage
+
+If your reputation has been damaged — emails are going to spam, delivery rates have dropped, or you're seeing increased deferrals — you can recover, but it takes time and discipline.
+
+<Steps>
+  <Step title="Reduce your sending volume immediately">
+    Cut volume to 10–20% of your current level. Continuing to send at full volume while your reputation is damaged makes things worse with every send.
+  </Step>
+  <Step title="Identify and fix the root cause">
+    Determine what caused the damage. Common causes include:
+    - Sending to a purchased or scraped list
+    - Failing to process bounces, leading to repeated sends to invalid addresses
+    - A spike in spam complaints after a poorly targeted campaign
+    - Broken authentication (DKIM/DMARC failures)
+
+    Check your webhook logs for `email.bounced`, `email.complained`, and `email.deferred` events to pinpoint the issue.
+  </Step>
+  <Step title="Clean your recipient list aggressively">
+    Remove all hard-bounced addresses, all spam complainants, and anyone who hasn't engaged in the last 6 months. This is not the time for a generous re-engagement window.
+  </Step>
+  <Step title="Send only to your most engaged recipients">
+    Restrict sending to recipients who have opened or clicked within the last 30 days. Positive engagement signals are what will rebuild your reputation.
+  </Step>
+  <Step title="Gradually increase volume">
+    Follow the same warm-up schedule you would use for a new domain. Increase volume only when your metrics are healthy — bounce rate below 2%, complaint rate below 0.1%.
+  </Step>
+  <Step title="Monitor daily until metrics stabilize">
+    Check your dashboard and webhook data every day during recovery. It typically takes 2–4 weeks of consistently good behavior for reputation to recover meaningfully.
+  </Step>
+</Steps>
+
+<Warning>
+  Recovery is not instant. Mailbox providers need to see sustained good behavior before they'll trust your domain again. Expect the process to take 2–6 weeks depending on the severity of the damage.
+</Warning>
+
+---
+
+## Warning Signs
+
+Watch for these indicators that your reputation may be slipping:
+
+<AccordionGroup>
+  <Accordion title="Increasing deferrals">
+    If you see a growing number of `email.deferred` webhook events, receiving servers are delaying your emails rather than accepting them immediately. This is often the first sign that a provider is losing trust in your domain. Check which providers are deferring and whether the pattern correlates with a recent volume increase or a change in your recipient list.
+  </Accordion>
+  <Accordion title="Sudden drop in open rates">
+    A sharp decline in open rates — especially at a specific provider like Gmail or Outlook — usually means your emails are being routed to spam. Open rates naturally fluctuate, but a drop of more than 20–30% over a few days is a red flag. Test by sending to a seed account at the affected provider to confirm inbox placement.
+  </Accordion>
+  <Accordion title="Bounce rate creeping up">
+    A gradually increasing bounce rate indicates your list is aging and accumulating invalid addresses. If you're not processing `email.bounced` webhook events in real time, stale addresses will pile up and accelerate reputation damage. Review your bounce handling code and confirm suppression is working correctly.
+  </Accordion>
+  <Accordion title="Emails going to spam at specific providers">
+    If your emails land in the inbox at most providers but consistently go to spam at one (commonly Gmail), that provider has flagged your domain. This often happens when your complaint rate exceeds their threshold. Reduce volume to that provider, send only to engaged recipients there, and ensure your DKIM and DMARC records are passing. Recovery at a single provider can take 1–4 weeks of improved behavior.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Deliverability Best Practices" icon="inbox" href="/knowledge-base/best-practices/deliverability">
+    Foundational practices for maximizing inbox placement
+  </Card>
+  <Card title="List Hygiene" icon="broom" href="/knowledge-base/best-practices/list-hygiene">
+    Maintain healthy, engaged recipient lists
+  </Card>
+  <Card title="Sending Domains" icon="globe" href="/learn/domains/sending-domains">
+    Configure and verify your sending domains
+  </Card>
+  <Card title="Subdomain vs Root Domain" icon="diagram-project" href="/knowledge-base/fundamentals/subdomain-vs-root">
+    Choose the right domain strategy for your emails
+  </Card>
+</CardGroup>

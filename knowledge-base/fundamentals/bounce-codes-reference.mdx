@@ -1,0 +1,178 @@
+---
+title: "Bounce Codes Reference"
+description: "Comprehensive reference of SMTP response codes with explanations and recommended actions"
+---
+
+Every time an email is sent, the receiving mail server responds with an SMTP status code indicating whether the message was accepted, temporarily deferred, or permanently rejected. Lettr surfaces these codes in your **dashboard** and via **`email.bounced` webhook events**, so understanding them helps you diagnose delivery issues quickly.
+
+---
+
+## How SMTP Response Codes Work
+
+SMTP response codes are three-digit numbers returned by a receiving mail server during or after the message transfer. The **first digit** determines the overall class of the response:
+
+| First Digit | Class              | Meaning                                                                 |
+| ----------- | ------------------ | ----------------------------------------------------------------------- |
+| **2xx**     | Success            | The server accepted the message for delivery.                           |
+| **4xx**     | Temporary Failure  | The server could not process the message right now but may accept it later. These generate **soft bounces**. |
+| **5xx**     | Permanent Failure  | The server will never accept this message. These generate **hard bounces**. |
+
+Modern mail servers also return **Enhanced Status Codes** (defined in RFC 3463) in the format `x.y.z`, such as `5.1.1`. These provide more granular detail about the failure and are explained in a [later section](#enhanced-status-code-structure).
+
+---
+
+## Success Codes
+
+These codes indicate the message was accepted by the receiving server.
+
+| Code  | Meaning                                                                 |
+| ----- | ----------------------------------------------------------------------- |
+| **250** | Message accepted for delivery. This is the standard success response. |
+| **251** | User not local; the server is forwarding the message to another destination. |
+
+<Note>
+  A `250` response means the receiving server accepted the message — it does not guarantee inbox placement. The server may still filter the message to spam or reject it at a later stage.
+</Note>
+
+---
+
+## Temporary Failure Codes — Soft Bounces
+
+Soft bounces are transient failures. Lettr automatically retries delivery for soft bounces according to its retry schedule. If retries are exhausted without success, the bounce may be reclassified as a hard bounce.
+
+| Code  | Enhanced Code | Meaning                                      | Recommended Action                        |
+| ----- | ------------- | -------------------------------------------- | ----------------------------------------- |
+| **421** | 4.7.0        | Server temporarily unavailable or rate limiting | Auto-retry. Lettr handles this automatically. |
+| **450** | 4.2.1        | Mailbox temporarily unavailable              | Auto-retry. The mailbox may be locked or temporarily offline. |
+| **451** | 4.3.0        | Server configuration issue on the receiving end | Auto-retry. Usually resolves on its own.  |
+| **452** | 4.2.2        | Mailbox full or over quota                   | Auto-retry. If the mailbox remains full across multiple attempts, this may be promoted to a hard bounce. |
+| **454** | 4.7.0        | TLS negotiation failed; TLS not available    | Retry without TLS if your sending policy allows opportunistic encryption. |
+
+<Info>
+  Lettr retries soft bounces automatically with exponential backoff. You do not need to resend these messages manually. Monitor the **Activity Log** in your dashboard to track retry progress.
+</Info>
+
+---
+
+## Permanent Failure Codes — Hard Bounces
+
+Hard bounces are definitive rejections. The receiving server will not accept this message regardless of how many times it is sent. Lettr automatically adds hard-bounced addresses to your suppression list to protect your sender reputation.
+
+| Code  | Enhanced Code | Meaning                                      | Recommended Action                        |
+| ----- | ------------- | -------------------------------------------- | ----------------------------------------- |
+| **550** | 5.1.1        | User unknown — mailbox does not exist        | Remove the address from your list.        |
+| **550** | 5.1.2        | Bad destination domain — domain does not exist or has no MX records | Remove the address from your list.        |
+| **550** | 5.2.1        | Mailbox disabled or deactivated              | Remove the address from your list.        |
+| **550** | 5.7.1        | Message rejected by policy (spam filter, blocklist, or authentication failure) | Check your content, authentication records (SPF/DKIM/DMARC), and sender reputation. |
+| **551** | 5.1.6        | User not local and server will not forward   | Remove the address from your list.        |
+| **552** | 5.2.3        | Message exceeds size limits                  | Reduce the message size (compress images, remove large attachments). |
+| **553** | 5.1.3        | Invalid mailbox name syntax                  | Fix the email address format (check for typos or illegal characters). |
+| **554** | 5.7.1        | Transaction failed — general rejection       | Investigate the full bounce message for details. May indicate blocklisting or content issues. |
+
+<Warning>
+  Continuing to send to hard-bounced addresses damages your sender reputation and can lead to your IP or domain being blocklisted. Lettr suppresses these addresses automatically — do not remove them from your suppression list unless you have confirmed the address is valid again.
+</Warning>
+
+---
+
+## Enhanced Status Code Structure
+
+Enhanced Status Codes follow the format **`x.y.z`** where each component has a specific meaning:
+
+- **x** — Class (matches the first digit of the basic SMTP code)
+  - `2` = Success
+  - `4` = Temporary failure
+  - `5` = Permanent failure
+- **y** — Subject category (what part of the system the issue relates to)
+- **z** — Detail (specific condition within that category)
+
+### Subject Categories
+
+| Subject (y) | Category        | Description                                      |
+| ----------- | --------------- | ------------------------------------------------ |
+| **0**       | Other / Undefined | Status does not fit other categories.           |
+| **1**       | Addressing      | Problems with the recipient or sender address.   |
+| **2**       | Mailbox         | Issues with the destination mailbox (full, disabled, not found). |
+| **3**       | Mail System     | Problems with the destination mail system.       |
+| **4**       | Network         | Network-level issues (DNS, routing, connection). |
+| **5**       | Protocol        | Protocol-related failures during the SMTP transaction. |
+| **6**       | Content         | The message content triggered a rejection (encoding, media type). |
+| **7**       | Security        | Security or policy violations (authentication, encryption, blocklisting). |
+
+For example, `5.1.1` means: **permanent failure** (`5`) related to **addressing** (`.1.`) with detail code **1** (mailbox does not exist).
+
+---
+
+## Provider-Specific Codes
+
+Major mailbox providers often return custom error messages alongside standard SMTP codes. Below are common patterns you may encounter.
+
+<AccordionGroup>
+  <Accordion title="Gmail">
+    | Error Message Pattern | Meaning | What to Do |
+    | --------------------- | ------- | ---------- |
+    | `550 5.1.1 The email account that you tried to reach does not exist` | The Gmail address is invalid or has been deleted. | Remove the address from your list. |
+    | `421 4.7.28 ... rate limited` | Gmail is throttling your sending due to volume or reputation. | Reduce sending speed. Lettr retries automatically. |
+    | `550 5.7.1 Our system has detected that this message is likely unsolicited mail` | Gmail's spam filters flagged your message. | Review your content, authentication, and list hygiene. |
+    | `550 5.7.26 Unauthenticated email ... is not accepted due to domain's DMARC policy` | Your message fails DMARC alignment. | Ensure SPF and DKIM are properly configured and aligned with your From domain. |
+  </Accordion>
+
+  <Accordion title="Outlook / Microsoft 365">
+    | Error Message Pattern | Meaning | What to Do |
+    | --------------------- | ------- | ---------- |
+    | `550 5.1.1 User unknown` | The Outlook/Hotmail address does not exist. | Remove the address from your list. |
+    | `550 5.7.1 Service unavailable, client host [x.x.x.x] blocked` | Your sending IP is on a Microsoft blocklist. | Check your IP against the Outlook SNDS portal and request delisting if needed. |
+    | `451 4.7.500 Server busy. Please try again later` | Microsoft is rate limiting connections. | Lettr retries automatically. |
+    | `550 5.5.0 Requested action not taken: mailbox unavailable` | Mailbox is disabled or deleted. | Remove the address from your list. |
+  </Accordion>
+
+  <Accordion title="Yahoo / AOL">
+    | Error Message Pattern | Meaning | What to Do |
+    | --------------------- | ------- | ---------- |
+    | `553 5.1.3 Invalid address` | The Yahoo/AOL address is malformed or does not exist. | Remove the address or fix formatting. |
+    | `421 4.7.0 [TS01] ... temporarily deferred` | Yahoo is throttling your messages due to sending patterns or reputation. | Reduce volume. Lettr retries automatically. |
+    | `554 5.7.9 Message not accepted for policy reasons` | Your message was rejected due to Yahoo's content or authentication policies. | Review DKIM/SPF configuration and message content. |
+    | `421 4.7.1 [TS03] ... too many connections` | Too many simultaneous connections from your IP. | Lettr manages connection pooling automatically. |
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## How Lettr Categorizes Bounces
+
+Lettr maps raw SMTP response codes to standardized bounce categories that appear in your dashboard and in `email.bounced` webhook payloads. This makes it easier to take action without interpreting SMTP codes directly.
+
+| Lettr Category       | SMTP Codes / Conditions                          | Description                                      |
+| -------------------- | ------------------------------------------------ | ------------------------------------------------ |
+| `invalid_address`    | 550 5.1.1, 553 5.1.3                            | The recipient address does not exist or is malformed. |
+| `domain_not_found`   | 550 5.1.2                                        | The recipient domain does not exist or has no MX records. |
+| `mailbox_full`       | 452 4.2.2, 552 5.2.2                            | The recipient mailbox is over its storage quota.  |
+| `blocked`            | 550 5.7.1 (IP/domain block), 554 5.7.1          | The receiving server blocked delivery due to reputation or blocklisting. |
+| `spam_related`       | 550 5.7.1 (content rejection)                   | The message was flagged as spam by the receiving server. |
+| `policy_related`     | 550 5.7.1 (authentication), 551 5.1.6           | Rejected due to authentication failure, DMARC policy, or other sending policies. |
+| `server_error`       | 451 4.3.0, 421 4.7.0                            | A temporary server-side issue on the receiving end. |
+| `protocol_error`     | 454 4.7.0, 552 5.2.3                            | A protocol-level failure such as TLS negotiation or message size limits. |
+| `unknown`            | Any unrecognized or ambiguous response           | The bounce could not be classified into a specific category. |
+
+<Tip>
+  You can filter bounces by category in the **Activity** section of your dashboard, or use the `category` field in `email.bounced` webhook events to automate list management in your application.
+</Tip>
+
+---
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Diagnosing Bounces" icon="magnifying-glass" href="/knowledge-base/troubleshooting/bounce-diagnosis">
+    Step-by-step guide to investigating and resolving bounce issues.
+  </Card>
+  <Card title="Bounce Suppressions" icon="ban" href="/learn/suppressions/bounces">
+    How Lettr manages bounced addresses and suppression lists.
+  </Card>
+  <Card title="How Email Delivery Works" icon="paper-plane" href="/knowledge-base/fundamentals/how-email-delivery-works">
+    Understand the full email delivery pipeline from send to inbox.
+  </Card>
+  <Card title="Webhook Event Types" icon="bell" href="/learn/webhooks/event-types">
+    Reference for all webhook events including email.bounced payloads.
+  </Card>
+</CardGroup>

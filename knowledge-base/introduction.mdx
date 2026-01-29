@@ -1,42 +1,85 @@
 ---
 title: Introduction
-description: "Guides, troubleshooting, and best practices"
+description: "Guides, troubleshooting, and best practices for email sending with Lettr"
 ---
 
 # Knowledge Base
 
-Find answers to common questions, troubleshooting guides, and best practices for using Lettr.
+Find answers to common questions, learn email fundamentals, troubleshoot issues, and follow best practices for sending email with Lettr.
 
 ## Popular Topics
 
 <CardGroup cols={2}>
-  <Card title="Delivery Issues" icon="triangle-exclamation" href="/knowledge-base/troubleshooting/delivery-issues">
-    Troubleshoot email delivery problems
+  <Card title="Deliverability Best Practices" icon="inbox" href="/knowledge-base/best-practices/deliverability">
+    Maximize inbox placement and maintain sender reputation
   </Card>
-  <Card title="Authentication" icon="lock" href="/knowledge-base/troubleshooting/authentication">
-    Fix API key and authentication issues
+  <Card title="Emails Landing in Spam" icon="shield-exclamation" href="/knowledge-base/troubleshooting/spam-placement">
+    Step-by-step diagnosis for spam folder issues
   </Card>
-  <Card title="Deliverability Tips" icon="inbox" href="/knowledge-base/best-practices/deliverability">
-    Improve your email deliverability
+  <Card title="Google & Yahoo Requirements" icon="envelope-circle-check" href="/knowledge-base/compliance/google-yahoo-requirements">
+    Meet the 2024 bulk sender requirements
   </Card>
-  <Card title="Security Best Practices" icon="shield" href="/knowledge-base/best-practices/security">
-    Secure your integration
+  <Card title="How Email Delivery Works" icon="diagram-project" href="/knowledge-base/fundamentals/how-email-delivery-works">
+    Understand the email delivery pipeline end to end
   </Card>
 </CardGroup>
 
 ## Browse by Category
 
-### Troubleshooting
+### Email Fundamentals
 
-- [Delivery Issues](/knowledge-base/troubleshooting/delivery-issues) - Why emails aren't being delivered
-- [Authentication](/knowledge-base/troubleshooting/authentication) - API key and auth problems
-- [Rate Limits](/knowledge-base/troubleshooting/rate-limits) - Understanding and handling rate limits
+Educational content explaining how email infrastructure works.
+
+- [How Email Delivery Works](/knowledge-base/fundamentals/how-email-delivery-works) — End-to-end overview of the email delivery pipeline
+- [Understanding SPF, DKIM, and DMARC](/knowledge-base/fundamentals/spf-dkim-dmarc) — How authentication protocols protect your domain
+- [Email Headers Explained](/knowledge-base/fundamentals/email-headers) — What common headers mean and how they affect delivery
+- [Bounce Codes Reference](/knowledge-base/fundamentals/bounce-codes-reference) — Comprehensive SMTP response code reference
+- [Understanding Suppression Lists](/knowledge-base/fundamentals/suppression-lists) — What suppression lists are and how they work
+- [Email Content Types](/knowledge-base/fundamentals/content-types) — HTML, plain text, and AMP email explained
+- [Subdomain vs Root Domain](/knowledge-base/fundamentals/subdomain-vs-root) — Choosing the right domain strategy for sending
 
 ### Best Practices
 
-- [Deliverability](/knowledge-base/best-practices/deliverability) - Maximize inbox placement
-- [Security](/knowledge-base/best-practices/security) - Protect your account and data
-- [Templates](/knowledge-base/best-practices/templates) - Design effective email templates
+Guidance for optimizing your email sending.
+
+- [Deliverability](/knowledge-base/best-practices/deliverability) — Maximize inbox placement
+- [Sending Reputation](/knowledge-base/best-practices/sending-reputation) — Build and protect your sender reputation
+- [List Hygiene](/knowledge-base/best-practices/list-hygiene) — Maintain healthy recipient lists
+- [Templates](/knowledge-base/best-practices/templates) — Design effective email templates
+- [Security](/knowledge-base/best-practices/security) — Protect your account and API keys
+- [Transactional vs Marketing](/knowledge-base/best-practices/transactional-vs-marketing) — Understand the differences and why separation matters
+
+### Compliance & Regulations
+
+Stay compliant with email regulations and provider requirements.
+
+- [Google & Yahoo Sender Requirements](/knowledge-base/compliance/google-yahoo-requirements) — 2024 bulk sender requirements
+- [CAN-SPAM Requirements](/knowledge-base/compliance/can-spam) — US commercial email law compliance
+- [GDPR and Email Sending](/knowledge-base/compliance/gdpr-email) — EU data protection and consent requirements
+- [Unsubscribe Best Practices](/knowledge-base/compliance/unsubscribe-best-practices) — Implementing effective unsubscribe mechanisms
+- [Data Privacy in Email Metadata](/knowledge-base/compliance/data-privacy-metadata) — Protecting sensitive information
+
+### Troubleshooting
+
+Diagnose and fix common issues.
+
+- [Delivery Issues](/knowledge-base/troubleshooting/delivery-issues) — Why emails aren't being delivered
+- [Emails Landing in Spam](/knowledge-base/troubleshooting/spam-placement) — Diagnose spam folder placement
+- [Bounce Diagnosis](/knowledge-base/troubleshooting/bounce-diagnosis) — Interpret bounce codes and take action
+- [Authentication Issues](/knowledge-base/troubleshooting/authentication) — API key and auth problems
+- [Rate Limits](/knowledge-base/troubleshooting/rate-limits) — Understanding and handling rate limits
+- [Domain Verification](/knowledge-base/troubleshooting/domain-verification) — Fix DNS and verification failures
+- [Tracking Accuracy](/knowledge-base/troubleshooting/tracking-accuracy) — Why open and click rates may be inaccurate
+
+### DNS Guides
+
+Step-by-step DNS configuration for specific providers.
+
+- [AWS Route 53](/knowledge-base/dns-guides/aws-route53)
+- [Cloudflare](/knowledge-base/dns-guides/cloudflare)
+- [GoDaddy](/knowledge-base/dns-guides/godaddy)
+- [Hetzner](/knowledge-base/dns-guides/hetzner)
+- [Vercel](/knowledge-base/dns-guides/vercel)
 
 ## Quick Answers
 
@@ -44,14 +87,20 @@ Find answers to common questions, troubleshooting guides, and best practices for
   <Accordion title="Why isn't my email being delivered?">
     Check your domain verification status, ensure the recipient isn't suppressed, and verify you're not hitting rate limits. See [Delivery Issues](/knowledge-base/troubleshooting/delivery-issues) for detailed troubleshooting.
   </Accordion>
+  <Accordion title="Why are my emails going to spam?">
+    Common causes include missing authentication (DKIM, DMARC), poor sender reputation, spam trigger words in content, or missing unsubscribe links. See [Emails Landing in Spam](/knowledge-base/troubleshooting/spam-placement) for a step-by-step diagnosis guide.
+  </Accordion>
   <Accordion title="How do I verify my domain?">
-    Add the DNS records shown in your dashboard, wait for propagation (15 min to 48 hours), then click Verify. See [Domains](/learn/domains/introduction) for details.
+    Add the DNS records shown in your dashboard (CNAME, DKIM, DMARC), wait for propagation, then click Verify. See [Domains](/learn/domains/introduction) for details or [Domain Verification](/knowledge-base/troubleshooting/domain-verification) if you're having issues.
   </Accordion>
-  <Accordion title="What's the API rate limit?">
-    Free: 10 req/sec, Pro: 100 req/sec, Enterprise: Custom. See [Rate Limits](/knowledge-base/troubleshooting/rate-limits).
+  <Accordion title="What are the API rate limits?">
+    Standard: 300 requests per 5 minutes. High-volume: 2,000 requests per 5 minutes. See [Rate Limits](/knowledge-base/troubleshooting/rate-limits) for details and handling strategies.
   </Accordion>
-  <Accordion title="How do I track email opens?">
-    Open tracking is enabled by default. View stats in the dashboard or via the API. See [Analytics](/learn/sending/analytics).
+  <Accordion title="Do I need an unsubscribe link?">
+    Marketing and promotional emails require an unsubscribe link by law (CAN-SPAM, GDPR). Since February 2024, Google and Yahoo also require one-click unsubscribe for bulk senders. See [Unsubscribe Best Practices](/knowledge-base/compliance/unsubscribe-best-practices).
+  </Accordion>
+  <Accordion title="Should I send from a subdomain or root domain?">
+    For most senders, a subdomain (like `mail.yourdomain.com`) is recommended. It provides reputation isolation so problems with one email type don't affect others. See [Subdomain vs Root Domain](/knowledge-base/fundamentals/subdomain-vs-root).
   </Accordion>
 </AccordionGroup>
 
@@ -64,8 +113,7 @@ Find answers to common questions, troubleshooting guides, and best practices for
   <Card title="API Reference" icon="code" href="/api-reference/introduction">
     Technical API documentation
   </Card>
-  <Card title="Contact Support" icon="headset" href="mailto:support@lettr.dev">
+  <Card title="Contact Support" icon="headset" href="mailto:support@lettr.com">
     Get help from our team
   </Card>
 </CardGroup>
-

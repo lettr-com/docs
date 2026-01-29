@@ -1,0 +1,148 @@
+---
+title: "Subdomain vs Root Domain for Sending"
+description: "Trade-offs of sending from a subdomain versus the root domain and how each affects reputation"
+---
+
+## The Question
+
+When setting up your sending domain in Lettr, you face a fundamental choice: should you send from your root domain (`example.com`) or a subdomain (`mail.example.com`)?
+
+Both approaches are fully supported. Lettr lets you add any domain or subdomain, verify it via CNAME, DKIM, and DMARC records, and track its status as **pending**, **approved**, or **blocked**. The right choice depends on your sending volume, email types, and risk tolerance.
+
+---
+
+## Root Domain Sending
+
+Sending directly from `example.com` keeps things simple and immediately recognizable.
+
+### Pros
+
+- **Simpler setup** — fewer DNS records to manage, one domain to monitor.
+- **Brand recognition** — recipients see your exact domain in the From address.
+- **Recipient trust** — no unfamiliar subdomain that could look suspicious to non-technical recipients.
+
+### Cons
+
+- **Shared reputation risk** — if your email reputation suffers, it affects your entire domain including your website and corporate email.
+- **CNAME conflicts at root** — many DNS providers do not allow a CNAME record at the zone apex alongside MX, A, or other records.
+- **No segmentation** — all email types share a single reputation.
+
+<Note>
+Root domain sending is best for established brands with careful, low-volume sending practices and a strong existing domain reputation.
+</Note>
+
+---
+
+## Subdomain Sending
+
+Sending from a subdomain like `mail.example.com` gives you separation between your email streams and the rest of your domain.
+
+### Pros
+
+- **Reputation isolation** — deliverability problems on the subdomain do not drag down your root domain reputation.
+- **Stream separation** — you can create dedicated subdomains for each email type (transactional, marketing, notifications).
+- **Avoids CNAME conflicts** — subdomains have no restrictions on CNAME coexistence with root-level records.
+
+### Cons
+
+- **Less immediate brand recognition** — recipients see `mail.example.com` rather than `example.com`.
+- **More DNS management** — each subdomain requires its own set of verification records.
+- **No inherited reputation** — a new subdomain starts with a neutral reputation and must be warmed up.
+
+<Note>
+Subdomain sending is best for most senders, especially those sending both marketing and transactional email.
+</Note>
+
+---
+
+## Reputation Isolation Strategy
+
+A common best practice is to separate email streams onto dedicated subdomains so that reputation damage in one stream does not affect others.
+
+| Subdomain             | Purpose                        | Example Content                  |
+| --------------------- | ------------------------------ | -------------------------------- |
+| `mail.example.com`    | Transactional emails           | Receipts, password resets        |
+| `news.example.com`    | Newsletters and marketing      | Promotions, product updates      |
+| `alerts.example.com`  | System notifications           | Monitoring alerts, status reports |
+
+Each subdomain builds and maintains its own independent reputation with mailbox providers. If a marketing campaign triggers spam complaints on `news.example.com`, your transactional delivery on `mail.example.com` remains unaffected.
+
+<Warning>
+Without this separation, a single bad campaign can degrade deliverability for your most critical emails like password resets and order confirmations.
+</Warning>
+
+---
+
+## DMARC Alignment Considerations
+
+DMARC alignment checks that the domain in the **From** header matches the domain used for DKIM signing.
+
+- **Strict alignment** requires an exact domain match. A message from `mail.example.com` must be signed with a `mail.example.com` DKIM key.
+- **Relaxed alignment** allows subdomains to pass under the root domain's DMARC policy. A message from `mail.example.com` signed with `example.com` will pass.
+
+<Tip>
+Set your DMARC record on the root domain with relaxed alignment and an appropriate subdomain policy (`sp=none` or `sp=quarantine`) so all subdomains are covered without needing individual DMARC records on each one.
+</Tip>
+
+---
+
+## DNS Considerations
+
+The most common technical reason to choose a subdomain is the **CNAME conflict at the zone apex**.
+
+DNS standards do not allow a CNAME record to coexist with other record types at the same name. Because your root domain typically has A, AAAA, MX, and TXT records, you cannot add a CNAME there without removing them.
+
+Subdomains avoid this entirely — you can freely add CNAME records to `mail.example.com` without affecting any records on `example.com`.
+
+<Note>
+Some DNS providers like Cloudflare support **CNAME flattening**, which resolves the CNAME at the apex and returns an A record instead. This can work around the limitation, but not all providers offer it.
+</Note>
+
+---
+
+## Common Strategies
+
+<AccordionGroup>
+  <Accordion title="Small Business">
+    Using your root domain is fine if you send low volumes, primarily transactional email, and maintain good list hygiene. The simpler setup outweighs the isolation benefits at this scale.
+  </Accordion>
+
+  <Accordion title="Growing SaaS">
+    Use a subdomain like `mail.example.com` for transactional and product emails. Keep your root domain for corporate email (employee inboxes). This protects your team's day-to-day communication from any deliverability issues caused by product-generated email.
+  </Accordion>
+
+  <Accordion title="High-Volume Sender">
+    Create separate subdomains for each email stream — transactional, marketing, and notifications at minimum. Warm up each subdomain independently and monitor reputation per stream. This gives you maximum control and isolation.
+  </Accordion>
+
+  <Accordion title="Enterprise">
+    Assign dedicated subdomains per team or product line with a centralized DMARC policy on the root domain using relaxed alignment. This lets each team manage their own sending reputation while maintaining organization-wide authentication standards.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Recommendation
+
+<Tip>
+For most Lettr users, start with a subdomain like `mail.yourdomain.com` for transactional email. This gives you reputation isolation from day one and avoids DNS conflicts at your root domain. You can always add more subdomains later as your sending needs grow.
+</Tip>
+
+---
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Domains Overview" icon="globe" href="/learn/domains/introduction">
+    Learn how domains work in Lettr and how to add your first one.
+  </Card>
+  <Card title="Sending Domains" icon="paper-plane" href="/learn/domains/sending-domains">
+    Configure and verify a domain for sending email.
+  </Card>
+  <Card title="DMARC" icon="shield-check" href="/learn/domains/dmarc">
+    Set up DMARC authentication for your domain.
+  </Card>
+  <Card title="Sending Reputation" icon="chart-line" href="/knowledge-base/best-practices/sending-reputation">
+    Best practices for building and maintaining a strong sender reputation.
+  </Card>
+</CardGroup>
