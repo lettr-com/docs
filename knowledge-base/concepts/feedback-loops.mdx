@@ -1,0 +1,186 @@
+---
+title: "What Are Feedback Loops?"
+description: "How mailbox providers report spam complaints back to senders and how Lettr processes feedback loop data to protect your reputation"
+---
+
+A feedback loop (FBL) is a mechanism that mailbox providers use to notify senders when a recipient marks their email as spam. When a user clicks "Report Spam" or "Mark as Junk" in their email client, the mailbox provider sends a complaint report back to the sender — or in most cases, to the sender's email service provider.
+
+Feedback loops are one of the most important signals in email deliverability. They tell you directly that a recipient does not want your emails, and they give you the opportunity to stop sending to that person before further complaints damage your reputation.
+
+---
+
+## How Feedback Loops Work
+
+<Steps>
+  <Step title="Recipient Reports Spam">
+    A recipient clicks "Report Spam," "Mark as Junk," or a similar button in their email client (Gmail, Outlook, Yahoo Mail, Apple Mail). This registers a complaint with the mailbox provider.
+  </Step>
+
+  <Step title="Mailbox Provider Generates a Report">
+    The mailbox provider creates a complaint report in a standardized format — typically ARF (Abuse Reporting Format, defined in RFC 5965). The report includes the original message headers (or a redacted version) and identifies the complaint type.
+  </Step>
+
+  <Step title="Report Sent to the Sender's ESP">
+    The mailbox provider sends the ARF report to the email address registered in their feedback loop program. For emails sent through Lettr, these reports are sent to Lettr's feedback loop processing infrastructure.
+  </Step>
+
+  <Step title="ESP Processes the Complaint">
+    Lettr receives the complaint, identifies the original message and recipient, and records the event. The recipient is automatically added to the suppression list to prevent further sends. The complaint event is fired to your configured webhooks.
+  </Step>
+
+  <Step title="Sender Takes Action">
+    Your application receives the complaint webhook and can take additional action — updating the recipient's status in your database, triggering an internal review, or adjusting your sending practices if complaint rates are elevated.
+  </Step>
+</Steps>
+
+---
+
+## Which Providers Offer Feedback Loops
+
+Not all mailbox providers operate feedback loop programs, and those that do have varying levels of detail in their reports.
+
+| Provider | FBL Available | Format | Notes |
+| -------- | ------------- | ------ | ----- |
+| **Yahoo / AOL** | Yes | ARF | One of the original FBL programs. Reports include full message headers. |
+| **Outlook.com / Hotmail** | Yes | ARF via JMRP/SNDS | Microsoft's Junk Mail Reporting Program. Also offers Smart Network Data Services (SNDS) for IP-level reputation data. |
+| **Gmail** | Partial | Not traditional ARF | Gmail does not offer a traditional FBL. Instead, it requires senders to implement a `List-Unsubscribe` header and uses aggregate reputation data via Google Postmaster Tools. |
+| **Apple Mail / iCloud** | Limited | Varies | Apple processes complaints but does not offer a public FBL enrollment program. |
+| **Corporate / Enterprise** | Varies | Varies | Many enterprise email systems (Exchange, Google Workspace) have internal complaint mechanisms that do not generate external FBL reports. |
+
+<Note>
+  Gmail's approach is different from traditional feedback loops. Instead of sending individual complaint reports, Gmail expects senders to monitor aggregate data through [Google Postmaster Tools](https://postmaster.google.com/) and respond to reputation changes at the domain or IP level.
+</Note>
+
+---
+
+## How Lettr Handles Feedback Loops
+
+Lettr is enrolled in feedback loop programs with major mailbox providers. When a complaint is received, Lettr processes it automatically.
+
+### Automatic Suppression
+
+When a recipient files a spam complaint, Lettr immediately adds their address to your account's suppression list. This prevents your application from sending further emails to that address, even if your application explicitly requests it.
+
+This automatic suppression is critical for protecting your sending reputation. Continuing to send to recipients who have complained is one of the fastest ways to get your domain or IP blocklisted.
+
+### Webhook Events
+
+Lettr fires a `email.complained` webhook event for every complaint received. Your application can listen for this event to update its own records:
+
+```javascript
+app.post('/webhooks/lettr', (req, res) => {
+  const event = req.body;
+
+  if (event.type === 'email.complained') {
+    const { to, complaint_type, timestamp } = event.data;
+
+    // Update your database
+    markAsComplained(to, timestamp);
+
+    // Optional: trigger internal review if complaints spike
+    checkComplaintRate();
+  }
+
+  res.sendStatus(200);
+});
+```
+
+### Dashboard Visibility
+
+Complaint events are visible in your Lettr dashboard under email event history. You can filter by complaint events to see which messages generated complaints and identify patterns.
+
+---
+
+## Complaint Rate and Reputation
+
+Your complaint rate — the percentage of delivered emails that generate spam complaints — is one of the most heavily weighted signals in sender reputation scoring.
+
+### Benchmarks
+
+| Complaint Rate | Assessment | Action |
+| -------------- | ---------- | ------ |
+| < 0.1% | Healthy | Continue current practices |
+| 0.1% – 0.3% | Warning | Review recent sends, check content and targeting |
+| 0.3% – 0.5% | Dangerous | Stop non-essential sends, investigate root cause |
+| > 0.5% | Critical | Sending reputation is being actively damaged |
+
+<Warning>
+  Google requires bulk senders to maintain a spam complaint rate below 0.3%, and recommends staying below 0.1%. Exceeding this threshold can result in emails being sent to spam or rejected entirely. See [Google & Yahoo Sender Requirements](/knowledge-base/compliance/google-yahoo-requirements).
+</Warning>
+
+### Why Complaints Matter More Than Unsubscribes
+
+An unsubscribe is a neutral signal — the recipient used the proper mechanism to stop receiving emails. A complaint is a negative signal — the recipient told their mailbox provider that your email is spam. From a reputation perspective, complaints are far more damaging than unsubscribes.
+
+This is why making it easy to unsubscribe is a deliverability strategy, not a subscriber retention risk. Every recipient who unsubscribes instead of complaining is protecting your reputation.
+
+---
+
+## Reducing Complaint Rates
+
+<AccordionGroup>
+  <Accordion title="Make unsubscribing easier than complaining">
+    If the unsubscribe link is buried at the bottom of your email in small gray text, recipients will use the more visible "Report Spam" button instead. Place your unsubscribe link prominently. Implement one-click unsubscribe via the `List-Unsubscribe` header — Lettr supports this automatically.
+  </Accordion>
+
+  <Accordion title="Only send to recipients who opted in">
+    The most common cause of high complaint rates is sending to people who did not explicitly agree to receive your emails. Never add recipients without their consent. Use double opt-in to confirm that the address is valid and the owner wants your messages.
+  </Accordion>
+
+  <Accordion title="Set expectations at sign-up">
+    Tell subscribers what kind of emails they will receive and how often. If someone signs up expecting a single welcome email and receives weekly promotions, they will complain. Align your sending behavior with what you promised.
+  </Accordion>
+
+  <Accordion title="Segment and target carefully">
+    Sending irrelevant content increases complaint rates. Segment your audience and send content that matches their interests and engagement level. A user who signed up for product updates does not necessarily want marketing promotions.
+  </Accordion>
+
+  <Accordion title="Honor unsubscribe requests immediately">
+    Process unsubscribe requests in real time. If a recipient unsubscribes and receives another email the next day because of processing delays, they will often file a spam complaint. Lettr processes `List-Unsubscribe` requests immediately.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## The ARF Format
+
+For technical readers, the Abuse Reporting Format (ARF) defined in RFC 5965 is the standard format for feedback loop reports. An ARF message is a MIME multipart message containing three parts:
+
+1. **Human-readable description** — A plain text summary of the complaint
+2. **Machine-readable report** — Structured fields including `Feedback-Type`, `User-Agent`, `Version`, and `Arrival-Date`
+3. **Original message** — The original email (or its headers) that was reported
+
+Common `Feedback-Type` values:
+
+| Type | Meaning |
+| ---- | ------- |
+| `abuse` | Recipient reported the message as spam |
+| `fraud` | Message is suspected phishing or fraud |
+| `not-spam` | Recipient indicated the message is not spam (rare) |
+| `other` | Other complaint type |
+
+<Info>
+  You do not need to parse ARF reports yourself. Lettr processes all incoming feedback loop reports and translates them into structured webhook events and dashboard data.
+</Info>
+
+---
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="What Is Email Deliverability?" icon="inbox" href="/knowledge-base/concepts/email-deliverability">
+    How feedback loops fit into the broader deliverability picture.
+  </Card>
+
+  <Card title="Sending Reputation" icon="chart-line" href="/knowledge-base/best-practices/sending-reputation">
+    How complaint rates affect your sender reputation and what to do about it.
+  </Card>
+
+  <Card title="Unsubscribe Best Practices" icon="bell-slash" href="/knowledge-base/compliance/unsubscribe-best-practices">
+    Implement unsubscribe mechanisms that reduce complaints and protect reputation.
+  </Card>
+
+  <Card title="Suppression Lists" icon="ban" href="/knowledge-base/fundamentals/suppression-lists">
+    How Lettr manages suppressed addresses from bounces and complaints.
+  </Card>
+</CardGroup>
