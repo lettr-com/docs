@@ -247,6 +247,12 @@
               "knowledge-base/troubleshooting/domain-verification",
               "knowledge-base/troubleshooting/tracking-accuracy"
             ]
+          },
+          {
+            "group": "Glossary",
+            "pages": [
+              "knowledge-base/glossary/email-glossary"
+            ]
           }
         ]
       }
