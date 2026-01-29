@@ -1,0 +1,200 @@
+---
+title: "What Is Transactional Email?"
+description: "Learn what transactional email is, how it differs from marketing email, and why it requires a different approach to sending and deliverability"
+---
+
+Transactional email is email sent to an individual recipient in response to a specific action they took or an event that directly affects them. Password resets, order confirmations, shipping notifications, and login alerts are all transactional emails. The recipient expects them, often needs them immediately, and did not need to subscribe to receive them.
+
+Transactional email is the backbone of every modern application. When it fails, users cannot log in, do not know their order shipped, and lose trust in your product.
+
+---
+
+## What Makes Email Transactional
+
+An email is transactional when it meets two criteria:
+
+1. **Triggered by a user action or system event** — The recipient did something (placed an order, requested a password reset, logged in from a new device) or something happened to their account (payment failed, subscription renewed).
+2. **Contains information the recipient expects or needs** — The email delivers information directly related to that action or event. It is not promotional in nature.
+
+The key distinction is who initiated the interaction. With transactional email, the recipient triggered it. With marketing email, the sender initiated it.
+
+---
+
+## Common Types of Transactional Email
+
+| Category | Examples |
+| -------- | -------- |
+| **Authentication** | Password reset links, two-factor authentication codes, magic login links |
+| **Account activity** | Welcome confirmation, email verification, account settings changes, login from new device alerts |
+| **Commerce** | Order confirmations, payment receipts, shipping notifications, refund confirmations |
+| **Billing** | Invoice emails, payment failure notices, subscription renewal confirmations, plan change confirmations |
+| **Notifications** | Comment replies, mentions, shared document alerts, collaboration invitations |
+| **System alerts** | Usage limit warnings, security alerts, scheduled maintenance notices |
+
+---
+
+## Transactional vs Marketing Email
+
+| | Transactional | Marketing |
+| --- | --- | --- |
+| **Initiated by** | Recipient's action or a system event | Sender's decision |
+| **Timing** | Immediate or near-immediate | Scheduled or batched |
+| **Consent** | Implied by the user's action | Explicit opt-in required |
+| **Unsubscribe link** | Generally not required | Required by law |
+| **Typical open rate** | 60–80% | 15–25% |
+| **Recipient expectation** | Expected and often urgent | Optional and interruptive |
+| **Volume pattern** | Steady, driven by user activity | Spiky, driven by campaigns |
+
+<Note>
+  Some emails fall into a gray area. Onboarding sequences, review requests, and order confirmations with product recommendations can blur the line. When in doubt, treat the email as marketing — include an unsubscribe link and ensure you have consent. See [Transactional vs Marketing Email](/knowledge-base/best-practices/transactional-vs-marketing) for a detailed guide on handling gray areas.
+</Note>
+
+---
+
+## Why Transactional Email Needs Special Treatment
+
+Transactional email has unique requirements that make it fundamentally different from marketing email in how it should be sent, managed, and monitored.
+
+### Speed Is Critical
+
+A password reset link that arrives five minutes late is a failed product experience. A two-factor authentication code that takes thirty seconds is barely acceptable. Transactional emails must be sent and delivered as close to instantly as possible.
+
+This means:
+
+- Sending through a dedicated API rather than batching through a queue
+- Using infrastructure optimized for low-latency delivery
+- Not throttling transactional sends the way you might throttle marketing campaigns
+
+### Deliverability Cannot Fail
+
+Marketing emails that land in spam are a missed opportunity. Transactional emails that land in spam are a product outage. If a user cannot receive their password reset email, they are locked out of your product entirely.
+
+This is why transactional and marketing email should use separate sending domains. Marketing reputation problems should never affect transactional delivery.
+
+### Content Must Be Focused
+
+Transactional emails should contain exactly what the recipient needs — the reset link, the order details, the shipping tracking number — and nothing else. Adding promotional content to transactional emails risks reclassification by mailbox providers and regulators.
+
+<Warning>
+  Adding a "You might also like..." section to an order confirmation can cause mailbox providers to treat the entire email as marketing, applying stricter filtering. It can also create legal complications under GDPR and similar regulations. Keep transactional emails focused on their purpose.
+</Warning>
+
+---
+
+## How to Send Transactional Email with Lettr
+
+### Via the API
+
+The most common approach is sending transactional email through Lettr's REST API, triggered by your application logic:
+
+```javascript
+const response = await fetch('https://app.lettr.com/api/emails', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer your-api-key',
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    from: 'no-reply@mail.yourdomain.com',
+    to: 'user@example.com',
+    subject: 'Reset your password',
+    template_id: 'tmpl_password_reset',
+    merge_tags: {
+      reset_link: 'https://yourdomain.com/reset?token=abc123',
+      expiry_minutes: '30',
+    },
+  }),
+});
+```
+
+### Via SMTP
+
+If your application sends email through SMTP (common with legacy systems and frameworks like Laravel, Rails, or Django), Lettr supports SMTP relay:
+
+```
+Host: smtp.lettr.com
+Port: 587
+Username: your-api-key
+Password: your-api-key
+Encryption: STARTTLS
+```
+
+### Using Templates
+
+Lettr's template system lets you design your transactional emails once and send them with dynamic data via merge tags. This keeps your email content out of your application code and allows non-developers to update email designs without deploying code changes.
+
+See [Templates](/learn/templates/introduction) for the full guide.
+
+---
+
+## Best Practices for Transactional Email
+
+<AccordionGroup>
+  <Accordion title="Use a dedicated subdomain for transactional email">
+    Send transactional email from a subdomain like `mail.yourdomain.com` rather than your root domain. This isolates transactional reputation from marketing reputation and from your website's domain reputation. If you also send marketing email, use a separate subdomain like `campaigns.yourdomain.com`.
+  </Accordion>
+
+  <Accordion title="Send immediately, never batch">
+    Transactional emails are time-sensitive. Send each one as soon as the triggering event occurs. Do not queue transactional emails for batch processing — a password reset link that arrives an hour late is useless.
+  </Accordion>
+
+  <Accordion title="Keep the content minimal and purposeful">
+    A password reset email needs the reset link, an expiry notice, and a note about what to do if the user didn't request it. It does not need your company's full header, a product announcement, or social media links. Every extra element adds rendering time and dilutes the purpose.
+  </Accordion>
+
+  <Accordion title="Include a plain text version">
+    Always provide a plain text alternative alongside your HTML email. Some email clients render plain text only, and spam filters view HTML-only emails with more suspicion. Lettr's template system generates plain text versions automatically.
+  </Accordion>
+
+  <Accordion title="Monitor delivery metrics separately">
+    Track transactional email metrics independently from marketing email. Transactional email should maintain open rates above 50% and bounce rates below 1%. If metrics deviate, investigate immediately — it likely indicates a delivery or authentication problem.
+  </Accordion>
+
+  <Accordion title="Handle failures in your application">
+    Implement webhook handlers that respond to delivery failures. If a password reset email bounces, your application should surface an alternative recovery flow. If a 2FA code is deferred, your application should allow the user to request a new one.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Common Mistakes
+
+<AccordionGroup>
+  <Accordion title="Treating transactional email as an afterthought">
+    Many teams invest heavily in marketing email campaigns while treating transactional email as a simple utility. In reality, transactional email is a product feature. When it fails, users experience a product failure. Invest in monitoring, testing, and reliability for transactional email with the same rigor you apply to any critical system.
+  </Accordion>
+
+  <Accordion title="Sending transactional and marketing email from the same domain">
+    This is the most common and most damaging mistake. A marketing campaign that generates spam complaints will drag down the reputation of your transactional sending domain, causing password resets and order confirmations to land in spam. Always use separate subdomains.
+  </Accordion>
+
+  <Accordion title="Not setting up authentication">
+    Transactional email without proper SPF, DKIM, and DMARC authentication is likely to be filtered or rejected by major mailbox providers. Authentication is not optional — it is the foundation of deliverability.
+  </Accordion>
+
+  <Accordion title="Including promotional content in transactional emails">
+    Adding product recommendations, upsells, or promotional banners to transactional emails risks reclassification by mailbox providers and violates regulations in some jurisdictions. Keep transactional emails focused on the information the recipient needs.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Transactional vs Marketing Email" icon="arrows-left-right" href="/knowledge-base/best-practices/transactional-vs-marketing">
+    Detailed comparison and guidance on separating email streams.
+  </Card>
+
+  <Card title="What Is Email Deliverability?" icon="inbox" href="/knowledge-base/concepts/email-deliverability">
+    Understand the factors that determine whether your emails reach the inbox.
+  </Card>
+
+  <Card title="Sending with Lettr" icon="paper-plane" href="/learn/sending/introduction">
+    Get started sending transactional email through the Lettr API.
+  </Card>
+
+  <Card title="Templates" icon="file-code" href="/learn/templates/introduction">
+    Design and manage reusable email templates for your transactional emails.
+  </Card>
+</CardGroup>

@@ -204,6 +204,16 @@
             ]
           },
           {
+            "group": "Concepts",
+            "pages": [
+              "knowledge-base/concepts/email-deliverability",
+              "knowledge-base/concepts/transactional-email",
+              "knowledge-base/concepts/feedback-loops",
+              "knowledge-base/concepts/email-service-provider",
+              "knowledge-base/concepts/dedicated-vs-shared-ips"
+            ]
+          },
+          {
             "group": "Email Fundamentals",
             "pages": [
               "knowledge-base/fundamentals/how-email-delivery-works",
@@ -212,7 +222,12 @@
               "knowledge-base/fundamentals/bounce-codes-reference",
               "knowledge-base/fundamentals/suppression-lists",
               "knowledge-base/fundamentals/content-types",
-              "knowledge-base/fundamentals/subdomain-vs-root"
+              "knowledge-base/fundamentals/subdomain-vs-root",
+              "knowledge-base/fundamentals/smtp-protocol-basics",
+              "knowledge-base/fundamentals/email-address-anatomy",
+              "knowledge-base/fundamentals/bimi",
+              "knowledge-base/fundamentals/custom-return-path",
+              "knowledge-base/fundamentals/email-rendering-clients"
             ]
           },
           {

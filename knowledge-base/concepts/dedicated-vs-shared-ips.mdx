@@ -1,0 +1,211 @@
+---
+title: "Dedicated vs Shared IPs"
+description: "Understand the differences between dedicated and shared IP addresses for email sending, when each is appropriate, and how IP warm-up works"
+---
+
+When you send email through an ESP like Lettr, your messages are transmitted from an IP address that mailbox providers use to evaluate your sender reputation. That IP address is either **shared** with other senders on the platform or **dedicated** exclusively to your account.
+
+This choice affects your deliverability, your control over reputation, and how much operational effort is required on your part. Neither option is universally better — the right choice depends on your sending volume, patterns, and tolerance for management overhead.
+
+---
+
+## How IP Reputation Works
+
+Every IP address that sends email has a reputation score maintained by mailbox providers. This reputation is built over time based on the sending behavior observed from that IP:
+
+- **Bounce rates** — How often emails from this IP are sent to invalid addresses
+- **Complaint rates** — How often recipients mark emails from this IP as spam
+- **Volume consistency** — Whether sending patterns are predictable or erratic
+- **Spam trap hits** — Whether emails from this IP are sent to known spam trap addresses
+- **Engagement signals** — Whether recipients open, click, and interact with emails from this IP
+
+Mailbox providers use this reputation as a major factor in filtering decisions. A high-reputation IP gets its messages delivered to the inbox. A low-reputation IP gets its messages sent to spam or rejected outright.
+
+---
+
+## Shared IPs
+
+With shared IPs, your emails are sent from IP addresses that are also used by other senders on the same ESP. Your reputation is pooled with theirs.
+
+### How Shared IPs Work
+
+The ESP manages a pool of IP addresses and distributes sending across them. Multiple customers send email from the same IPs. The reputation of those IPs reflects the aggregate behavior of all senders using them.
+
+### Advantages
+
+| Advantage | Detail |
+| --------- | ------ |
+| **No warm-up required** | Shared IPs already have established reputation from ongoing use by multiple senders. You can start sending immediately. |
+| **Lower cost** | Shared IPs are included in standard pricing. No additional fees. |
+| **No maintenance** | The ESP manages the IP pool, monitors reputation, and removes bad actors. You do not need to manage IP health. |
+| **Works at any volume** | Suitable for senders of all sizes, from a few hundred to tens of thousands of emails per month. |
+
+### Disadvantages
+
+| Disadvantage | Detail |
+| ------------ | ------ |
+| **Shared reputation risk** | If another sender on the same IP engages in poor practices (sending to spam traps, high complaint rates), their behavior can affect your deliverability. |
+| **Less control** | You cannot control the behavior of other senders sharing your IPs. You depend on the ESP to enforce quality standards. |
+| **Reputation not portable** | The reputation belongs to the IP, not to you. If you switch ESPs, you start over on different IPs. |
+
+<Note>
+  Reputable ESPs mitigate shared IP risk by enforcing strict sending policies, monitoring for abuse, and quickly removing bad actors from shared pools. The shared IP risk is real but manageable with a well-run ESP.
+</Note>
+
+---
+
+## Dedicated IPs
+
+With a dedicated IP, your emails are sent from an IP address used exclusively by your account. Your reputation is entirely your own — built by your sending behavior alone.
+
+### How Dedicated IPs Work
+
+The ESP assigns one or more IP addresses to your account. All email from your account is sent from those IPs and no one else's email uses them. Your reputation on those IPs is determined solely by your sending practices.
+
+### Advantages
+
+| Advantage | Detail |
+| --------- | ------ |
+| **Full reputation control** | Your deliverability depends only on your own behavior. No other sender can damage your reputation. |
+| **Reputation isolation** | Poor practices by other senders on the ESP do not affect you. |
+| **Predictable deliverability** | Your inbox placement is a direct result of your sending quality, making troubleshooting straightforward. |
+| **Reputation portability (domain-level)** | While IP reputation does not transfer between ESPs, domain reputation — which is increasingly important — does travel with you. |
+
+### Disadvantages
+
+| Disadvantage | Detail |
+| ------------ | ------ |
+| **Requires warm-up** | A new dedicated IP has no reputation. You must gradually build it by slowly increasing volume over several weeks. Skipping warm-up will result in spam filtering and rejections. |
+| **Requires sufficient volume** | Dedicated IPs need consistent daily volume to maintain reputation. If you send too infrequently, mailbox providers may treat the IP as inactive or suspicious. |
+| **Higher cost** | Dedicated IPs are typically an add-on with additional fees. |
+| **Your responsibility** | If your sending practices cause reputation damage, there is no shared pool to dilute the impact. The damage is concentrated on your IP. |
+
+<Warning>
+  A dedicated IP is not inherently better for deliverability. If your sending volume is low or inconsistent, a dedicated IP will perform worse than a well-managed shared pool because it cannot maintain the steady sending patterns that mailbox providers expect.
+</Warning>
+
+---
+
+## When to Use Each Option
+
+### Use Shared IPs When
+
+- You send fewer than **50,000 emails per month**
+- Your sending volume fluctuates significantly (seasonal business, event-driven spikes)
+- You are starting out and do not have the volume to sustain a dedicated IP
+- You want to start sending immediately without a warm-up period
+- You are a small to mid-size sender who wants the ESP to manage IP reputation
+
+### Use Dedicated IPs When
+
+- You consistently send more than **100,000 emails per month**
+- You need full control over your sender reputation
+- You operate in a regulated industry where reputation isolation is required
+- You have the resources to manage IP warm-up and monitor reputation metrics
+- Your deliverability requirements are strict (financial services, healthcare notifications)
+
+### The Gray Zone: 50,000–100,000 Emails Per Month
+
+Senders in this range can go either way. Consider a dedicated IP if:
+
+- Your content or audience puts you at higher risk for complaints (e-commerce promotions, user-generated content notifications)
+- You have experienced deliverability issues on shared IPs that you suspect are caused by other senders
+- You want the ability to directly correlate your sending practices with your deliverability outcomes
+
+Otherwise, a well-managed shared IP pool is likely sufficient and simpler to maintain.
+
+---
+
+## IP Warm-Up
+
+If you move to a dedicated IP, you must warm it up before sending at full volume. A new IP has no reputation — mailbox providers do not know whether to trust it. Sending thousands of emails from an unknown IP will trigger spam filtering.
+
+### Warm-Up Schedule
+
+A typical warm-up schedule gradually increases daily volume over 4–6 weeks:
+
+| Week | Daily Volume | Strategy |
+| ---- | ------------ | -------- |
+| 1 | 50–200 | Send only to your most engaged recipients (recent openers and clickers) |
+| 2 | 200–1,000 | Continue with engaged recipients, expand to recently active users |
+| 3 | 1,000–5,000 | Broaden audience, monitor metrics closely |
+| 4 | 5,000–20,000 | Continue expanding if metrics remain healthy |
+| 5 | 20,000–50,000 | Approach target volume |
+| 6+ | Full volume | Maintain consistent daily sending |
+
+### Warm-Up Rules
+
+<AccordionGroup>
+  <Accordion title="Start with your most engaged recipients">
+    During warm-up, send to recipients who have recently opened or clicked your emails. Their positive engagement sends strong trust signals to mailbox providers. Save less-engaged segments for later in the warm-up process.
+  </Accordion>
+
+  <Accordion title="Send every day without gaps">
+    Consistency matters during warm-up. Send every single day, even weekends. Gaps in sending can reset the reputation-building process or make the IP look inactive. If you do not have enough daily volume to fill the schedule naturally, consider supplementing with engaged segments from your list.
+  </Accordion>
+
+  <Accordion title="Monitor bounce and complaint rates at each stage">
+    Watch your bounce rate (should stay below 2%) and complaint rate (should stay below 0.1%) at every volume step. If either metric spikes, pause volume increases and investigate before continuing. Pushing through bad metrics will damage the IP's reputation.
+  </Accordion>
+
+  <Accordion title="Do not skip steps">
+    It is tempting to accelerate warm-up to reach full volume faster. Resist this. Mailbox providers need time to observe consistent, positive behavior. Jumping from 500 to 50,000 emails per day will trigger throttling and filtering that can take weeks to recover from.
+  </Accordion>
+
+  <Accordion title="Separate warm-up by mailbox provider">
+    Gmail, Outlook, and Yahoo each maintain independent reputation data. Your IP may warm up faster with one provider than another. If you see filtering from a specific provider, reduce volume to that provider's domains while continuing normal volume to others.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Domain Reputation vs IP Reputation
+
+IP reputation was historically the dominant factor in filtering decisions, but the industry has shifted significantly toward **domain reputation**. Major mailbox providers — especially Gmail — now weight domain reputation more heavily than IP reputation.
+
+| Factor | IP Reputation | Domain Reputation |
+| ------ | ------------- | ----------------- |
+| **Tied to** | The sending IP address | Your sending domain (From address) |
+| **Portable** | No — changes when you switch IPs or ESPs | Yes — follows your domain everywhere |
+| **Influenced by** | All senders on that IP (shared) or only you (dedicated) | Only you, regardless of IP |
+| **Trend** | Decreasing in weight | Increasing in weight |
+
+<Tip>
+  Regardless of whether you use shared or dedicated IPs, invest in your domain reputation. Authenticate properly (SPF, DKIM, DMARC), maintain list hygiene, and monitor engagement metrics. Domain reputation travels with you across IPs and ESPs.
+</Tip>
+
+---
+
+## Multiple Dedicated IPs
+
+High-volume senders sometimes use multiple dedicated IPs to separate different email streams:
+
+| IP | Purpose | Rationale |
+| --- | ------- | --------- |
+| IP 1 | Transactional email | Isolates critical emails (password resets, receipts) from marketing reputation |
+| IP 2 | Marketing email | Marketing complaints and lower engagement do not affect transactional delivery |
+| IP 3 | Re-engagement campaigns | Higher-risk sends to lapsed subscribers are isolated from both streams |
+
+This approach provides maximum reputation isolation but adds operational complexity. Each IP needs its own warm-up, monitoring, and volume management. Only pursue this if your volume and deliverability requirements justify the overhead.
+
+---
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="What Is Email Deliverability?" icon="inbox" href="/knowledge-base/concepts/email-deliverability">
+    How IP and domain reputation fit into the broader deliverability picture.
+  </Card>
+
+  <Card title="Sending Reputation" icon="chart-line" href="/knowledge-base/best-practices/sending-reputation">
+    Build and protect your sender reputation across IPs and domains.
+  </Card>
+
+  <Card title="Deliverability Best Practices" icon="envelope-open" href="/knowledge-base/best-practices/deliverability">
+    Practical strategies for maximizing inbox placement including warm-up guidance.
+  </Card>
+
+  <Card title="Subdomain vs Root Domain" icon="sitemap" href="/knowledge-base/fundamentals/subdomain-vs-root">
+    Domain strategy for isolating email streams and protecting reputation.
+  </Card>
+</CardGroup>

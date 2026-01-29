@@ -1,0 +1,192 @@
+---
+title: "What Is an Email Service Provider (ESP)?"
+description: "Understand the role of an email service provider, how it differs from an ISP, and why sending email through a dedicated provider like Lettr is better than sending directly from your server"
+---
+
+An email service provider (ESP) is a platform that sends email on your behalf. Instead of running your own mail server and managing the infrastructure required for reliable email delivery, you send emails through an ESP's API or SMTP relay, and the ESP handles the rest — message delivery, authentication, reputation management, bounce processing, and compliance.
+
+Lettr is an ESP built for developers sending transactional email. When your application needs to send a password reset, order confirmation, or any other email, it makes an API call to Lettr, and Lettr delivers the message to the recipient's mailbox provider.
+
+---
+
+## ESP vs ISP
+
+These two acronyms are frequently confused, but they serve entirely different roles in the email ecosystem.
+
+| | Email Service Provider (ESP) | Internet Service Provider (ISP) |
+| --- | --- | --- |
+| **Role** | Sends email on behalf of businesses and applications | Provides internet connectivity and often operates mailbox services |
+| **Examples** | Lettr, Resend, SendGrid, Postmark, Amazon SES | Gmail (Google), Outlook.com (Microsoft), Yahoo Mail, Comcast |
+| **Relationship to email** | Sends and manages outbound email | Receives and stores inbound email for end users |
+| **Also called** | Email sending platform, email API provider | Mailbox provider, inbox provider |
+
+<Note>
+  In the email industry, the term "ISP" is often used loosely to mean "mailbox provider" — the service that operates the recipient's inbox (Gmail, Outlook, Yahoo). This is technically imprecise (Gmail is not an internet service provider), but the usage is widespread in deliverability discussions.
+</Note>
+
+---
+
+## Why Use an ESP Instead of Sending Directly
+
+It is technically possible to send email directly from your own server using an SMTP server like Postfix or Sendmail. For small-scale personal use, this can work. For any application sending email to real users at scale, direct sending creates serious problems that an ESP solves.
+
+### IP Reputation
+
+When you send from your own server, you are sending from an IP address with no email reputation. Mailbox providers treat unknown IPs with suspicion and are likely to filter or reject your messages. Building IP reputation from scratch requires weeks of careful volume ramp-up and consistent positive engagement.
+
+An ESP like Lettr maintains pools of sending IPs with established, positive reputations. Your emails benefit from this reputation from day one.
+
+### Authentication Infrastructure
+
+Properly authenticating email requires generating DKIM key pairs, publishing SPF records, configuring DMARC policies, and rotating keys periodically. On your own server, you are responsible for all of this. If any component is misconfigured, your emails fail authentication checks and go to spam.
+
+Lettr handles DKIM key generation and signing automatically. You publish the DNS records Lettr provides, and authentication works for every message.
+
+### Bounce and Complaint Processing
+
+When you send email directly, you need to:
+
+- Parse SMTP bounce responses in dozens of formats
+- Classify bounces as hard or soft
+- Maintain a suppression list of invalid addresses
+- Enroll in feedback loop programs with every major mailbox provider
+- Process abuse reports and suppress complainers
+
+An ESP handles all of this automatically. Lettr processes bounces, manages suppression lists, and receives feedback loop reports from major providers — surfacing the data to your application through webhooks and your dashboard.
+
+### Deliverability Expertise
+
+Mailbox providers constantly update their filtering algorithms. Staying current with sender requirements, authentication standards, and best practices is a specialized discipline. An ESP's deliverability infrastructure is maintained by people whose full-time job is ensuring emails reach the inbox.
+
+### Compliance
+
+Email regulations (CAN-SPAM, GDPR, CASL) impose requirements on commercial email — unsubscribe mechanisms, physical address inclusion, consent management. An ESP provides built-in tools to help you meet these requirements, including `List-Unsubscribe` header support and suppression list enforcement.
+
+---
+
+## What an ESP Does for You
+
+<CardGroup cols={2}>
+  <Card title="Message Delivery">
+    Accepts your email via API or SMTP, assembles the full message with proper headers, signs it with DKIM, resolves the recipient's MX records, and delivers it over an encrypted SMTP connection.
+  </Card>
+
+  <Card title="Reputation Management">
+    Maintains sending IP reputation, monitors blocklists, processes feedback loops, and isolates your sending from other users on shared infrastructure.
+  </Card>
+
+  <Card title="Bounce Handling">
+    Parses bounce responses, classifies them by type, automatically suppresses invalid addresses, and reports bounce events to your application via webhooks.
+  </Card>
+
+  <Card title="Analytics and Events">
+    Tracks delivery, bounce, open, click, complaint, and unsubscribe events. Provides dashboards for monitoring and webhooks for real-time event processing.
+  </Card>
+
+  <Card title="Template Management">
+    Provides tools for designing, versioning, and managing email templates with dynamic content via merge tags — keeping email design out of your application code.
+  </Card>
+
+  <Card title="Compliance Tools">
+    Enforces suppression lists, supports one-click unsubscribe headers, and provides the infrastructure needed to comply with email regulations.
+  </Card>
+</CardGroup>
+
+---
+
+## Types of ESPs
+
+Not all ESPs serve the same purpose. The ESP landscape broadly splits into two categories:
+
+### Transactional ESPs
+
+Built for application-triggered, one-to-one emails — password resets, order confirmations, account notifications. These ESPs prioritize delivery speed, API reliability, and developer experience.
+
+Lettr is a transactional ESP. Other examples include Postmark, Resend, and Amazon SES.
+
+Key characteristics:
+
+- API-first design with SDKs for major languages
+- Sub-second delivery for time-sensitive messages
+- Per-message event tracking (delivery, bounce, open, click)
+- Template systems with merge tag support
+- Webhook-based event delivery
+
+### Marketing ESPs
+
+Built for one-to-many campaigns — newsletters, promotions, product announcements. These ESPs prioritize audience management, campaign scheduling, and engagement analytics.
+
+Examples include Mailchimp, Campaign Monitor, and HubSpot.
+
+Key characteristics:
+
+- Visual campaign builders and drag-and-drop editors
+- Audience segmentation and list management
+- A/B testing and campaign scheduling
+- Subscription management and preference centers
+- Aggregate campaign analytics
+
+<Tip>
+  Many applications need both types. The recommended approach is to use a transactional ESP for triggered emails (where speed and reliability matter most) and either the same provider's marketing features or a separate marketing ESP for campaigns. Always use separate sending domains for each stream.
+</Tip>
+
+---
+
+## Choosing an ESP
+
+When evaluating an ESP for transactional email, consider these factors:
+
+| Factor | What to Evaluate |
+| ------ | ---------------- |
+| **API design** | Is the API well-documented and intuitive? Are there SDKs for your language? |
+| **Delivery speed** | How quickly do messages arrive after an API call? Sub-second matters for auth codes. |
+| **Deliverability** | Does the provider maintain strong IP reputation and support all authentication protocols? |
+| **Event tracking** | Can you track delivery, bounces, opens, clicks, and complaints via webhooks? |
+| **Template support** | Can you manage templates outside your codebase with dynamic content support? |
+| **Pricing model** | Per-email pricing vs volume tiers? Are there overages or hidden fees? |
+| **Compliance** | Does the provider handle suppression lists, feedback loops, and unsubscribe headers? |
+| **Support** | Is deliverability support available when you have inbox placement issues? |
+
+---
+
+## Common Mistakes
+
+<AccordionGroup>
+  <Accordion title="Sending directly from your application server">
+    Running your own SMTP server (Postfix, Sendmail) and sending directly to recipients might work for a handful of test emails, but it will fail at scale. Your IP has no reputation, you have no bounce processing, you are not enrolled in feedback loops, and mailbox providers will likely reject or spam-folder your messages. Use an ESP.
+  </Accordion>
+
+  <Accordion title="Using a marketing ESP for transactional email">
+    Marketing ESPs are optimized for campaigns, not triggered messages. They may batch-process sends (adding latency), lack per-message event tracking, or not support the API patterns needed for real-time triggering. Use a transactional ESP for transactional email.
+  </Accordion>
+
+  <Accordion title="Using your company email provider as your ESP">
+    Sending application email through Google Workspace or Microsoft 365 is not a sustainable approach. These services are designed for person-to-person email, have strict sending limits, and are not built for API-driven transactional use cases. They will rate-limit you quickly.
+  </Accordion>
+
+  <Accordion title="Ignoring the ESP's deliverability features">
+    An ESP provides authentication, bounce handling, suppression lists, and feedback loop processing. If you do not set up your DNS records, do not configure webhooks, and do not monitor your metrics, you lose most of the value of using an ESP. Take the time to configure these features properly.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="How Email Delivery Works" icon="diagram-project" href="/knowledge-base/fundamentals/how-email-delivery-works">
+    End-to-end overview of the email delivery pipeline.
+  </Card>
+
+  <Card title="What Is Email Deliverability?" icon="inbox" href="/knowledge-base/concepts/email-deliverability">
+    Understand the factors that determine inbox placement.
+  </Card>
+
+  <Card title="Sending with Lettr" icon="paper-plane" href="/learn/sending/introduction">
+    Get started sending email through the Lettr API.
+  </Card>
+
+  <Card title="SPF, DKIM & DMARC" icon="shield-check" href="/knowledge-base/fundamentals/spf-dkim-dmarc">
+    Configure authentication for your sending domain.
+  </Card>
+</CardGroup>

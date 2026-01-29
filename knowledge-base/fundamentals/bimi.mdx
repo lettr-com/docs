@@ -1,0 +1,237 @@
+---
+title: "BIMI: Brand Indicators for Message Identification"
+description: "How to display your brand logo in recipient inboxes using BIMI and VMC certificates"
+---
+
+# BIMI: Brand Indicators for Message Identification
+
+BIMI (Brand Indicators for Message Identification) is an email standard that lets you display your brand's logo next to your messages in recipient inboxes. Instead of a generic avatar or the recipient's initials, your verified logo appears — increasing brand recognition and signaling authenticity.
+
+BIMI builds on top of existing email authentication. It requires a fully enforced [DMARC policy](/knowledge-base/fundamentals/spf-dkim-dmarc) and, for most mailbox providers, a Verified Mark Certificate (VMC) that proves you own the logo's trademark.
+
+---
+
+## How BIMI Works
+
+BIMI uses a DNS TXT record to point mailbox providers to your brand's logo. When a message arrives, the receiving server checks whether the email passes DMARC authentication and then looks up the BIMI record to find and display the logo.
+
+<Steps>
+  <Step title="Email Passes DMARC">
+    The receiving mail server authenticates the message using SPF, DKIM, and DMARC. BIMI only applies if DMARC passes with a policy of `p=quarantine` or `p=reject`. A `p=none` policy is not sufficient.
+  </Step>
+
+  <Step title="BIMI DNS Lookup">
+    The receiving server queries DNS for a BIMI record at `default._bimi.yourdomain.com`. This TXT record contains the URL of your logo file and, optionally, a URL to your VMC certificate.
+
+    ```
+    default._bimi.yourdomain.com  TXT  "v=BIMI1; l=https://example.com/logo.svg; a=https://example.com/cert.pem"
+    ```
+  </Step>
+
+  <Step title="Logo Validation">
+    The server fetches the logo file and, if a VMC is provided, validates the certificate to confirm the logo is trademarked and the certificate is issued by an authorized Certificate Authority.
+  </Step>
+
+  <Step title="Logo Display">
+    If all checks pass, the mailbox provider displays your logo in the inbox alongside your message. The exact placement varies by provider — Gmail shows it as the sender avatar, Apple Mail displays it as a verified brand indicator.
+  </Step>
+</Steps>
+
+---
+
+## Requirements
+
+BIMI has several prerequisites that must be in place before your logo will appear.
+
+### Authentication Requirements
+
+| Requirement | Detail |
+|-------------|--------|
+| **SPF** | Must pass for your sending domain |
+| **DKIM** | Must pass with alignment to your From domain |
+| **DMARC** | Must be published with `p=quarantine` or `p=reject` — `p=none` is not enough |
+
+<Warning>
+  BIMI will not work if your DMARC policy is set to `p=none`. You must enforce at least `p=quarantine` before mailbox providers will look up your BIMI record. See the [SPF, DKIM & DMARC guide](/knowledge-base/fundamentals/spf-dkim-dmarc) for how to progress your DMARC policy safely.
+</Warning>
+
+### Logo Requirements
+
+Your logo must meet specific format requirements:
+
+| Specification | Requirement |
+|---------------|-------------|
+| **Format** | SVG Tiny PS (Portable/Secure profile) — not standard SVG |
+| **Shape** | Square — the logo is displayed in a circle, so keep important content centered |
+| **Background** | Non-transparent — must have a solid background color |
+| **File size** | Under 32 KB |
+| **Hosted at** | An HTTPS URL accessible to mailbox providers |
+
+<Note>
+  SVG Tiny PS is a restricted subset of SVG designed for security. It does not allow JavaScript, external references, or animations. Standard SVG files from design tools will need to be converted. Tools like the BIMI Group's SVG converter can help: [bimigroup.org](https://bimigroup.org/implementation-guide).
+</Note>
+
+### Verified Mark Certificate (VMC)
+
+A VMC is a digital certificate that proves your logo is a registered trademark and that you have the right to use it. VMCs are issued by authorized Certificate Authorities.
+
+| Detail | Information |
+|--------|-------------|
+| **Required by** | Gmail (required), Apple Mail (required for blue checkmark) |
+| **Not required by** | Yahoo Mail, Fastmail (will display logo without VMC) |
+| **Trademark requirement** | Your logo must be registered with a recognized trademark office (e.g., USPTO, EUIPO, UKIPO) |
+| **Certificate Authorities** | DigiCert and Entrust are the current authorized VMC issuers |
+| **Validity period** | Typically 1 year — must be renewed |
+| **Cost** | VMCs are a paid product — check with DigiCert or Entrust for current pricing |
+
+---
+
+## Setting Up BIMI
+
+<Steps>
+  <Step title="Ensure DMARC Enforcement">
+    Verify that your domain has a DMARC record with `p=quarantine` or `p=reject` and that your emails are passing DMARC consistently. Check your DMARC record:
+
+    ```bash
+    dig TXT _dmarc.yourdomain.com
+    ```
+
+    The response should show a policy of `quarantine` or `reject`:
+
+    ```
+    v=DMARC1; p=reject; rua=mailto:dmarc@yourdomain.com
+    ```
+  </Step>
+
+  <Step title="Prepare Your Logo">
+    Create an SVG Tiny PS version of your logo:
+
+    1. Start with your brand logo in SVG format
+    2. Convert it to SVG Tiny PS profile (remove scripts, external references, animations)
+    3. Ensure it is square with a solid background
+    4. Keep the file under 32 KB
+    5. Host the file at a publicly accessible HTTPS URL
+
+    ```
+    https://yourdomain.com/brand/logo.svg
+    ```
+  </Step>
+
+  <Step title="Obtain a VMC (if targeting Gmail)">
+    If you want your logo to appear in Gmail:
+
+    1. Ensure your logo is a registered trademark
+    2. Contact DigiCert or Entrust to apply for a VMC
+    3. Complete the validation process (trademark verification, domain ownership)
+    4. Receive your VMC certificate file (PEM format)
+    5. Host the certificate at a publicly accessible HTTPS URL
+
+    ```
+    https://yourdomain.com/brand/vmc.pem
+    ```
+  </Step>
+
+  <Step title="Publish the BIMI DNS Record">
+    Add a TXT record at `default._bimi.yourdomain.com`:
+
+    ```
+    default._bimi.yourdomain.com  TXT  "v=BIMI1; l=https://yourdomain.com/brand/logo.svg; a=https://yourdomain.com/brand/vmc.pem"
+    ```
+
+    If you do not have a VMC, you can omit the `a=` parameter:
+
+    ```
+    default._bimi.yourdomain.com  TXT  "v=BIMI1; l=https://yourdomain.com/brand/logo.svg; a="
+    ```
+  </Step>
+
+  <Step title="Verify the Record">
+    Confirm the DNS record is published:
+
+    ```bash
+    dig TXT default._bimi.yourdomain.com
+    ```
+
+    You should see your BIMI record in the response.
+  </Step>
+</Steps>
+
+---
+
+## Mailbox Provider Support
+
+BIMI adoption is growing but not yet universal. Here is the current state of support among major providers.
+
+| Provider | BIMI Support | VMC Required? | Notes |
+|----------|-------------|---------------|-------|
+| **Gmail** | Yes | Yes | Displays logo as sender avatar. Shows a blue verified checkmark. |
+| **Apple Mail** | Yes | Yes (for checkmark) | Displays logo in macOS and iOS Mail. Blue checkmark with VMC. |
+| **Yahoo Mail** | Yes | No | Displays logo without VMC. One of the earliest BIMI adopters. |
+| **Fastmail** | Yes | No | Displays logo without VMC. |
+| **Outlook / Microsoft 365** | Limited | — | Microsoft has its own brand verification program (not BIMI-based). |
+| **Thunderbird** | No | — | Does not support BIMI. |
+
+---
+
+## BIMI Record Syntax
+
+The BIMI TXT record has a straightforward syntax:
+
+```
+v=BIMI1; l=<logo-url>; a=<vmc-url>
+```
+
+| Tag | Required | Description |
+|-----|----------|-------------|
+| `v=BIMI1` | Yes | Version identifier |
+| `l=` | Yes | HTTPS URL pointing to your SVG Tiny PS logo file |
+| `a=` | No | HTTPS URL pointing to your VMC certificate in PEM format. Set to empty (`a=`) if you don't have a VMC. |
+
+### Selector-Based BIMI
+
+By default, the BIMI record is published at `default._bimi.yourdomain.com`. You can use different selectors for different email streams by changing the subdomain prefix. For example, `marketing._bimi.yourdomain.com` could display a different logo for marketing emails — though this is rarely used in practice.
+
+---
+
+## Common Mistakes
+
+<AccordionGroup>
+  <Accordion title="Using p=none DMARC policy">
+    BIMI requires DMARC enforcement. If your DMARC policy is `p=none`, mailbox providers will not look up your BIMI record regardless of whether it exists. Progress your DMARC policy to at least `p=quarantine` — and ideally `p=reject` — before implementing BIMI.
+  </Accordion>
+
+  <Accordion title="Using standard SVG instead of SVG Tiny PS">
+    A regular SVG file exported from Figma, Illustrator, or Inkscape will not work. BIMI requires the SVG Tiny PS (Portable/Secure) profile, which strips out scripts, external references, and other elements that pose security risks. Use a BIMI-specific SVG converter to produce a compliant file.
+  </Accordion>
+
+  <Accordion title="Logo not centered or square">
+    BIMI logos are displayed in a circular frame by most providers. If your logo is not centered within a square canvas, important parts may be clipped. Design your logo with padding so the key visual element is centered and visible within a circle crop.
+  </Accordion>
+
+  <Accordion title="Hosting the logo on a non-HTTPS URL">
+    The logo URL in your BIMI record must use HTTPS. HTTP URLs will be rejected. Ensure the URL is publicly accessible — mailbox providers need to fetch the file from their servers.
+  </Accordion>
+
+  <Accordion title="Expecting immediate results">
+    After publishing your BIMI record, it may take days or weeks before logos start appearing consistently. DNS propagation, provider caching, and the provider's own processing timeline all contribute to the delay. BIMI is not instant.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="SPF, DKIM & DMARC" icon="shield-check" href="/knowledge-base/fundamentals/spf-dkim-dmarc">
+    BIMI requires DMARC enforcement — understand the authentication stack first.
+  </Card>
+  <Card title="Sending Domains" icon="globe" href="/learn/domains/sending-domains">
+    Set up and verify your sending domain in Lettr.
+  </Card>
+  <Card title="Sending Reputation" icon="chart-line" href="/knowledge-base/best-practices/sending-reputation">
+    How your domain and IP reputation affect inbox placement.
+  </Card>
+  <Card title="Security Best Practices" icon="lock" href="/knowledge-base/best-practices/security">
+    Comprehensive guide to securing your email sending infrastructure.
+  </Card>
+</CardGroup>
