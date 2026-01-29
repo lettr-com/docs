@@ -133,7 +133,8 @@
                   "learn/templates/template-language",
                   "learn/templates/projects",
                   "learn/templates/versions",
-                  "learn/templates/saved-blocks"
+                  "learn/templates/saved-blocks",
+                  "learn/templates/loop-blocks"
                 ]
               },
               {
