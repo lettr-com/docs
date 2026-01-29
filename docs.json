@@ -94,6 +94,12 @@
               "learn/logs/introduction",
               "learn/logs/status-codes"
             ]
+          },
+          {
+            "group": "MCP",
+            "pages": [
+              "learn/mcp/introduction"
+            ]
           }
         ]
       },

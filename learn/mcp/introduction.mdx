@@ -1,0 +1,384 @@
+---
+title: MCP Integration
+description: "Connect AI agents and LLMs to Lettr using the Model Context Protocol"
+---
+
+# MCP Integration
+
+Lettr provides a [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server that enables AI agents, LLMs, and automation tools to interact with your Lettr account programmatically.
+
+## What is MCP?
+
+MCP (Model Context Protocol) is an open standard that allows AI assistants like Claude, Cursor, and other LLM-powered tools to connect to external services securely. With Lettr's MCP server, AI agents can:
+
+- Send emails on your behalf
+- Browse email delivery events and logs
+- Check domain verification status
+- Monitor webhooks and API keys
+- Debug delivery issues
+
+## Server Configuration
+
+Connect your MCP-compatible client to:
+
+```
+https://app.lettr.com/mcp
+```
+
+### Authentication
+
+The MCP server uses your Lettr session for authentication. Ensure you're logged into your Lettr account before connecting.
+
+### Claude Desktop Configuration
+
+Add the following to your Claude Desktop MCP configuration:
+
+```json
+{
+  "mcpServers": {
+    "lettr": {
+      "url": "https://app.lettr.com/mcp"
+    }
+  }
+}
+```
+
+### Cursor Configuration
+
+In Cursor, add Lettr as an MCP server in your settings with the URL `https://app.lettr.com/mcp`.
+
+---
+
+## Available Actions
+
+### send_email
+
+Send an email with plain text, HTML, or AMP HTML content.
+
+**Required Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `from` | string | Sender email address (must be from a verified sending domain) |
+| `to` | string | Recipient email address |
+| `subject` | string | Email subject line |
+
+**Content (at least one required):**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `html` | string | HTML content of the email |
+| `text` | string | Plain text content of the email |
+| `amp_html` | string | AMP HTML content for interactive emails |
+
+**Optional Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `from_name` | string | Display name for the sender |
+| `reply_to` | string | Reply-to email address |
+| `cc` | string | CC recipient email address |
+| `bcc` | string | BCC recipient email address |
+| `substitution_data` | object | Key-value pairs for merge tag replacement |
+
+**Merge Tags:**
+
+Use `{{variable_name}}` syntax in your content and provide values via `substitution_data`:
+
+```
+Content: "Hello {{first_name}}, your order {{order_id}} has shipped."
+substitution_data: {"first_name": "John", "order_id": "12345"}
+```
+
+**Returns:**
+- Transmission ID
+- Number of accepted/rejected recipients
+
+---
+
+### send_template_email
+
+Send an email using a pre-defined template.
+
+**Required Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `from` | string | Sender email address (must be from a verified sending domain) |
+| `to` | string | Recipient email address |
+| `subject` | string | Email subject line |
+| `template_slug` | string | The slug/identifier of the template to use |
+
+**Optional Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `from_name` | string | Display name for the sender |
+| `reply_to` | string | Reply-to email address |
+| `project_id` | string | Project ID where the template is located (uses default project if not specified) |
+| `template_version` | string | Specific template version to use (uses active version if not specified) |
+| `substitution_data` | object | Key-value pairs to replace merge tags in the template |
+
+**Returns:**
+- Transmission ID
+- Number of accepted/rejected recipients
+
+---
+
+### browse_email_events
+
+Browse email delivery events for your team with optional filtering.
+
+**Optional Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `recipient` | string | Search for events related to a specific email address |
+| `from` | string | Start date for filtering (ISO 8601 format) |
+| `to` | string | End date for filtering (ISO 8601 format) |
+| `event_type` | string | Filter by event type |
+| `cursor` | string | Pagination cursor for fetching more results |
+
+**Event Types:**
+
+| Type | Description |
+|------|-------------|
+| `delivery` | Email successfully delivered to recipient |
+| `injection` | Email accepted for sending |
+| `open` | Recipient opened the email |
+| `initial_open` | First time recipient opened the email |
+| `click` | Recipient clicked a link in the email |
+| `bounce` | Email bounced (hard bounce) |
+| `out_of_band` | Delayed bounce notification |
+| `delay` | Temporary delivery delay |
+| `spam_complaint` | Recipient marked as spam |
+| `policy_rejection` | Rejected by policy |
+| `list_unsubscribe` | Recipient unsubscribed via list-unsubscribe |
+| `link_unsubscribe` | Recipient unsubscribed via link |
+
+**Returns (up to 25 events):**
+
+| Field | Description |
+|-------|-------------|
+| `type` | Event type |
+| `timestamp` | When the event occurred |
+| `recipient` | Email address of the recipient |
+| `subject` | Email subject line |
+| `sender` | From address |
+| `sending_domain` | Domain used for sending |
+| `message_id` | Unique message identifier |
+| `transmission_id` | Transmission/request ID |
+
+For bounces and delays, additional fields:
+- `reason`: Human-readable explanation
+- `error_code`: SMTP error code
+
+---
+
+### browse_api_logs
+
+Browse API request logs for your team with optional filtering.
+
+**Optional Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `from` | string | Start date (max 30 days back) |
+| `to` | string | End date |
+| `api_key_name` | string | Filter by a specific API key's name |
+| `user_agent` | string | Filter by client type: `php`, `curl`, `nodejs`, `python`, `ruby`, `go`, `rust`, `java`, `dotnet`, `smtp`, `other` |
+| `status_code` | integer | Filter by HTTP response status (e.g., 200, 400, 500) |
+| `cursor` | string | Pagination cursor for fetching more results |
+
+**Returns (up to 20 logs):**
+
+| Field | Description |
+|-------|-------------|
+| `timestamp` | When the request was made |
+| `method` | HTTP method (GET, POST, etc.) or SMTP |
+| `path` | Request endpoint path |
+| `status` | HTTP response status code |
+| `ip` | Client IP address |
+| `user_agent` | Client user agent string |
+| `api_key_prefix` | First part of the API key used |
+| `request_body` | The request payload (truncated for large requests) |
+| `response_body` | The response payload (truncated for large responses) |
+
+---
+
+### list_sending_domains
+
+List all sending domains configured for your team.
+
+**Parameters:** None
+
+**Returns:**
+
+| Field | Description |
+|-------|-------------|
+| `domain` | The domain name (e.g., "example.com") |
+| `status` | Verification status: `pending`, `unverified`, `verified`, `blocked` |
+| `status_label` | Human-readable status label |
+| `can_send` | Whether the domain can be used to send emails |
+| `cname_status` | CNAME record verification status |
+| `dkim_status` | DKIM record verification status |
+| `created_at` | When the domain was added |
+| `updated_at` | When the domain was last updated |
+
+---
+
+### list_tracking_domains
+
+List all tracking domains configured for your team.
+
+**Parameters:** None
+
+**Returns:**
+
+| Field | Description |
+|-------|-------------|
+| `domain` | The tracking domain name (e.g., "track.example.com") |
+| `cname_status` | CNAME record verification status: `unverified`, `valid` |
+| `ssl_status` | SSL certificate status: `pending`, `active` |
+| `ssl_txt_name` | TXT record name for SSL validation (if pending) |
+| `ssl_txt_value` | TXT record value for SSL validation (if pending) |
+| `ownership_txt_name` | TXT record name for ownership validation |
+| `ownership_txt_value` | TXT record value for ownership validation |
+| `created_at` | When the domain was added |
+
+---
+
+### list_inbound_domains
+
+List all inbound domains configured for your team.
+
+**Parameters:** None
+
+**Returns:**
+
+| Field | Description |
+|-------|-------------|
+| `domain` | The inbound domain name (e.g., "inbound.example.com") |
+| `mx_status` | MX record verification status: `unverified`, `valid` |
+| `created_at` | When the domain was added |
+| `updated_at` | When the domain was last updated |
+
+---
+
+### list_storage_domains
+
+List all storage domains configured for your team.
+
+**Parameters:** None
+
+**Returns:**
+
+| Field | Description |
+|-------|-------------|
+| `domain` | The storage domain name (e.g., "storage.example.com") |
+| `is_default` | Whether this is the default storage domain |
+| `ssl_status` | SSL certificate status: `pending`, `active` |
+| `cname_verified` | Whether the CNAME record is properly configured |
+| `ssl_txt_verified` | Whether the SSL TXT record is verified |
+| `ownership_txt_verified` | Whether the ownership TXT record is verified |
+| `domain_verified` | Whether the domain ownership is fully verified |
+| `domain_enabled` | Whether the domain is enabled for use |
+
+---
+
+### list_api_keys
+
+List all API keys configured for your team.
+
+**Parameters:** None
+
+**Returns:**
+
+| Field | Description |
+|-------|-------------|
+| `name` | API key name |
+| `id` | API key ID |
+| `prefix` | First 12 characters of the key (for identification) |
+| `permissions` | Permission level: `full` or `restricted` |
+| `ip_whitelist` | Allowed IP addresses (if configured) |
+
+<Note>
+  For security reasons, the full API key value is never shown. Only the prefix is displayed to help identify keys.
+</Note>
+
+---
+
+### list_webhooks
+
+List all webhooks configured for your team.
+
+**Parameters:** None
+
+**Returns:**
+
+| Field | Description |
+|-------|-------------|
+| `name` | Webhook name |
+| `url` | Target URL for the webhook |
+| `enabled` | Whether the webhook is enabled |
+| `events` | Event types being tracked (delivery, bounce, click, open, etc.) |
+| `auth_type` | Authentication type |
+| `last_success` | Last successful delivery status |
+| `last_failure` | Last failed delivery status |
+
+---
+
+## Example Use Cases
+
+### Sending an Email with an AI Agent
+
+Ask your AI assistant:
+
+> "Send an email to john@example.com from hello@mycompany.com with subject 'Meeting Tomorrow' and let them know the meeting is at 3pm."
+
+The agent will use the `send_email` action to compose and send the email.
+
+### Debugging Delivery Issues
+
+Ask your AI assistant:
+
+> "Why didn't my email to jane@example.com get delivered yesterday?"
+
+The agent will use `browse_email_events` to search for events related to that recipient and identify any bounces, delays, or other issues.
+
+### Checking Domain Status
+
+Ask your AI assistant:
+
+> "Are all my sending domains verified?"
+
+The agent will use `list_sending_domains` to check the verification status of each domain.
+
+### Monitoring API Activity
+
+Ask your AI assistant:
+
+> "Show me any failed API requests from the last 24 hours."
+
+The agent will use `browse_api_logs` with a status code filter to find 4xx and 5xx errors.
+
+---
+
+## Pagination
+
+Actions that return lists (`browse_email_events`, `browse_api_logs`) support pagination using a cursor parameter. When more results are available, the response includes a `cursor` value that can be passed to subsequent requests to fetch the next page.
+
+## Rate Limits
+
+MCP requests are subject to the same rate limits as the REST API. See [Rate Limits](/knowledge-base/troubleshooting/rate-limits) for details.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Sending Domains" icon="globe" href="/learn/domains/sending-domains">
+    Set up domains for sending
+  </Card>
+  <Card title="Webhooks" icon="webhook" href="/learn/webhooks/introduction">
+    Configure event webhooks
+  </Card>
+</CardGroup>
