@@ -1,0 +1,201 @@
+---
+title: "Gmail-Specific Delivery Issues"
+description: "Diagnose and fix deliverability problems specific to Gmail, including Promotions tab placement, Google Postmaster Tools setup, and common Gmail blocks."
+---
+
+Gmail processes over half of all consumer email, so Gmail-specific delivery problems can have an outsized impact on your sending metrics. This guide covers Gmail's unique filtering behaviors, how to use Google Postmaster Tools, and how to resolve common blocks.
+
+---
+
+## Understanding Gmail's Tab System
+
+Gmail sorts incoming email into tabs: **Primary**, **Promotions**, **Social**, **Updates**, and **Forums**. Tab placement is not the same as spam — emails in the Promotions tab are delivered successfully, but they get less visibility.
+
+### What Determines Tab Placement
+
+Gmail uses machine learning to classify messages. The main signals are:
+
+| Signal | Primary | Promotions |
+|--------|---------|------------|
+| **Sender relationship** | Frequent 1:1 conversations | Bulk or automated sends |
+| **Content style** | Plain text, conversational tone | HTML-heavy, images, CTAs |
+| **Unsubscribe header** | Absent (transactional) | Present (marketing) |
+| **Engagement history** | Recipient regularly opens and replies | Recipient rarely interacts |
+| **Links and images** | Few or none | Multiple links, large images |
+
+### Improving Primary Tab Placement
+
+For transactional emails that are landing in Promotions:
+
+- **Simplify the HTML** — use minimal styling, fewer images, and avoid marketing-style layouts for receipts, alerts, and notifications.
+- **Remove promotional elements** — banners, upsells, social media links, and footer marketing content push messages toward Promotions.
+- **Use a plain From name** — a personal name (e.g., "Jane from Acme") performs better than a brand name for Primary placement.
+- **Send from a separate subdomain** — isolate transactional email on a subdomain like `notify.yourdomain.com` so its reputation isn't affected by marketing sends.
+
+<Tip>
+  Tab placement is per-user. If a recipient manually drags your email from Promotions to Primary, Gmail learns to place future messages from you in Primary for that user.
+</Tip>
+
+<Warning>
+  Do not try to trick Gmail's tab classifier by stripping unsubscribe headers from marketing email. This violates [Google & Yahoo Requirements](/knowledge-base/compliance/google-yahoo-requirements) and will damage your reputation.
+</Warning>
+
+---
+
+## Setting Up Google Postmaster Tools
+
+Google Postmaster Tools (GPT) is the most important diagnostic tool for Gmail delivery. It shows domain reputation, spam rate, authentication status, and delivery errors — data that is not available anywhere else.
+
+<Steps>
+  <Step title="Go to Google Postmaster Tools">
+    Visit [postmaster.google.com](https://postmaster.google.com/) and sign in with a Google account.
+  </Step>
+  <Step title="Add your sending domain">
+    Click the **+** button and enter your sending domain (e.g., `mail.yourdomain.com`). Use the exact domain you send from in Lettr, including the subdomain if applicable.
+  </Step>
+  <Step title="Verify domain ownership">
+    Google provides a TXT record to add to your DNS. Add it at your DNS provider:
+
+    ```
+    google-site-verification=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+    ```
+
+    Click **Verify** once the record is published. Propagation usually takes a few minutes but can take up to 48 hours.
+  </Step>
+  <Step title="Wait for data">
+    Data appears after you send a sufficient volume to Gmail addresses (typically 100+ messages per day). Dashboards populate within 24–48 hours of reaching this threshold.
+  </Step>
+</Steps>
+
+### Key Dashboards
+
+| Dashboard | What It Shows | What to Watch For |
+|-----------|--------------|-------------------|
+| **Spam Rate** | Percentage of emails marked as spam by recipients | Keep below 0.1%. Action required above 0.3%. |
+| **Domain Reputation** | Overall trust level: High, Medium, Low, Bad | Low or Bad causes most email to go to spam |
+| **IP Reputation** | Trust level of sending IP addresses | Relevant if using dedicated IPs |
+| **Authentication** | DKIM, SPF, and DMARC pass rates | Should be 100%. Any failures need investigation. |
+| **Delivery Errors** | Temporary and permanent rejection reasons | Identifies specific blocks and rate limits |
+
+---
+
+## Common Gmail Blocks and Errors
+
+### Temporary Blocks (4xx Errors)
+
+Gmail throttles senders who exceed its internal rate limits or whose reputation dips. These are temporary and resolve automatically, but they signal a problem.
+
+```
+421-4.7.28 Our system has detected an unusual rate of unsolicited mail
+originating from your IP address.
+```
+
+**Causes and fixes:**
+
+- **Volume spike** — you sent significantly more email than usual. Reduce volume and ramp up gradually. See [IP and Domain Warm-Up](/knowledge-base/best-practices/ip-domain-warmup).
+- **High spam complaint rate** — check Google Postmaster Tools. Reduce complaints by improving list quality and making unsubscribe easy.
+- **Sending to many invalid addresses** — clean your list. See [List Hygiene](/knowledge-base/best-practices/list-hygiene).
+
+<Note>
+  Lettr automatically handles 4xx retries. Temporary blocks typically resolve within a few hours. If they persist beyond 24 hours, review your sending practices.
+</Note>
+
+### Permanent Blocks (5xx Errors)
+
+Permanent rejections mean Gmail refused the message entirely.
+
+```
+550-5.7.1 Our system has detected that this message is likely
+unsolicited mail. To reduce the amount of spam sent to Gmail,
+this message has been blocked.
+```
+
+| Error Code | Meaning | Action |
+|------------|---------|--------|
+| `550-5.7.1` | Message blocked as spam | Review content, check authentication, verify reputation |
+| `550-5.7.26` | DMARC authentication failed | Fix DMARC alignment — ensure your From domain matches your DKIM signing domain |
+| `550-5.7.27` | SPF record missing or invalid | Add or correct your SPF record |
+| `550-5.1.1` | Recipient address doesn't exist | Remove the address from your list |
+| `421-4.7.28` | Rate limited due to reputation | Reduce volume, improve engagement metrics |
+
+### DMARC Enforcement
+
+Gmail strictly enforces DMARC policies. If your domain publishes `p=reject` or `p=quarantine` and authentication fails, Gmail will reject or spam-folder the message with no exceptions.
+
+Verify your DMARC alignment:
+
+```bash
+# Check your DMARC record
+dig TXT _dmarc.yourdomain.com +short
+
+# Expected output (example)
+"v=DMARC1; p=reject; rua=mailto:dmarc@yourdomain.com; adkim=r; aspf=r"
+```
+
+Ensure the domain in your `From` address matches the domain used for DKIM signing in Lettr. Check this on the [Domains page](https://app.lettr.com/domains).
+
+---
+
+## Gmail and Engagement Signals
+
+Gmail weighs recipient engagement more heavily than most providers. Low engagement leads to progressively worse placement over time.
+
+### Signals Gmail Tracks
+
+- **Opens** — recipients who regularly open your emails signal trust
+- **Replies** — direct replies are the strongest positive signal
+- **Moves to spam** — the strongest negative signal
+- **Moves from spam to inbox** — a strong positive signal
+- **Deletes without opening** — a weak negative signal
+- **Stars and labels** — positive engagement signals
+
+### Improving Engagement
+
+1. **Segment by engagement** — send more frequently to engaged recipients and less to inactive ones.
+2. **Re-engagement campaigns** — before removing inactive subscribers, send a targeted re-engagement email. If they don't respond, suppress them.
+3. **Send at the right time** — use Lettr's analytics to identify when your recipients are most active.
+4. **Relevant content** — personalize emails based on recipient behavior and preferences. See [Personalization and Dynamic Content](/knowledge-base/best-practices/personalization-dynamic-content).
+
+---
+
+## Diagnosing Gmail Issues Checklist
+
+<AccordionGroup>
+  <Accordion title="Check Google Postmaster Tools first">
+    Most Gmail delivery problems are visible in Postmaster Tools. Check domain reputation, spam rate, and authentication dashboards before investigating anything else.
+  </Accordion>
+  <Accordion title="Verify authentication passes">
+    Send a test email to a Gmail account. Open the message, click the three-dot menu, and select **Show original**. Confirm `dkim=pass`, `spf=pass`, and `dmarc=pass` all appear in the Authentication-Results header.
+  </Accordion>
+  <Accordion title="Check for blocklisting">
+    Search your sending domain and IPs on [MXToolbox](https://mxtoolbox.com/blacklists.aspx). Being listed on Spamhaus, SORBS, or other major blocklists will cause Gmail to reject or spam-folder your messages.
+  </Accordion>
+  <Accordion title="Review recent content changes">
+    If delivery degraded after a content change, compare the new email against the previous version. Look for newly added URL shorteners, excessive images, or spam trigger words.
+  </Accordion>
+  <Accordion title="Check complaint rate trend">
+    A gradual increase in spam complaints — even if still below 0.3% — will eventually cause reputation damage. Address the trend early.
+  </Accordion>
+  <Accordion title="Confirm one-click unsubscribe is working">
+    Gmail requires a functional `List-Unsubscribe` header with one-click support for bulk senders. Lettr adds this automatically, but verify it hasn't been overridden via custom headers in the API.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Emails Landing in Spam" icon="shield-exclamation" href="/knowledge-base/troubleshooting/spam-placement">
+    General spam placement diagnosis across all providers.
+  </Card>
+  <Card title="Google & Yahoo Requirements" icon="envelope-circle-check" href="/knowledge-base/compliance/google-yahoo-requirements">
+    Authentication and unsubscribe requirements for bulk senders.
+  </Card>
+  <Card title="Sending Reputation" icon="chart-line" href="/knowledge-base/best-practices/sending-reputation">
+    Build and maintain a strong sender reputation.
+  </Card>
+  <Card title="Outlook Delivery Issues" icon="envelope" href="/knowledge-base/troubleshooting/outlook-delivery">
+    Troubleshoot Microsoft-specific delivery problems.
+  </Card>
+</CardGroup>

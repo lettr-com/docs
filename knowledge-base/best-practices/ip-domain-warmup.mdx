@@ -1,0 +1,237 @@
+---
+title: IP and Domain Warm-Up Guide
+description: "Detailed warm-up schedules and strategies for establishing sender reputation on new domains and IPs"
+---
+
+# IP and Domain Warm-Up Guide
+
+When you start sending from a new domain or IP address, mailbox providers have no history to judge you by. Warm-up is the process of gradually increasing your sending volume so providers can observe positive engagement signals and build trust in your sender identity. Skipping or rushing this process is one of the most common causes of long-term deliverability problems.
+
+---
+
+## Why Warm-Up Matters
+
+Mailbox providers like Gmail, Outlook, and Yahoo are designed to protect their users from spam. When they see a new domain suddenly sending thousands of emails, they treat it as suspicious — the same pattern spammers use with disposable domains.
+
+A proper warm-up demonstrates that:
+
+- Real recipients want your emails (they open, click, and reply)
+- You maintain a clean list (low bounce rates)
+- You respect recipient preferences (low complaint rates)
+- Your sending patterns are predictable and consistent
+
+<Warning>
+  Sending high volumes immediately from a new domain can result in blocks that take weeks or months to lift. Some providers may permanently flag your domain, making recovery extremely difficult.
+</Warning>
+
+---
+
+## Domain Warm-Up Schedule
+
+This schedule applies when you add a new sending domain to Lettr. Adjust the numbers based on your total list size — the key principle is gradual, consistent growth.
+
+### Low-Volume Senders (under 10,000 emails/month)
+
+| Week | Daily Volume | Target Audience | Key Metrics to Watch |
+|------|-------------|-----------------|---------------------|
+| 1 | 50–100 | Most engaged recipients (opened/clicked in last 7 days) | Bounce rate, complaints |
+| 2 | 200–500 | Engaged in last 30 days | Bounce rate, complaints, deferrals |
+| 3 | 500–1,000 | Engaged in last 90 days | All metrics, inbox placement |
+| 4+ | Scale to target | Full active list | All metrics |
+
+### High-Volume Senders (over 10,000 emails/month)
+
+| Week | Daily Volume | Target Audience | Key Metrics to Watch |
+|------|-------------|-----------------|---------------------|
+| 1 | 100–200 | Most engaged recipients (opened/clicked in last 7 days) | Bounce rate, complaints |
+| 2 | 500–1,000 | Engaged in last 14 days | Bounce rate, complaints, deferrals |
+| 3 | 2,000–5,000 | Engaged in last 30 days | All metrics, inbox placement |
+| 4 | 5,000–10,000 | Engaged in last 60 days | All metrics |
+| 5 | 10,000–25,000 | Engaged in last 90 days | All metrics |
+| 6+ | Scale toward target | Full active list (excluding unengaged) | All metrics |
+
+<Tip>
+  These are guidelines, not rigid rules. The right pace depends on your engagement metrics. If bounce rates stay below 2% and complaint rates below 0.1%, you can accelerate. If either metric spikes, slow down immediately.
+</Tip>
+
+---
+
+## Warm-Up Principles
+
+### Send to Engaged Recipients First
+
+Start with recipients who have recently interacted with your emails — opens, clicks, or replies in the last 7–14 days. These recipients are most likely to engage again, which sends strong positive signals to mailbox providers.
+
+```javascript
+// Example: Query engaged recipients for warm-up phases
+const warmupRecipients = await db.recipients.find({
+  lastEngagedAt: {
+    $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) // Last 7 days
+  },
+  status: 'active',
+  suppressionStatus: null
+}).limit(100); // Week 1 daily cap
+```
+
+### Send Consistently Every Day
+
+Sending every day during warm-up is more important than sending large volumes. Sporadic bursts followed by silence look suspicious. A steady 100 emails per day is better than 700 emails once a week.
+
+### Authenticate Before You Start
+
+All DNS records must be verified and passing before you send your first warm-up email. This is non-negotiable.
+
+<Steps>
+  <Step title="Add your sending domain in Lettr">
+    Navigate to **Domains** → **Add Domain** and enter your sending subdomain (e.g., `mail.example.com`).
+  </Step>
+  <Step title="Configure DNS records">
+    Add the CNAME and DKIM records shown in your Lettr dashboard to your DNS provider.
+  </Step>
+  <Step title="Set up DMARC">
+    Publish a DMARC record for your domain. Start with `p=none` during warm-up so you can monitor without risking rejections.
+  </Step>
+  <Step title="Verify all records pass">
+    Wait for verification to complete in your dashboard. All records should show a green checkmark before you send.
+  </Step>
+</Steps>
+
+### Monitor After Every Send
+
+Check your metrics in the Lettr dashboard after each warm-up send. Set up webhook endpoints for real-time monitoring:
+
+```javascript
+app.post('/webhooks/lettr', (req, res) => {
+  const event = req.body;
+
+  switch (event.type) {
+    case 'email.bounced':
+      logWarmupMetric('bounce', event.data);
+      break;
+    case 'email.complained':
+      logWarmupMetric('complaint', event.data);
+      // Immediately suppress this recipient
+      suppressRecipient(event.data.to, 'spam_complaint');
+      break;
+    case 'email.deferred':
+      logWarmupMetric('deferral', event.data);
+      break;
+    case 'email.delivered':
+      logWarmupMetric('delivered', event.data);
+      break;
+  }
+
+  res.sendStatus(200);
+});
+```
+
+---
+
+## Stop Signals
+
+Pause your warm-up and investigate immediately if you observe any of these:
+
+| Signal | Threshold | Action |
+|--------|-----------|--------|
+| Bounce rate | > 5% on any single send | Stop sending. Clean your list before resuming. |
+| Complaint rate | > 0.3% | Stop sending. Review content and targeting. |
+| Deferrals spike | Sudden increase in `email.deferred` events | Reduce volume by 50%. Resume previous volume after deferrals normalize. |
+| Block messages | 421 or 550 responses mentioning reputation | Stop sending to that provider. Wait 24–48 hours before retrying at reduced volume. |
+
+<Warning>
+  Do not ignore deferrals. A deferral means the receiving server accepted the connection but delayed delivery — it's a warning that the provider is becoming cautious about your domain. Continuing at the same volume will likely escalate to blocks.
+</Warning>
+
+---
+
+## Warm-Up by Provider
+
+Different mailbox providers have different thresholds and behaviors during warm-up.
+
+### Gmail
+
+Gmail relies heavily on domain reputation and engagement signals. During warm-up:
+
+- Keep daily volume to Gmail addresses especially conservative (start with 20–50)
+- Gmail is the most sensitive to complaint rates — stay well below 0.1%
+- Use [Google Postmaster Tools](https://postmaster.google.com/) to monitor your domain reputation directly
+
+### Outlook / Microsoft 365
+
+Microsoft uses SmartScreen filtering and has its own reputation system:
+
+- Outlook tends to be more forgiving during initial warm-up than Gmail
+- Register with [SNDS (Smart Network Data Services)](https://sendersupport.olc.protection.outlook.com/snds/) to monitor your reputation
+- Outlook may silently route emails to Junk without bouncing — monitor open rates closely
+
+### Yahoo
+
+Yahoo was an early adopter of domain-based reputation:
+
+- Yahoo provides feedback loops (FBL) — ensure Lettr is processing these
+- Yahoo tends to defer rather than block during warm-up, so watch for deferral patterns
+
+---
+
+## Warming Up a Damaged Domain
+
+If you're recovering from reputation damage rather than starting fresh, the warm-up process is similar but stricter.
+
+<Steps>
+  <Step title="Reduce volume to near zero">
+    Cut sending to 10–20% of your pre-damage volume, or pause entirely for 48 hours.
+  </Step>
+  <Step title="Identify and fix the root cause">
+    Check webhook logs for `email.bounced`, `email.complained`, and `email.deferred` events. Common causes: stale list, broken authentication, sudden volume spike.
+  </Step>
+  <Step title="Clean your list aggressively">
+    Remove all hard bounces, all complainants, and anyone who hasn't engaged in 6 months.
+  </Step>
+  <Step title="Restart warm-up at week 1 volumes">
+    Follow the warm-up schedule above, starting from week 1 with your most engaged recipients only.
+  </Step>
+  <Step title="Monitor daily for 4–6 weeks">
+    Reputation recovery is slower than initial warm-up. Expect 2–6 weeks of consistent good behavior before providers fully trust your domain again.
+  </Step>
+</Steps>
+
+---
+
+## Common Mistakes
+
+<AccordionGroup>
+  <Accordion title="Sending your entire list on day one">
+    The most common warm-up mistake. Even if your list is opt-in and legitimate, sending thousands of emails from a brand-new domain triggers spam filters. Always start small and scale gradually.
+  </Accordion>
+  <Accordion title="Only warming up on weekdays">
+    Gaps in sending volume (like skipping weekends) create an inconsistent pattern. If you can't send every day, at least send smaller volumes on off-days to maintain continuity.
+  </Accordion>
+  <Accordion title="Ignoring engagement during warm-up">
+    Warm-up isn't just about volume — it's about engagement quality. If your open rates are low even during warm-up, your content or targeting needs work before you scale up.
+  </Accordion>
+  <Accordion title="Not segmenting by engagement level">
+    Sending to your full list sorted by signup date instead of engagement recency. Always prioritize recipients who have recently opened or clicked.
+  </Accordion>
+  <Accordion title="Warming up without authentication">
+    Sending emails without verified DKIM, SPF, and DMARC records during warm-up wastes every positive signal you generate. Authenticate first, then warm up.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Sending Reputation" icon="chart-line" href="/knowledge-base/best-practices/sending-reputation">
+    Build and protect your sender reputation over time
+  </Card>
+  <Card title="List Hygiene" icon="broom" href="/knowledge-base/best-practices/list-hygiene">
+    Maintain clean, engaged recipient lists
+  </Card>
+  <Card title="Sending Domains" icon="globe" href="/learn/domains/sending-domains">
+    Configure and verify your sending domains
+  </Card>
+  <Card title="Deliverability Best Practices" icon="inbox" href="/knowledge-base/best-practices/deliverability">
+    Maximize inbox placement across all providers
+  </Card>
+</CardGroup>

@@ -1,0 +1,381 @@
+---
+title: Invoice and Billing Emails
+description: "Legal requirements, formatting, attachment handling, compliance considerations, and implementation patterns for invoice and billing emails"
+---
+
+# Invoice and Billing Emails
+
+Invoice and billing emails are transactional messages that carry legal and financial significance. They serve as receipts, payment reminders, and accounting records. Unlike most transactional emails, invoices often need to meet specific legal formatting requirements that vary by jurisdiction. A missed or spam-filtered invoice can lead to late payments, revenue delays, and frustrated customers. This guide covers legal requirements, content structure, attachment handling, and delivery best practices.
+
+---
+
+## Types of Billing Emails
+
+| Email Type | Trigger | Classification |
+|-----------|---------|---------------|
+| **Invoice / Receipt** | Payment processed successfully | Transactional |
+| **Payment reminder** | Upcoming payment due date | Transactional (if related to an existing agreement) |
+| **Failed payment notice** | Payment method declined | Transactional |
+| **Subscription renewal** | Recurring billing cycle completed | Transactional |
+| **Plan change confirmation** | User upgrades or downgrades | Transactional |
+| **Payment method expiring** | Card approaching expiration | Transactional |
+| **Refund confirmation** | Refund issued | Transactional |
+| **Promotional pricing offer** | Discount or upsell | Marketing — requires unsubscribe |
+
+<Note>
+  All billing emails related to an existing business transaction are transactional and do not require an unsubscribe link. However, emails promoting upgrades, new plans, or discounts are marketing and must comply with CAN-SPAM, GDPR, and other regulations. See [Transactional vs Marketing](/knowledge-base/best-practices/transactional-vs-marketing).
+</Note>
+
+---
+
+## Legal Requirements
+
+Invoice formatting requirements vary by country. Always verify the requirements for the jurisdictions where your customers are located.
+
+### Common Required Fields
+
+Most jurisdictions require invoices to include:
+
+<Steps>
+  <Step title="Seller identification">
+    Your business name, address, and tax identification number (e.g., VAT number in the EU, EIN in the US).
+  </Step>
+  <Step title="Buyer identification">
+    Customer name or business name, and address for B2B invoices.
+  </Step>
+  <Step title="Invoice number">
+    A unique, sequential identifier. Many jurisdictions require invoice numbers to be sequential without gaps.
+  </Step>
+  <Step title="Invoice date">
+    The date the invoice was issued.
+  </Step>
+  <Step title="Line items">
+    Description of goods or services, quantity, unit price, and line total.
+  </Step>
+  <Step title="Tax breakdown">
+    Tax rate applied, tax amount, and whether prices are inclusive or exclusive of tax.
+  </Step>
+  <Step title="Total amount">
+    Net amount, tax amount, and gross total. Currency must be clearly stated.
+  </Step>
+  <Step title="Payment terms">
+    Due date, accepted payment methods, and any late payment penalties.
+  </Step>
+</Steps>
+
+### Regional Requirements
+
+| Region | Key Requirements |
+|--------|-----------------|
+| **EU (VAT)** | VAT number (seller and buyer for B2B), VAT rate per line item, "reverse charge" notation for cross-border B2B sales |
+| **US** | Less prescriptive — business name, address, EIN for B2B, and state sales tax if applicable |
+| **UK** | VAT number, VAT rate, business registration number |
+| **Canada** | GST/HST number, tax breakdown by province |
+| **Australia** | ABN (Australian Business Number), GST amounts |
+
+<Warning>
+  This is general guidance, not legal advice. Consult with an accountant or legal professional to ensure your invoices meet the specific requirements of your operating jurisdictions.
+</Warning>
+
+---
+
+## Email Content and Structure
+
+### Invoice Email Template
+
+```html
+<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; color: #1a1a1a;">
+
+  <!-- Header -->
+  <div style="padding: 24px 0; border-bottom: 1px solid #e5e5e5;">
+    <h2 style="margin: 0;">Invoice #{{invoiceNumber}}</h2>
+    <p style="color: #6b6b6b; margin: 8px 0 0;">
+      {{invoiceDate}} · {{currency}} {{totalAmount}}
+    </p>
+  </div>
+
+  <!-- Status -->
+  <div style="background-color: #f0fdf4; border-radius: 8px; padding: 12px 16px; margin: 24px 0;">
+    <span style="color: #166534; font-weight: 600;">Payment successful</span>
+    <span style="color: #6b6b6b;"> · {{paymentMethod}}</span>
+  </div>
+
+  <!-- Line Items -->
+  <table style="width: 100%; border-collapse: collapse; margin: 24px 0;">
+    <thead>
+      <tr style="border-bottom: 2px solid #e5e5e5;">
+        <th style="text-align: left; padding: 8px 0; font-size: 13px; color: #6b6b6b; font-weight: 600;">Description</th>
+        <th style="text-align: right; padding: 8px 0; font-size: 13px; color: #6b6b6b; font-weight: 600;">Amount</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="border-bottom: 1px solid #e5e5e5;">
+        <td style="padding: 12px 0;">
+          {{planName}} — {{billingPeriod}}<br>
+          <span style="color: #6b6b6b; font-size: 14px;">{{periodStart}} to {{periodEnd}}</span>
+        </td>
+        <td style="text-align: right; padding: 12px 0;">{{lineAmount}}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Totals -->
+  <table style="width: 100%; margin-bottom: 24px;">
+    <tr>
+      <td style="padding: 4px 0; color: #6b6b6b;">Subtotal</td>
+      <td style="text-align: right;">{{subtotal}}</td>
+    </tr>
+    <tr>
+      <td style="padding: 4px 0; color: #6b6b6b;">Tax ({{taxRate}}%)</td>
+      <td style="text-align: right;">{{taxAmount}}</td>
+    </tr>
+    <tr style="border-top: 2px solid #1a1a1a;">
+      <td style="padding: 12px 0; font-weight: 600;">Total</td>
+      <td style="text-align: right; font-weight: 600;">{{currency}} {{totalAmount}}</td>
+    </tr>
+  </table>
+
+  <!-- Seller Info -->
+  <div style="padding: 16px; background-color: #f9fafb; border-radius: 8px; font-size: 13px; color: #6b6b6b; line-height: 1.6;">
+    <strong style="color: #1a1a1a;">{{businessName}}</strong><br>
+    {{businessAddress}}<br>
+    Tax ID: {{taxId}}
+  </div>
+
+  <!-- CTA -->
+  <div style="text-align: center; margin: 32px 0;">
+    <a href="{{invoiceUrl}}"
+       style="background-color: #6366F1; color: #ffffff; padding: 12px 32px;
+              text-decoration: none; border-radius: 6px; font-weight: 600;">
+      View Invoice
+    </a>
+  </div>
+
+  <p style="color: #6b6b6b; font-size: 13px; text-align: center; line-height: 1.6;">
+    Questions about this invoice? Contact
+    <a href="mailto:billing@yourapp.com" style="color: #6366F1;">billing@yourapp.com</a>
+  </p>
+</div>
+```
+
+---
+
+## Inline vs Attachment
+
+There are two approaches to delivering the actual invoice: inline in the email body, or as a PDF attachment.
+
+| Approach | Pros | Cons |
+|----------|------|------|
+| **Inline (HTML in email body)** | Immediate visibility, no extra step to view, works on mobile | Harder to save/print, may not meet legal archival requirements |
+| **PDF attachment** | Professional format, easy to save/print/archive, meets legal requirements | Larger email size, some providers flag attachments, requires PDF generation |
+| **Link to hosted invoice** | Smallest email size, always up-to-date, no attachment flags | Requires the user to click, link can expire, depends on your uptime |
+
+### Recommended Approach
+
+Use a combination: include a summary in the email body and provide a link to download or view the full invoice as a PDF:
+
+```javascript
+const response = await fetch('https://app.lettr.com/api/emails', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${process.env.LETTR_API_KEY}`,
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    from: 'billing@mail.yourapp.com',
+    to: customer.email,
+    subject: `Invoice #${invoice.number} — ${invoice.currency} ${invoice.total}`,
+    html: invoiceEmailHtml,
+    text: invoiceEmailText,
+    tags: ['invoice', 'billing'],
+    metadata: {
+      invoiceId: invoice.id,
+      customerId: customer.id,
+      amount: invoice.total,
+    },
+  }),
+});
+```
+
+<Tip>
+  Include the invoice number and amount in the subject line. Customers and their accounting teams search for invoices by number and amount — making these searchable in the subject saves time.
+</Tip>
+
+### If You Attach a PDF
+
+When attaching an invoice PDF, keep the file size under 1 MB and use Lettr's attachment support:
+
+```javascript
+const fs = require('fs');
+
+const pdfBuffer = await generateInvoicePdf(invoice);
+const pdfBase64 = pdfBuffer.toString('base64');
+
+const response = await fetch('https://app.lettr.com/api/emails', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${process.env.LETTR_API_KEY}`,
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    from: 'billing@mail.yourapp.com',
+    to: customer.email,
+    subject: `Invoice #${invoice.number} — ${invoice.currency} ${invoice.total}`,
+    html: invoiceEmailHtml,
+    text: invoiceEmailText,
+    attachments: [
+      {
+        filename: `invoice-${invoice.number}.pdf`,
+        content: pdfBase64,
+        contentType: 'application/pdf',
+      },
+    ],
+    tags: ['invoice'],
+  }),
+});
+```
+
+<Warning>
+  Large attachments can trigger spam filters and slow delivery. Keep PDF attachments under 1 MB. If the invoice is larger (e.g., includes detailed line items or images), host the PDF and include a download link instead.
+</Warning>
+
+---
+
+## Failed Payment Emails
+
+Failed payment notices need special attention because they directly affect your revenue. A customer who doesn't see the failed payment notice will churn unintentionally.
+
+### Dunning Email Sequence
+
+| Email | Timing | Tone |
+|-------|--------|------|
+| **1. Payment failed** | Immediately after failure | Informational — "Your payment didn't go through, here's how to update it" |
+| **2. Reminder** | 3 days after failure | Friendly reminder — "Your payment is still pending" |
+| **3. Urgent notice** | 7 days after failure | Warning — "Your account will be downgraded in X days" |
+| **4. Final notice** | 14 days after failure | Last chance — "Your account has been downgraded, update payment to restore" |
+
+```javascript
+// Failed payment email
+await fetch('https://app.lettr.com/api/emails', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${process.env.LETTR_API_KEY}`,
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    from: 'billing@mail.yourapp.com',
+    to: customer.email,
+    subject: 'Action required: Your payment could not be processed',
+    html: failedPaymentHtml,
+    text: failedPaymentText,
+    tags: ['billing', 'payment-failed', `dunning-${attempt}`],
+    metadata: {
+      customerId: customer.id,
+      dunningStep: attempt,
+      failedAmount: invoice.total,
+    },
+  }),
+});
+```
+
+### Failed Payment Email Content
+
+- **Explain what happened** — "We tried to charge your Visa ending in 4242 but the payment was declined"
+- **Don't speculate why** — you rarely know the reason for the decline. Don't say "insufficient funds" — just say the payment didn't go through
+- **Provide a direct link** to update the payment method
+- **State the consequence** — what happens if the payment isn't resolved (service downgrade, access loss)
+- **Include a deadline** — when the account will be affected
+
+---
+
+## Subscription Renewal Emails
+
+For recurring billing, send a notification shortly before or immediately after each charge:
+
+| Timing | Content |
+|--------|---------|
+| **Before charge** (3–7 days) | "Your subscription renews on [date] for [amount]. No action needed." |
+| **After charge** | Standard invoice/receipt |
+
+<Note>
+  Pre-charge notifications are required by some payment processors (Stripe recommends them) and reduce chargebacks. They also give customers a chance to update their payment method before it's charged.
+</Note>
+
+---
+
+## Currency and Localization
+
+### Formatting Currency
+
+Always display currency amounts with the correct symbol, decimal separator, and thousands separator for the customer's locale:
+
+| Locale | Format | Example |
+|--------|--------|---------|
+| US/UK | $1,234.56 | `$1,234.56` |
+| Germany | 1.234,56 € | `1.234,56 €` |
+| Japan | ¥123,456 | `¥123,456` |
+| Switzerland | CHF 1'234.56 | `CHF 1'234.56` |
+
+```javascript
+function formatCurrency(amount, currency, locale) {
+  return new Intl.NumberFormat(locale, {
+    style: 'currency',
+    currency: currency,
+  }).format(amount);
+}
+
+// Examples
+formatCurrency(1234.56, 'USD', 'en-US');  // "$1,234.56"
+formatCurrency(1234.56, 'EUR', 'de-DE');  // "1.234,56 €"
+```
+
+<Tip>
+  Store amounts in the smallest currency unit (e.g., cents) to avoid floating-point issues. Convert to the display format only when rendering the email.
+</Tip>
+
+---
+
+## Common Mistakes
+
+<AccordionGroup>
+  <Accordion title="Missing legal requirements">
+    Invoice formats vary by jurisdiction. A US-format invoice missing a VAT number is invalid for EU customers. Consult with an accountant to ensure compliance in every market you serve.
+  </Accordion>
+  <Accordion title="Sending from a no-reply address">
+    Customers reply to billing emails with payment questions, refund requests, and disputes. Use a monitored `billing@` address so these reach your finance or support team.
+  </Accordion>
+  <Accordion title="Non-sequential invoice numbers">
+    Many jurisdictions require sequential invoice numbering without gaps. Use a database sequence or auto-increment, not random IDs.
+  </Accordion>
+  <Accordion title="Wrong currency formatting">
+    Displaying "$1.234,56" to a US customer (or "$1,234.56" to a German customer) causes confusion. Format amounts according to the customer's locale.
+  </Accordion>
+  <Accordion title="No failed payment recovery flow">
+    A single "payment failed" email with no follow-up loses revenue. Implement a dunning sequence that escalates over 2 weeks before downgrading the account.
+  </Accordion>
+  <Accordion title="Large PDF attachments">
+    PDFs over 1 MB can trigger spam filters or slow delivery. Optimize your invoice PDF generation or host the file and send a download link instead.
+  </Accordion>
+  <Accordion title="Including sensitive payment details">
+    Never include full card numbers, bank account numbers, or security codes. Show only the card type and last four digits.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Order Confirmation Emails" icon="bag-shopping" href="/knowledge-base/use-cases/order-confirmation-emails">
+    E-commerce order confirmations and receipts
+  </Card>
+  <Card title="Data Privacy in Email Metadata" icon="user-shield" href="/knowledge-base/compliance/data-privacy-metadata">
+    Protecting sensitive information in email content and metadata
+  </Card>
+  <Card title="Deliverability Best Practices" icon="inbox" href="/knowledge-base/best-practices/deliverability">
+    Maximize inbox placement for your emails
+  </Card>
+  <Card title="CAN-SPAM Requirements" icon="scale-balanced" href="/knowledge-base/compliance/can-spam">
+    US email compliance requirements
+  </Card>
+</CardGroup>

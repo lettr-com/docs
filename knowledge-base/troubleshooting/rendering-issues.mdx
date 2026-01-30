@@ -1,0 +1,271 @@
+---
+title: "Email Content Rendering Issues"
+description: "Diagnose and fix broken layouts, missing images, font fallbacks, and clipped messages across email clients."
+---
+
+Email clients render HTML differently — there is no universal standard like there is for web browsers. Layouts that look perfect in Gmail can break completely in Outlook, and vice versa. This guide covers the most common rendering problems and how to fix them.
+
+---
+
+## The Rendering Landscape
+
+Each email client uses a different rendering engine, which means different levels of CSS and HTML support:
+
+| Client | Rendering Engine | CSS Support |
+|--------|-----------------|-------------|
+| **Gmail (web)** | Custom (strips `<style>` blocks, inlines CSS) | Limited — no `<style>` in `<head>`, no media queries |
+| **Gmail (mobile app)** | WebKit | Better than web — supports some media queries |
+| **Outlook 2019/2021/365 (desktop)** | Microsoft Word | Very limited — no `background-image`, broken `float`, poor `margin`/`padding` |
+| **Outlook.com (web)** | Custom | Moderate — better than desktop Outlook |
+| **Apple Mail** | WebKit | Excellent — closest to a web browser |
+| **Yahoo Mail** | Custom | Moderate — strips some CSS properties |
+| **Thunderbird** | Gecko | Good — similar to Firefox |
+
+<Warning>
+  Outlook desktop's use of the Word rendering engine is the single biggest source of email rendering problems. If you design for Outlook first, other clients will generally work. The reverse is not true.
+</Warning>
+
+---
+
+## Broken Layouts
+
+### Tables vs CSS Layout
+
+Modern web development uses CSS Grid and Flexbox, but email requires **table-based layouts** for consistent rendering across clients — especially Outlook desktop.
+
+```html
+<!-- Good: Table-based layout works everywhere -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr>
+    <td width="50%" valign="top" style="padding: 10px;">
+      Left column content
+    </td>
+    <td width="50%" valign="top" style="padding: 10px;">
+      Right column content
+    </td>
+  </tr>
+</table>
+
+<!-- Bad: CSS layout breaks in Outlook desktop -->
+<div style="display: flex; gap: 20px;">
+  <div style="flex: 1;">Left column content</div>
+  <div style="flex: 1;">Right column content</div>
+</div>
+```
+
+### Common Layout Breakages
+
+<AccordionGroup>
+  <Accordion title="Columns stacking or overlapping in Outlook">
+    Outlook desktop ignores `display: flex`, `display: grid`, and `float` in many contexts.
+
+    **Fix:** Use `<table>` elements with explicit `width` attributes (in pixels or percentages) for column layouts. Set `role="presentation"` on layout tables for accessibility.
+  </Accordion>
+  <Accordion title="Email is wider than expected">
+    Missing width constraints cause the email to stretch to the full viewport.
+
+    **Fix:** Wrap your entire email in a container table with a fixed `max-width`:
+
+    ```html
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="600" cellpadding="0" cellspacing="0"
+                 style="max-width: 600px; width: 100%;">
+            <tr>
+              <td>
+                <!-- Email content here -->
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+    ```
+  </Accordion>
+  <Accordion title="Spacing is inconsistent across clients">
+    Different clients handle `margin` and `padding` differently, especially on `<p>` and `<div>` elements.
+
+    **Fix:** Use `padding` on `<td>` elements instead of `margin` on block elements. Reset default margins on `<p>` tags:
+
+    ```html
+    <p style="margin: 0 0 16px 0;">Paragraph text</p>
+    ```
+  </Accordion>
+  <Accordion title="Responsive design not working in Gmail web">
+    Gmail's web client strips `<style>` blocks from the `<head>`, which removes media queries.
+
+    **Fix:** Use inline styles as the default (mobile-first) and rely on media queries only as a progressive enhancement for clients that support them. Design your single-column mobile layout as the base.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Missing or Broken Images
+
+### Common Causes
+
+| Problem | Cause | Fix |
+|---------|-------|-----|
+| Images not loading | Blocked by client (Outlook blocks by default) | Always include `alt` text as a fallback |
+| Broken image icon | Incorrect `src` URL or expired link | Use absolute URLs hosted on a reliable CDN |
+| Images clipped or distorted | Missing `width`/`height` attributes | Always set both `width` and `height` on `<img>` tags |
+| Retina images blurry | Image served at 1x resolution | Use 2x resolution images with explicit `width`/`height` at the display size |
+| CID images not displaying | Inline attachments not supported by all clients | Use hosted URLs instead of CID references |
+
+### Best Practices for Email Images
+
+```html
+<!-- Good: Complete image tag with fallbacks -->
+<img
+  src="https://storage.yourdomain.com/logo.png"
+  alt="Your Company Logo"
+  width="200"
+  height="50"
+  style="display: block; border: 0; outline: none; max-width: 100%; height: auto;"
+/>
+
+<!-- Bad: Missing dimensions and alt text -->
+<img src="https://storage.yourdomain.com/logo.png" />
+```
+
+<Tip>
+  Use Lettr's [Email Storage](/learn/domains/storage-domains) to host email images on your own domain. This improves load speed and avoids images being blocked by URL reputation filters.
+</Tip>
+
+### Images Blocked by Default
+
+Some email clients block images by default until the recipient clicks "Load images":
+
+- **Outlook desktop** — blocks external images by default
+- **Thunderbird** — blocks remote content by default
+- **Some corporate email systems** — strip or block images for security
+
+Design your emails to be readable without images. Use descriptive `alt` text, background colors as fallbacks, and ensure key information is in HTML text, not baked into images.
+
+---
+
+## Font Rendering Issues
+
+Email clients have very limited web font support. Most clients fall back to system fonts.
+
+### Web Font Support
+
+| Client | Web Fonts (`@font-face`) |
+|--------|-------------------------|
+| Apple Mail | Supported |
+| iOS Mail | Supported |
+| Outlook (all versions) | Not supported |
+| Gmail (web and app) | Not supported |
+| Yahoo Mail | Not supported |
+| Thunderbird | Supported |
+
+### Font Fallback Stack
+
+Always define a fallback stack. Your web font (if used) should be first, followed by system fonts:
+
+```html
+<p style="font-family: 'Your Web Font', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  This text will render in the first available font.
+</p>
+```
+
+<Note>
+  Since most recipients will see a system font, design and test with system fonts as the primary experience. Treat web fonts as a progressive enhancement.
+</Note>
+
+---
+
+## Gmail Message Clipping
+
+Gmail clips (truncates) emails that exceed approximately **102 KB** of HTML content. When clipped, Gmail shows a "[Message clipped] View entire message" link at the bottom.
+
+### Why Clipping Matters
+
+- Recipients may miss important content below the fold (like unsubscribe links)
+- The "View entire message" link opens the email in a new window, which many recipients won't click
+- Tracking pixels placed at the bottom of clipped emails won't fire, reducing open rate accuracy
+
+### How to Avoid Clipping
+
+1. **Minimize HTML size** — remove unnecessary whitespace, comments, and redundant inline styles.
+2. **Avoid duplicated CSS** — some email builders inline the same styles on every element, inflating file size.
+3. **Use efficient markup** — simplify nested tables and remove empty elements.
+4. **Check the size before sending** — your HTML should be well under 102 KB.
+
+```bash
+# Check your email HTML file size
+wc -c < email-template.html
+# If the output exceeds ~100000, you need to optimize
+```
+
+<Tip>
+  Lettr's template editor shows the compiled HTML size. If your template approaches 80 KB, start optimizing before it reaches the 102 KB limit.
+</Tip>
+
+---
+
+## Dark Mode Rendering
+
+Dark mode inverts colors in email clients, which can break designs that aren't prepared for it. See [Dark Mode Email Design](/knowledge-base/best-practices/dark-mode-design) for a dedicated guide on this topic.
+
+### Quick Fixes
+
+- Add `color-scheme: light dark;` and `-webkit-color-scheme: light dark;` to your email's root element to signal dark mode awareness.
+- Use transparent PNGs for logos instead of JPGs with white backgrounds.
+- Avoid pure white (`#ffffff`) backgrounds — use a very slight off-white (`#fefefe`) that won't get inverted.
+
+---
+
+## Testing Across Clients
+
+There is no substitute for testing your emails in multiple clients before sending.
+
+### Manual Testing Checklist
+
+<AccordionGroup>
+  <Accordion title="Test in the major clients">
+    At minimum, test in:
+
+    - Gmail (web and mobile)
+    - Outlook desktop (2019/2021/365)
+    - Outlook.com (web)
+    - Apple Mail (macOS and iOS)
+
+    These four cover the vast majority of recipients. Add Yahoo Mail if a significant portion of your audience uses it.
+  </Accordion>
+  <Accordion title="Test with images on and off">
+    View your email with images loaded and with images blocked. Verify that alt text displays properly and the email is still readable.
+  </Accordion>
+  <Accordion title="Test at different widths">
+    View your email at desktop (600px content width) and mobile (320px viewport) sizes. Verify that responsive breakpoints work correctly.
+  </Accordion>
+  <Accordion title="Test in dark mode">
+    Toggle dark mode in Gmail, Outlook, and Apple Mail. Check for invisible text, missing logos, and broken backgrounds.
+  </Accordion>
+  <Accordion title="Check the HTML file size">
+    Verify the compiled HTML is under 80 KB to avoid Gmail clipping. Check for unnecessary inline styles or deeply nested tables inflating the size.
+  </Accordion>
+  <Accordion title="Validate links and tracking">
+    Click every link in the email. Verify tracking links resolve correctly and don't trigger browser security warnings.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Templates Best Practices" icon="paintbrush" href="/knowledge-base/best-practices/templates">
+    Design effective email templates.
+  </Card>
+  <Card title="Dark Mode Email Design" icon="moon" href="/knowledge-base/best-practices/dark-mode-design">
+    Defensive CSS strategies for dark mode rendering.
+  </Card>
+  <Card title="Email Accessibility" icon="universal-access" href="/knowledge-base/best-practices/email-accessibility">
+    Alt text, semantic HTML, and screen reader compatibility.
+  </Card>
+  <Card title="Email Content Types" icon="file-code" href="/knowledge-base/fundamentals/content-types">
+    HTML, plain text, and AMP email explained.
+  </Card>
+</CardGroup>

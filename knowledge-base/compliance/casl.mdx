@@ -1,0 +1,246 @@
+---
+title: "CASL (Canadian Anti-Spam Law)"
+description: "Requirements of Canada's Anti-Spam Legislation, consent types, and how CASL differs from CAN-SPAM and GDPR"
+---
+
+## What Is CASL
+
+**Canada's Anti-Spam Legislation (CASL)** is a federal law that took effect on July 1, 2014. It regulates commercial electronic messages (CEMs) sent to or from Canadian computer systems. CASL is enforced by the **Canadian Radio-television and Telecommunications Commission (CRTC)**, the **Competition Bureau**, and the **Office of the Privacy Commissioner of Canada**.
+
+CASL is widely considered one of the strictest anti-spam laws in the world. Unlike the US CAN-SPAM Act, which follows an opt-out model, CASL requires **prior consent** before you can send a commercial electronic message.
+
+<Warning>
+  CASL applies to any commercial electronic message sent to a **Canadian recipient** or routed through a **Canadian computer system**, regardless of where the sender is located. If you have Canadian recipients on your list, CASL applies to you.
+</Warning>
+
+---
+
+## Who Must Comply
+
+CASL applies to any person or organization that sends a **commercial electronic message (CEM)** — any electronic message that encourages participation in a commercial activity. This includes:
+
+- Marketing and promotional emails
+- Newsletters that promote products or services
+- Emails containing offers, discounts, or upsells
+- Messages that direct recipients to a website with commercial content
+
+<Note>
+  CASL also covers SMS, social media messages, and other electronic messages — not just email. However, for the purpose of email sending through Lettr, this article focuses on email-specific requirements.
+</Note>
+
+---
+
+## Consent Under CASL
+
+CASL recognizes two types of consent: **express** and **implied**. You must have one or the other before sending a commercial email to a Canadian recipient.
+
+### Express Consent
+
+Express consent is an affirmative opt-in where the recipient explicitly agrees to receive your messages. It does not expire and remains valid until the recipient withdraws it.
+
+To obtain valid express consent, you must clearly disclose:
+
+1. **Who** is requesting consent (your name or organization name)
+2. **Why** you are requesting consent (the purpose for sending messages)
+3. **Contact information** — a mailing address and either a phone number, email address, or web address
+4. **How to withdraw** — a statement that the recipient can unsubscribe at any time
+
+```html
+<!-- Example: Compliant express consent form -->
+<form>
+  <label>
+    <input type="checkbox" name="consent" />
+    I agree to receive marketing emails from Your Company about product
+    updates and promotions. You can unsubscribe at any time using the
+    link in our emails.
+  </label>
+  <p style="font-size: 12px; color: #666;">
+    Your Company Inc. — 456 Bay Street, Toronto, ON M5J 2T3<br />
+    Contact: marketing@yourcompany.com
+  </p>
+</form>
+```
+
+<Warning>
+  Pre-checked boxes do **not** constitute express consent under CASL. The recipient must take an affirmative action to opt in.
+</Warning>
+
+### Implied Consent
+
+Implied consent exists in certain business relationships without an explicit opt-in, but it is **time-limited**. The two most common forms are:
+
+| Type | Duration | Example |
+|------|----------|---------|
+| **Existing business relationship** | 2 years from last purchase, contract, or transaction | A customer who bought from you 18 months ago |
+| **Existing non-business relationship** | 6 months from the inquiry or application | A prospect who submitted a contact form 4 months ago |
+| **Conspicuous publication** | No fixed expiry, but message must be relevant to the recipient's role | An email address listed on a business website or directory |
+
+<Tip>
+  Implied consent is temporary. Use it as a window to convert the recipient to express consent. Include a clear opt-in mechanism in every email you send under implied consent.
+</Tip>
+
+---
+
+## The Three Requirements for Every CEM
+
+Every commercial electronic message sent under CASL must meet three requirements:
+
+<Steps>
+  <Step title="Obtain consent (express or implied)">
+    You must have valid consent before sending. Unlike CAN-SPAM, you cannot send first and offer an opt-out later.
+  </Step>
+
+  <Step title="Identify yourself">
+    Every message must clearly identify the sender, including your name (or the name of the person on whose behalf the message is sent), your mailing address, and a way to contact you (phone, email, or web URL).
+  </Step>
+
+  <Step title="Provide an unsubscribe mechanism">
+    Every message must include a functional unsubscribe mechanism that is free, easy to use, and works for at least 60 days after the message is sent. Unsubscribe requests must be processed within **10 business days**.
+  </Step>
+</Steps>
+
+---
+
+## Implementation in Lettr
+
+### Consent Record Keeping
+
+Maintain records of how and when consent was obtained. For express consent, store:
+
+- The date and time of consent
+- The method (signup form, checkbox, etc.)
+- The exact text or disclosure presented
+- The source (URL of the form, event name, etc.)
+
+```javascript
+// Example: Storing consent data alongside a Lettr API call
+const response = await fetch("https://api.lettr.com/api/emails", {
+  method: "POST",
+  headers: {
+    "Authorization": "Bearer YOUR_API_KEY",
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    from: "updates@yourcompany.com",
+    to: "recipient@example.ca",
+    subject: "Your weekly product update",
+    template_id: "weekly-update",
+    metadata: {
+      consent_type: "express",
+      consent_date: "2025-06-15T10:30:00Z",
+      consent_source: "signup_form_v3",
+    },
+  }),
+});
+```
+
+### Unsubscribe Link
+
+Use Lettr's built-in unsubscribe tracking to comply with the unsubscribe requirement:
+
+```html
+<a href="https://yourcompany.com/unsubscribe?email={{email}}"
+   data-msys-unsubscribe="1">
+  Unsubscribe
+</a>
+```
+
+<Note>
+  Lettr processes unsubscribes immediately when using `data-msys-unsubscribe="1"`, which is well within CASL's 10-business-day requirement.
+</Note>
+
+### Sender Identification
+
+Include your organization name, mailing address, and contact information in every commercial email footer:
+
+```html
+<footer style="text-align: center; padding: 20px; font-size: 12px; color: #666;">
+  <p>Your Company Inc.</p>
+  <p>456 Bay Street, Toronto, ON M5J 2T3</p>
+  <p>Contact: marketing@yourcompany.com</p>
+  <p>
+    <a href="https://yourcompany.com/unsubscribe?email={{email}}"
+       data-msys-unsubscribe="1"
+       style="color: #0066cc;">
+      Unsubscribe
+    </a>
+  </p>
+</footer>
+```
+
+---
+
+## Penalties
+
+<Warning>
+  CASL penalties are among the highest in the world for anti-spam violations:
+
+  - Up to **$1 million per violation** for individuals
+  - Up to **$10 million per violation** for organizations
+  - Directors and officers can be held **personally liable**
+
+  The CRTC has levied multi-million-dollar fines against companies of all sizes.
+</Warning>
+
+---
+
+## CASL vs CAN-SPAM vs GDPR
+
+| Aspect | CASL (Canada) | CAN-SPAM (US) | GDPR (EU) |
+|--------|---------------|---------------|-----------|
+| **Consent model** | Opt-in required (express or implied) | Opt-out — you can send until they unsubscribe | Opt-in required (explicit consent) |
+| **Pre-checked boxes** | Not valid consent | Not addressed (no consent required) | Not valid consent |
+| **Implied consent** | Yes, time-limited (2 years / 6 months) | N/A — no consent required | No — consent must be explicit |
+| **Unsubscribe processing** | Within 10 business days | Within 10 business days | Without undue delay |
+| **Physical address required** | Yes | Yes | Not explicitly, but data controller must be identifiable |
+| **Maximum penalties** | $10M per violation (organizations) | ~$50,120 per email | 4% of global revenue or €20M |
+| **Transactional email exempt** | Largely exempt | Largely exempt | Requires lawful basis (contractual necessity) |
+
+<Tip>
+  If you send email to recipients in Canada, the US, and the EU, the simplest compliance strategy is to obtain express consent from all recipients and honor all unsubscribe requests immediately. This satisfies the strictest requirements across all three frameworks.
+</Tip>
+
+---
+
+## Common Mistakes
+
+<AccordionGroup>
+  <Accordion title="Relying on implied consent indefinitely">
+    Implied consent expires — 2 years for existing business relationships and 6 months for inquiries. If you do not convert recipients to express consent before the implied consent window closes, you must stop emailing them.
+  </Accordion>
+
+  <Accordion title="Assuming CAN-SPAM compliance covers Canada">
+    CAN-SPAM is an opt-out law; CASL is an opt-in law. Complying with CAN-SPAM does not mean you comply with CASL. If you have Canadian recipients, you need express or implied consent before sending.
+  </Accordion>
+
+  <Accordion title="Not recording consent details">
+    CASL places the burden of proof on the sender. If you cannot demonstrate that you had valid consent at the time of sending, you are presumed non-compliant. Store timestamps, form versions, and the disclosure text for every consent record.
+  </Accordion>
+
+  <Accordion title="Using purchased lists for Canadian recipients">
+    Purchased lists almost never include valid CASL consent. Sending commercial email to purchased Canadian addresses without consent is a direct violation.
+  </Accordion>
+
+  <Accordion title="Forgetting to include sender identification">
+    Every CEM must include your name, mailing address, and contact information. Missing any of these is a separate violation, even if you have valid consent and include an unsubscribe link.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="CAN-SPAM Requirements" icon="gavel" href="/knowledge-base/compliance/can-spam">
+    US commercial email law and how it compares to CASL.
+  </Card>
+  <Card title="GDPR and Email Sending" icon="shield-halved" href="/knowledge-base/compliance/gdpr-email">
+    EU data protection requirements for email communications.
+  </Card>
+  <Card title="Email Consent Best Practices" icon="clipboard-check" href="/knowledge-base/compliance/email-consent">
+    Practical guidance for obtaining, recording, and managing email consent.
+  </Card>
+  <Card title="Unsubscribe Best Practices" icon="envelope-circle-check" href="/knowledge-base/compliance/unsubscribe-best-practices">
+    Implement effective unsubscribe mechanisms across all jurisdictions.
+  </Card>
+</CardGroup>

@@ -1,0 +1,202 @@
+---
+title: "Acceptable Use Policy for Email"
+description: "What you can and cannot send through Lettr, prohibited content, and anti-abuse measures"
+---
+
+## Why an Acceptable Use Policy Exists
+
+Email service providers maintain acceptable use policies (AUPs) to protect the platform's sending reputation, ensure reliable delivery for all users, and comply with legal obligations. When one sender abuses the platform, the resulting reputation damage affects every other sender sharing that infrastructure.
+
+Lettr's acceptable use policy sets clear expectations for what you can send, how you should send it, and what is prohibited. Following these guidelines protects your deliverability and helps maintain a healthy sending environment for everyone.
+
+<Info>
+  Every major email service provider — including SendGrid, Postmark, Amazon SES, and Resend — enforces an acceptable use policy. These policies exist to protect the shared infrastructure that makes reliable email delivery possible.
+</Info>
+
+---
+
+## Permitted Use
+
+Lettr is designed for legitimate transactional and commercial email. Permitted uses include:
+
+| Category | Examples |
+|----------|---------|
+| **Transactional email** | Order confirmations, shipping notifications, password resets, account alerts, two-factor authentication codes |
+| **Marketing email** | Newsletters, product announcements, promotional campaigns, event invitations |
+| **Relationship email** | Onboarding sequences, feedback requests, renewal reminders, re-engagement campaigns |
+| **Operational email** | System alerts, status updates, scheduled reports, usage notifications |
+
+All permitted sending must comply with applicable laws (CAN-SPAM, GDPR, CASL) and follow email best practices regarding consent, identification, and unsubscribe mechanisms.
+
+---
+
+## Prohibited Content
+
+The following types of content are prohibited and may result in immediate account suspension:
+
+### Spam and Unsolicited Email
+
+- Sending email to recipients who have not consented to receive it (where consent is required by law)
+- Using purchased, rented, scraped, or harvested email lists
+- Sending email to addresses collected through deceptive means
+- Sending to lists that have not been mailed in over 12 months without re-consent
+
+### Deceptive or Fraudulent Content
+
+- Phishing emails or messages impersonating other organizations
+- Emails with false or misleading header information
+- Deceptive subject lines designed to trick recipients into opening
+- Emails that disguise commercial content as personal messages
+
+### Illegal Content
+
+- Content that violates applicable laws in the sender's or recipient's jurisdiction
+- Emails promoting illegal products, services, or activities
+- Content that facilitates identity theft, financial fraud, or other crimes
+
+### Malware and Harmful Content
+
+- Emails containing viruses, malware, or malicious attachments
+- Messages with links to malware distribution or phishing sites
+- Emails designed to exploit software vulnerabilities
+
+### Harmful or Abusive Content
+
+- Threats, harassment, or intimidation
+- Content promoting violence or self-harm
+- Child exploitation material
+
+<Warning>
+  Violations of the prohibited content policy may result in immediate account suspension without prior notice. Lettr reserves the right to review and take action on any content that poses a risk to platform reputation or violates applicable laws.
+</Warning>
+
+---
+
+## Sending Practice Requirements
+
+Beyond content restrictions, Lettr requires that all senders follow responsible sending practices:
+
+### Authentication
+
+All sending domains must be properly authenticated with SPF, DKIM, and DMARC. Unauthenticated sending is not permitted.
+
+### Consent and Compliance
+
+- Obtain appropriate consent before sending commercial email
+- Include a functional unsubscribe mechanism in every commercial message
+- Honor unsubscribe requests promptly
+- Include accurate sender identification and a physical address in commercial emails
+
+### List Quality
+
+- Maintain clean recipient lists with valid, consented addresses
+- Remove hard bounces immediately — do not re-send to addresses that have hard bounced
+- Process spam complaints and unsubscribes without delay
+- Do not send to suppressed addresses
+
+### Volume and Reputation
+
+- Warm up new domains and IPs gradually — do not send high volume from a new domain on day one
+- Maintain a spam complaint rate below 0.1% (hard limit: 0.3%)
+- Maintain a hard bounce rate below 2%
+- Monitor your sending reputation through tools like Google Postmaster Tools
+
+<Note>
+  Lettr automatically adds hard bounces and spam complaints to your suppression list. Attempting to circumvent suppression lists by re-adding bounced or complained addresses is a policy violation.
+</Note>
+
+---
+
+## Monitoring and Enforcement
+
+Lettr monitors sending activity to detect potential abuse and protect platform reputation. Monitoring includes:
+
+| Signal | What It Indicates |
+|--------|------------------|
+| **High bounce rate** | Poor list quality or stale addresses |
+| **High spam complaint rate** | Unwanted email or poor consent practices |
+| **Spam trap hits** | Use of purchased, scraped, or stale lists |
+| **Sudden volume spikes** | Potential compromise or abuse |
+| **Content pattern matching** | Phishing, scam, or prohibited content |
+
+### Enforcement Actions
+
+Depending on the severity and nature of the violation, Lettr may take one or more of the following actions:
+
+<Steps>
+  <Step title="Warning">
+    For minor or first-time issues, you will receive a notification explaining the problem and what corrective action is needed.
+  </Step>
+
+  <Step title="Sending throttle">
+    Your sending rate may be temporarily reduced while the issue is investigated or resolved.
+  </Step>
+
+  <Step title="Sending suspension">
+    Your ability to send email may be temporarily suspended pending resolution of the issue.
+  </Step>
+
+  <Step title="Account termination">
+    For severe violations (phishing, malware, repeated policy violations), your account may be permanently terminated.
+  </Step>
+</Steps>
+
+---
+
+## What to Do If Your Account Is Flagged
+
+If your sending is flagged or suspended:
+
+1. **Check your email** — Lettr will send a notification explaining the issue
+2. **Review your recent sending** — Identify the source of the problem (list quality, content, consent)
+3. **Take corrective action** — Fix the root cause before requesting reinstatement
+4. **Contact support** — Reach out to [support@lettr.com](mailto:support@lettr.com) with details of the corrective actions you have taken
+
+<Tip>
+  Most flagged accounts are the result of list quality issues, not intentional abuse. Cleaning your list, removing unengaged recipients, and verifying consent records resolves the majority of cases.
+</Tip>
+
+---
+
+## Common Mistakes
+
+<AccordionGroup>
+  <Accordion title="Importing old lists without re-consent">
+    Lists that have not been mailed in 12 or more months are likely to contain invalid addresses, spam traps, and disengaged recipients. Sending to these lists will generate high bounce and complaint rates, triggering enforcement actions. Always re-verify or re-consent stale lists before importing.
+  </Accordion>
+
+  <Accordion title="Ignoring bounce and complaint signals">
+    High bounce and complaint rates are early warning signs. If you notice rates climbing, investigate immediately — do not continue sending at the same volume to the same list. Continuing to send into poor metrics will escalate enforcement actions.
+  </Accordion>
+
+  <Accordion title="Sending marketing email without an unsubscribe link">
+    Every commercial email must include a functional unsubscribe mechanism. Sending marketing email without one violates both the acceptable use policy and applicable laws (CAN-SPAM, GDPR, CASL).
+  </Accordion>
+
+  <Accordion title="Assuming transactional email has no rules">
+    While transactional email has lighter compliance requirements, it is still subject to the acceptable use policy. Transactional email must not contain deceptive content, must be sent to valid addresses, and must not be used as a vehicle for marketing content without proper consent and unsubscribe mechanisms.
+  </Accordion>
+
+  <Accordion title="Circumventing suppression lists">
+    Attempting to re-add addresses that have been suppressed due to bounces, complaints, or unsubscribes is a serious policy violation. Suppression lists exist to protect both recipients and your sending reputation.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Deliverability Best Practices" icon="inbox" href="/knowledge-base/best-practices/deliverability">
+    Maximize inbox placement and maintain sender reputation.
+  </Card>
+  <Card title="Sending Reputation" icon="star" href="/knowledge-base/best-practices/sending-reputation">
+    Build and protect your sender reputation.
+  </Card>
+  <Card title="List Hygiene" icon="broom" href="/knowledge-base/best-practices/list-hygiene">
+    Maintain clean, compliant recipient lists.
+  </Card>
+  <Card title="IP and Domain Warm-Up" icon="fire" href="/knowledge-base/best-practices/ip-domain-warmup">
+    Gradually ramp up sending volume on new domains and IPs.
+  </Card>
+</CardGroup>
