@@ -1,0 +1,312 @@
+---
+title: Welcome and Onboarding Emails
+description: "Sequence design, timing, content strategy, and transactional vs marketing classification for welcome and onboarding emails"
+---
+
+# Welcome and Onboarding Emails
+
+Welcome emails have the highest engagement of any email you'll send — open rates of 50–80% are typical. This is the moment when a new user is most interested in your product. A well-designed onboarding sequence reduces churn, drives feature adoption, and sets the tone for the entire customer relationship. This guide covers sequence design, timing, content strategy, and how to classify welcome emails correctly.
+
+---
+
+## Transactional vs Marketing Classification
+
+Welcome emails sit in a gray area between transactional and marketing. Getting the classification wrong affects deliverability and legal compliance.
+
+| Email Type | Classification | Reasoning |
+|-----------|---------------|-----------|
+| **Account confirmation** (verify your email) | Transactional | Required to complete signup — user can't use the product without it |
+| **Welcome with setup instructions** | Transactional | Directly related to the service the user signed up for |
+| **Onboarding tips** (feature highlights, tutorials) | Marketing | Educational but not required — the user can use the product without them |
+| **Promotional welcome** (discounts, upgrades) | Marketing | Promotional content, regardless of timing |
+
+<Warning>
+  If you send onboarding emails that are classified as marketing, they must include an unsubscribe link and comply with CAN-SPAM, GDPR, and other regulations. See [Transactional vs Marketing](/knowledge-base/best-practices/transactional-vs-marketing) for detailed classification guidance.
+</Warning>
+
+### Practical Approach
+
+The safest approach is to keep your first email purely transactional (account confirmation or welcome with setup instructions) and send subsequent onboarding emails as marketing with proper unsubscribe handling:
+
+```javascript
+// Email 1: Transactional — no unsubscribe needed
+await sendEmail({
+  from: 'welcome@mail.yourapp.com',
+  to: user.email,
+  subject: 'Welcome to YourApp — verify your email',
+  tags: ['welcome', 'transactional'],
+  // Account verification link, getting started steps
+});
+
+// Email 2+: Marketing — include unsubscribe
+await sendEmail({
+  from: 'tips@mail.yourapp.com',
+  to: user.email,
+  subject: 'Get the most out of YourApp',
+  tags: ['onboarding', 'marketing'],
+  headers: {
+    'List-Unsubscribe': '<https://yourapp.com/unsubscribe?token=xxx>',
+    'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+  },
+  // Feature tips, tutorials, best practices
+});
+```
+
+---
+
+## Sequence Design
+
+A typical onboarding sequence has 3–7 emails over 1–2 weeks. The goal is to guide users from signup to their first success with your product.
+
+### Recommended Sequence
+
+| Email | Timing | Purpose | Classification |
+|-------|--------|---------|---------------|
+| **1. Welcome / Verify** | Immediately | Confirm account, provide login details, one essential next step | Transactional |
+| **2. Getting Started** | Day 1 (hours after signup) | Walk through the primary use case — the single thing that delivers value | Marketing |
+| **3. Key Feature** | Day 3 | Introduce a feature they haven't used yet that solves a common problem | Marketing |
+| **4. Integration / Setup** | Day 5 | Encourage a deeper setup step (connect an integration, invite a team member) | Marketing |
+| **5. Success Story** | Day 7 | Show how others use the product, or highlight their own progress | Marketing |
+| **6. Check-In** | Day 14 | Ask if they need help, offer support, or prompt feedback | Marketing |
+
+<Tip>
+  Fewer, better emails outperform a long sequence. If you're unsure, start with 3 emails (welcome, getting started, check-in) and expand based on engagement data.
+</Tip>
+
+### Adapt Based on User Behavior
+
+The most effective onboarding sequences are behavior-driven, not purely time-based. Skip or modify emails based on what the user has already done:
+
+```javascript
+async function sendOnboardingEmail(user, emailNumber) {
+  // Skip "Getting Started" if user already completed setup
+  if (emailNumber === 2 && user.hasCompletedSetup) {
+    return scheduleNextEmail(user, 3);
+  }
+
+  // Skip "Key Feature" if user already used it
+  if (emailNumber === 3 && user.hasUsedFeatureX) {
+    return scheduleNextEmail(user, 4);
+  }
+
+  // Stop sequence if user is already active
+  if (user.actionsThisWeek > 5) {
+    return; // They don't need onboarding nudges
+  }
+
+  await sendEmail({
+    from: 'tips@mail.yourapp.com',
+    to: user.email,
+    subject: onboardingSubjects[emailNumber],
+    html: onboardingTemplates[emailNumber](user),
+    tags: ['onboarding', `onboarding-${emailNumber}`],
+  });
+
+  scheduleNextEmail(user, emailNumber + 1);
+}
+```
+
+---
+
+## Welcome Email Content
+
+The welcome email is the most important email in the sequence. It should accomplish one thing: get the user to take their first meaningful action.
+
+### Structure
+
+<Steps>
+  <Step title="Greet and confirm">
+    Welcome the user by name, confirm their account is active (or ask them to verify their email).
+  </Step>
+  <Step title="One clear next step">
+    Don't overwhelm with features. Present a single action — the thing that will give them their first success with your product.
+  </Step>
+  <Step title="Set expectations">
+    Tell them what emails to expect next (and how to unsubscribe if the sequence is marketing).
+  </Step>
+  <Step title="Provide support access">
+    Make it easy to get help — link to docs, support email, or a chat option.
+  </Step>
+</Steps>
+
+### Example Welcome Email
+
+```html
+<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto;">
+  <h2 style="color: #1a1a1a;">Welcome to YourApp, {{firstName}}</h2>
+
+  <p style="color: #4a4a4a; line-height: 1.6;">
+    Your account is ready. Here's how to get started in under 5 minutes.
+  </p>
+
+  <!-- Single primary CTA -->
+  <div style="background-color: #f5f3ff; border-radius: 8px; padding: 20px; margin: 24px 0;">
+    <h3 style="margin: 0 0 8px; font-size: 16px;">Step 1: Send your first email</h3>
+    <p style="color: #4a4a4a; margin: 0 0 16px; line-height: 1.6;">
+      Set up your sending domain and send a test email to see Lettr in action.
+    </p>
+    <a href="{{dashboardUrl}}/domains"
+       style="background-color: #6366F1; color: #ffffff; padding: 10px 24px;
+              text-decoration: none; border-radius: 6px; font-weight: 600;">
+      Set Up Your Domain
+    </a>
+  </div>
+
+  <!-- Quick links (secondary) -->
+  <p style="color: #4a4a4a; line-height: 1.6;">
+    Or jump to what you need:
+  </p>
+  <ul style="color: #4a4a4a; line-height: 2;">
+    <li><a href="{{docsUrl}}/quickstart" style="color: #6366F1;">Quickstart guide</a></li>
+    <li><a href="{{docsUrl}}/api-reference" style="color: #6366F1;">API reference</a></li>
+    <li><a href="{{dashboardUrl}}/api-keys" style="color: #6366F1;">Get your API key</a></li>
+  </ul>
+
+  <p style="color: #6b6b6b; font-size: 14px; line-height: 1.6;">
+    Need help? Reply to this email or reach us at
+    <a href="mailto:support@yourapp.com" style="color: #6366F1;">support@yourapp.com</a>.
+  </p>
+</div>
+```
+
+<Note>
+  Use a real reply-to address for welcome emails, not `no-reply@`. New users frequently reply to welcome emails with questions, and reaching a human builds trust.
+</Note>
+
+---
+
+## Sending with Lettr
+
+```javascript
+// Welcome email — sent immediately on signup
+const response = await fetch('https://app.lettr.com/api/emails', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${process.env.LETTR_API_KEY}`,
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    from: 'welcome@mail.yourapp.com',
+    replyTo: 'support@yourapp.com',
+    to: user.email,
+    subject: `Welcome to YourApp, ${user.firstName}`,
+    html: welcomeEmailHtml,
+    text: welcomeEmailText,
+    tags: ['welcome', 'onboarding-1'],
+    metadata: {
+      userId: user.id,
+      signupSource: user.source,
+    },
+  }),
+});
+```
+
+---
+
+## Timing and Scheduling
+
+### When to Send Each Email
+
+- **Welcome email** — immediately after signup or email verification, within seconds
+- **Getting started** — 2–4 hours after signup (give them time to explore on their own first)
+- **Follow-up emails** — morning or early afternoon in the recipient's timezone, on weekdays
+
+### Scheduling Tips
+
+```javascript
+// Schedule follow-up emails with appropriate delays
+async function scheduleOnboardingSequence(user) {
+  // Email 1: Immediate
+  await sendWelcomeEmail(user);
+
+  // Email 2: 4 hours later (or next morning if signed up late)
+  const email2Time = getNextReasonableTime(user.timezone, 4 * 60);
+  await queue.add('sendOnboarding', { userId: user.id, email: 2 }, {
+    delay: email2Time - Date.now(),
+  });
+
+  // Email 3: Day 3
+  const email3Time = getNextReasonableTime(user.timezone, 3 * 24 * 60);
+  await queue.add('sendOnboarding', { userId: user.id, email: 3 }, {
+    delay: email3Time - Date.now(),
+  });
+}
+
+function getNextReasonableTime(timezone, minutesFromNow) {
+  // Target 10 AM local time if the calculated time falls outside 8AM–6PM
+  const targetTime = new Date(Date.now() + minutesFromNow * 60 * 1000);
+  const localHour = getHourInTimezone(targetTime, timezone);
+
+  if (localHour < 8 || localHour >= 18) {
+    // Push to 10 AM next business day
+    return getNext10AM(timezone);
+  }
+
+  return targetTime.getTime();
+}
+```
+
+<Tip>
+  Avoid sending onboarding emails on weekends for B2B products. For B2C, weekends can work — but test both and compare engagement rates.
+</Tip>
+
+---
+
+## Measuring Onboarding Effectiveness
+
+Track these metrics to evaluate your onboarding sequence:
+
+| Metric | What It Tells You |
+|--------|-------------------|
+| **Open rate per email** | Which emails are being seen — declining rates may mean you're sending too many |
+| **Click rate per email** | Which CTAs drive action |
+| **Activation rate** | Percentage of new users who complete a key action (your "aha moment") |
+| **Drop-off point** | Where in the sequence users stop engaging |
+| **Unsubscribe rate** | If above 1% per email, the content isn't relevant or you're sending too often |
+| **Time to first value** | How quickly users reach their first success — the primary metric to optimize |
+
+Use Lettr webhook events (`email.opened`, `email.clicked`) combined with your product analytics to connect email engagement to product activation.
+
+---
+
+## Common Mistakes
+
+<AccordionGroup>
+  <Accordion title="Too many features in the welcome email">
+    The welcome email should have one primary action. Listing every feature overwhelms new users and reduces click-through rates. Save feature introductions for subsequent emails.
+  </Accordion>
+  <Accordion title="Sending the same sequence to everyone">
+    A developer signing up for an API product needs different onboarding than a marketing manager signing up for a campaign tool. Segment your sequence by user type or signup source.
+  </Accordion>
+  <Accordion title="Not stopping the sequence when the user is active">
+    If a user has already completed setup and is actively using the product, continuing to send "getting started" emails feels tone-deaf. Check user activity before each send.
+  </Accordion>
+  <Accordion title="Classifying all onboarding emails as transactional">
+    Only the account confirmation and essential setup emails are transactional. Feature tips, tutorials, and engagement nudges are marketing and need unsubscribe links.
+  </Accordion>
+  <Accordion title="Using no-reply as the sender">
+    New users reply to welcome emails with questions, feedback, and setup issues. A no-reply address creates a dead end. Use a monitored address.
+  </Accordion>
+  <Accordion title="No plain-text version">
+    Some developers read email in terminal-based clients. Some corporate environments strip HTML. Always include a plain-text alternative.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Transactional vs Marketing" icon="arrows-split-up-and-left" href="/knowledge-base/best-practices/transactional-vs-marketing">
+    How to classify emails and why it matters
+  </Card>
+  <Card title="Personalization and Dynamic Content" icon="user-pen" href="/knowledge-base/best-practices/personalization-dynamic-content">
+    Merge tags, conditional blocks, and dynamic sections
+  </Card>
+  <Card title="Deliverability Best Practices" icon="inbox" href="/knowledge-base/best-practices/deliverability">
+    Maximize inbox placement for your emails
+  </Card>
+  <Card title="Unsubscribe Best Practices" icon="right-from-bracket" href="/knowledge-base/compliance/unsubscribe-best-practices">
+    Implement effective unsubscribe mechanisms
+  </Card>
+</CardGroup>

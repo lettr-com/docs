@@ -1,0 +1,236 @@
+---
+title: "Email Consent Best Practices"
+description: "How to obtain, record, and manage email consent for compliance with GDPR, CASL, and other regulations"
+---
+
+## Why Consent Matters
+
+Consent is the foundation of compliant email sending. Under GDPR, CASL, and other privacy regulations, sending commercial email without valid consent can result in significant fines and damage to your sending reputation. Even where consent is not legally required (such as under CAN-SPAM's opt-out model), obtaining it is a best practice that improves engagement and reduces spam complaints.
+
+<Info>
+  Strong consent practices protect you legally, improve your deliverability, and build trust with your recipients. Lists built on genuine consent consistently outperform purchased or scraped lists.
+</Info>
+
+---
+
+## Single vs Double Opt-In
+
+The two most common consent collection methods are single opt-in and double opt-in. Each has trade-offs.
+
+### Single Opt-In
+
+The recipient submits their email address through a form and is immediately added to your list. No confirmation step is required.
+
+**Pros:** Lower friction, larger list growth, simpler to implement.
+
+**Cons:** Higher risk of invalid addresses, typos, and bot signups. Weaker evidence of consent for GDPR compliance.
+
+### Double Opt-In
+
+After submitting the form, the recipient receives a confirmation email and must click a link to verify their address. Only confirmed addresses are added to the list.
+
+**Pros:** Stronger consent evidence, cleaner lists, fewer spam complaints, better deliverability.
+
+**Cons:** Some recipients never complete confirmation (expect 10–30% drop-off), slightly more complex to implement.
+
+| Factor | Single Opt-In | Double Opt-In |
+|--------|---------------|---------------|
+| **Consent strength** | Moderate | Strong |
+| **List quality** | Lower (typos, bots) | Higher (verified addresses) |
+| **GDPR compliance** | Acceptable but harder to prove | Recommended — clear audit trail |
+| **CASL compliance** | Acceptable for express consent | Strongest evidence of express consent |
+| **List growth rate** | Higher | Lower (10–30% drop-off) |
+| **Deliverability impact** | Neutral to negative | Positive |
+
+<Tip>
+  If you send to EU or Canadian recipients, double opt-in is strongly recommended. It provides the clearest evidence of consent and produces the highest-quality lists.
+</Tip>
+
+---
+
+## Designing Compliant Consent Forms
+
+A consent form must clearly communicate what the recipient is signing up for. Vague or bundled consent is not valid under GDPR or CASL.
+
+### Required Elements
+
+<Steps>
+  <Step title="Clear description of what they will receive">
+    Tell recipients exactly what emails you will send — newsletters, product updates, promotional offers, etc. Do not use vague language like "we may contact you."
+  </Step>
+
+  <Step title="Frequency expectations">
+    State how often you will send — weekly, monthly, or as applicable. Recipients should know what to expect.
+  </Step>
+
+  <Step title="Sender identification">
+    Clearly identify your organization name so recipients know who will be emailing them.
+  </Step>
+
+  <Step title="Separate consent for separate purposes">
+    If you send different types of email (e.g., product updates and partner offers), obtain separate consent for each. Bundling multiple purposes into a single checkbox is not valid under GDPR.
+  </Step>
+
+  <Step title="Unsubscribe disclosure">
+    Inform recipients that they can withdraw consent at any time.
+  </Step>
+</Steps>
+
+### Example: Compliant Signup Form
+
+```html
+<form action="/subscribe" method="POST">
+  <label for="email">Email address</label>
+  <input type="email" id="email" name="email" required />
+
+  <fieldset>
+    <legend>Email preferences</legend>
+
+    <label>
+      <input type="checkbox" name="consent_product" />
+      Send me product updates and feature announcements (approximately twice a month)
+    </label>
+
+    <label>
+      <input type="checkbox" name="consent_marketing" />
+      Send me promotional offers and discounts (approximately weekly)
+    </label>
+  </fieldset>
+
+  <p style="font-size: 12px; color: #666;">
+    You can unsubscribe at any time using the link in our emails.
+    Your Company Inc. — 123 Main Street, New York, NY 10001
+  </p>
+
+  <button type="submit">Subscribe</button>
+</form>
+```
+
+<Warning>
+  Never use pre-checked checkboxes. Under both GDPR and CASL, consent must be an affirmative action taken by the recipient. Pre-checked boxes do not count.
+</Warning>
+
+---
+
+## Recording and Storing Consent
+
+You must be able to demonstrate that valid consent was obtained if challenged by a regulator or a recipient. The burden of proof is on you as the sender.
+
+### What to Record
+
+For every consent record, store:
+
+| Field | Description |
+|-------|-------------|
+| **Email address** | The address that was submitted |
+| **Timestamp** | When consent was given (ISO 8601 format) |
+| **Source** | Where consent was collected (URL, form name, event) |
+| **Method** | How consent was collected (checkbox, double opt-in confirmation click) |
+| **IP address** | The IP address of the person who submitted the form |
+| **Consent text** | The exact wording presented at the time of consent |
+| **Form version** | An identifier for the version of the form used |
+
+```json
+{
+  "email": "recipient@example.com",
+  "consent_given_at": "2025-09-15T14:22:00Z",
+  "source": "https://yoursite.com/newsletter-signup",
+  "method": "double_opt_in",
+  "confirmed_at": "2025-09-15T14:25:12Z",
+  "ip_address": "198.51.100.42",
+  "consent_text": "Send me product updates and feature announcements (approximately twice a month)",
+  "form_version": "signup_v4"
+}
+```
+
+<Note>
+  Under GDPR, you must also record the specific purposes the recipient consented to. Generic "opted in to email" records are insufficient if you send multiple types of email.
+</Note>
+
+---
+
+## Managing Consent Over Time
+
+Consent is not permanent. It must be managed as your relationship with the recipient evolves.
+
+### Consent Decay
+
+Even with valid consent, engagement declines over time. Recipients who signed up years ago and no longer open your emails are unlikely to still want them. Continuing to email disengaged recipients harms your deliverability and wastes resources.
+
+Best practices for managing consent over time:
+
+- **Re-engagement campaigns** — Send a targeted email to inactive recipients (e.g., no opens in 6+ months) asking if they still want to hear from you.
+- **Sunset policies** — Automatically suppress recipients who have not engaged in a defined period (typically 6–12 months).
+- **Periodic consent refresh** — For high-risk lists or long-inactive segments, ask recipients to reconfirm their subscription.
+
+### When Consent Expires
+
+Under CASL, implied consent has explicit expiry dates (2 years for business relationships, 6 months for inquiries). Under GDPR, consent does not technically expire, but regulators expect you to refresh consent periodically if there is no ongoing relationship.
+
+<Tip>
+  Track the date of last engagement (open or click) alongside consent records. This helps you identify recipients whose consent may still be technically valid but whose interest has clearly lapsed.
+</Tip>
+
+---
+
+## Consent for Third-Party Sharing
+
+If you plan to share recipient data with third parties or send emails on behalf of partners, you need **separate, specific consent** for this purpose. Bundling third-party sharing into a general email consent is not valid under GDPR.
+
+```html
+<!-- Separate consent for third-party communications -->
+<label>
+  <input type="checkbox" name="consent_partners" />
+  I agree to receive offers from selected partners of Your Company.
+  <a href="/partners-list">View partner list</a>
+</label>
+```
+
+<Warning>
+  Never assume that consent to receive your emails also covers emails from your partners or affiliates. Each sender needs their own consent.
+</Warning>
+
+---
+
+## Common Mistakes
+
+<AccordionGroup>
+  <Accordion title="Bundling consent for multiple purposes">
+    A single checkbox that covers marketing emails, partner offers, and analytics consent is not valid under GDPR. Each distinct purpose must have its own consent mechanism. Recipients must be able to consent to one purpose without consenting to others.
+  </Accordion>
+
+  <Accordion title="Not storing proof of consent">
+    "They signed up on our website" is not sufficient proof. You need timestamps, IP addresses, the exact text presented, and the form version. Without this evidence, you cannot demonstrate valid consent if challenged.
+  </Accordion>
+
+  <Accordion title="Making consent a condition of service">
+    Under GDPR, consent must be freely given. You cannot make access to a service conditional on consenting to marketing emails (unless the emails are genuinely necessary for the service). A checkbox like "I agree to receive marketing emails" should not be required to complete a purchase.
+  </Accordion>
+
+  <Accordion title="Ignoring consent withdrawal">
+    When a recipient unsubscribes or withdraws consent, you must stop sending immediately. This includes all email types covered by that consent — not just the most recent campaign. Process withdrawals across all your systems, not just one mailing list.
+  </Accordion>
+
+  <Accordion title="Treating purchased lists as consented">
+    Purchasing an email list does not transfer consent. The recipients consented to hear from the original collector, not from you. Sending to purchased lists without obtaining your own consent violates GDPR, CASL, and damages your deliverability.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="GDPR and Email Sending" icon="shield-halved" href="/knowledge-base/compliance/gdpr-email">
+    EU data protection requirements and consent standards for email.
+  </Card>
+  <Card title="CASL (Canadian Anti-Spam Law)" icon="leaf" href="/knowledge-base/compliance/casl">
+    Canadian consent requirements including express and implied consent.
+  </Card>
+  <Card title="List Hygiene" icon="broom" href="/knowledge-base/best-practices/list-hygiene">
+    Maintain healthy, engaged recipient lists.
+  </Card>
+  <Card title="Unsubscribe Best Practices" icon="envelope-circle-check" href="/knowledge-base/compliance/unsubscribe-best-practices">
+    Implement compliant unsubscribe mechanisms.
+  </Card>
+</CardGroup>

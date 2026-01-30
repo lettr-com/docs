@@ -1,0 +1,235 @@
+---
+title: Sending via SMTP vs API
+description: "Choose between SMTP relay and REST API for sending email, with performance comparisons and migration guidance"
+---
+
+# Sending via SMTP vs API
+
+Lettr supports two methods for sending email: SMTP relay and the REST API. Both deliver the same result — your email reaches the recipient — but they differ in how your application connects to Lettr, the features available, and the performance characteristics. This guide helps you choose the right method and migrate between them.
+
+---
+
+## How Each Method Works
+
+### REST API
+
+Your application sends an HTTP POST request to Lettr's API endpoint with the email content as a JSON payload. Lettr processes the request and returns a response immediately.
+
+```javascript
+const response = await fetch('https://app.lettr.com/api/emails', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer your-api-key',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    from: 'notifications@mail.example.com',
+    to: 'recipient@example.com',
+    subject: 'Your order has shipped',
+    html: '<h1>Order #1234 shipped</h1><p>Track your package...</p>'
+  })
+});
+
+const data = await response.json();
+console.log(data.id); // Email ID for tracking
+```
+
+### SMTP Relay
+
+Your application connects to Lettr's SMTP server and sends the email using the SMTP protocol. This works with any language, framework, or tool that supports SMTP — including legacy systems, WordPress, and command-line utilities.
+
+```bash
+# Example: Send via SMTP using curl
+curl --url "smtp://smtp.lettr.com:587" \
+  --ssl-reqd \
+  --user "api:your-api-key" \
+  --mail-from "notifications@mail.example.com" \
+  --mail-rcpt "recipient@example.com" \
+  --upload-file email.eml
+```
+
+```javascript
+// Node.js with Nodemailer
+const nodemailer = require('nodemailer');
+
+const transporter = nodemailer.createTransport({
+  host: 'smtp.lettr.com',
+  port: 587,
+  secure: false, // STARTTLS
+  auth: {
+    user: 'api',
+    pass: 'your-api-key'
+  }
+});
+
+await transporter.sendMail({
+  from: 'notifications@mail.example.com',
+  to: 'recipient@example.com',
+  subject: 'Your order has shipped',
+  html: '<h1>Order #1234 shipped</h1><p>Track your package...</p>'
+});
+```
+
+---
+
+## Feature Comparison
+
+| Feature | REST API | SMTP |
+|---------|----------|------|
+| **Template rendering** | Yes — pass template ID and variables in the request | No — you must render the email before sending |
+| **Batch sending** | Yes — send to multiple recipients in one request | No — one connection per message (or per SMTP session) |
+| **Immediate response with email ID** | Yes | No — SMTP returns only a queue acknowledgment |
+| **Metadata and tags** | Yes — include custom metadata in the JSON payload | Limited — use custom headers (X-Lettr-Metadata) |
+| **Scheduled sending** | Yes — set `scheduledAt` in the request | No |
+| **Attachments** | Yes — base64-encoded in JSON | Yes — native MIME attachments |
+| **Idempotency keys** | Yes — via `Idempotency-Key` header | No |
+| **Works with legacy systems** | Requires HTTP client support | Works with any SMTP-capable system |
+| **Connection overhead** | New HTTPS connection per request (or connection pooling) | Persistent TCP connection with reuse |
+| **Firewall compatibility** | Port 443 (HTTPS) — rarely blocked | Port 587 — sometimes blocked in hosted environments |
+
+---
+
+## When to Use the REST API
+
+The API is the recommended method for most use cases. Choose it when:
+
+- **You're building a new integration.** The API provides the richest feature set and the most straightforward developer experience.
+- **You use Lettr templates.** The API lets you pass a template ID and substitution variables — the rendering happens server-side.
+- **You need batch sending.** Send to multiple recipients in a single API call.
+- **You want immediate feedback.** The API response includes the email ID and any validation errors.
+- **You're in a serverless environment.** Lambda, Cloud Functions, and similar platforms handle HTTP requests natively but may not support long-lived SMTP connections.
+
+<Tip>
+  If you're starting fresh and have no existing email infrastructure, use the API. It's simpler to set up, easier to debug, and gives you access to all of Lettr's features.
+</Tip>
+
+---
+
+## When to Use SMTP
+
+SMTP is the right choice when:
+
+- **You're migrating from another provider.** If your application already sends via SMTP, switching to Lettr requires only changing the SMTP host, port, and credentials — no code changes.
+- **You use a platform that only supports SMTP.** WordPress, legacy CMS systems, and many enterprise applications expose SMTP settings but not HTTP API configuration.
+- **You're sending from infrastructure tools.** Monitoring systems, CI/CD pipelines, and cron jobs often use SMTP for notifications.
+- **Your environment blocks outbound HTTPS but allows SMTP.** Rare, but it happens in some corporate networks.
+
+### SMTP Connection Settings
+
+| Setting | Value |
+|---------|-------|
+| Host | `smtp.lettr.com` |
+| Port | `587` (STARTTLS) or `465` (TLS) |
+| Authentication | Username: `api`, Password: your API key |
+| Encryption | Required (TLS or STARTTLS) |
+
+<Warning>
+  Never use port 25 for sending through Lettr. Port 25 is unencrypted and is blocked by most cloud providers. Always use port 587 with STARTTLS or port 465 with implicit TLS.
+</Warning>
+
+---
+
+## Performance Considerations
+
+### Throughput
+
+The REST API generally achieves higher throughput because:
+
+- JSON payloads are smaller than full MIME messages
+- Batch endpoints let you send multiple emails per request
+- HTTP/2 connection multiplexing reduces overhead
+
+SMTP throughput can be improved by reusing connections (sending multiple messages per session), but it still involves more protocol overhead per message (EHLO, AUTH, MAIL FROM, RCPT TO, DATA, QUIT).
+
+### Latency
+
+For a single email, the difference is negligible — both methods typically complete in under 200ms. For high-volume sending, the API's batch endpoint reduces the number of round trips.
+
+### Error Handling
+
+| Scenario | REST API | SMTP |
+|----------|----------|------|
+| Invalid recipient | Immediate 422 response with error details | 550 response during RCPT TO command |
+| Rate limited | 429 response with Retry-After header | 421 response with retry guidance |
+| Server error | 500 response | 451 temporary failure code |
+| Authentication failure | 401 response | 535 authentication failed |
+
+The API provides structured JSON errors that are easier to parse programmatically:
+
+```json
+{
+  "error": {
+    "code": "validation_error",
+    "message": "The 'to' field must be a valid email address",
+    "field": "to"
+  }
+}
+```
+
+SMTP errors are text-based status codes that require parsing:
+
+```
+550 5.1.1 <invalid@example.com>: Recipient address rejected
+```
+
+---
+
+## Migrating from SMTP to API
+
+If you're currently using SMTP and want to switch to the API for more features, follow these steps:
+
+<Steps>
+  <Step title="Audit your current SMTP usage">
+    Identify all places in your codebase that send email via SMTP. Look for SMTP configuration (host, port, credentials) and mail-sending calls.
+  </Step>
+  <Step title="Replace with HTTP calls">
+    Swap each SMTP send with an API call. If you use a framework like Laravel or Rails, update the mail driver configuration to use Lettr's API transport instead of SMTP.
+  </Step>
+  <Step title="Adopt template rendering">
+    If you're currently building HTML emails in your application, consider moving them to Lettr templates. This lets you update email content without redeploying your application.
+  </Step>
+  <Step title="Update error handling">
+    SMTP and API errors have different formats. Update your error handling to parse JSON responses and handle HTTP status codes.
+  </Step>
+  <Step title="Test in staging">
+    Send test emails through the API to verify everything works before switching production traffic.
+  </Step>
+</Steps>
+
+---
+
+## Common Mistakes
+
+<AccordionGroup>
+  <Accordion title="Using SMTP in serverless environments">
+    Serverless functions (AWS Lambda, Vercel Functions) have short execution timeouts and don't maintain persistent connections. SMTP's connection setup overhead makes it a poor fit. Use the REST API in serverless environments.
+  </Accordion>
+  <Accordion title="Not reusing SMTP connections">
+    Opening a new SMTP connection for every email is wasteful. If you're sending multiple emails in sequence, keep the connection open and send them in the same session. Most SMTP libraries support connection pooling.
+  </Accordion>
+  <Accordion title="Hardcoding SMTP credentials">
+    Store SMTP credentials (your API key) in environment variables, not in your codebase. This applies equally to API keys used with the REST API.
+  </Accordion>
+  <Accordion title="Using SMTP when you need template rendering">
+    SMTP sends pre-built MIME messages — Lettr can't apply template rendering to them. If you want to use Lettr's template engine with merge tags and conditional content, you need the REST API.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="API Reference" icon="code" href="/api-reference/introduction">
+    Complete REST API documentation
+  </Card>
+  <Card title="Batch Sending" icon="layer-group" href="/learn/sending/batch-sending">
+    Send to multiple recipients in a single API call
+  </Card>
+  <Card title="Batch and Bulk Sending Best Practices" icon="envelopes-bulk" href="/knowledge-base/best-practices/batch-bulk-sending">
+    Best practices for high-volume email sending
+  </Card>
+  <Card title="Rate Limits" icon="gauge-high" href="/knowledge-base/troubleshooting/rate-limits">
+    Understanding and handling rate limits
+  </Card>
+</CardGroup>

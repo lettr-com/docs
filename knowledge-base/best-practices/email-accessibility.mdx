@@ -1,0 +1,396 @@
+---
+title: Email Accessibility
+description: "Make your emails accessible to all recipients with alt text, semantic HTML, color contrast, and screen reader best practices"
+---
+
+# Email Accessibility
+
+Accessible emails reach more people. Over 1 billion people worldwide live with some form of disability, and many of them use assistive technologies like screen readers, magnifiers, and keyboard navigation to read email. Building accessible emails isn't just good practice — it improves engagement for everyone, because the same techniques that help assistive technology users also make emails clearer and more readable on all devices.
+
+---
+
+## Semantic Structure
+
+Screen readers rely on HTML structure to help users navigate content. Without proper structure, an email becomes a flat wall of text that's difficult to scan.
+
+### Use Heading Tags for Hierarchy
+
+Use `<h1>` through `<h4>` to create a logical content hierarchy. Never use font size or bold styling alone to indicate headings — screen readers won't recognize them.
+
+```html
+<!-- Accessible: semantic headings -->
+<h1 style="font-size: 24px; color: #1a1a2e; margin: 0;">
+  Your Monthly Summary
+</h1>
+<h2 style="font-size: 18px; color: #1a1a2e; margin: 16px 0 8px;">
+  Account Activity
+</h2>
+<p style="font-size: 16px; line-height: 1.5; color: #4a4a68;">
+  Here's what happened this month...
+</p>
+
+<!-- Inaccessible: visual-only heading -->
+<p style="font-size: 24px; font-weight: bold; color: #1a1a2e;">
+  Your Monthly Summary
+</p>
+```
+
+### Use Lists for Sequential Content
+
+When presenting a series of items, use proper list markup:
+
+```html
+<ul style="margin: 0; padding: 0 0 0 20px;">
+  <li style="margin-bottom: 8px; font-size: 16px; line-height: 1.5; color: #4a4a68;">
+    3 new orders received
+  </li>
+  <li style="margin-bottom: 8px; font-size: 16px; line-height: 1.5; color: #4a4a68;">
+    2 shipments delivered
+  </li>
+  <li style="margin-bottom: 8px; font-size: 16px; line-height: 1.5; color: #4a4a68;">
+    1 return processed
+  </li>
+</ul>
+```
+
+### Mark Layout Tables as Presentational
+
+Email HTML relies on tables for layout. Add `role="presentation"` to every table that's used for layout (not data). This tells screen readers to ignore the table structure.
+
+```html
+<!-- Layout table: add role="presentation" -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr>
+    <td style="padding: 20px;">
+      Content goes here
+    </td>
+  </tr>
+</table>
+
+<!-- Data table: keep table semantics, add scope attributes -->
+<table width="100%" cellpadding="8" cellspacing="0" border="1" style="border-collapse: collapse;">
+  <tr>
+    <th scope="col" style="text-align: left; background-color: #f3f4f6;">Item</th>
+    <th scope="col" style="text-align: right; background-color: #f3f4f6;">Price</th>
+  </tr>
+  <tr>
+    <td>Widget Pro</td>
+    <td style="text-align: right;">$29.99</td>
+  </tr>
+</table>
+```
+
+---
+
+## Images and Alt Text
+
+Images are one of the most common accessibility barriers in email. Many email clients block images by default, and screen readers can only convey image content through alt text.
+
+### Write Descriptive Alt Text
+
+Every image needs an `alt` attribute that describes its content or purpose.
+
+```html
+<!-- Informational image: describe what it shows -->
+<img
+  src="https://cdn.example.com/chart-q4-revenue.png"
+  alt="Q4 revenue chart showing 23% growth from $1.2M to $1.47M"
+  width="560"
+  height="300"
+  style="display: block; max-width: 100%; height: auto;"
+/>
+
+<!-- Actionable image: describe the action -->
+<a href="https://example.com/dashboard">
+  <img
+    src="https://cdn.example.com/dashboard-button.png"
+    alt="Go to your dashboard"
+    width="200"
+    height="44"
+    style="display: block;"
+  />
+</a>
+
+<!-- Decorative image: use empty alt -->
+<img
+  src="https://cdn.example.com/divider-line.png"
+  alt=""
+  width="560"
+  height="2"
+  style="display: block;"
+/>
+```
+
+<Note>
+  A decorative image (borders, spacers, visual flourishes) should have `alt=""` — not a missing alt attribute. An empty alt tells screen readers to skip the image. A missing alt causes screen readers to announce the filename, which is confusing.
+</Note>
+
+### Never Put Critical Content Only in Images
+
+Discount codes, CTAs, dates, and important instructions must exist as live text, not just in images. If images are blocked, the recipient should still understand the email.
+
+```html
+<!-- Bad: CTA only in an image -->
+<img src="https://cdn.example.com/get-started-button.png" alt="Get started" />
+
+<!-- Good: bulletproof button with live text -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0">
+  <tr>
+    <td align="center" style="background-color: #6366F1; border-radius: 6px;">
+      <a href="https://example.com/start"
+         style="display: inline-block; padding: 14px 32px; color: #ffffff; text-decoration: none; font-size: 16px; font-weight: bold;">
+        Get Started
+      </a>
+    </td>
+  </tr>
+</table>
+```
+
+---
+
+## Color and Contrast
+
+### Minimum Contrast Ratios
+
+The Web Content Accessibility Guidelines (WCAG) define minimum contrast ratios. Apply these to your email content:
+
+| Element | Minimum Ratio | Example |
+|---------|--------------|---------|
+| Body text | 4.5:1 | Dark gray (#4a4a68) on white (#ffffff) = 7.2:1 |
+| Large text (18px+ or 14px+ bold) | 3:1 | Medium gray (#6b7280) on white = 4.6:1 |
+| UI components (buttons, links) | 3:1 | Indigo (#6366F1) on white = 4.5:1 |
+
+<Tip>
+  Use the [WebAIM Contrast Checker](https://webaim.org/resources/contrastchecker/) to verify your color combinations. Enter your foreground and background colors to get an instant pass/fail result.
+</Tip>
+
+### Don't Rely on Color Alone
+
+Color should never be the only way to convey information. Always pair color with text labels, icons, or patterns.
+
+```html
+<!-- Bad: status conveyed only by color -->
+<span style="color: red;">●</span> Failed
+<span style="color: green;">●</span> Delivered
+
+<!-- Good: status conveyed by color AND text -->
+<span style="color: #dc2626;">✕ Failed</span>
+<span style="color: #16a34a;">✓ Delivered</span>
+```
+
+---
+
+## Typography and Readability
+
+### Font Size
+
+Body text should be at least 14px, and 16px is preferred. Smaller text is difficult to read on mobile devices and for users with low vision.
+
+```html
+<p style="font-size: 16px; line-height: 1.5; color: #4a4a68;">
+  Body text at 16px with 1.5 line height for comfortable reading.
+</p>
+
+<p style="font-size: 12px; color: #9ca3af;">
+  Footer text can be smaller (12px minimum) but maintain adequate contrast.
+</p>
+```
+
+### Line Length and Spacing
+
+- **Line length**: Keep content within 600px max width. Lines longer than 75 characters are harder to read.
+- **Line height**: Use 1.5 for body text. Tight line heights (1.0–1.2) make text harder to scan.
+- **Paragraph spacing**: Add margins between paragraphs (16px minimum) to create visual separation.
+
+### Font Stacks
+
+Always include fallback fonts. Users with custom system fonts or accessibility settings should see readable text regardless.
+
+```html
+<p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+  This font stack covers all major operating systems with clean, readable defaults.
+</p>
+```
+
+---
+
+## Links and Buttons
+
+### Descriptive Link Text
+
+Screen readers can navigate by links, reading each link text out of context. Make sure every link makes sense on its own.
+
+```html
+<!-- Bad: meaningless out of context -->
+<a href="https://example.com/report">Click here</a>
+<a href="https://example.com/settings">Read more</a>
+
+<!-- Good: descriptive and self-explanatory -->
+<a href="https://example.com/report">View your monthly report</a>
+<a href="https://example.com/settings">Manage notification settings</a>
+```
+
+### Button Size and Touch Targets
+
+Buttons should be large enough to tap easily on mobile devices. The minimum recommended touch target is 44×44 pixels.
+
+```html
+<table role="presentation" cellpadding="0" cellspacing="0" border="0">
+  <tr>
+    <td align="center" style="background-color: #6366F1; border-radius: 6px;">
+      <a href="https://example.com/action"
+         style="display: inline-block; padding: 14px 32px; min-height: 44px; color: #ffffff; text-decoration: none; font-size: 16px; font-weight: bold;">
+        Confirm Your Email
+      </a>
+    </td>
+  </tr>
+</table>
+```
+
+### Underline Links in Body Text
+
+In body text, always underline links. Users with color vision deficiencies may not be able to distinguish link color from body text color.
+
+```html
+<p style="font-size: 16px; color: #4a4a68;">
+  Check your
+  <a href="https://example.com/dashboard" style="color: #6366F1; text-decoration: underline;">
+    dashboard
+  </a>
+  for details.
+</p>
+```
+
+---
+
+## Plain Text Fallbacks
+
+Always include a plain text version of your email alongside the HTML version. Some recipients prefer plain text, and some email clients don't render HTML at all.
+
+When using the Lettr API, include both `html` and `text` fields:
+
+```javascript
+await fetch('https://app.lettr.com/api/emails', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer your-api-key',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    from: 'updates@mail.example.com',
+    to: 'recipient@example.com',
+    subject: 'Your order has shipped',
+    html: '<h1>Order #1234 shipped</h1><p>Your package is on its way.</p>',
+    text: 'Order #1234 shipped\n\nYour package is on its way.\n\nTrack your package: https://example.com/track/1234'
+  })
+});
+```
+
+<Tip>
+  The plain text version doesn't need to mirror the HTML exactly. Focus on conveying the same information and include full URLs (not hyperlinked text) so recipients can copy and paste them.
+</Tip>
+
+---
+
+## Language and Direction
+
+### Set the Language Attribute
+
+Screen readers use the `lang` attribute to switch pronunciation rules. Always set it on the outermost element.
+
+```html
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Your Email Subject</title>
+  </head>
+  <body>
+    <!-- Email content -->
+  </body>
+</html>
+```
+
+### Support Right-to-Left Languages
+
+If you send emails in Arabic, Hebrew, or other RTL languages, use the `dir` attribute:
+
+```html
+<td dir="rtl" style="text-align: right; font-size: 16px; line-height: 1.5;">
+  مرحبًا بك في خدمتنا
+</td>
+```
+
+---
+
+## Accessibility Checklist
+
+<Steps>
+  <Step title="Semantic headings">
+    Use `<h1>` through `<h4>` for content hierarchy, not styled `<p>` tags.
+  </Step>
+  <Step title="Alt text on all images">
+    Descriptive alt for content images, empty `alt=""` for decorative images.
+  </Step>
+  <Step title="Layout tables marked presentational">
+    All layout tables have `role="presentation"`.
+  </Step>
+  <Step title="Color contrast passes WCAG">
+    4.5:1 minimum for body text, 3:1 for large text and UI components.
+  </Step>
+  <Step title="Information not conveyed by color alone">
+    Status indicators, errors, and important cues use text labels alongside color.
+  </Step>
+  <Step title="Links are descriptive">
+    No "click here" or "read more" — every link makes sense out of context.
+  </Step>
+  <Step title="Font size is readable">
+    Body text is 14px minimum (16px preferred), line height 1.5.
+  </Step>
+  <Step title="Plain text version included">
+    Both HTML and plain text versions are sent with every email.
+  </Step>
+  <Step title="Language attribute set">
+    The `lang` attribute is set on the outer HTML element.
+  </Step>
+</Steps>
+
+---
+
+## Common Mistakes
+
+<AccordionGroup>
+  <Accordion title="Missing alt text on images">
+    Omitting the `alt` attribute entirely causes screen readers to announce the image filename (e.g., "IMG_20240115_hero_v3_final.png"), which is confusing and unhelpful. Always add an `alt` attribute — even if it's empty for decorative images.
+  </Accordion>
+  <Accordion title="Low contrast text on colored backgrounds">
+    Light gray text on a white background or white text on a light-colored button may look subtle and elegant, but it fails contrast requirements and is unreadable for many users. Check every text/background combination.
+  </Accordion>
+  <Accordion title="Using 'Click here' as link text">
+    Screen reader users often navigate by tabbing through links. A list of "click here" links provides no context about where each link goes. Use descriptive text like "View your invoice" or "Update payment method".
+  </Accordion>
+  <Accordion title="Tiny font sizes in footers">
+    Legal text and footers are often set to 10px or smaller, making them illegible on mobile devices. Keep footer text at 12px minimum.
+  </Accordion>
+  <Accordion title="No plain text fallback">
+    Sending HTML-only emails excludes recipients using text-only email clients or those who prefer plain text for accessibility reasons. Always include a `text` version.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Template Best Practices" icon="paintbrush" href="/knowledge-base/best-practices/templates">
+    Design effective, accessible email templates
+  </Card>
+  <Card title="Dark Mode Email Design" icon="moon" href="/knowledge-base/best-practices/dark-mode-design">
+    Ensure your emails look good in dark mode
+  </Card>
+  <Card title="Email Content Types" icon="file-lines" href="/knowledge-base/fundamentals/content-types">
+    HTML, plain text, and AMP email explained
+  </Card>
+  <Card title="Email Rendering Across Clients" icon="desktop" href="/knowledge-base/fundamentals/email-rendering-clients">
+    How different email clients render HTML email
+  </Card>
+</CardGroup>

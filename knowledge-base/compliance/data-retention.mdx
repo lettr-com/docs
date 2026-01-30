@@ -1,0 +1,234 @@
+---
+title: "Data Retention and Deletion"
+description: "How long Lettr retains email data, logs, and metadata, and how to handle deletion requests"
+---
+
+## Why Data Retention Matters
+
+Every email you send through Lettr generates data — recipient addresses, email content, delivery events, tracking data, and metadata. Understanding what is retained, for how long, and how to handle deletion requests is essential for compliance with GDPR, CASL, and other data protection regulations.
+
+A clear data retention policy helps you:
+
+- Respond to data subject access and deletion requests
+- Minimize the personal data you store
+- Meet regulatory expectations for data minimization
+- Maintain a defensible compliance posture
+
+<Info>
+  Under GDPR's data minimization principle, personal data should be kept only for as long as necessary for the purposes for which it was collected. Retaining email data indefinitely without justification is a compliance risk.
+</Info>
+
+---
+
+## What Data Lettr Retains
+
+When you send email through Lettr, the following data is stored:
+
+| Data Type | Description | Retention Purpose |
+|-----------|-------------|-------------------|
+| **Sender and recipient addresses** | From, To, CC, BCC addresses | Delivery, history, analytics |
+| **Subject line** | The email subject | History, debugging |
+| **Email content** | Full HTML or plain text body | History, preview, debugging |
+| **Metadata** | Custom key-value pairs you attach via the API | Webhook delivery, your internal tracking |
+| **Delivery events** | Injection, delivery, bounce, open, click, unsubscribe timestamps | Analytics, deliverability monitoring |
+| **Tracking data** | Open and click tracking events with timestamps | Engagement analytics |
+| **Suppression records** | Bounced, complained, and unsubscribed addresses | Preventing future sends to suppressed addresses |
+
+<Note>
+  Suppression records (bounces, complaints, unsubscribes) are retained separately from email history. Even when email data is deleted, suppression records are maintained to prevent re-sending to addresses that should not receive email.
+</Note>
+
+---
+
+## Retention Periods
+
+Lettr retains different categories of data for different periods:
+
+| Data Category | Retention Period | Notes |
+|---------------|-----------------|-------|
+| **Email content and history** | 30 days | Full email body, subject, headers available in dashboard |
+| **Delivery and engagement events** | 90 days | Open, click, bounce, delivery timestamps |
+| **Aggregated analytics** | 12 months | Summary statistics without individual-level data |
+| **Suppression lists** | Indefinite | Required to prevent sending to suppressed addresses |
+| **API request logs** | 30 days | Request/response logs for debugging |
+| **Account and billing data** | Duration of account + legal retention period | Required for billing and legal compliance |
+
+<Tip>
+  If you need to retain email data longer than the default retention periods — for example, for your own compliance or audit requirements — export the data you need to your own systems using webhooks or the API before it is purged.
+</Tip>
+
+---
+
+## Data Minimization Best Practices
+
+Reduce the personal data flowing through your email infrastructure by following these practices:
+
+### Use Opaque Identifiers in Metadata
+
+Pass internal IDs instead of personally identifiable information in your API calls:
+
+```bash
+# Avoid — PII in metadata
+curl -X POST https://api.lettr.com/api/emails \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "from": "orders@shop.com",
+    "to": "customer@example.com",
+    "subject": "Order confirmation",
+    "template_id": "order-confirm",
+    "metadata": {
+      "customer_name": "Jane Smith",
+      "customer_phone": "+1-555-0123"
+    }
+  }'
+
+# Better — opaque identifiers only
+curl -X POST https://api.lettr.com/api/emails \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "from": "orders@shop.com",
+    "to": "customer@example.com",
+    "subject": "Order confirmation",
+    "template_id": "order-confirm",
+    "metadata": {
+      "user_id": "usr_8a3f2b",
+      "order_id": "ord_19x7k4"
+    }
+  }'
+```
+
+### Limit Sensitive Data in Email Content
+
+- Use masked or partial values (e.g., "card ending in 4242") instead of full account numbers
+- Use time-limited, single-use tokens for sensitive actions like password resets
+- Avoid embedding government IDs, health data, or financial details in email bodies
+
+### Export What You Need, Delete What You Don't
+
+Use Lettr's webhooks to capture delivery and engagement data in your own systems in real time. This way, you have the data you need for analysis without relying on Lettr's retention windows.
+
+---
+
+## Handling Deletion Requests
+
+Under GDPR (right to erasure) and similar regulations, individuals can request that you delete their personal data. When a recipient makes a deletion request, you must address data held both in your own systems and in Lettr.
+
+### What to Delete
+
+<Steps>
+  <Step title="Remove from your mailing lists">
+    Delete the recipient's email address and associated data from your own CRM, database, and mailing lists.
+  </Step>
+
+  <Step title="Add to your suppression list">
+    Add the address to your suppression list to ensure you do not accidentally re-add or re-send to this person. Maintaining a suppression record with the minimum necessary data (the email address) is permitted under GDPR.
+  </Step>
+
+  <Step title="Request deletion from Lettr">
+    Contact [support@lettr.com](mailto:support@lettr.com) to request deletion of a specific recipient's data from Lettr's systems. Include the email address and the sending domain(s) involved.
+  </Step>
+
+  <Step title="Confirm deletion to the requester">
+    Once deletion is complete, confirm to the individual that their data has been removed.
+  </Step>
+</Steps>
+
+<Warning>
+  GDPR requires you to respond to erasure requests within **one month**. Do not delay processing deletion requests. Establish an internal process so requests are handled promptly.
+</Warning>
+
+### What Is NOT Deleted
+
+Certain data is retained even after a deletion request:
+
+- **Suppression records** — The email address is retained in the suppression list to prevent future sends. This is permitted under GDPR as a legitimate interest to comply with the individual's request not to be contacted.
+- **Aggregated analytics** — De-identified, aggregated statistics that cannot identify an individual are not subject to erasure requests.
+- **Legal hold data** — Data subject to a legal hold, regulatory investigation, or ongoing dispute may be retained as required by law.
+
+<Note>
+  Suppression lists serve the recipient's interest by ensuring they are not contacted again. Regulators have confirmed that retaining the minimum data necessary for suppression purposes is compatible with the right to erasure.
+</Note>
+
+---
+
+## Data Subject Access Requests
+
+Under GDPR, individuals can also request a copy of all personal data you hold about them (right of access). For email data, this may include:
+
+- Email addresses and any associated profile data
+- Sending history (dates, subjects, templates used)
+- Engagement data (opens, clicks)
+- Metadata attached to their emails
+- Suppression status
+
+You can retrieve much of this data from Lettr's dashboard or API. For data that is not accessible through self-service, contact [support@lettr.com](mailto:support@lettr.com).
+
+<Tip>
+  Build internal tooling to generate data export reports from your own systems. This reduces your dependence on Lettr for access requests and speeds up your response time.
+</Tip>
+
+---
+
+## Your Responsibilities as Data Controller
+
+When you use Lettr to send email, you are the **data controller** and Lettr is the **data processor**. This means:
+
+| Responsibility | Owner |
+|---------------|-------|
+| Determining what data to collect and process | You (controller) |
+| Ensuring lawful basis for processing | You (controller) |
+| Responding to data subject requests | You (controller) |
+| Processing data according to your instructions | Lettr (processor) |
+| Implementing appropriate security measures | Both |
+| Maintaining a Data Processing Agreement (DPA) | Both |
+
+<Warning>
+  As the data controller, you are ultimately responsible for compliance. Ensure you have a Data Processing Agreement (DPA) in place with Lettr. Contact [support@lettr.com](mailto:support@lettr.com) to request a DPA if you do not already have one.
+</Warning>
+
+---
+
+## Common Mistakes
+
+<AccordionGroup>
+  <Accordion title="Retaining email data indefinitely without justification">
+    Keeping all email data forever "just in case" violates the data minimization principle under GDPR. Define clear retention periods based on your business needs and delete data that is no longer necessary.
+  </Accordion>
+
+  <Accordion title="Deleting suppression records during an erasure request">
+    If you delete a recipient's suppression record along with the rest of their data, you risk re-adding them to a list and sending to them again — which is the opposite of what they requested. Always maintain suppression records even after erasure.
+  </Accordion>
+
+  <Accordion title="Not knowing what data Lettr holds on your behalf">
+    As the data controller, you must understand what personal data your processors hold. Familiarize yourself with Lettr's data storage practices so you can accurately respond to access and deletion requests.
+  </Accordion>
+
+  <Accordion title="Ignoring data in metadata and substitution_data">
+    Metadata and substitution data are stored by Lettr and visible in the dashboard. If you pass PII in these fields, it becomes part of the data you must account for in access and deletion requests. Use opaque identifiers instead.
+  </Accordion>
+
+  <Accordion title="No internal process for handling requests">
+    Without a defined internal process, deletion and access requests get delayed or lost. Designate a responsible person or team, define the steps, and document your procedures before a request arrives.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="GDPR and Email Sending" icon="shield-halved" href="/knowledge-base/compliance/gdpr-email">
+    EU data protection requirements for email communications.
+  </Card>
+  <Card title="Data Privacy in Email Metadata" icon="tags" href="/knowledge-base/compliance/data-privacy-metadata">
+    What data is stored when sending emails and how to protect sensitive information.
+  </Card>
+  <Card title="Email Consent Best Practices" icon="clipboard-check" href="/knowledge-base/compliance/email-consent">
+    Obtaining, recording, and managing email consent.
+  </Card>
+  <Card title="Suppression Lists" icon="ban" href="/knowledge-base/fundamentals/suppression-lists">
+    How suppression lists work and why they matter.
+  </Card>
+</CardGroup>

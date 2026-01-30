@@ -238,7 +238,13 @@
               "knowledge-base/best-practices/list-hygiene",
               "knowledge-base/best-practices/templates",
               "knowledge-base/best-practices/security",
-              "knowledge-base/best-practices/transactional-vs-marketing"
+              "knowledge-base/best-practices/transactional-vs-marketing",
+              "knowledge-base/best-practices/ip-domain-warmup",
+              "knowledge-base/best-practices/smtp-vs-api",
+              "knowledge-base/best-practices/batch-bulk-sending",
+              "knowledge-base/best-practices/email-accessibility",
+              "knowledge-base/best-practices/dark-mode-design",
+              "knowledge-base/best-practices/personalization-dynamic-content"
             ]
           },
           {
@@ -248,7 +254,11 @@
               "knowledge-base/compliance/can-spam",
               "knowledge-base/compliance/gdpr-email",
               "knowledge-base/compliance/unsubscribe-best-practices",
-              "knowledge-base/compliance/data-privacy-metadata"
+              "knowledge-base/compliance/data-privacy-metadata",
+              "knowledge-base/compliance/casl",
+              "knowledge-base/compliance/email-consent",
+              "knowledge-base/compliance/acceptable-use-policy",
+              "knowledge-base/compliance/data-retention"
             ]
           },
           {
@@ -260,7 +270,22 @@
               "knowledge-base/troubleshooting/authentication",
               "knowledge-base/troubleshooting/rate-limits",
               "knowledge-base/troubleshooting/domain-verification",
-              "knowledge-base/troubleshooting/tracking-accuracy"
+              "knowledge-base/troubleshooting/tracking-accuracy",
+              "knowledge-base/troubleshooting/gmail-delivery",
+              "knowledge-base/troubleshooting/outlook-delivery",
+              "knowledge-base/troubleshooting/webhook-failures",
+              "knowledge-base/troubleshooting/rendering-issues",
+              "knowledge-base/troubleshooting/sandbox-testing"
+            ]
+          },
+          {
+            "group": "Use Cases",
+            "pages": [
+              "knowledge-base/use-cases/password-reset-emails",
+              "knowledge-base/use-cases/order-confirmation-emails",
+              "knowledge-base/use-cases/welcome-onboarding-emails",
+              "knowledge-base/use-cases/two-factor-authentication-emails",
+              "knowledge-base/use-cases/invoice-billing-emails"
             ]
           },
           {

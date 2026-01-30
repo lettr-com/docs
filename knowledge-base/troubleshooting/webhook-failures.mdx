@@ -1,0 +1,289 @@
+---
+title: "Webhook Delivery Failures"
+description: "Diagnose and fix webhook delivery issues, including retry logic, timeout handling, debugging failed deliveries, and signature verification."
+---
+
+Lettr sends webhook events to your server when email events occur (delivery, bounce, open, click, complaint, etc.). When your endpoint fails to receive or process these events, you lose visibility into your email delivery pipeline. This guide covers how to diagnose and fix webhook delivery failures.
+
+---
+
+## How Lettr Webhook Delivery Works
+
+When an email event occurs, Lettr sends an HTTP POST request to your configured webhook endpoint. The delivery follows this sequence:
+
+1. Event occurs (e.g., email is delivered)
+2. Lettr queues the webhook payload
+3. Lettr sends an HTTP POST to your endpoint URL
+4. Your server must respond with a `2xx` status code within **30 seconds**
+5. If the request fails, Lettr retries with exponential backoff
+
+### What Counts as a Failure
+
+| Response | Result |
+|----------|--------|
+| `2xx` status code | Success — event is marked as delivered |
+| `3xx` redirect | Failure — Lettr does not follow redirects |
+| `4xx` status code | Failure — retried according to retry schedule |
+| `5xx` status code | Failure — retried according to retry schedule |
+| Connection timeout (30s) | Failure — retried according to retry schedule |
+| DNS resolution failure | Failure — retried according to retry schedule |
+| TLS handshake failure | Failure — retried according to retry schedule |
+
+<Warning>
+  Lettr does not follow HTTP redirects (`301`, `302`, `307`, `308`). Your endpoint must respond directly with a `2xx` status. If your URL has changed, update it in the [Webhooks settings](https://app.lettr.com/webhooks).
+</Warning>
+
+---
+
+## Retry Logic and Schedule
+
+When a webhook delivery fails, Lettr retries the request with exponential backoff:
+
+| Attempt | Delay After Previous Attempt |
+|---------|------------------------------|
+| 1st retry | 1 minute |
+| 2nd retry | 5 minutes |
+| 3rd retry | 30 minutes |
+| 4th retry | 2 hours |
+| 5th retry | 8 hours |
+
+After 5 failed retries (6 total attempts), the webhook event is marked as **permanently failed** and no further delivery attempts are made.
+
+<Note>
+  Failed webhook events are visible in the Lettr dashboard under **Webhooks > Event Log**. You can manually retry individual failed events from this page.
+</Note>
+
+---
+
+## Diagnosing Failures
+
+### Check the Webhook Event Log
+
+The fastest way to diagnose webhook issues is the event log in the Lettr dashboard:
+
+1. Go to **Webhooks** in the dashboard
+2. Click on the webhook endpoint that is failing
+3. Review the **Event Log** tab
+4. Click on a failed event to see the full request and response details, including:
+   - Request headers and body sent by Lettr
+   - Response status code and body returned by your server
+   - Error message (for connection-level failures)
+
+### Common Failure Patterns
+
+<AccordionGroup>
+  <Accordion title="All events failing with connection timeout">
+    Your server is taking longer than 30 seconds to respond.
+
+    **Fixes:**
+    - Process webhook events asynchronously. Accept the request immediately (return `200`), then process the event in a background job.
+    - Check if your server is overloaded or if the webhook handler has a performance bottleneck.
+    - Verify your firewall allows inbound connections from Lettr's IP ranges.
+  </Accordion>
+  <Accordion title="All events failing with DNS resolution error">
+    Lettr cannot resolve your webhook endpoint hostname.
+
+    **Fixes:**
+    - Verify the URL in your webhook settings is correct.
+    - Check that your DNS records are properly configured and your domain is resolving.
+    - If you recently changed DNS providers, wait for propagation to complete.
+  </Accordion>
+  <Accordion title="All events failing with TLS error">
+    The TLS handshake to your server is failing.
+
+    **Fixes:**
+    - Verify your SSL certificate is valid and not expired.
+    - Ensure your server supports TLS 1.2 or higher.
+    - Check that the certificate chain is complete (intermediate certificates included).
+
+    ```bash
+    # Test your endpoint's TLS configuration
+    openssl s_client -connect yourdomain.com:443 -servername yourdomain.com
+    ```
+  </Accordion>
+  <Accordion title="Intermittent 5xx errors">
+    Your server is sometimes returning 500-series errors.
+
+    **Fixes:**
+    - Check your server logs around the time of the failed deliveries.
+    - Look for out-of-memory errors, database connection pool exhaustion, or unhandled exceptions in your webhook handler.
+    - Ensure your webhook handler is idempotent — it should handle receiving the same event more than once.
+  </Accordion>
+  <Accordion title="403 Forbidden responses">
+    Your server is rejecting the request due to authentication or authorization rules.
+
+    **Fixes:**
+    - If you have IP-based access controls, ensure Lettr's sending IPs are allowlisted.
+    - If you require authentication headers, note that Lettr sends a `lettr-signature` header — make sure your middleware isn't blocking the request before signature verification.
+    - Check for CSRF protection middleware intercepting the POST request.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Handling Timeouts
+
+The 30-second timeout is the most common cause of webhook failures. Your webhook handler should return a response as quickly as possible.
+
+### Recommended Architecture
+
+```javascript
+const express = require("express");
+const app = express();
+
+// Good: Accept immediately, process in background
+app.post(
+  "/webhooks/lettr",
+  express.raw({ type: "application/json" }),
+  (req, res) => {
+    // Verify signature first
+    const isValid = verifySignature(req);
+    if (!isValid) {
+      return res.status(401).send("Invalid signature");
+    }
+
+    // Parse and queue for background processing
+    const event = JSON.parse(req.body);
+    queue.add("process-webhook", event);
+
+    // Respond immediately
+    res.status(200).send("OK");
+  }
+);
+
+// Bad: Processing synchronously blocks the response
+app.post("/webhooks/lettr-slow", express.json(), (req, res) => {
+  // This might take 30+ seconds and cause a timeout
+  updateDatabase(req.body);
+  sendSlackNotification(req.body);
+  updateAnalytics(req.body);
+
+  res.status(200).send("OK");
+});
+```
+
+<Tip>
+  Use a background job queue (Bull, Sidekiq, Laravel Queues, etc.) to process webhook events. This ensures you respond within the timeout and can handle high event volumes without blocking.
+</Tip>
+
+---
+
+## Signature Verification
+
+Every webhook request from Lettr includes a `lettr-signature` header containing an HMAC-SHA256 signature of the request body. Always verify this signature to confirm the request is from Lettr.
+
+### Verification Steps
+
+1. Get the raw request body (unparsed)
+2. Compute an HMAC-SHA256 hash using your webhook secret
+3. Compare the computed hash with the `lettr-signature` header value
+
+```javascript
+const crypto = require("crypto");
+
+function verifySignature(req) {
+  const signature = req.headers["lettr-signature"];
+  const webhookSecret = process.env.LETTR_WEBHOOK_SECRET;
+
+  const expectedSignature = crypto
+    .createHmac("sha256", webhookSecret)
+    .update(req.body) // Must be the raw body (Buffer), not parsed JSON
+    .digest("hex");
+
+  return crypto.timingSafeEqual(
+    Buffer.from(signature),
+    Buffer.from(expectedSignature)
+  );
+}
+```
+
+### Common Signature Verification Failures
+
+| Problem | Cause | Fix |
+|---------|-------|-----|
+| Signature always fails | Body parsed as JSON before verification | Use `express.raw()` on the webhook route |
+| Wrong signature header name | Looking for `x-signature` instead of `lettr-signature` | Use the correct header: `lettr-signature` |
+| Wrong secret | Using a secret from a different webhook endpoint | Each webhook endpoint has its own secret — check the dashboard |
+| Timing-based failures | Using `===` instead of `timingSafeEqual` | Use `crypto.timingSafeEqual()` to prevent timing attacks |
+
+<Warning>
+  Never skip signature verification in production. Without it, anyone who discovers your webhook URL can send forged events to your server.
+</Warning>
+
+---
+
+## Idempotency
+
+Lettr may deliver the same webhook event more than once (due to retries or network issues). Your handler must be idempotent — processing the same event twice should not cause duplicate side effects.
+
+### Implementing Idempotency
+
+Use the event ID included in every webhook payload to deduplicate:
+
+```javascript
+async function processWebhook(event) {
+  // Check if we've already processed this event
+  const exists = await db.webhookEvents.findOne({ eventId: event.id });
+  if (exists) {
+    console.log(`Event ${event.id} already processed, skipping`);
+    return;
+  }
+
+  // Process the event
+  await handleEvent(event);
+
+  // Record that we've processed it
+  await db.webhookEvents.insertOne({
+    eventId: event.id,
+    processedAt: new Date(),
+  });
+}
+```
+
+---
+
+## Testing Webhooks
+
+Before deploying to production, test your webhook endpoint to verify it handles events correctly.
+
+### Using Lettr's Test Events
+
+Send test events from the Lettr dashboard:
+
+1. Go to **Webhooks** and select your endpoint
+2. Click **Send Test Event**
+3. Select the event type to test
+4. Check your server logs and the event log to verify delivery
+
+### Using a Tunnel for Local Development
+
+To test webhooks against a local development server, use a tunnel service:
+
+```bash
+# Using ngrok
+ngrok http 3000
+
+# Using cloudflared
+cloudflared tunnel --url http://localhost:3000
+```
+
+Copy the generated public URL and use it as your webhook endpoint in the Lettr dashboard. See [Webhook Testing](/learn/webhooks/testing) for more details.
+
+---
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Webhook Introduction" icon="webhook" href="/learn/webhooks/introduction">
+    Overview of Lettr's webhook system and available event types.
+  </Card>
+  <Card title="Webhook Authorization" icon="lock" href="/learn/webhooks/authorization">
+    Set up and verify webhook signatures.
+  </Card>
+  <Card title="Webhook Retries" icon="rotate" href="/learn/webhooks/retries">
+    Detailed retry behavior and handling.
+  </Card>
+  <Card title="Authentication Issues" icon="key" href="/knowledge-base/troubleshooting/authentication">
+    Troubleshoot API key and auth problems.
+  </Card>
+</CardGroup>
