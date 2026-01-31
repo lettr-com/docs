@@ -52,7 +52,7 @@ You will be asked to choose between Vercel's Nameservers or manual DNS configura
 <img src="/images/vercel-nameservers.png" alt="Vercel nameserver configuration options" />
 
 <Tip>
-**Vercel Nameservers vs. manual configuration:** Using Vercel's Nameservers points all DNS management for this domain to Vercel, which simplifies setup. If your domain's DNS is managed elsewhere (e.g. Cloudflare, Route 53), choose manual configuration and add the records at your existing DNS provider instead.
+Using Vercel's Nameservers points all DNS management for this domain to Vercel, which simplifies setup. If your domain's DNS is managed elsewhere, add the records at your existing DNS provider instead.
 </Tip>
 
 Now, copy the DNS records from Lettr to Vercel one by one.
@@ -155,7 +155,7 @@ Copy the MX values from Lettr to Vercel:
 4. Copy the **Priority** number (e.g. `10`) from Lettr and paste it into the **Priority** field in Vercel.
 5. Leave **TTL** set to 60 (Vercel default).
 6. Click **Add**.
-7. Repeat this process for the second and third MX records.
+7. Repeat this process for the second (rx2.sparkpostmail.com) and third (rx3.sparkpostmail.com) MX records.
 
 <Info>
 Omit your domain suffix from the Hostname when pasting into Vercel. For example, instead of `inbound.lettr-demo.com`, paste only `inbound`.
@@ -188,6 +188,8 @@ Click on the name of your new Tracking domain in the list of Tracking Domains.
 <img src="/images/lettr-tracking-list.png" alt="Tracking domain listed in Lettr domain list" />
 
 This will display the CNAME records that need to be configured. Keep this page open — you will need these values in the next steps.
+
+<img src="/images/lettr-tracking-config.png" alt="Creating a new tracking domain in Lettr" />
 
 ### Add SSL Certificate CNAME Record
 
@@ -250,6 +252,8 @@ Click on the name of your new domain in the Storage Domains list to open the dom
 <img src="/images/lettr-storage-list-new.png" alt="Storage domain listed in Lettr domain list" />
 
 This will display the TXT and CNAME records that need to be configured. Keep this page open — you will need these values in the next steps.
+
+<img src="/images/lettr-strage-config.png" alt="Storage domain configuration in Lettr" />
 
 ### Add TXT Record (Certificate Validation)
 
