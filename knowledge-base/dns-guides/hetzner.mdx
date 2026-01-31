@@ -35,12 +35,24 @@ Lettr will display a list of DNS records that need to be configured. Keep this p
 
 ### Configure Hetzner DNS
 
-(Steps for Hetzner DNS Console to be added here)
+Log in to the [Hetzner Console](https://console.hetzner.com/projects) and select one of your projects.
 
-{/* Log in to Hetzner DNS Console, select your zone, navigate to Records tab, etc. */}
+<img src="/images/hetz-console.png" alt="Hetzner Console showing the list of projects" />
+
+In your project dashboard, click on **DNS** in the left-hand menu. If you have no DNS zones yet, click **Add DNS Zone**, enter your domain name in the modal window, and confirm.
+
+<img src="/images/hetz-add-dns-zone.png" alt="Add DNS Zone dialog in Hetzner DNS Console" />
+
+Your domain will now appear in the list of DNS zones.
+
+<img src="/images/hetz-domain-list.png" alt="Domain listed in Hetzner DNS zone list" />
+
+Click on it to open the zone details page. If your domain is pointing to another DNS provider, you will see a message asking you to change the nameservers to Hetzner. Click on **Name servers** and follow the instructions.
+
+<img src="/images/hetz-details-initial.png" alt="Hetzner DNS zone details page with nameserver instructions" />
 
 <Tip>
-(Hetzner-specific DNS management notes to be added — e.g. how zones work in Hetzner DNS Console, nameserver requirements, etc.)
+Using Hetzner's Nameservers points all DNS management for this domain to Hetzner, which simplifies setup. If your domain's DNS is managed elsewhere, add the records at your existing DNS provider instead.
 </Tip>
 
 Now, copy the DNS records from Lettr to Hetzner one by one.
@@ -51,17 +63,18 @@ The CNAME record verifies domain ownership with Lettr's email infrastructure.
 
 Copy the CNAME values from Lettr to Hetzner:
 
-(Hetzner-specific instructions to be added)
-
-{/* Steps for adding a CNAME record in Hetzner DNS Console */}
+1. Expand the **Type** dropdown in Hetzner and select **CNAME**.
+2. Copy the **Hostname** from Lettr and paste it into the **Name** field in Hetzner.
+3. Copy the **Value** from Lettr and paste it into the **Value** field in Hetzner.
+4. Leave **TTL** empty (Hetzner will default to 3600).
+5. Click **Add**.
 
 <Info>
 Omit your domain suffix from the Hostname when pasting into Hetzner. For example, instead of `mailing.lettr-demo.com`, paste only `mailing`.
 </Info>
 
 <img src="/images/lettr-mailing-1.png" alt="CNAME record Hostname and Value in Lettr" />
-
-{/* Hetzner screenshot to be added */}
+<img src="/images/hetz-sending-1.png" alt="Adding CNAME record in Hetzner DNS Console" />
 
 ### Add TXT Record (DKIM)
 
@@ -69,17 +82,18 @@ The DKIM record adds a cryptographic signature to your outgoing emails, allowing
 
 Copy the TXT values from Lettr to Hetzner:
 
-(Hetzner-specific instructions to be added)
-
-{/* Steps for adding a TXT record in Hetzner DNS Console */}
+1. Expand the **Type** dropdown in Hetzner and select **TXT**.
+2. Copy the **Hostname** from Lettr and paste it into the **Name** field in Hetzner.
+3. Copy the **Value** from Lettr and paste it into the **Value** field in Hetzner.
+4. Leave **TTL** empty (Hetzner will default to 3600).
+5. Click **Add**.
 
 <Info>
 Omit your domain suffix from the Hostname when pasting into Hetzner. For example, instead of `scph0126._domainkey.mailing.lettr-demo.com`, paste only `scph0126._domainkey.mailing`.
 </Info>
 
 <img src="/images/lettr-mailing-2.png" alt="DKIM TXT record Hostname and Value in Lettr" />
-
-{/* Hetzner screenshot to be added */}
+<img src="/images/hetz-sending-2.png" alt="Adding DKIM TXT record in Hetzner DNS Console" />
 
 ### Add TXT Record (DMARC)
 
@@ -87,17 +101,18 @@ The DMARC record tells receiving mail servers how to handle emails that fail aut
 
 Copy the TXT values from Lettr to Hetzner:
 
-(Hetzner-specific instructions to be added)
-
-{/* Steps for adding a TXT record in Hetzner DNS Console */}
+1. Expand the **Type** dropdown in Hetzner and select **TXT**.
+2. Copy the **Hostname** from Lettr and paste it into the **Name** field in Hetzner.
+3. Copy the **Value** from Lettr and paste it into the **Value** field in Hetzner.
+4. Leave **TTL** empty (Hetzner will default to 3600).
+5. Click **Add**.
 
 <Info>
 Omit your domain suffix from the Hostname when pasting into Hetzner. For example, instead of `_dmarc.mailing.lettr-demo.com`, paste only `_dmarc.mailing`.
 </Info>
 
 <img src="/images/lettr-mailing-3.png" alt="DMARC TXT record Hostname and Value in Lettr" />
-
-{/* Hetzner screenshot to be added */}
+<img src="/images/hetz-sending-3.png" alt="Adding DMARC TXT record in Hetzner DNS Console" />
 
 ### Verify Your Sending Domain
 
@@ -131,17 +146,20 @@ MX records tell other mail servers where to deliver emails addressed to your dom
 
 Copy the MX values from Lettr to Hetzner:
 
-(Hetzner-specific instructions to be added)
-
-{/* Steps for adding MX records in Hetzner DNS Console, including priority field */}
+1. Expand the **Type** dropdown in Hetzner and select **MX**.
+2. Copy the **Hostname** from Lettr and paste it into the **Name** field in Hetzner.
+3. Copy the **Priority** number (e.g. `10`) from Lettr and paste it into the **Priority** field in Hetzner.
+4. Copy the **Required MX Record** value (without the priority number) from Lettr and paste it into the **Value** field in Hetzner.
+5. Leave **TTL** empty (Hetzner will default to 3600).
+6. Click **Add**.
+7. Repeat this process for the second (rx2.sparkpostmail.com) and third (rx3.sparkpostmail.com) MX records.
 
 <Info>
 Omit your domain suffix from the Hostname when pasting into Hetzner. For example, instead of `inbound.lettr-demo.com`, paste only `inbound`.
 </Info>
 
 <img src="/images/lettr-inbound-1.png" alt="MX record values in Lettr for inbound domain" />
-
-{/* Hetzner screenshot to be added */}
+<img src="/images/hetz-inbound-1.png" alt="Adding MX record in Hetzner DNS Console" />
 
 ### Verify Your Inbound Domain
 
@@ -167,23 +185,26 @@ Click on the name of your new Tracking domain in the list of Tracking Domains.
 
 This will display the CNAME records that need to be configured. Keep this page open — you will need these values in the next steps.
 
+<img src="/images/lettr-tracking-config.png" alt="Creating a new tracking domain in Lettr" />
+
 ### Add SSL Certificate CNAME Record
 
 The SSL Certificate CNAME record provisions an SSL certificate for your custom tracking domain, enabling secure HTTPS connections for tracked links.
 
 Add the record in Hetzner:
 
-(Hetzner-specific instructions to be added)
-
-{/* Steps for adding a CNAME record in Hetzner DNS Console */}
+1. Expand the **Type** dropdown in Hetzner and select **CNAME**.
+2. Copy the **Hostname** from Lettr and paste it into the **Name** field in Hetzner.
+3. Copy the **Value** from Lettr and paste it into the **Value** field in Hetzner.
+4. Leave **TTL** empty (Hetzner will default to 3600).
+5. Click **Add**.
 
 <Info>
 Omit your domain suffix from the Hostname when pasting into Hetzner. For example, instead of `track.lettr-demo.com`, paste only `track`.
 </Info>
 
 <img src="/images/lettr-tracking-1.png" alt="SSL Certificate CNAME record values in Lettr for tracking domain" />
-
-{/* Hetzner screenshot to be added */}
+<img src="/images/hetz-tracking-1.png" alt="Adding SSL Certificate CNAME record in Hetzner DNS Console" />
 
 ### Add Traffic CNAME Record
 
@@ -191,17 +212,18 @@ The Traffic CNAME record routes click and open tracking requests from your custo
 
 Add the record in Hetzner:
 
-(Hetzner-specific instructions to be added)
-
-{/* Steps for adding a CNAME record in Hetzner DNS Console */}
+1. Expand the **Type** dropdown in Hetzner and select **CNAME**.
+2. Copy the **Hostname** from Lettr and paste it into the **Name** field in Hetzner.
+3. Copy the **Value** from Lettr and paste it into the **Value** field in Hetzner.
+4. Leave **TTL** empty (Hetzner will default to 3600).
+5. Click **Add**.
 
 <Info>
 Omit your domain suffix from the Hostname when pasting into Hetzner. For example, instead of `track.lettr-demo.com`, paste only `track`.
 </Info>
 
 <img src="/images/lettr-tracking-2.png" alt="Traffic CNAME record values in Lettr for tracking domain" />
-
-{/* Hetzner screenshot to be added */}
+<img src="/images/hetz-tracking-2.png" alt="Adding Traffic CNAME record in Hetzner DNS Console" />
 
 ### Verify Your Tracking Domain
 
@@ -227,23 +249,26 @@ Click on the name of your new domain in the Storage Domains list to open the dom
 
 This will display the TXT and CNAME records that need to be configured. Keep this page open — you will need these values in the next steps.
 
+<img src="/images/lettr-strage-config.png" alt="Storage domain configuration in Lettr" />
+
 ### Add TXT Record (Certificate Validation)
 
 The Certificate Validation TXT record provisions an SSL certificate for your custom storage domain, enabling secure HTTPS delivery of email assets.
 
 Add the record in Hetzner:
 
-(Hetzner-specific instructions to be added)
-
-{/* Steps for adding a TXT record in Hetzner DNS Console */}
+1. Expand the **Type** dropdown in Hetzner and select **TXT**.
+2. Copy the **Hostname** from Lettr and paste it into the **Name** field in Hetzner.
+3. Copy the **Value** from Lettr and paste it into the **Value** field in Hetzner.
+4. Leave **TTL** empty (Hetzner will default to 3600).
+5. Click **Add**.
 
 <Info>
 Omit your domain suffix from the Hostname when pasting into Hetzner, just as with the CNAME record above.
 </Info>
 
 <img src="/images/lettr-storage-1.png" alt="Certificate Validation TXT record values in Lettr for storage domain" />
-
-{/* Hetzner screenshot to be added */}
+<img src="/images/hetz-storage-1.png" alt="Adding Certificate Validation TXT record in Hetzner DNS Console" />
 
 ### Add TXT Record (Hostname Pre-validation)
 
@@ -251,17 +276,18 @@ The Hostname Pre-validation TXT record verifies ownership of the storage domain 
 
 Add the record in Hetzner:
 
-(Hetzner-specific instructions to be added)
-
-{/* Steps for adding a TXT record in Hetzner DNS Console */}
+1. Expand the **Type** dropdown in Hetzner and select **TXT**.
+2. Copy the **Hostname** from Lettr and paste it into the **Name** field in Hetzner.
+3. Copy the **Value** from Lettr and paste it into the **Value** field in Hetzner.
+4. Leave **TTL** empty (Hetzner will default to 3600).
+5. Click **Add**.
 
 <Info>
 Omit your domain suffix from the Hostname when pasting into Hetzner, just as with the CNAME record above.
 </Info>
 
 <img src="/images/lettr-storage-2.png" alt="Hostname Pre-validation TXT record values in Lettr for storage domain" />
-
-{/* Hetzner screenshot to be added */}
+<img src="/images/hetz-storage-2.png" alt="Adding Hostname Pre-validation TXT record in Hetzner DNS Console" />
 
 ### Add CNAME Record (Domain Routing)
 
@@ -269,17 +295,18 @@ The Domain Routing CNAME record routes asset requests from your custom domain to
 
 Add the record in Hetzner:
 
-(Hetzner-specific instructions to be added)
-
-{/* Steps for adding a CNAME record in Hetzner DNS Console */}
+1. Expand the **Type** dropdown in Hetzner and select **CNAME**.
+2. Copy the **Hostname** from Lettr and paste it into the **Name** field in Hetzner.
+3. Copy the **Value** from Lettr and paste it into the **Value** field in Hetzner.
+4. Leave **TTL** empty (Hetzner will default to 3600).
+5. Click **Add**.
 
 <Info>
 Omit your domain suffix from the Hostname when pasting into Hetzner. For example, instead of `assets.lettr-demo.com`, paste only `assets`.
 </Info>
 
 <img src="/images/lettr-storage-3.png" alt="Domain Routing CNAME record values in Lettr for storage domain" />
-
-{/* Hetzner screenshot to be added */}
+<img src="/images/hetz-storage-3.png" alt="Adding Domain Routing CNAME record in Hetzner DNS Console" />
 
 ### Verify Your Storage Domain
 
@@ -344,9 +371,17 @@ A common mistake is selecting the wrong type in Hetzner's record type selector:
 
 ### DKIM Value Truncated
 
-The DKIM TXT value is a long string. After saving the record in Hetzner, re-open it to confirm the full value was stored. If it appears truncated, try pasting the value again.
+The DKIM TXT value is a long string. After saving the record in Hetzner, re-open it to confirm the full value was stored. If it appears truncated, try pasting the value again. Hetzner's DNS Console supports long TXT values, but copying errors can occasionally cut off the string.
 
-{/* Add any Hetzner-specific notes about TXT value length limits here */}
+### Nameservers Not Updated
+
+If your records are saved in Hetzner but not resolving, confirm that your domain registrar is pointing to Hetzner's nameservers. You can check this with:
+
+```bash
+dig NS yourdomain.com +short
+```
+
+The output should include Hetzner nameservers (e.g. `hydrogen.ns.hetzner.com`, `oxygen.ns.hetzner.com`, `helium.ns.hetzner.de`). If it shows a different provider's nameservers, update them at your domain registrar.
 
 ### When to Contact Support
 
