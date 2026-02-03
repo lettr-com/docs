@@ -1,8 +1,477 @@
 ---
 title: "AWS Route 53"
-description: "Configure DNS records for Lettr on AWS Route 53"
+description: "Step-by-step guide to configuring DNS records for Lettr on AWS Route 53."
 ---
 
-# AWS Route 53 DNS Configuration
+This guide walks you through adding the required DNS records for Lettr using AWS Route 53. Route 53 is Amazon Web Services' scalable Domain Name System (DNS) web service, managed through the [AWS Management Console](https://console.aws.amazon.com/route53/). Route 53 organizes DNS records into **hosted zones**, where each hosted zone corresponds to a domain.
 
-(Content to be added)
+You will configure a **sending domain** (CNAME, DKIM TXT, and DMARC TXT records) and, optionally, an **inbound domain** (MX records), **tracking domain** (two CNAME records), and **storage domain** (CNAME and two TXT records).
+
+---
+
+## Sending Domain Setup
+
+A sending domain authenticates your outgoing emails with DKIM and DMARC, ensuring they are delivered reliably and not marked as spam. This requires a CNAME record for domain verification, a TXT record for DKIM signing, and a TXT record for DMARC policy.
+
+### Add Domain to Lettr
+
+Log in to your Lettr account and add a domain. Select **Domains** in the navigation panel, or click **Add a domain** on the Dashboard.
+
+<img src="/images/lettr-dashboard-add-domain.png" alt="Lettr dashboard showing the Add Domain option" />
+
+Select **Sending Domains** and click **Create Sending Domain**.
+
+<img src="/images/lettr-create-sending-domain.png" alt="Create Sending Domain button in Lettr" />
+
+In the modal window, enter your domain name and click **Create Domain**.
+
+<Tip>
+Use a subdomain (e.g. `mailing.company.com`) instead of the root domain (`company.com`). A subdomain provides proper reputation segmentation and is required if you also plan to receive emails with Lettr.
+</Tip>
+
+Lettr will display a list of DNS records that need to be configured. Keep this page open — you will need these values in the next steps.
+
+<img src="/images/lettr-mailing-config.png" alt="DNS records displayed in Lettr after creating a sending domain" />
+
+### Configure Route 53 DNS
+
+Log in to the [AWS Management Console](https://console.aws.amazon.com/route53/) and navigate to **Route 53**. In the left sidebar, click **Hosted zones**.
+
+{/* Provider-specific screenshot to be added */}
+
+If your domain does not have a hosted zone yet, click **Create hosted zone**, enter your domain name, select **Public hosted zone** as the type, and click **Create hosted zone**.
+
+{/* Provider-specific screenshot to be added */}
+
+Select your hosted zone from the list to view its records. Route 53 will display the default NS and SOA record sets.
+
+{/* Provider-specific screenshot to be added */}
+
+### Which setup applies to you?
+
+Not sure which nameservers your domain is using? Run this command in your terminal:
+
+```bash
+dig NS yourdomain.com +short
+```
+
+If the output shows Route 53 nameservers (e.g. `ns-123.awsdns-45.com`, `ns-456.awsdns-67.net`), your domain is already pointing to Route 53. If it shows a different provider's nameservers, you will need to update them.
+
+| Your situation | What to do |
+|---|---|
+| Domain registered and DNS managed on Route 53 | Skip nameserver changes — proceed directly to [adding DNS records below](#add-cname-record) |
+| Domain registered elsewhere, DNS managed on Route 53 | Update nameservers at your registrar to the four NS records in your hosted zone, then add DNS records below |
+| Domain registered on Route 53, DNS managed elsewhere | Add the Lettr DNS records at your current DNS provider instead of in Route 53 |
+
+<Info>
+**Domain registered with a different registrar?** If you registered your domain elsewhere (e.g. GoDaddy, Namecheap) but want to manage DNS on Route 53, you must first update the nameservers at your registrar to the four NS records shown in your Route 53 hosted zone. Until the nameservers are updated, any records you add in Route 53 will not resolve.
+</Info>
+
+<Tip>
+**Domain already on Route 53?** If your domain was registered through Route 53 or your nameservers already point to Route 53, skip nameserver configuration entirely. Your domain is already using Route 53's nameservers by default — proceed directly to adding the DNS records below.
+</Tip>
+
+Now, copy the DNS records from Lettr to Route 53 one by one, following the instructions below.
+
+### Add CNAME Record
+
+The CNAME record verifies domain ownership with Lettr's email infrastructure.
+
+Copy the CNAME values from Lettr to Route 53:
+
+1. Click **Create record** in your hosted zone.
+2. Copy the **Hostname** from Lettr and paste it into the **Record name** field in Route 53.
+3. Select **CNAME** from the **Record type** dropdown.
+4. Copy the **Value** from Lettr and paste it into the **Value** field in Route 53.
+5. Leave **TTL** set to 300 (Route 53 default) or adjust as needed.
+6. Ensure **Routing policy** is set to **Simple routing**.
+7. Click **Create records**.
+
+<Info>
+Omit your domain suffix from the Hostname when pasting into Route 53. For example, instead of `mailing.lettr-demo.com`, paste only `mailing`. Route 53 displays the hosted zone domain as a greyed-out suffix next to the Record name field.
+</Info>
+
+<img src="/images/lettr-mailing-1.png" alt="CNAME record Hostname and Value in Lettr" />
+{/* Provider-specific screenshot to be added */}
+
+### Add TXT Record (DKIM)
+
+The DKIM record adds a cryptographic signature to your outgoing emails, allowing recipients to verify they were sent by an authorized sender.
+
+Copy the TXT values from Lettr to Route 53:
+
+1. Click **Create record** in your hosted zone.
+2. Copy the **Hostname** from Lettr and paste it into the **Record name** field in Route 53.
+3. Select **TXT** from the **Record type** dropdown.
+4. Copy the **Value** from Lettr and paste it into the **Value** field in Route 53. Enclose the value in double quotes (e.g. `"v=DKIM1; ..."`).
+5. Leave **TTL** set to 300 or adjust as needed.
+6. Ensure **Routing policy** is set to **Simple routing**.
+7. Click **Create records**.
+
+<Warning>
+Route 53 requires TXT record values to be enclosed in double quotes. If you paste the value without quotes, the record will fail to save or will be stored incorrectly.
+</Warning>
+
+<Info>
+Omit your domain suffix from the Hostname when pasting into Route 53. For example, instead of `scph0126._domainkey.mailing.lettr-demo.com`, paste only `scph0126._domainkey.mailing`.
+</Info>
+
+<img src="/images/lettr-mailing-2.png" alt="DKIM TXT record Hostname and Value in Lettr" />
+{/* Provider-specific screenshot to be added */}
+
+### Add TXT Record (DMARC)
+
+The DMARC record tells receiving mail servers how to handle emails that fail authentication checks, protecting your domain from spoofing.
+
+Copy the TXT values from Lettr to Route 53:
+
+1. Click **Create record** in your hosted zone.
+2. Copy the **Hostname** from Lettr and paste it into the **Record name** field in Route 53.
+3. Select **TXT** from the **Record type** dropdown.
+4. Copy the **Value** from Lettr and paste it into the **Value** field in Route 53. Enclose the value in double quotes.
+5. Leave **TTL** set to 300 or adjust as needed.
+6. Ensure **Routing policy** is set to **Simple routing**.
+7. Click **Create records**.
+
+<Info>
+Omit your domain suffix from the Hostname when pasting into Route 53. For example, instead of `_dmarc.mailing.lettr-demo.com`, paste only `_dmarc.mailing`.
+</Info>
+
+<img src="/images/lettr-mailing-3.png" alt="DMARC TXT record Hostname and Value in Lettr" />
+{/* Provider-specific screenshot to be added */}
+
+### Verify Your Sending Domain
+
+After adding all three DNS records, go back to Lettr and click **Verify DNS Records**. DNS propagation can take up to 24–48 hours, though it typically completes within a few minutes.
+
+<img src="/images/lettr-verified.png" alt="Sending domain verified successfully in Lettr" />
+
+---
+
+## Inbound Domain Setup
+
+An inbound domain allows Lettr to receive emails on your behalf. This requires three MX records that direct incoming mail to Lettr's mail servers.
+
+### Add Inbound Domain to Lettr
+
+Select **Inbound Domains** when creating a domain in Lettr.
+
+<img src="/images/lettr-inbound-new.png" alt="Creating a new inbound domain in Lettr" />
+
+Click on the name of your new domain in the Inbound Domains list to open the domain details page.
+
+<img src="/images/lettr-inbound-list-new.png" alt="Inbound domain listed in Lettr domain list" />
+
+This will display the MX records that need to be configured. Keep this page open — you will need these values in the next steps.
+
+<img src="/images/lettr-inbound-config.png" alt="MX record configuration displayed in Lettr for inbound domain" />
+
+### Add MX Records
+
+MX records tell other mail servers where to deliver emails addressed to your domain.
+
+Copy the MX values from Lettr to Route 53:
+
+1. Click **Create record** in your hosted zone.
+2. Copy the **Hostname** from Lettr and paste it into the **Record name** field in Route 53.
+3. Select **MX** from the **Record type** dropdown.
+4. In the **Value** field, enter all three MX records, each on a separate line, in the format `priority mailserver`. For example:
+   ```
+   10 rx1.sparkpostmail.com
+   10 rx2.sparkpostmail.com
+   10 rx3.sparkpostmail.com
+   ```
+5. Leave **TTL** set to 300 or adjust as needed.
+6. Ensure **Routing policy** is set to **Simple routing**.
+7. Click **Create records**.
+
+<Info>
+Route 53 combines all MX records for the same name into a single record set. Enter each MX record on a separate line within the same Value field, with the priority number before the mail server address.
+</Info>
+
+<Info>
+Omit your domain suffix from the Hostname when pasting into Route 53. For example, instead of `inbound.lettr-demo.com`, paste only `inbound`.
+</Info>
+
+<img src="/images/lettr-inbound-1.png" alt="MX record values in Lettr for inbound domain" />
+{/* Provider-specific screenshot to be added */}
+
+### Verify Your Inbound Domain
+
+After adding the MX records, go back to Lettr and click **Verify DNS Records**. DNS propagation can take up to 24–48 hours, though it typically completes within a few minutes.
+
+<img src="/images/lettr-inbound-verified.png" alt="Inbound domain verified successfully in Lettr" />
+
+---
+
+## Tracking Domain Setup
+
+A tracking domain allows Lettr to track email opens and link clicks using your own custom domain instead of the default Lettr tracking domain. This requires two CNAME records: one for the SSL certificate and one for routing tracking traffic to Lettr's infrastructure.
+
+### Add Tracking Domain to Lettr
+
+In the Lettr dashboard, select **Domains** in the navigation panel, then select **Tracking Domains** and click **Create Tracking Domain**. Enter your desired tracking subdomain (e.g. `track.company.com`) and click **Create Tracking Domain**.
+
+<img src="/images/lettr-add-tracking.png" alt="Creating a new tracking domain in Lettr" />
+
+Click on the name of your new Tracking domain in the list of Tracking Domains.
+
+<img src="/images/lettr-tracking-list.png" alt="Tracking domain listed in Lettr domain list" />
+
+This will display the CNAME records that need to be configured. Keep this page open — you will need these values in the next steps.
+
+<img src="/images/lettr-tracking-config.png" alt="Creating a new tracking domain in Lettr" />
+
+### Add SSL Certificate CNAME Record
+
+The SSL Certificate CNAME record provisions an SSL certificate for your custom tracking domain, enabling secure HTTPS connections for tracked links.
+
+Add the record in Route 53:
+
+1. Click **Create record** in your hosted zone.
+2. Copy the **Hostname** from Lettr and paste it into the **Record name** field in Route 53.
+3. Select **CNAME** from the **Record type** dropdown.
+4. Copy the **Value** from Lettr and paste it into the **Value** field in Route 53.
+5. Leave **TTL** set to 300 or adjust as needed.
+6. Ensure **Routing policy** is set to **Simple routing**.
+7. Click **Create records**.
+
+<Info>
+Omit your domain suffix from the Hostname when pasting into Route 53. For example, instead of `track.lettr-demo.com`, paste only `track`.
+</Info>
+
+<img src="/images/lettr-tracking-1.png" alt="SSL Certificate CNAME record values in Lettr for tracking domain" />
+{/* Provider-specific screenshot to be added */}
+
+### Add Traffic CNAME Record
+
+The Traffic CNAME record routes click and open tracking requests from your custom domain to Lettr's tracking servers.
+
+Add the record in Route 53:
+
+1. Click **Create record** in your hosted zone.
+2. Copy the **Hostname** from Lettr and paste it into the **Record name** field in Route 53.
+3. Select **CNAME** from the **Record type** dropdown.
+4. Copy the **Value** from Lettr and paste it into the **Value** field in Route 53.
+5. Leave **TTL** set to 300 or adjust as needed.
+6. Ensure **Routing policy** is set to **Simple routing**.
+7. Click **Create records**.
+
+<Info>
+Omit your domain suffix from the Hostname when pasting into Route 53. For example, instead of `track.lettr-demo.com`, paste only `track`.
+</Info>
+
+<img src="/images/lettr-tracking-2.png" alt="Traffic CNAME record values in Lettr for tracking domain" />
+{/* Provider-specific screenshot to be added */}
+
+### Verify Your Tracking Domain
+
+After adding both CNAME records, go back to Lettr and click **Verify DNS Records**.
+
+<img src="/images/lettr-tracking-verified.png" alt="Tracking domain verified successfully in Lettr" />
+
+---
+
+## Storage Domain Setup
+
+A storage domain lets you serve email assets (images, attachments) from your own custom domain instead of the default Lettr storage URL. This requires two TXT records for certificate validation and ownership verification, and a CNAME record for routing asset requests to Lettr's storage infrastructure.
+
+### Add Storage Domain to Lettr
+
+In the Lettr dashboard, select **Domains** in the navigation panel, then select **Storage Domains** and click **Create Storage Domain**. Enter your desired storage subdomain (e.g. `assets.company.com`) and click **Create Storage Domain**.
+
+<img src="/images/lettr-storage-new.png" alt="Creating a new storage domain in Lettr" />
+
+Click on the name of your new domain in the Storage Domains list to open the domain details page.
+
+<img src="/images/lettr-storage-list-new.png" alt="Storage domain listed in Lettr domain list" />
+
+This will display the TXT and CNAME records that need to be configured. Keep this page open — you will need these values in the next steps.
+
+<img src="/images/lettr-storage-config.png" alt="Storage domain configuration in Lettr" />
+
+### Add TXT Record (Certificate Validation)
+
+The Certificate Validation TXT record provisions an SSL certificate for your custom storage domain, enabling secure HTTPS delivery of email assets.
+
+Add the record in Route 53:
+
+1. Click **Create record** in your hosted zone.
+2. Copy the **Hostname** from Lettr and paste it into the **Record name** field in Route 53.
+3. Select **TXT** from the **Record type** dropdown.
+4. Copy the **Value** from Lettr and paste it into the **Value** field in Route 53. Enclose the value in double quotes.
+5. Leave **TTL** set to 300 or adjust as needed.
+6. Ensure **Routing policy** is set to **Simple routing**.
+7. Click **Create records**.
+
+<Info>
+Omit your domain suffix from the Hostname when pasting into Route 53, just as with the CNAME record above.
+</Info>
+
+<img src="/images/lettr-storage-1.png" alt="Certificate Validation TXT record values in Lettr for storage domain" />
+{/* Provider-specific screenshot to be added */}
+
+### Add TXT Record (Hostname Pre-validation)
+
+The Hostname Pre-validation TXT record verifies ownership of the storage domain before Lettr provisions a custom hostname for it.
+
+Add the record in Route 53:
+
+1. Click **Create record** in your hosted zone.
+2. Copy the **Hostname** from Lettr and paste it into the **Record name** field in Route 53.
+3. Select **TXT** from the **Record type** dropdown.
+4. Copy the **Value** from Lettr and paste it into the **Value** field in Route 53. Enclose the value in double quotes.
+5. Leave **TTL** set to 300 or adjust as needed.
+6. Ensure **Routing policy** is set to **Simple routing**.
+7. Click **Create records**.
+
+<Warning>
+If the Record name is the same as the Certificate Validation TXT record above, Route 53 will not allow two separate TXT record sets with the same name. Instead, edit the existing TXT record and add the new value on a separate line, with each value enclosed in its own double quotes.
+</Warning>
+
+<Info>
+Omit your domain suffix from the Hostname when pasting into Route 53, just as with the CNAME record above.
+</Info>
+
+<img src="/images/lettr-storage-2.png" alt="Hostname Pre-validation TXT record values in Lettr for storage domain" />
+{/* Provider-specific screenshot to be added */}
+
+### Add CNAME Record (Domain Routing)
+
+The Domain Routing CNAME record routes asset requests from your custom domain to Lettr's storage infrastructure.
+
+Add the record in Route 53:
+
+1. Click **Create record** in your hosted zone.
+2. Copy the **Hostname** from Lettr and paste it into the **Record name** field in Route 53.
+3. Select **CNAME** from the **Record type** dropdown.
+4. Copy the **Value** from Lettr and paste it into the **Value** field in Route 53.
+5. Leave **TTL** set to 300 or adjust as needed.
+6. Ensure **Routing policy** is set to **Simple routing**.
+7. Click **Create records**.
+
+<Info>
+Omit your domain suffix from the Hostname when pasting into Route 53. For example, instead of `assets.lettr-demo.com`, paste only `assets`.
+</Info>
+
+<img src="/images/lettr-storage-3.png" alt="Domain Routing CNAME record values in Lettr for storage domain" />
+{/* Provider-specific screenshot to be added */}
+
+### Verify Your Storage Domain
+
+After adding all three records, go back to Lettr and click **Verify DNS Records**.
+
+<img src="/images/lettr-storage-verified.png" alt="Storage domain verified successfully in Lettr" />
+
+---
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="TXT Values Missing Quotes">
+    Route 53 requires all TXT record values to be enclosed in double quotes. If you paste a value without quotes, the record may fail to save or resolve incorrectly. Edit the record and ensure the value is wrapped like `"v=DKIM1; ..."`.
+  </Accordion>
+  <Accordion title="Multiple TXT Records With the Same Name">
+    Route 53 does not allow two separate record sets of the same type with the same name. If you need to add multiple TXT values for the same hostname (e.g. both storage TXT records share a name), add them as separate lines within a single TXT record set, each enclosed in its own double quotes:
+
+    ```
+    "certificate-validation-value-here"
+    "hostname-prevalidation-value-here"
+    ```
+  </Accordion>
+  <Accordion title="Domain Suffix Not Omitted">
+    Route 53 displays the hosted zone domain as a greyed-out suffix next to the Record name field. If you paste the full hostname (e.g. `mailing.lettr-demo.com`), the resulting record will be `mailing.lettr-demo.com.lettr-demo.com`, which will fail verification.
+
+    Always paste only the subdomain portion (e.g. `mailing`, `scph0126._domainkey.mailing`, `_dmarc.mailing`).
+  </Accordion>
+  <Accordion title="Records Not Propagating">
+    If verification fails after adding records, check the following:
+
+    - **Wait at least 30 minutes** before your first verification attempt. Most records propagate within 1–2 hours.
+    - **Confirm the records exist** using command-line tools:
+
+    ```bash
+    # Check CNAME record
+    dig CNAME mailing.yourdomain.com +short
+
+    # Check DKIM record
+    dig TXT scph0126._domainkey.mailing.yourdomain.com +short
+
+    # Check DMARC record
+    dig TXT _dmarc.mailing.yourdomain.com +short
+
+    # Check MX records (inbound)
+    dig MX inbound.yourdomain.com +short
+
+    # Check tracking domain CNAME
+    dig CNAME track.yourdomain.com +short
+
+    # Check storage domain CNAME
+    dig CNAME assets.yourdomain.com +short
+    ```
+
+    - **Use a web tool** like [dnschecker.org](https://dnschecker.org) to verify propagation across multiple DNS servers worldwide.
+  </Accordion>
+  <Accordion title="Wrong Record Type">
+    A common mistake is selecting the wrong type in Route 53's Record type dropdown:
+
+    | Record | Correct Type |
+    |--------|-------------|
+    | Sending verification | CNAME |
+    | DKIM | TXT |
+    | DMARC | TXT |
+    | Inbound mail | MX |
+    | Tracking SSL certificate | CNAME |
+    | Tracking traffic | CNAME |
+    | Storage certificate validation | TXT |
+    | Storage hostname pre-validation | TXT |
+    | Storage domain routing | CNAME |
+  </Accordion>
+  <Accordion title="DKIM Value Truncated">
+    The DKIM TXT value is a long string. After saving the record in Route 53, click the record to confirm the full value was stored. If it appears truncated, edit the record and try pasting the value again. Remember to enclose the entire value in double quotes.
+  </Accordion>
+  <Accordion title="CNAME at Zone Apex Not Supported">
+    Route 53 does not support CNAME records at the zone apex (root domain). For example, you cannot create a CNAME record for `company.com` itself — only for subdomains like `mailing.company.com`. Use a subdomain for your sending domain to avoid this limitation.
+
+    <Tip>
+    If you need to use the root domain, consider using Route 53's **Alias** record type, which works at the zone apex. However, Alias records only support routing to specific AWS resources and may not work for Lettr's CNAME targets. Using a subdomain is the recommended approach.
+    </Tip>
+  </Accordion>
+  <Accordion title="Nameservers Not Updated">
+    If your records are saved in Route 53 but not resolving, confirm that your domain registrar is pointing to Route 53's nameservers. You can check this with:
+
+    ```bash
+    dig NS yourdomain.com +short
+    ```
+
+    The output should include the four nameservers listed in your Route 53 hosted zone (e.g. `ns-123.awsdns-45.com`, `ns-456.awsdns-67.net`). If it shows a different provider's nameservers, update them at your domain registrar.
+  </Accordion>
+  <Accordion title="When to Contact Support">
+    If your DNS records are correctly configured (confirmed with `dig` or dnschecker.org) and verification still fails after 48 hours, contact Lettr support at **support@lettr.com** or through the in-app chat. Include your domain name and the output of the `dig` commands above.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Sending Domains" icon="paper-plane" href="/learn/domains/sending-domains">
+    Learn about sending domain setup, SPF, DKIM, and DMARC.
+  </Card>
+  <Card title="Inbound Domains" icon="inbox" href="/learn/domains/inbound-domains">
+    Configure MX records to receive emails with Lettr.
+  </Card>
+  <Card title="Tracking Domains" icon="link" href="/learn/domains/tracking-domains">
+    Set up a custom tracking domain for click and open tracking.
+  </Card>
+  <Card title="Storage Domains" icon="hard-drive" href="/learn/domains/storage-domains">
+    Serve email assets from your own custom domain.
+  </Card>
+  <Card title="Domains Overview" icon="globe" href="/learn/domains/introduction">
+    Understand domain types and how they work in Lettr.
+  </Card>
+  <Card title="Domain Verification Failures" icon="circle-exclamation" href="/knowledge-base/troubleshooting/domain-verification">
+    Troubleshoot common DNS configuration and propagation issues.
+  </Card>
+</CardGroup>
