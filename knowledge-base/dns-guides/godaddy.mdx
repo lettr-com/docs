@@ -13,61 +13,50 @@ You will configure a **sending domain** (CNAME, DKIM TXT, and DMARC TXT records)
 
 A sending domain authenticates your outgoing emails with DKIM and DMARC, ensuring they are delivered reliably and not marked as spam. This requires a CNAME record for domain verification, a TXT record for DKIM signing, and a TXT record for DMARC policy.
 
-### Add Domain to Lettr
-
-Log in to your Lettr account and add a domain. Select **Domains** in the navigation panel, or click **Add a domain** on the Dashboard.
-
-<img src="/images/lettr-dashboard-add-domain.png" alt="Lettr dashboard showing the Add Domain option" />
-
-Select **Sending Domains** and click **Create Sending Domain**.
+To create a sending domain in Lettr:
+1. Select **Domains** in the navigation panel
+2. Select **Sending Domains**
+3. Click **Create Sending Domain**
+4. Enter your desired storage subdomain (e.g. `mailing.company.com`)
+5. Click **Create Domain**
 
 <img src="/images/lettr-create-sending-domain.png" alt="Create Sending Domain button in Lettr" />
 
-In the modal window, enter your domain name and click **Create Domain**.
-
 <Tip>
-Use a subdomain (e.g. `mailing.company.com`) instead of the root domain (`company.com`). A subdomain provides proper reputation segmentation and is required if you also plan to receive emails with Lettr.
+  Use a subdomain (e.g. `mailing.company.com`) instead of the root domain (`company.com`). A subdomain provides proper
+  reputation segmentation and is required if you also plan to receive emails with Lettr.
 </Tip>
 
-Lettr will display a list of DNS records that need to be configured. Keep this page open — you will need these values in the next steps.
+Click your new domain the Storage Domains list.
+
+<img src="/images/lettr-sending-list.png" alt="CNAME record Hostname and Value in Lettr" />
+
+This will display a list of DNS records that need to be configured. Keep this page open — you will need these values soon.
 
 <img src="/images/lettr-mailing-config.png" alt="DNS records displayed in Lettr after creating a sending domain" />
 
 ### Configure GoDaddy DNS
 
-Log in to your [GoDaddy account](https://dcc.godaddy.com) and navigate to **My Products**. Find your domain in the list and click **DNS** (or click the three-dot menu and select **Manage DNS**).
+Log in to your [GoDaddy account](https://dcc.godaddy.com), make sure the **DNS** in the left-hand menu is selected, and select the domain for which you want to manage DNS records from the dropdown. Scroll down for DNS management.
 
-{/* Provider-specific screenshot to be added */}
-
-This opens the DNS Management page, which displays all existing DNS records for your domain.
-
-{/* Provider-specific screenshot to be added */}
-
-### Which setup applies to you?
-
-Not sure which nameservers your domain is using? Run this command in your terminal:
-
-```bash
-dig NS yourdomain.com +short
-```
-
-If the output shows GoDaddy nameservers (e.g. `ns51.domaincontrol.com`, `ns52.domaincontrol.com`), your domain is already pointing to GoDaddy. If it shows a different provider's nameservers, you will need to update them.
-
-| Your situation | What to do |
-|---|---|
-| Domain registered and DNS managed on GoDaddy | Skip nameserver changes — proceed directly to [adding DNS records below](#add-cname-record) |
-| Domain registered elsewhere, DNS managed on GoDaddy | Update nameservers at your registrar to GoDaddy's nameservers, then add DNS records below |
-| Domain registered on GoDaddy, DNS managed elsewhere | Add the Lettr DNS records at your current DNS provider instead of in GoDaddy |
-
-<Info>
-**Domain registered with a different registrar?** If you registered your domain elsewhere but want to manage DNS on GoDaddy, you must first update the nameservers at your registrar to GoDaddy's nameservers (e.g. `ns51.domaincontrol.com`, `ns52.domaincontrol.com`). Until the nameservers are updated, any records you add in GoDaddy will not resolve.
-</Info>
+<img src="/images/daddy-domain-list.png" alt="Domain listed in GoDaddy DNS zone list" />
 
 <Tip>
-**Domain already on GoDaddy?** If your domain was purchased through GoDaddy and you have not changed the nameservers, skip nameserver configuration entirely. GoDaddy manages DNS for its own domains by default — proceed directly to adding the DNS records below.
+  If your domain was purchased through GoDaddy or your nameservers already point to GoDaddy, skip nameserver
+  configuration entirely. Your domain is already using GoDaddy's nameservers by default — proceed directly to adding the
+  DNS records below.
 </Tip>
 
-Now, copy the DNS records from Lettr to GoDaddy one by one, following the instructions below.
+<AccordionGroup>
+  <Accordion title="Domain registered with a different registrar?">
+    If you registered your domain elsewhere but want to manage DNS on GoDaddy, you must first transfer the domain to GoDaddy. Select **Transfer** in the left-hand menu and follow the instructions.
+    <img src="/images/daddy-transfer.png" alt="Vercel nameserver configuration options" />
+    Then, select DNS in the left-hand menu, select your domain, and **update the nameservers**
+    at your registrar to GoDaddy's nameservers shown in the domain configuration.
+    <img src="/images/daddy-nameservers.png" alt="Vercel nameserver configuration options" />
+    <Warning>Until the nameservers are updated, any records you add in GoDaddy will not resolve.</Warning>
+  </Accordion>
+</AccordionGroup>
 
 ### Add CNAME Record
 
@@ -87,7 +76,7 @@ Omit your domain suffix from the Hostname when pasting into GoDaddy. For example
 </Info>
 
 <img src="/images/lettr-mailing-1.png" alt="CNAME record Hostname and Value in Lettr" />
-{/* Provider-specific screenshot to be added */}
+<img src="/images/daddy-mailing-1.png" alt="CNAME record Hostname and Value in Lettr" />
 
 ### Add TXT Record (DKIM)
 
@@ -107,7 +96,7 @@ Omit your domain suffix from the Hostname when pasting into GoDaddy. For example
 </Info>
 
 <img src="/images/lettr-mailing-2.png" alt="DKIM TXT record Hostname and Value in Lettr" />
-{/* Provider-specific screenshot to be added */}
+<img src="/images/daddy-mailing-2.png" alt="CNAME record Hostname and Value in Lettr" />
 
 ### Add TXT Record (DMARC)
 
@@ -127,7 +116,7 @@ Omit your domain suffix from the Hostname when pasting into GoDaddy. For example
 </Info>
 
 <img src="/images/lettr-mailing-3.png" alt="DMARC TXT record Hostname and Value in Lettr" />
-{/* Provider-specific screenshot to be added */}
+<img src="/images/daddy-mailing-3.png" alt="CNAME record Hostname and Value in Lettr" />
 
 ### Verify Your Sending Domain
 
@@ -143,15 +132,20 @@ An inbound domain allows Lettr to receive emails on your behalf. This requires t
 
 ### Add Inbound Domain to Lettr
 
-Select **Inbound Domains** when creating a domain in Lettr.
+To create an Inbound domain in Lettr:
+1. Select **Domains** in the navigation panel
+2. Select **Inbound Domains**
+3. Click **Create Inbound Domain**
+4. Enter your desired storage subdomain (e.g. `inbound.company.com`)
+5. Click **Create Domain**.
 
-<img src="/images/lettr-inbound-new.png" alt="Creating a new inbound domain in Lettr" />
+<img src="/images/lettr-inbound-new.png" alt="Inbound domain listed in Lettr domain list" />
 
-Click on the name of your new domain in the Inbound Domains list to open the domain details page.
+Click on your new domain the Inbound Domains list.
 
-<img src="/images/lettr-inbound-list-new.png" alt="Inbound domain listed in Lettr domain list" />
+<img src="/images/lettr-inbound-list.png" alt="CNAME record Hostname and Value in Lettr" />
 
-This will display the MX records that need to be configured. Keep this page open — you will need these values in the next steps.
+This will display the MX records that need to be configured.
 
 <img src="/images/lettr-inbound-config.png" alt="MX record configuration displayed in Lettr for inbound domain" />
 
@@ -179,7 +173,7 @@ Omit your domain suffix from the Hostname when pasting into GoDaddy. For example
 </Info>
 
 <img src="/images/lettr-inbound-1.png" alt="MX record values in Lettr for inbound domain" />
-{/* Provider-specific screenshot to be added */}
+<img src="/images/daddy-inbound-1.png" alt="MX record values in Lettr for inbound domain" />
 
 ### Verify Your Inbound Domain
 
@@ -195,15 +189,20 @@ A tracking domain allows Lettr to track email opens and link clicks using your o
 
 ### Add Tracking Domain to Lettr
 
-In the Lettr dashboard, select **Domains** in the navigation panel, then select **Tracking Domains** and click **Create Tracking Domain**. Enter your desired tracking subdomain (e.g. `track.company.com`) and click **Create Tracking Domain**.
+To create a Tracking domain in Lettr:
+1. Select **Domains** in the navigation panel
+2. Select **Tracking Domains**
+3. Click **Create Tracking Domain**
+4. Enter your desired storage subdomain (e.g. `tracking.company.com`)
+5. Click **Create Domain**
 
-<img src="/images/lettr-add-tracking.png" alt="Creating a new tracking domain in Lettr" />
+<img src="/images/lettr-add-tracking.png" alt="Tracking domain listed in Lettr domain list" />
 
-Click on the name of your new Tracking domain in the list of Tracking Domains.
+Click on your new domain the Tracking Domains list.
 
-<img src="/images/lettr-tracking-list.png" alt="Tracking domain listed in Lettr domain list" />
+<img src="/images/lettr-tracking-list.png" alt="CNAME record Hostname and Value in Lettr" />
 
-This will display the CNAME records that need to be configured. Keep this page open — you will need these values in the next steps.
+This will display the CNAME records that need to be configured.
 
 <img src="/images/lettr-tracking-config.png" alt="Creating a new tracking domain in Lettr" />
 
@@ -225,7 +224,7 @@ Omit your domain suffix from the Hostname when pasting into GoDaddy. For example
 </Info>
 
 <img src="/images/lettr-tracking-1.png" alt="SSL Certificate CNAME record values in Lettr for tracking domain" />
-{/* Provider-specific screenshot to be added */}
+<img src="/images/daddy-tracking-1.png" alt="SSL Certificate CNAME record values in Lettr for tracking domain" />
 
 ### Add Traffic CNAME Record
 
@@ -245,7 +244,7 @@ Omit your domain suffix from the Hostname when pasting into GoDaddy. For example
 </Info>
 
 <img src="/images/lettr-tracking-2.png" alt="Traffic CNAME record values in Lettr for tracking domain" />
-{/* Provider-specific screenshot to be added */}
+<img src="/images/daddy-tracking-2.png" alt="Traffic CNAME record values in Lettr for tracking domain" />
 
 ### Verify Your Tracking Domain
 
@@ -261,17 +260,22 @@ A storage domain lets you serve email assets (images, attachments) from your own
 
 ### Add Storage Domain to Lettr
 
-In the Lettr dashboard, select **Domains** in the navigation panel, then select **Storage Domains** and click **Create Storage Domain**. Enter your desired storage subdomain (e.g. `assets.company.com`) and click **Create Storage Domain**.
+To create a Storage domain in Lettr:
+1. Select **Domains** in the navigation panel
+2. Select **Storage Domains**
+3. Click **Create Storage Domain**
+4. Enter your desired storage subdomain (e.g. `assets.company.com`)
+5. Click **Create Domain**
 
-<img src="/images/lettr-storage-new.png" alt="Creating a new storage domain in Lettr" />
+<img src="/images/lettr-storage-new.png" alt="Tracking domain listed in Lettr domain list" />
 
-Click on the name of your new domain in the Storage Domains list to open the domain details page.
+Click on your new domain the Storage Domains list.
 
-<img src="/images/lettr-storage-list-new.png" alt="Storage domain listed in Lettr domain list" />
+<img src="/images/lettr-storage-list.png" alt="CNAME record Hostname and Value in Lettr" />
 
-This will display the TXT and CNAME records that need to be configured. Keep this page open — you will need these values in the next steps.
+This will display the CNAME records that need to be configured.
 
-<img src="/images/lettr-storage-config.png" alt="Storage domain configuration in Lettr" />
+<img src="/images/lettr-storage-config.png" alt="Creating a new tracking domain in Lettr" />
 
 ### Add TXT Record (Certificate Validation)
 
@@ -291,7 +295,7 @@ Omit your domain suffix from the Hostname when pasting into GoDaddy, just as wit
 </Info>
 
 <img src="/images/lettr-storage-1.png" alt="Certificate Validation TXT record values in Lettr for storage domain" />
-{/* Provider-specific screenshot to be added */}
+<img src="/images/daddy-storage-1.png" alt="Certificate Validation TXT record values in Lettr for storage domain" />
 
 ### Add TXT Record (Hostname Pre-validation)
 
@@ -311,7 +315,7 @@ Omit your domain suffix from the Hostname when pasting into GoDaddy, just as wit
 </Info>
 
 <img src="/images/lettr-storage-2.png" alt="Hostname Pre-validation TXT record values in Lettr for storage domain" />
-{/* Provider-specific screenshot to be added */}
+<img src="/images/daddy-storage-2.png" alt="Hostname Pre-validation TXT record values in Lettr for storage domain" />
 
 ### Add CNAME Record (Domain Routing)
 
@@ -331,7 +335,7 @@ Omit your domain suffix from the Hostname when pasting into GoDaddy. For example
 </Info>
 
 <img src="/images/lettr-storage-3.png" alt="Domain Routing CNAME record values in Lettr for storage domain" />
-{/* Provider-specific screenshot to be added */}
+<img src="/images/daddy-storage-3.png" alt="Domain Routing CNAME record values in Lettr for storage domain" />
 
 ### Verify Your Storage Domain
 
