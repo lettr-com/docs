@@ -13,49 +13,52 @@ You will configure a **sending domain** (CNAME, DKIM TXT, and DMARC TXT records)
 
 A sending domain authenticates your outgoing emails with DKIM and DMARC, ensuring they are delivered reliably and not marked as spam. This requires a CNAME record for domain verification, a TXT record for DKIM signing, and a TXT record for DMARC policy.
 
-### Add Domain to Lettr
-
-Log in to your Lettr account and add a domain. Select **Domains** in the navigation panel, or click **Add a domain** on the Dashboard.
-
-<img src="/images/lettr-dashboard-add-domain.png" alt="Lettr dashboard showing the Add Domain option" />
-
-Select **Sending Domains** and click **Create Sending Domain**.
+To create a sending domain in Lettr:
+1. Select **Domains** in the navigation panel
+2. Select **Sending Domains**
+3. Click **Create Sending Domain**
+4. Enter your desired storage subdomain (e.g. `mailing.company.com`)
+5. Click **Create Domain**
 
 <img src="/images/lettr-create-sending-domain.png" alt="Create Sending Domain button in Lettr" />
 
-In the modal window, enter your domain name and click **Create Domain**.
-
 <Tip>
-Use a subdomain (e.g. `mailing.company.com`) instead of the root domain (`company.com`). A subdomain provides proper reputation segmentation and is required if you also plan to receive emails with Lettr.
+  Use a subdomain (e.g. `mailing.company.com`) instead of the root domain (`company.com`). A subdomain provides proper
+  reputation segmentation and is required if you also plan to receive emails with Lettr.
 </Tip>
 
-Lettr will display a list of DNS records that need to be configured. Keep this page open — you will need these values in the next steps.
+Click your new domain the Storage Domains list.
+
+<img src="/images/lettr-sending-list.png" alt="CNAME record Hostname and Value in Lettr" />
+
+This will display a list of DNS records that need to be configured. Keep this page open — you will need these values soon.
 
 <img src="/images/lettr-mailing-config.png" alt="DNS records displayed in Lettr after creating a sending domain" />
 
 ### Configure Hetzner DNS
 
-Log in to the [Hetzner Console](https://console.hetzner.com/projects) and select one of your projects.
-
-<img src="/images/hetz-console.png" alt="Hetzner Console showing the list of projects" />
-
-In your project dashboard, click on **DNS** in the left-hand menu. If you have no DNS zones yet, click **Add DNS Zone**, enter your domain name in the modal window, and confirm.
-
-<img src="/images/hetz-add-dns-zone.png" alt="Add DNS Zone dialog in Hetzner DNS Console" />
-
-Your domain will now appear in the list of DNS zones.
+Log in to your [Hetzner account](https://console.hetzner.com/projects) and select one of your projects. In your project dashboard, click on **DNS** in the left-hand menu and select the DNS Zone you want to configure.
 
 <img src="/images/hetz-domain-list.png" alt="Domain listed in Hetzner DNS zone list" />
 
-Click on it to open the zone details page. If your domain is pointing to another DNS provider, you will see a message asking you to change the nameservers to Hetzner. Click on **Name servers** and follow the instructions.
+This will open the domain details page, where you can manage your DNS records.
 
-<img src="/images/hetz-details-initial.png" alt="Hetzner DNS zone details page with nameserver instructions" />
+<img src="/images/hetz-dns-setup.png" alt="Hetzner DNS zone details page with nameserver instructions" />
 
 <Tip>
-Using Hetzner's Nameservers points all DNS management for this domain to Hetzner, which simplifies setup. If your domain's DNS is managed elsewhere, add the records at your existing DNS provider instead.
+  If your domain was purchased through Hetzner or your nameservers already point to Hetzner, skip nameserver
+  configuration entirely. Your domain is already using Hetzner's nameservers by default — proceed directly to adding the
+  DNS records below.
 </Tip>
 
-Now, copy the DNS records from Lettr to Hetzner one by one.
+<AccordionGroup>
+  <Accordion title="Domain registered with a different registrar?">
+    If you registered your domain elsewhere but want to manage DNS on Hetzner, you must first **update the nameservers**
+    at your registrar to Hetzner's nameservers shown in the domain configuration.
+    <img src="/images/hetz-nameservers.png" alt="Vercel nameserver configuration options" />
+    <Warning>Until the nameservers are updated, any records you add in Hetzner will not resolve.</Warning>
+  </Accordion>
+</AccordionGroup>
 
 ### Add CNAME Record
 
@@ -70,7 +73,8 @@ Copy the CNAME values from Lettr to Hetzner:
 5. Click **Add**.
 
 <Info>
-Omit your domain suffix from the Hostname when pasting into Hetzner. For example, instead of `mailing.lettr-demo.com`, paste only `mailing`.
+  Omit your domain suffix from the Hostname when pasting into Hetzner. For example, instead of `mailing.lettr-demo.com`,
+  paste only `mailing`.
 </Info>
 
 <img src="/images/lettr-mailing-1.png" alt="CNAME record Hostname and Value in Lettr" />
@@ -89,7 +93,8 @@ Copy the TXT values from Lettr to Hetzner:
 5. Click **Add**.
 
 <Info>
-Omit your domain suffix from the Hostname when pasting into Hetzner. For example, instead of `scph0126._domainkey.mailing.lettr-demo.com`, paste only `scph0126._domainkey.mailing`.
+  Omit your domain suffix from the Hostname when pasting into Hetzner. For example, instead of
+  `scph0126._domainkey.mailing.lettr-demo.com`, paste only `scph0126._domainkey.mailing`.
 </Info>
 
 <img src="/images/lettr-mailing-2.png" alt="DKIM TXT record Hostname and Value in Lettr" />
@@ -108,7 +113,8 @@ Copy the TXT values from Lettr to Hetzner:
 5. Click **Add**.
 
 <Info>
-Omit your domain suffix from the Hostname when pasting into Hetzner. For example, instead of `_dmarc.mailing.lettr-demo.com`, paste only `_dmarc.mailing`.
+  Omit your domain suffix from the Hostname when pasting into Hetzner. For example, instead of
+  `_dmarc.mailing.lettr-demo.com`, paste only `_dmarc.mailing`.
 </Info>
 
 <img src="/images/lettr-mailing-3.png" alt="DMARC TXT record Hostname and Value in Lettr" />
@@ -128,15 +134,20 @@ An inbound domain allows Lettr to receive emails on your behalf. This requires t
 
 ### Add Inbound Domain to Lettr
 
-Select **Inbound Domains** when creating a domain in Lettr.
+To create an Inbound domain in Lettr:
+1. Select **Domains** in the navigation panel
+2. Select **Inbound Domains**
+3. Click **Create Inbound Domain**
+4. Enter your desired storage subdomain (e.g. `inbound.company.com`)
+5. Click **Create Domain**.
 
-<img src="/images/lettr-inbound-new.png" alt="Creating a new inbound domain in Lettr" />
+<img src="/images/lettr-inbound-new.png" alt="Inbound domain listed in Lettr domain list" />
 
-Click on the name of your new domain in the Inbound Domains list to open the domain details page.
+Click on your new domain the Inbound Domains list.
 
-<img src="/images/lettr-inbound-list-new.png" alt="Inbound domain listed in Lettr domain list" />
+<img src="/images/lettr-inbound-list.png" alt="CNAME record Hostname and Value in Lettr" />
 
-This will display the MX records that need to be configured. Keep this page open — you will need these values in the next steps.
+This will display the MX records that need to be configured.
 
 <img src="/images/lettr-inbound-config.png" alt="MX record configuration displayed in Lettr for inbound domain" />
 
@@ -155,7 +166,8 @@ Copy the MX values from Lettr to Hetzner:
 7. Repeat this process for the second (rx2.sparkpostmail.com) and third (rx3.sparkpostmail.com) MX records.
 
 <Info>
-Omit your domain suffix from the Hostname when pasting into Hetzner. For example, instead of `inbound.lettr-demo.com`, paste only `inbound`.
+  Omit your domain suffix from the Hostname when pasting into Hetzner. For example, instead of `inbound.lettr-demo.com`,
+  paste only `inbound`.
 </Info>
 
 <img src="/images/lettr-inbound-1.png" alt="MX record values in Lettr for inbound domain" />
@@ -175,15 +187,20 @@ A tracking domain allows Lettr to track email opens and link clicks using your o
 
 ### Add Tracking Domain to Lettr
 
-In the Lettr dashboard, select **Domains** in the navigation panel, then select **Tracking Domains** and click **Create Tracking Domain**. Enter your desired tracking subdomain (e.g. `track.company.com`) and click **Create Tracking Domain**.
+To create a Tracking domain in Lettr:
+1. Select **Domains** in the navigation panel
+2. Select **Tracking Domains**
+3. Click **Create Tracking Domain**
+4. Enter your desired storage subdomain (e.g. `tracking.company.com`)
+5. Click **Create Domain**
 
-<img src="/images/lettr-add-tracking.png" alt="Creating a new tracking domain in Lettr" />
+<img src="/images/lettr-add-tracking.png" alt="Tracking domain listed in Lettr domain list" />
 
-Click on the name of your new Tracking domain in the list of Tracking Domains.
+Click on your new domain the Tracking Domains list.
 
-<img src="/images/lettr-tracking-list.png" alt="Tracking domain listed in Lettr domain list" />
+<img src="/images/lettr-tracking-list.png" alt="CNAME record Hostname and Value in Lettr" />
 
-This will display the CNAME records that need to be configured. Keep this page open — you will need these values in the next steps.
+This will display the CNAME records that need to be configured.
 
 <img src="/images/lettr-tracking-config.png" alt="Creating a new tracking domain in Lettr" />
 
@@ -200,7 +217,8 @@ Add the record in Hetzner:
 5. Click **Add**.
 
 <Info>
-Omit your domain suffix from the Hostname when pasting into Hetzner. For example, instead of `track.lettr-demo.com`, paste only `track`.
+  Omit your domain suffix from the Hostname when pasting into Hetzner. For example, instead of `track.lettr-demo.com`,
+  paste only `track`.
 </Info>
 
 <img src="/images/lettr-tracking-1.png" alt="SSL Certificate CNAME record values in Lettr for tracking domain" />
@@ -219,7 +237,8 @@ Add the record in Hetzner:
 5. Click **Add**.
 
 <Info>
-Omit your domain suffix from the Hostname when pasting into Hetzner. For example, instead of `track.lettr-demo.com`, paste only `track`.
+  Omit your domain suffix from the Hostname when pasting into Hetzner. For example, instead of `track.lettr-demo.com`,
+  paste only `track`.
 </Info>
 
 <img src="/images/lettr-tracking-2.png" alt="Traffic CNAME record values in Lettr for tracking domain" />
@@ -239,17 +258,22 @@ A storage domain lets you serve email assets (images, attachments) from your own
 
 ### Add Storage Domain to Lettr
 
-In the Lettr dashboard, select **Domains** in the navigation panel, then select **Storage Domains** and click **Create Storage Domain**. Enter your desired storage subdomain (e.g. `assets.company.com`) and click **Create Storage Domain**.
+To create a Storage domain in Lettr:
+1. Select **Domains** in the navigation panel
+2. Select **Storage Domains**
+3. Click **Create Storage Domain**
+4. Enter your desired storage subdomain (e.g. `assets.company.com`)
+5. Click **Create Domain**
 
-<img src="/images/lettr-storage-new.png" alt="Creating a new storage domain in Lettr" />
+<img src="/images/lettr-storage-new.png" alt="Tracking domain listed in Lettr domain list" />
 
-Click on the name of your new domain in the Storage Domains list to open the domain details page.
+Click on your new domain the Storage Domains list.
 
-<img src="/images/lettr-storage-list-new.png" alt="Storage domain listed in Lettr domain list" />
+<img src="/images/lettr-storage-list.png" alt="CNAME record Hostname and Value in Lettr" />
 
-This will display the TXT and CNAME records that need to be configured. Keep this page open — you will need these values in the next steps.
+This will display the CNAME records that need to be configured.
 
-<img src="/images/lettr-storage-config.png" alt="Storage domain configuration in Lettr" />
+<img src="/images/lettr-storage-config.png" alt="Creating a new tracking domain in Lettr" />
 
 ### Add TXT Record (Certificate Validation)
 
@@ -263,9 +287,7 @@ Add the record in Hetzner:
 4. Leave **TTL** empty (Hetzner will default to 3600).
 5. Click **Add**.
 
-<Info>
-Omit your domain suffix from the Hostname when pasting into Hetzner, just as with the CNAME record above.
-</Info>
+<Info>Omit your domain suffix from the Hostname when pasting into Hetzner, just as with the CNAME record above.</Info>
 
 <img src="/images/lettr-storage-1.png" alt="Certificate Validation TXT record values in Lettr for storage domain" />
 <img src="/images/hetz-storage-1.png" alt="Adding Certificate Validation TXT record in Hetzner DNS Console" />
@@ -282,9 +304,7 @@ Add the record in Hetzner:
 4. Leave **TTL** empty (Hetzner will default to 3600).
 5. Click **Add**.
 
-<Info>
-Omit your domain suffix from the Hostname when pasting into Hetzner, just as with the CNAME record above.
-</Info>
+<Info>Omit your domain suffix from the Hostname when pasting into Hetzner, just as with the CNAME record above.</Info>
 
 <img src="/images/lettr-storage-2.png" alt="Hostname Pre-validation TXT record values in Lettr for storage domain" />
 <img src="/images/hetz-storage-2.png" alt="Adding Hostname Pre-validation TXT record in Hetzner DNS Console" />
@@ -302,7 +322,8 @@ Add the record in Hetzner:
 5. Click **Add**.
 
 <Info>
-Omit your domain suffix from the Hostname when pasting into Hetzner. For example, instead of `assets.lettr-demo.com`, paste only `assets`.
+  Omit your domain suffix from the Hostname when pasting into Hetzner. For example, instead of `assets.lettr-demo.com`,
+  paste only `assets`.
 </Info>
 
 <img src="/images/lettr-storage-3.png" alt="Domain Routing CNAME record values in Lettr for storage domain" />
@@ -318,74 +339,75 @@ After adding all three records, go back to Lettr and click **Verify DNS Records*
 
 ## Troubleshooting
 
-### Domain Suffix Not Omitted
+<AccordionGroup>
+  <Accordion title="Domain Suffix Not Omitted">
+    Hetzner automatically appends your zone's domain to the record name. If you paste the full hostname (e.g. `mailing.lettr-demo.com`), the resulting record will be `mailing.lettr-demo.com.lettr-demo.com`, which will fail verification.
 
-Hetzner automatically appends your zone's domain to the record name. If you paste the full hostname (e.g. `mailing.lettr-demo.com`), the resulting record will be `mailing.lettr-demo.com.lettr-demo.com`, which will fail verification.
+    Always paste only the subdomain portion (e.g. `mailing`, `scph0126._domainkey.mailing`, `_dmarc.mailing`).
 
-Always paste only the subdomain portion (e.g. `mailing`, `scph0126._domainkey.mailing`, `_dmarc.mailing`).
+  </Accordion>
+  <Accordion title="Records Not Propagating">
+    If verification fails after adding records, check the following:
 
-### Records Not Propagating
+    - **Wait at least 30 minutes** before your first verification attempt. Most records propagate within 1–2 hours.
+    - **Confirm the records exist** using command-line tools:
 
-If verification fails after adding records, check the following:
+    ```bash
+    # Check CNAME record
+    dig CNAME mailing.yourdomain.com +short
 
-- **Wait at least 30 minutes** before your first verification attempt. Most records propagate within 1–2 hours.
-- **Confirm the records exist** using command-line tools:
+    # Check DKIM record
+    dig TXT scph0126._domainkey.mailing.yourdomain.com +short
 
-```bash
-# Check CNAME record
-dig CNAME mailing.yourdomain.com +short
+    # Check DMARC record
+    dig TXT _dmarc.mailing.yourdomain.com +short
 
-# Check DKIM record
-dig TXT scph0126._domainkey.mailing.yourdomain.com +short
+    # Check MX records (inbound)
+    dig MX inbound.yourdomain.com +short
 
-# Check DMARC record
-dig TXT _dmarc.mailing.yourdomain.com +short
+    # Check tracking domain CNAME
+    dig CNAME track.yourdomain.com +short
 
-# Check MX records (inbound)
-dig MX inbound.yourdomain.com +short
+    # Check storage domain CNAME
+    dig CNAME assets.yourdomain.com +short
+    ```
 
-# Check tracking domain CNAME
-dig CNAME track.yourdomain.com +short
+    - **Use a web tool** like [dnschecker.org](https://dnschecker.org) to verify propagation across multiple DNS servers worldwide.
 
-# Check storage domain CNAME
-dig CNAME assets.yourdomain.com +short
-```
+  </Accordion>
+  <Accordion title="Wrong Record Type">
+    A common mistake is selecting the wrong type in Hetzner's record type selector:
 
-- **Use a web tool** like [dnschecker.org](https://dnschecker.org) to verify propagation across multiple DNS servers worldwide.
+    | Record | Correct Type |
+    |--------|-------------|
+    | Sending verification | CNAME |
+    | DKIM | TXT |
+    | DMARC | TXT |
+    | Inbound mail | MX |
+    | Tracking SSL certificate | CNAME |
+    | Tracking traffic | CNAME |
+    | Storage certificate validation | TXT |
+    | Storage hostname pre-validation | TXT |
+    | Storage domain routing | CNAME |
 
-### Wrong Record Type
+  </Accordion>
+  <Accordion title="DKIM Value Truncated">
+    The DKIM TXT value is a long string. After saving the record in Hetzner, re-open it to confirm the full value was stored. If it appears truncated, try pasting the value again. Hetzner's DNS Console supports long TXT values, but copying errors can occasionally cut off the string.
+  </Accordion>
+  <Accordion title="Nameservers Not Updated">
+    If your records are saved in Hetzner but not resolving, confirm that your domain registrar is pointing to Hetzner's nameservers. You can check this with:
 
-A common mistake is selecting the wrong type in Hetzner's record type selector:
+    ```bash
+    dig NS yourdomain.com +short
+    ```
 
-| Record | Correct Type |
-|--------|-------------|
-| Sending verification | CNAME |
-| DKIM | TXT |
-| DMARC | TXT |
-| Inbound mail | MX |
-| Tracking SSL certificate | CNAME |
-| Tracking traffic | CNAME |
-| Storage certificate validation | TXT |
-| Storage hostname pre-validation | TXT |
-| Storage domain routing | CNAME |
+    The output should include Hetzner nameservers (e.g. `hydrogen.ns.hetzner.com`, `oxygen.ns.hetzner.com`, `helium.ns.hetzner.de`). If it shows a different provider's nameservers, update them at your domain registrar.
 
-### DKIM Value Truncated
-
-The DKIM TXT value is a long string. After saving the record in Hetzner, re-open it to confirm the full value was stored. If it appears truncated, try pasting the value again. Hetzner's DNS Console supports long TXT values, but copying errors can occasionally cut off the string.
-
-### Nameservers Not Updated
-
-If your records are saved in Hetzner but not resolving, confirm that your domain registrar is pointing to Hetzner's nameservers. You can check this with:
-
-```bash
-dig NS yourdomain.com +short
-```
-
-The output should include Hetzner nameservers (e.g. `hydrogen.ns.hetzner.com`, `oxygen.ns.hetzner.com`, `helium.ns.hetzner.de`). If it shows a different provider's nameservers, update them at your domain registrar.
-
-### When to Contact Support
-
-If your DNS records are correctly configured (confirmed with `dig` or dnschecker.org) and verification still fails after 48 hours, contact Lettr support at **support@lettr.com** or through the in-app chat. Include your domain name and the output of the `dig` commands above.
+  </Accordion>
+  <Accordion title="When to Contact Support">
+    If your DNS records are correctly configured (confirmed with `dig` or dnschecker.org) and verification still fails after 48 hours, contact Lettr support at **support@lettr.com** or through the in-app chat. Include your domain name and the output of the `dig` commands above.
+  </Accordion>
+</AccordionGroup>
 
 ---
 
@@ -407,7 +429,10 @@ If your DNS records are correctly configured (confirmed with `dig` or dnschecker
   <Card title="Domains Overview" icon="globe" href="/learn/domains/introduction">
     Understand domain types and how they work in Lettr.
   </Card>
-  <Card title="Domain Verification Failures" icon="circle-exclamation" href="/knowledge-base/troubleshooting/domain-verification">
+  <Card
+    title="Domain Verification Failures"
+    icon="circle-exclamation"
+    href="/knowledge-base/troubleshooting/domain-verification">
     Troubleshoot common DNS configuration and propagation issues.
   </Card>
 </CardGroup>
