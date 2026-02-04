@@ -1,0 +1,204 @@
+---
+title: Templates
+description: "Use Lettr templates with merge tags in Laravel"
+---
+
+# Templates
+
+Lettr templates let you manage email designs in the Lettr dashboard while your application provides the dynamic data.
+
+## Sending with Templates
+
+The simplest way to send a template:
+
+```php
+use Illuminate\Support\Facades\Mail;
+
+Mail::lettr()
+    ->to('user@example.com')
+    ->sendTemplate('welcome-email', [
+        'first_name' => 'John',
+        'activation_url' => 'https://example.com/activate/abc123',
+    ]);
+```
+
+The array keys correspond to merge tags in your template (e.g., `{{first_name}}`).
+
+## Code Generation
+
+Generate type-safe code from your Lettr templates to catch errors at compile time.
+
+### Generate Template Enum
+
+Create an enum with all your template slugs:
+
+```bash
+php artisan lettr:generate-enum
+```
+
+This creates `app/Enums/LettrTemplate.php`:
+
+```php
+namespace App\Enums;
+
+enum LettrTemplate: string
+{
+    case WelcomeEmail = 'welcome-email';
+    case OrderConfirmation = 'order-confirmation';
+    case PasswordReset = 'password-reset';
+    // ... all your templates
+}
+```
+
+Use it in your code:
+
+```php
+use App\Enums\LettrTemplate;
+
+Mail::lettr()
+    ->to('user@example.com')
+    ->sendTemplate(LettrTemplate::WelcomeEmail->value, $data);
+```
+
+### Generate DTOs
+
+Create data transfer objects for each template's merge tags:
+
+```bash
+php artisan lettr:generate-dtos
+```
+
+This creates DTOs like `app/Dto/Lettr/WelcomeEmailData.php`:
+
+```php
+namespace App\Dto\Lettr;
+
+class WelcomeEmailData
+{
+    public function __construct(
+        public string $first_name,
+        public string $activation_url,
+        public ?string $company_name = null,
+    ) {}
+
+    public function toArray(): array
+    {
+        return array_filter([
+            'first_name' => $this->first_name,
+            'activation_url' => $this->activation_url,
+            'company_name' => $this->company_name,
+        ], fn($v) => $v !== null);
+    }
+}
+```
+
+Use DTOs for validated template data:
+
+```php
+use App\Dto\Lettr\WelcomeEmailData;
+
+$data = new WelcomeEmailData(
+    first_name: 'John',
+    activation_url: $activationUrl,
+);
+
+Mail::lettr()
+    ->to('user@example.com')
+    ->sendTemplate('welcome-email', $data->toArray());
+```
+
+### Generate Both at Once
+
+During `lettr:init`, you can generate both enums and DTOs automatically.
+
+## Template Versioning
+
+Specify a template version to use a specific iteration:
+
+```php
+Mail::lettr()
+    ->to('user@example.com')
+    ->sendTemplate(
+        slug: 'welcome-email',
+        substitutionData: $data,
+        version: 2  // Use version 2 of the template
+    );
+```
+
+Omit the version to use the active (published) version.
+
+## Working with Projects
+
+If you have multiple projects in Lettr, specify the project ID:
+
+```php
+// Per-request
+Mail::lettr()
+    ->to('user@example.com')
+    ->sendTemplate(
+        slug: 'welcome-email',
+        substitutionData: $data,
+        projectId: 123
+    );
+```
+
+Or set a default in your `.env`:
+
+```env
+LETTR_DEFAULT_PROJECT_ID=123
+```
+
+## Pull Templates Locally
+
+Download templates from Lettr to edit locally as Blade files:
+
+```bash
+php artisan lettr:pull
+```
+
+Options:
+- `--template=slug` - Pull a specific template
+- `--project=id` - Pull from a specific project
+- `--as-html` - Save as HTML instead of Blade
+- `--with-mailables` - Also generate Mailable classes
+
+## Push Templates to Lettr
+
+Upload local Blade templates to Lettr:
+
+```bash
+php artisan lettr:push
+```
+
+Options:
+- `--template=name` - Push a specific template
+- `--project=id` - Push to a specific project
+- `--dry-run` - Preview without uploading
+
+<Note>
+  The push command converts Blade syntax to Lettr's template format automatically.
+</Note>
+
+## Listing Templates
+
+Retrieve available templates via the API:
+
+```php
+use Lettr\Laravel\Facades\Lettr;
+
+$templates = Lettr::templates()->list();
+
+foreach ($templates as $template) {
+    echo $template->name . ' (' . $template->slug . ')';
+}
+```
+
+Get a specific template:
+
+```php
+$template = Lettr::templates()->get('welcome-email');
+
+echo $template->name;
+echo $template->activeVersion;
+print_r($template->mergeTags);
+```

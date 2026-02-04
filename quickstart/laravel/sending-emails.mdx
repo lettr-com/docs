@@ -1,0 +1,227 @@
+---
+title: Sending Emails
+description: "Different ways to send emails with Lettr for Laravel"
+---
+
+# Sending Emails
+
+Lettr integrates seamlessly with Laravel's mail system. Choose the approach that fits your needs.
+
+## Using Laravel's Mail Facade
+
+If you've set Lettr as your default mailer, use Laravel's standard Mail facade:
+
+```php
+use App\Mail\OrderShipped;
+use Illuminate\Support\Facades\Mail;
+
+Mail::to('customer@example.com')->send(new OrderShipped($order));
+```
+
+## Quick Template Sending
+
+Send a Lettr template without creating a Mailable class:
+
+```php
+use Illuminate\Support\Facades\Mail;
+
+Mail::lettr()
+    ->to('user@example.com')
+    ->sendTemplate('welcome-email', [
+        'name' => 'John',
+        'company' => 'Acme Inc',
+    ]);
+```
+
+With additional options:
+
+```php
+Mail::lettr()
+    ->to('user@example.com')
+    ->cc('manager@example.com')
+    ->bcc('archive@example.com')
+    ->sendTemplate(
+        slug: 'order-confirmation',
+        substitutionData: [
+            'order_id' => $order->id,
+            'items' => $order->items->toArray(),
+        ],
+        version: 2,
+        projectId: 123
+    );
+```
+
+## Using the Lettr Facade
+
+For full control, use the Lettr facade directly:
+
+### HTML Email
+
+```php
+use Lettr\Laravel\Facades\Lettr;
+
+Lettr::emails()->sendHtml(
+    from: 'hello@yourdomain.com',
+    to: 'recipient@example.com',
+    subject: 'Hello from Lettr',
+    html: '<h1>Welcome!</h1><p>Thanks for signing up.</p>'
+);
+```
+
+### Plain Text Email
+
+```php
+Lettr::emails()->sendText(
+    from: 'hello@yourdomain.com',
+    to: ['user1@example.com', 'user2@example.com'],
+    subject: 'Plain text update',
+    text: 'This is a plain text email.'
+);
+```
+
+### Template Email
+
+```php
+Lettr::emails()->sendTemplate(
+    from: 'hello@yourdomain.com',
+    to: 'customer@example.com',
+    subject: 'Your order is ready!',
+    templateSlug: 'order-ready',
+    substitutionData: [
+        'customer_name' => $customer->name,
+        'order_number' => $order->number,
+    ]
+);
+```
+
+## Email Builder
+
+For complex emails, use the fluent email builder:
+
+```php
+use Lettr\Laravel\Facades\Lettr;
+
+$response = Lettr::emails()->send(
+    Lettr::emails()->create()
+        ->from('sender@yourdomain.com', 'Your Company')
+        ->to(['recipient@example.com'])
+        ->cc(['cc@example.com'])
+        ->bcc(['bcc@example.com'])
+        ->subject('Monthly Newsletter')
+        ->html('<h1>Newsletter</h1><p>{{content}}</p>')
+        ->text('Newsletter: {{content}}')
+        ->substitutionData(['content' => $newsletterContent])
+        ->withOpenTracking(true)
+        ->withClickTracking(true)
+        ->metadata(['campaign_id' => 'newsletter-2024-01'])
+);
+
+// Access the response
+echo $response->requestId;
+echo $response->accepted;
+```
+
+## Custom Mailable Classes
+
+Create a Mailable that uses Lettr templates:
+
+```php
+namespace App\Mail;
+
+use Lettr\Laravel\Mail\LettrMailable;
+use Illuminate\Mail\Mailables\Envelope;
+
+class OrderConfirmation extends LettrMailable
+{
+    public function __construct(
+        private Order $order
+    ) {}
+
+    public function envelope(): Envelope
+    {
+        return new Envelope(
+            subject: "Order #{$this->order->id} Confirmed",
+        );
+    }
+
+    public function build(): static
+    {
+        return $this
+            ->template('order-confirmation')
+            ->substitutionData([
+                'order_id' => $this->order->id,
+                'customer_name' => $this->order->customer->name,
+                'items' => $this->order->items->toArray(),
+                'total' => $this->order->total,
+            ]);
+    }
+}
+```
+
+Send it like any Laravel Mailable:
+
+```php
+Mail::to($customer->email)->send(new OrderConfirmation($order));
+```
+
+## Attachments
+
+Add attachments to your emails:
+
+```php
+use Lettr\Laravel\Facades\Lettr;
+use Lettr\Dto\Attachment;
+
+Lettr::emails()->send(
+    Lettr::emails()->create()
+        ->from('billing@yourdomain.com')
+        ->to(['customer@example.com'])
+        ->subject('Your Invoice')
+        ->template('invoice-email')
+        ->substitutionData(['invoice_number' => 'INV-001'])
+        ->attachments([
+            new Attachment(
+                name: 'invoice.pdf',
+                type: 'application/pdf',
+                data: base64_encode(file_get_contents($pdfPath))
+            ),
+        ])
+);
+```
+
+## Tracking
+
+Enable open and click tracking:
+
+```php
+Lettr::emails()->send(
+    Lettr::emails()->create()
+        ->from('marketing@yourdomain.com')
+        ->to(['subscriber@example.com'])
+        ->subject('Check out our new features')
+        ->html($htmlContent)
+        ->withOpenTracking(true)
+        ->withClickTracking(true)
+);
+```
+
+## Testing
+
+Use Laravel's `Mail::fake()` for testing:
+
+```php
+use Illuminate\Support\Facades\Mail;
+use Lettr\Laravel\Mail\InlineLettrMailable;
+
+public function test_welcome_email_is_sent()
+{
+    Mail::fake();
+
+    // Trigger the email
+    $this->post('/register', ['email' => 'user@example.com']);
+
+    Mail::assertSent(InlineLettrMailable::class, function ($mail) {
+        return $mail->hasTo('user@example.com');
+    });
+}
+```

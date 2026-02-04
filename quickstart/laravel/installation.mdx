@@ -1,0 +1,133 @@
+---
+title: Installation
+description: "Install and configure Lettr for Laravel"
+---
+
+# Installation
+
+Install the Lettr Laravel SDK via Composer.
+
+## Requirements
+
+- PHP 8.4 or higher
+- Laravel 10.x, 11.x, or 12.x
+
+## Install the Package
+
+```bash
+composer require lettr/lettr-laravel
+```
+
+## Configuration
+
+### Option 1: Interactive Setup (Recommended)
+
+Run the init command for guided configuration:
+
+```bash
+php artisan lettr:init
+```
+
+This handles all the steps below automatically.
+
+### Option 2: Manual Setup
+
+<Steps>
+  <Step title="Add your API key">
+    Add your Lettr API key to `.env`:
+
+    ```env
+    LETTR_API_KEY=le_xxxxxxxxxxxx
+    ```
+
+    <Tip>
+      Get your API key from the [Lettr dashboard](https://app.lettr.com/api-keys).
+    </Tip>
+  </Step>
+
+  <Step title="Publish the config file">
+    ```bash
+    php artisan vendor:publish --tag=lettr-config
+    ```
+
+    This creates `config/lettr.php` with customizable options.
+  </Step>
+
+  <Step title="Add the Lettr mailer">
+    Add the Lettr mailer to `config/mail.php`:
+
+    ```php config/mail.php
+    'mailers' => [
+        // ... other mailers
+
+        'lettr' => [
+            'transport' => 'lettr',
+        ],
+    ],
+    ```
+  </Step>
+
+  <Step title="Configure sender address">
+    Set your default sender address in `.env`. The address must use a verified sending domain:
+
+    ```env
+    MAIL_FROM_ADDRESS=hello@yourdomain.com
+    MAIL_FROM_NAME="Your App Name"
+    ```
+
+    <Warning>
+      The sender domain must be verified in your [Lettr dashboard](https://app.lettr.com/domains) before you can send emails.
+    </Warning>
+  </Step>
+
+  <Step title="Set as default mailer (optional)">
+    To use Lettr as your default mailer, update `.env`:
+
+    ```env
+    MAIL_MAILER=lettr
+    ```
+
+    Or keep your current mailer and use Lettr explicitly when needed.
+  </Step>
+</Steps>
+
+## Configuration Options
+
+The `config/lettr.php` file contains these options:
+
+```php config/lettr.php
+return [
+    // Your Lettr API key
+    'api_key' => env('LETTR_API_KEY'),
+
+    // Default project ID for template operations
+    'default_project_id' => env('LETTR_DEFAULT_PROJECT_ID'),
+
+    // Paths for generated files
+    'templates' => [
+        'html_path' => resource_path('templates/lettr'),
+        'blade_path' => resource_path('views/emails/lettr'),
+        'mailable_path' => app_path('Mail/Lettr'),
+        'mailable_namespace' => 'App\\Mail\\Lettr',
+        'dto_path' => app_path('Dto/Lettr'),
+        'dto_namespace' => 'App\\Dto\\Lettr',
+        'enum_path' => app_path('Enums'),
+        'enum_namespace' => 'App\\Enums',
+        'enum_class' => 'LettrTemplate',
+    ],
+];
+```
+
+## Verify Installation
+
+Test that everything is configured correctly:
+
+```php
+use Lettr\Laravel\Facades\Lettr;
+
+// List your verified domains
+$domains = Lettr::domains()->list();
+dd($domains);
+```
+
+If you see your domains, you're ready to send emails.

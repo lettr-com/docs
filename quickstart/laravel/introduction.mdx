@@ -1,0 +1,84 @@
+---
+title: Introduction
+description: "Send emails from Laravel using the Lettr SDK"
+---
+
+# Laravel Quickstart
+
+Send transactional emails from your Laravel application using the official Lettr SDK. Get up and running in under a minute with our interactive setup command.
+
+## Prerequisites
+
+Before you begin, make sure you have:
+
+<CardGroup cols={2}>
+  <Card title="API Key" icon="key" href="https://app.lettr.com/api-keys">
+    Create an API key in the Lettr dashboard
+  </Card>
+  <Card title="Verified Domain" icon="globe" href="/learn/domains/sending-domains">
+    Add and verify your sending domain
+  </Card>
+</CardGroup>
+
+## Quick Setup
+
+The fastest way to get started is using our interactive init command. It configures everything automatically.
+
+<Steps>
+  <Step title="Install the package">
+    ```bash
+    composer require lettr/lettr-laravel
+    ```
+  </Step>
+  <Step title="Run the init command">
+    ```bash
+    php artisan lettr:init
+    ```
+  </Step>
+  <Step title="Send your first email">
+    ```php
+    use App\Mail\WelcomeEmail;
+    use Illuminate\Support\Facades\Mail;
+
+    Mail::to('user@example.com')->send(new WelcomeEmail());
+    ```
+
+    Works with any Laravel Mailable - no code changes needed.
+  </Step>
+</Steps>
+
+## The Init Command
+
+The `lettr:init` command provides a guided setup experience that handles everything:
+
+<Frame>
+  <img src="/images/lettr-init.gif" alt="lettr:init command demo" />
+</Frame>
+
+**What it does:**
+
+- Prompts for your API key and saves it to `.env`
+- Publishes the configuration file
+- Adds the Lettr mailer to `config/mail.php`
+- Optionally sets Lettr as your default mailer
+- Generates type-safe template enums and DTOs
+- Configures your sending domain
+
+No more manual config file editing or copy-pasting boilerplate.
+
+## What's Next
+
+<CardGroup cols={2}>
+  <Card title="Installation" icon="download" href="/quickstart/laravel/installation">
+    Manual installation and configuration options
+  </Card>
+  <Card title="Sending Emails" icon="paper-plane" href="/quickstart/laravel/sending-emails">
+    Different ways to send emails
+  </Card>
+  <Card title="Templates" icon="file-code" href="/quickstart/laravel/templates">
+    Use Lettr templates with merge tags
+  </Card>
+  <Card title="API Reference" icon="book" href="/api-reference/introduction">
+    Complete API documentation
+  </Card>
+</CardGroup>

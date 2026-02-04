@@ -46,6 +46,15 @@
             "group": "Quickstart",
             "pages": [
               {
+                "group": "Laravel",
+                "pages": [
+                  "quickstart/laravel/introduction",
+                  "quickstart/laravel/installation",
+                  "quickstart/laravel/sending-emails",
+                  "quickstart/laravel/templates"
+                ]
+              },
+              {
                 "group": "PHP",
                 "pages": ["quickstart/php/introduction"]
               },
