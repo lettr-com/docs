@@ -112,9 +112,9 @@ Retrieve available templates via the API:
 ```php
 use Lettr\Laravel\Facades\Lettr;
 
-$templates = Lettr::templates()->list();
+$response = Lettr::templates()->list();
 
-foreach ($templates as $template) {
+foreach ($response->templates as $template) {
     echo $template->name . ' (' . $template->slug . ')';
 }
 ```
