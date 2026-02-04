@@ -1,0 +1,56 @@
+---
+title: API Logs
+description: "Monitor and debug every API request made against your Lettr account"
+---
+
+# API Logs
+
+The Logs page in your dashboard records every API request made to your Lettr account — the method, path, status code, IP address, and the full request and response bodies. This is your primary tool for debugging integration issues, auditing API activity, and verifying that your code is sending requests correctly.
+
+## When to Use Logs
+
+API Logs are most useful in three situations. First, when an integration isn't behaving as expected — for example, emails aren't being sent or you're getting error responses you don't understand. You can open Logs, find the request in question, and inspect exactly what was sent and what Lettr returned. Second, when you want to audit what API activity has occurred on your account, either for security purposes or to understand usage patterns. Third, when you're working through a new integration and want to confirm that your requests are being structured correctly before writing application logic to handle the responses.
+
+Logs are distinct from [Events](/learn/events/introduction), which track what happens to emails after they're sent (delivery, opens, clicks, bounces). Logs track the API calls themselves — the HTTP layer between your application and Lettr.
+
+<Note>
+  API Logs are retained for 30 days. If you need a longer audit trail, consider storing relevant API activity in your own system.
+</Note>
+
+## What Each Log Entry Contains
+
+Each entry in the Logs table shows the following at a glance:
+
+- **Timestamp** — When the request was made, sorted newest first.
+- **Method** — The HTTP method used (GET, POST, PUT, PATCH, DELETE), color-coded for quick scanning.
+- **Path** — The API endpoint that was called (e.g., `/api/emails`).
+- **Status** — The HTTP status code returned by Lettr, shown as a badge. Green for success (2xx), red for client or server errors (4xx, 5xx).
+- **IP Address** — The IP address the request originated from.
+- **API Key** — The name of the API key used for authentication. Hovering over it reveals the key's prefix for additional verification.
+
+To see the full request and response bodies, click the info icon on any row. This opens a detail dialog that shows the complete request body, the complete response body, and additional metadata including the full user agent string.
+
+<Tip>
+  Large request fields like `html`, `text`, and `amp_html` are truncated to 200 characters in the log entry. If you need to verify the full content of a request, cross-reference with your application's own logs.
+</Tip>
+
+## Programmatic Access
+
+Logs are a dashboard-only feature — there is no public API endpoint for querying them directly. For programmatic monitoring of your API activity, you can use [webhooks](/learn/webhooks/introduction) to capture email events, or implement your own request logging in your application layer.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Filtering and Searching" icon="filter" href="/learn/logs/filtering-and-searching">
+    How to narrow down logs by date, key, user agent, and status
+  </Card>
+  <Card title="API Keys" icon="key" href="/learn/api-keys/introduction">
+    Managing the keys that appear in your log entries
+  </Card>
+  <Card title="Events" icon="calendar-days" href="/learn/events/introduction">
+    Track what happens to emails after they're sent
+  </Card>
+  <Card title="Errors and Retries" icon="rotate" href="/learn/sending/errors-retries">
+    Understanding the error responses you might see in logs
+  </Card>
+</CardGroup>

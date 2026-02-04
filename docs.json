@@ -98,7 +98,6 @@
                   "learn/sending/idempotency",
                   "learn/sending/rate-limits",
                   "learn/sending/errors-retries",
-                  "learn/sending/analytics",
                   "learn/sending/email-history",
                   "learn/sending/best-practices"
                 ]
@@ -146,6 +145,29 @@
                   "learn/webhooks/authorization",
                   "learn/webhooks/retries",
                   "learn/webhooks/testing"
+                ]
+              },
+              {
+                "group": "Events",
+                "pages": [
+                  "learn/events/introduction",
+                  "learn/events/event-types",
+                  "learn/events/message-details"
+                ]
+              },
+              {
+                "group": "Logs",
+                "pages": [
+                  "learn/logs/introduction",
+                  "learn/logs/filtering-and-searching"
+                ]
+              },
+              {
+                "group": "Analytics",
+                "pages": [
+                  "learn/analytics/introduction",
+                  "learn/analytics/reading-the-dashboard",
+                  "learn/analytics/filtering-and-breakdowns"
                 ]
               },
               {

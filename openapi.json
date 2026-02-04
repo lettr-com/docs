@@ -1161,6 +1161,191 @@
             }
           }
         }
+      },
+      "post": {
+        "operationId": "createTemplate",
+        "summary": "Create Template",
+        "description": "Create a new email template with HTML or Topol editor JSON content. Automatically creates and publishes a template version with extracted merge tags.",
+        "tags": ["Templates"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTemplateRequest"
+              },
+              "examples": {
+                "with_json": {
+                  "summary": "Create with Topol JSON",
+                  "value": {
+                    "name": "Welcome Email",
+                    "json": "{\"tagName\":\"mj-container\",\"children\":[{\"tagName\":\"mj-text\",\"content\":\"Hello {{FIRST_NAME}}!\"}]}"
+                  }
+                },
+                "with_html": {
+                  "summary": "Create with custom HTML",
+                  "value": {
+                    "name": "Newsletter",
+                    "html": "<html><body><p>Hello {{NAME}}, your order {{ORDER_ID}} is ready!</p></body></html>"
+                  }
+                },
+                "with_project_and_folder": {
+                  "summary": "Create in specific project and folder",
+                  "value": {
+                    "name": "Invoice Email",
+                    "project_id": 5,
+                    "folder_id": 10,
+                    "html": "<html><body><p>Invoice for {{CUSTOMER_NAME}}</p></body></html>"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Template created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateTemplateResponse"
+                },
+                "example": {
+                  "message": "Template created successfully.",
+                  "data": {
+                    "id": 123,
+                    "name": "Welcome Email",
+                    "slug": "welcome-email",
+                    "project_id": 5,
+                    "folder_id": 10,
+                    "active_version": 1,
+                    "merge_tags": [
+                      {
+                        "key": "FIRST_NAME",
+                        "required": true
+                      }
+                    ],
+                    "created_at": "2026-01-28T12:00:00+00:00"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "description": "Project or folder not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "project_not_found": {
+                    "summary": "Project not found",
+                    "value": {
+                      "message": "Project with ID '123' was not found or you don't have access to it.",
+                      "error_code": "not_found"
+                    }
+                  },
+                  "no_default_project": {
+                    "summary": "No default project configured",
+                    "value": {
+                      "message": "No default project is configured for this team.",
+                      "error_code": "not_found"
+                    }
+                  },
+                  "folder_not_found": {
+                    "summary": "Folder not found",
+                    "value": {
+                      "message": "Folder with ID '456' was not found in the specified project.",
+                      "error_code": "not_found"
+                    }
+                  },
+                  "no_folders": {
+                    "summary": "No folders in project",
+                    "value": {
+                      "message": "Project with ID '123' has no folders. Please create a folder first.",
+                      "error_code": "not_found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                },
+                "examples": {
+                  "name_required": {
+                    "summary": "Name is required",
+                    "value": {
+                      "message": "Validation failed.",
+                      "error_code": "validation_error",
+                      "errors": {
+                        "name": ["The name field is required."]
+                      }
+                    }
+                  },
+                  "no_content": {
+                    "summary": "No content provided",
+                    "value": {
+                      "message": "Validation failed.",
+                      "error_code": "validation_error",
+                      "errors": {
+                        "html": ["Either html or json content is required."]
+                      }
+                    }
+                  },
+                  "both_content": {
+                    "summary": "Both html and json provided",
+                    "value": {
+                      "message": "Validation failed.",
+                      "error_code": "validation_error",
+                      "errors": {
+                        "json": ["The json and html fields are mutually exclusive. Provide only one."]
+                      }
+                    }
+                  },
+                  "invalid_json": {
+                    "summary": "Invalid JSON syntax",
+                    "value": {
+                      "message": "Validation failed.",
+                      "error_code": "validation_error",
+                      "errors": {
+                        "json": ["The provided JSON is not valid."]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "Failed to create template. Please try again later.",
+                  "error_code": "send_error"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/templates/{slug}": {
@@ -1282,6 +1467,467 @@
                 },
                 "example": {
                   "message": "Failed to retrieve template. Please try again later.",
+                  "error_code": "send_error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteTemplate",
+        "summary": "Delete Template",
+        "description": "Permanently delete an email template and all its versions. If `project_id` is not provided, the template will be looked up in the team's default project.",
+        "tags": ["Templates"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "description": "The template slug (URL-friendly identifier)",
+            "schema": {
+              "type": "string",
+              "example": "welcome-email"
+            }
+          },
+          {
+            "name": "project_id",
+            "in": "query",
+            "description": "Project ID to delete the template from. If not provided, uses the team's default project.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Template deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteTemplateResponse"
+                },
+                "example": {
+                  "message": "Template deleted successfully."
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "description": "Template or project not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "template_not_found": {
+                    "summary": "Template not found",
+                    "value": {
+                      "message": "Template with slug 'welcome-email' was not found.",
+                      "error_code": "not_found"
+                    }
+                  },
+                  "project_not_found": {
+                    "summary": "Project not found",
+                    "value": {
+                      "message": "Project with ID '123' was not found or you don't have access to it.",
+                      "error_code": "not_found"
+                    }
+                  },
+                  "no_default_project": {
+                    "summary": "No default project configured",
+                    "value": {
+                      "message": "No default project is configured for this team.",
+                      "error_code": "not_found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                },
+                "example": {
+                  "message": "Validation failed.",
+                  "error_code": "validation_error",
+                  "errors": {
+                    "project_id": ["The project_id parameter must be an integer."]
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "Failed to delete template. Please try again later.",
+                  "error_code": "send_error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateTemplate",
+        "summary": "Update Template",
+        "description": "Update an existing email template's name and/or content. If content (html or json) is provided, a new active version will be created with extracted merge tags. If `project_id` is not provided, the template will be looked up in the team's default project.",
+        "tags": ["Templates"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "description": "The template slug (URL-friendly identifier)",
+            "schema": {
+              "type": "string",
+              "example": "welcome-email"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTemplateRequest"
+              },
+              "examples": {
+                "update_name": {
+                  "summary": "Update template name only",
+                  "value": {
+                    "name": "Updated Welcome Email"
+                  }
+                },
+                "update_html": {
+                  "summary": "Update with new HTML content",
+                  "value": {
+                    "html": "<html><body><p>Hello {{NAME}}, welcome aboard!</p></body></html>"
+                  }
+                },
+                "update_json": {
+                  "summary": "Update with new Topol JSON content",
+                  "value": {
+                    "json": "{\"tagName\":\"mj-container\",\"children\":[{\"tagName\":\"mj-text\",\"content\":\"Hello {{FIRST_NAME}}!\"}]}"
+                  }
+                },
+                "update_name_and_content": {
+                  "summary": "Update name and content together",
+                  "value": {
+                    "name": "New Newsletter",
+                    "html": "<html><body><p>Welcome {{SUBSCRIBER_NAME}}!</p></body></html>"
+                  }
+                },
+                "update_with_project": {
+                  "summary": "Update template in specific project",
+                  "value": {
+                    "project_id": 5,
+                    "name": "Renamed Template"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Template updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateTemplateResponse"
+                },
+                "example": {
+                  "message": "Template updated successfully.",
+                  "data": {
+                    "id": 123,
+                    "name": "Updated Welcome Email",
+                    "slug": "welcome-email",
+                    "project_id": 5,
+                    "folder_id": 10,
+                    "active_version": 2,
+                    "merge_tags": [
+                      {
+                        "key": "NAME",
+                        "required": true
+                      }
+                    ],
+                    "created_at": "2026-01-15T10:00:00+00:00",
+                    "updated_at": "2026-01-28T14:30:00+00:00"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "description": "Template or project not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "template_not_found": {
+                    "summary": "Template not found",
+                    "value": {
+                      "message": "Template with slug 'welcome-email' was not found.",
+                      "error_code": "not_found"
+                    }
+                  },
+                  "project_not_found": {
+                    "summary": "Project not found",
+                    "value": {
+                      "message": "Project with ID '123' was not found or you don't have access to it.",
+                      "error_code": "not_found"
+                    }
+                  },
+                  "no_default_project": {
+                    "summary": "No default project configured",
+                    "value": {
+                      "message": "No default project is configured for this team.",
+                      "error_code": "not_found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                },
+                "examples": {
+                  "both_content": {
+                    "summary": "Both html and json provided",
+                    "value": {
+                      "message": "Validation failed.",
+                      "error_code": "validation_error",
+                      "errors": {
+                        "json": ["The json field prohibits html from being present."]
+                      }
+                    }
+                  },
+                  "invalid_json": {
+                    "summary": "Invalid JSON syntax",
+                    "value": {
+                      "message": "Validation failed.",
+                      "error_code": "validation_error",
+                      "errors": {
+                        "json": ["The provided JSON is not valid."]
+                      }
+                    }
+                  },
+                  "name_too_long": {
+                    "summary": "Name exceeds max length",
+                    "value": {
+                      "message": "Validation failed.",
+                      "error_code": "validation_error",
+                      "errors": {
+                        "name": ["The name must not be greater than 255 characters."]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "Failed to update template. Please try again later.",
+                  "error_code": "send_error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/templates/{slug}/merge-tags": {
+      "get": {
+        "operationId": "getTemplateMergeTags",
+        "summary": "Get Template Merge Tags",
+        "description": "Retrieve the merge tags (variables) for a template version. By default, returns merge tags for the active version. Use the `version` parameter to get merge tags for a specific version.",
+        "tags": ["Templates"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "description": "The template slug (URL-friendly identifier)",
+            "schema": {
+              "type": "string",
+              "example": "welcome-email"
+            }
+          },
+          {
+            "name": "project_id",
+            "in": "query",
+            "description": "Project ID to retrieve the template from. If not provided, uses the team's default project.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "description": "Template version number. If not provided, uses the active version.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Merge tags retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetMergeTagsResponse"
+                },
+                "example": {
+                  "message": "Merge tags retrieved successfully.",
+                  "data": {
+                    "template_slug": "welcome-email",
+                    "version": 2,
+                    "merge_tags": [
+                      {
+                        "key": "first_name",
+                        "required": true
+                      },
+                      {
+                        "key": "company_name",
+                        "required": false
+                      },
+                      {
+                        "key": "order_items",
+                        "required": false,
+                        "children": [
+                          {
+                            "key": "item_name",
+                            "type": "text"
+                          },
+                          {
+                            "key": "item_quantity",
+                            "type": "number"
+                          },
+                          {
+                            "key": "item_price",
+                            "type": "number"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "description": "Template, version, or project not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "template_not_found": {
+                    "summary": "Template not found",
+                    "value": {
+                      "message": "Template with slug 'welcome-email' was not found.",
+                      "error_code": "not_found"
+                    }
+                  },
+                  "project_not_found": {
+                    "summary": "Project not found",
+                    "value": {
+                      "message": "Project with ID '123' was not found or you don't have access to it.",
+                      "error_code": "not_found"
+                    }
+                  },
+                  "no_default_project": {
+                    "summary": "No default project configured",
+                    "value": {
+                      "message": "No default project is configured for this team.",
+                      "error_code": "not_found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                },
+                "example": {
+                  "message": "Validation failed.",
+                  "error_code": "validation_error",
+                  "errors": {
+                    "version": ["The version parameter must be an integer."]
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "Failed to retrieve merge tags. Please try again later.",
                   "error_code": "send_error"
                 }
               }
@@ -2441,6 +3087,16 @@
             "description": "Total number of versions for this template",
             "example": 3
           },
+          "html": {
+            "type": ["string", "null"],
+            "description": "The HTML content of the active template version, or null if no active version exists",
+            "example": "<html><body><h1>Welcome!</h1></body></html>"
+          },
+          "json": {
+            "type": ["string", "null"],
+            "description": "The JSON definition of the active template version (for visual editor templates), or null if no active version exists or it's a custom HTML template",
+            "example": "{\"tagName\":\"mj-body\",\"children\":[...]}"
+          },
           "created_at": {
             "type": "string",
             "format": "date-time",
@@ -2452,6 +3108,304 @@
             "format": "date-time",
             "description": "When the template was last updated",
             "example": "2025-01-20T14:30:00+00:00"
+          }
+        }
+      },
+      "CreateTemplateRequest": {
+        "type": "object",
+        "description": "Request to create a new email template. Provide either `html` for custom HTML templates or `json` for Topol visual editor templates.",
+        "required": ["name"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "Name of the template",
+            "example": "Welcome Email"
+          },
+          "project_id": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Project ID to create the template in. If not provided, uses the team's default project.",
+            "example": 5
+          },
+          "folder_id": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Folder ID to create the template in. If not provided, uses the first folder in the project.",
+            "example": 10
+          },
+          "html": {
+            "type": "string",
+            "description": "HTML content for custom HTML templates. Required if `json` is not provided. Mutually exclusive with `json`.",
+            "example": "<html><body><p>Hello {{NAME}}!</p></body></html>"
+          },
+          "json": {
+            "type": "string",
+            "description": "JSON content for Topol visual editor templates. Required if `html` is not provided. Mutually exclusive with `html`.",
+            "example": "{\"tagName\":\"mj-container\",\"children\":[{\"tagName\":\"mj-text\",\"content\":\"Hello {{FIRST_NAME}}!\"}]}"
+          }
+        }
+      },
+      "CreateTemplateResponse": {
+        "type": "object",
+        "description": "Response after successfully creating a template",
+        "required": ["message", "data"],
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Human-readable response message",
+            "example": "Template created successfully."
+          },
+          "data": {
+            "$ref": "#/components/schemas/CreatedTemplateView"
+          }
+        }
+      },
+      "DeleteTemplateResponse": {
+        "type": "object",
+        "description": "Response after successfully deleting a template",
+        "required": ["message"],
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Human-readable response message",
+            "example": "Template deleted successfully."
+          }
+        }
+      },
+      "UpdateTemplateRequest": {
+        "type": "object",
+        "description": "Request to update an existing email template. All fields are optional - provide only what you want to change. If `html` or `json` is provided, a new active version will be created.",
+        "properties": {
+          "project_id": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Project ID to find the template in. If not provided, uses the team's default project.",
+            "example": 5
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "New name for the template",
+            "example": "Updated Welcome Email"
+          },
+          "html": {
+            "type": "string",
+            "description": "New HTML content for the template. Creates a new active version. Mutually exclusive with `json`.",
+            "example": "<html><body><p>Hello {{NAME}}!</p></body></html>"
+          },
+          "json": {
+            "type": "string",
+            "description": "New JSON content for Topol visual editor templates. Creates a new active version. Mutually exclusive with `html`.",
+            "example": "{\"tagName\":\"mj-container\",\"children\":[{\"tagName\":\"mj-text\",\"content\":\"Hello {{FIRST_NAME}}!\"}]}"
+          }
+        }
+      },
+      "UpdateTemplateResponse": {
+        "type": "object",
+        "description": "Response after successfully updating a template",
+        "required": ["message", "data"],
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Human-readable response message",
+            "example": "Template updated successfully."
+          },
+          "data": {
+            "$ref": "#/components/schemas/UpdatedTemplateView"
+          }
+        }
+      },
+      "UpdatedTemplateView": {
+        "type": "object",
+        "description": "View of an updated template",
+        "required": ["id", "name", "slug", "project_id", "folder_id", "active_version", "merge_tags", "created_at", "updated_at"],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Unique identifier for the template",
+            "example": 123
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the template",
+            "example": "Updated Welcome Email"
+          },
+          "slug": {
+            "type": "string",
+            "description": "URL-friendly identifier for the template",
+            "example": "welcome-email"
+          },
+          "project_id": {
+            "type": "integer",
+            "description": "ID of the project containing this template",
+            "example": 5
+          },
+          "folder_id": {
+            "type": "integer",
+            "description": "ID of the folder containing this template",
+            "example": 10
+          },
+          "active_version": {
+            "type": "integer",
+            "description": "Version number of the active template version",
+            "example": 2
+          },
+          "merge_tags": {
+            "type": "array",
+            "description": "List of merge tags extracted from the template content",
+            "items": {
+              "$ref": "#/components/schemas/MergeTagView"
+            }
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the template was created",
+            "example": "2026-01-15T10:00:00+00:00"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the template was last updated",
+            "example": "2026-01-28T14:30:00+00:00"
+          }
+        }
+      },
+      "CreatedTemplateView": {
+        "type": "object",
+        "description": "View of a newly created template",
+        "required": ["id", "name", "slug", "project_id", "folder_id", "active_version", "merge_tags", "created_at"],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Unique identifier for the template",
+            "example": 123
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the template",
+            "example": "Welcome Email"
+          },
+          "slug": {
+            "type": "string",
+            "description": "URL-friendly identifier for the template",
+            "example": "welcome-email"
+          },
+          "project_id": {
+            "type": "integer",
+            "description": "ID of the project containing this template",
+            "example": 5
+          },
+          "folder_id": {
+            "type": "integer",
+            "description": "ID of the folder containing this template",
+            "example": 10
+          },
+          "active_version": {
+            "type": "integer",
+            "description": "Version number of the active template version",
+            "example": 1
+          },
+          "merge_tags": {
+            "type": "array",
+            "description": "List of merge tags extracted from the template content",
+            "items": {
+              "$ref": "#/components/schemas/MergeTagView"
+            }
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the template was created",
+            "example": "2026-01-28T12:00:00+00:00"
+          }
+        }
+      },
+      "GetMergeTagsResponse": {
+        "type": "object",
+        "description": "Response containing merge tags for a template version",
+        "required": ["message", "data"],
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Human-readable response message",
+            "example": "Merge tags retrieved successfully."
+          },
+          "data": {
+            "$ref": "#/components/schemas/MergeTagsListView"
+          }
+        }
+      },
+      "MergeTagsListView": {
+        "type": "object",
+        "description": "Merge tags for a template version",
+        "required": ["template_slug", "version", "merge_tags"],
+        "properties": {
+          "template_slug": {
+            "type": "string",
+            "description": "The template slug",
+            "example": "welcome-email"
+          },
+          "version": {
+            "type": "integer",
+            "description": "The template version number",
+            "example": 2
+          },
+          "merge_tags": {
+            "type": "array",
+            "description": "List of merge tags in this template version",
+            "items": {
+              "$ref": "#/components/schemas/MergeTagView"
+            }
+          }
+        }
+      },
+      "MergeTagView": {
+        "type": "object",
+        "description": "A single merge tag. Loop merge tags (for iterating over arrays) include a 'children' property with nested field definitions.",
+        "required": ["key", "required"],
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "The merge tag key/name used in templates",
+            "example": "first_name"
+          },
+          "required": {
+            "type": "boolean",
+            "description": "Whether this merge tag is required when sending emails",
+            "example": true
+          },
+          "type": {
+            "type": "string",
+            "description": "The data type of the merge tag (only present for loop children)",
+            "enum": ["text", "number", "image", "button"],
+            "example": "text"
+          },
+          "children": {
+            "type": "array",
+            "description": "Child merge tags for loop blocks. Each child represents a field available within the loop iteration.",
+            "items": {
+              "$ref": "#/components/schemas/MergeTagChild"
+            }
+          }
+        }
+      },
+      "MergeTagChild": {
+        "type": "object",
+        "description": "A child merge tag within a loop block",
+        "required": ["key"],
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "The child merge tag key/name",
+            "example": "item_name"
+          },
+          "type": {
+            "type": "string",
+            "description": "The data type of the child merge tag",
+            "enum": ["text", "number", "image", "button"],
+            "example": "text"
           }
         }
       },

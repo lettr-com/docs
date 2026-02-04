@@ -1,0 +1,56 @@
+---
+title: Events
+description: "Monitor the delivery lifecycle and engagement of every email you send"
+---
+
+# Events
+
+Every email you send through Lettr generates a series of events as it moves through the delivery pipeline. The Events page in your dashboard gives you a real-time, chronological view of what happened to each message — from the moment it was injected all the way through delivery, opens, clicks, bounces, or complaints.
+
+Events are distinct from [Analytics](/learn/analytics/introduction), which shows you aggregate metrics and trends over time. Events are the granular, per-email record. If Analytics tells you "your bounce rate went up yesterday," Events lets you find exactly which messages bounced and why.
+
+## What You'll See in the Events Dashboard
+
+When you navigate to **Events** in the sidebar, you'll land on a list of all recent email events for your team. Each row shows the timestamp, the event type (color-coded by category), the email subject, and the recipient and sender addresses. From this list, you can click **View Details** on any row to drill into the full event history for that specific message.
+
+The dashboard defaults to showing events from the last 14 days. You can adjust the date range using the date picker and narrow results down to a specific recipient by entering their email address in the search field. The per-page selector lets you display 10, 25, 50, or 100 events at a time, and navigation buttons let you page through results.
+
+<Note>
+  Events are retained for 90 days. If you need longer-term storage of event data, use [webhooks](/learn/webhooks/introduction) to capture and store events in your own system as they occur.
+</Note>
+
+## Events vs. Webhooks
+
+Events and webhooks are two ways to observe the same underlying data. The Events dashboard is for manual investigation — you open it when you want to check on a specific email or understand what happened to a batch of sends. Webhooks are for automation — Lettr pushes event data to your server in real time so your application can react without polling.
+
+For a full reference of event types and their webhook payloads, see [Webhook Event Types](/learn/webhooks/event-types). The event types you see in the Events dashboard correspond directly to the same set of events that webhooks deliver.
+
+## Searching for a Specific Email
+
+If you need to track down what happened to a particular message, enter the recipient's email address in the search field and hit Search. Lettr will return all events associated with emails sent to that address within your selected date range. From there, click **View Details** on the relevant row to see the full timeline of that message, including delivery status, any bounces or deferrals, and engagement like opens and clicks.
+
+You can also retrieve event data programmatically using the emails API:
+
+```bash
+curl -X GET "https://app.lettr.com/api/emails?recipients=customer@example.com" \
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+```
+
+This returns the same data the dashboard queries, filtered to the specified recipient. See [Email History](/learn/sending/email-history) for full details on the API response structure and query parameters.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Event Types" icon="tag" href="/learn/events/event-types">
+    Reference for every event type and what it means
+  </Card>
+  <Card title="Message Details" icon="mail" href="/learn/events/message-details">
+    How to read the per-message event timeline
+  </Card>
+  <Card title="Webhook Event Types" icon="webhook" href="/learn/webhooks/event-types">
+    Full payload reference for programmatic event handling
+  </Card>
+  <Card title="Analytics" icon="chart-bar" href="/learn/analytics/introduction">
+    Aggregate metrics and trends across all your sends
+  </Card>
+</CardGroup>

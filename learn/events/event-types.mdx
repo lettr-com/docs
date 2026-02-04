@@ -1,0 +1,82 @@
+---
+title: Event Types
+description: "A reference of every event type shown in the Events dashboard"
+---
+
+# Event Types
+
+The Events dashboard uses color-coded badges to identify what happened at each stage of an email's lifecycle. This page explains what each event type means and how to interpret it when troubleshooting or monitoring your sends.
+
+## Delivery Events
+
+These events track whether your email was successfully handed off to the recipient's mail server.
+
+**Injection** (gray) — The email was accepted by Lettr and queued for processing. This is the first event in any email's lifecycle. If you see an injection event but nothing after it, the email may still be in transit or may have encountered a processing issue downstream.
+
+**Delivery** (green) — The email was successfully delivered to the recipient's mail server. This is the most positive signal in the pipeline. Keep in mind that delivery confirms the recipient's server accepted the message — it does not guarantee the email landed in the inbox rather than a spam folder.
+
+## Engagement Events
+
+These events indicate that the recipient interacted with your email.
+
+**Opened** (blue) — The recipient opened the email. Open tracking works by embedding a small invisible image; when the email client loads that image, the open is recorded. Some email clients block images by default or prefetch them automatically, so open rates are an approximation rather than an exact count.
+
+**AMP Opened** (blue) — Same as Opened, but for emails delivered in AMP format. AMP emails are interactive and may be tracked slightly differently depending on the receiving mail client.
+
+**Clicked** (indigo) — The recipient clicked a link in your email. Lettr rewrites links to route through its tracking servers, so every click is recorded along with the specific URL that was clicked. Click data is generally more reliable than open data because it requires deliberate user action.
+
+**AMP Clicked** (indigo) — Same as Clicked, but for links within an AMP email.
+
+## Bounce Events
+
+Bounces mean the email could not be delivered. Understanding the difference between bounce types is critical for list health.
+
+**Bounced** (red) — A general bounce event. Check the Message Details view for the specific bounce reason and whether it was a hard or soft bounce. Hard bounces indicate a permanent failure (the address does not exist or the domain rejects your mail), while soft bounces are typically temporary (the mailbox is full, the server is busy).
+
+**Bounced (OOB)** (red) — An out-of-band bounce. These arrive after the initial delivery appeared successful — the receiving server accepted the message initially, then later determined it could not be delivered and sent a separate bounce notification back. Out-of-band bounces are less common but can be harder to diagnose.
+
+<Warning>
+  Hard bounces automatically add the recipient address to your [suppression list](/learn/suppressions/bounces). Continuing to send to hard-bounced addresses harms your sender reputation and can result in your account being suspended.
+</Warning>
+
+## Rejection and Failure Events
+
+These events occur before the email reaches the recipient's mail server.
+
+**Rejected** (orange) — The email was rejected by Lettr's infrastructure or by a policy rule before delivery was attempted. This could be due to content filtering, rate limits, or a configuration issue on your end.
+
+**Generation Rejection** (orange) — Similar to Rejected, but specifically indicates that the message was blocked during the generation phase — the point where the email is assembled and prepared for sending.
+
+**Failed** (red) — A generation failure. Something went wrong while preparing the message for delivery. This is typically an infrastructure-level issue rather than something caused by your email content.
+
+## Delay Events
+
+**Delayed** (yellow) — Delivery to the recipient's server was temporarily postponed. Lettr will continue retrying automatically. Delays are common with large mail providers that throttle incoming connections. A delayed email will usually resolve on its own — if it does not, it will eventually become a bounce event.
+
+## Engagement Opt-Out Events
+
+These events track when recipients opt out of receiving your emails.
+
+**Unsubscribed** (purple) — The recipient unsubscribed from your mailing list. This can happen via the List-Unsubscribe header (a one-click unsubscribe option built into email standards) or by clicking an unsubscribe link in your email. Either way, the address is added to your suppression list automatically. See [Complaints and Unsubscribes](/learn/suppressions/complaints-unsubscribes) for more on how suppressions work.
+
+## Complaint Events
+
+**Spam** (red) — The recipient reported your email as spam. This is one of the most damaging events for your sender reputation. A complaint rate above 0.1% can trigger filtering at major providers. When this event appears, the recipient is immediately suppressed. Review your sending practices and content if you see complaint events appearing regularly.
+
+---
+
+## Reading Event Badges in the Dashboard
+
+The badge color gives you an immediate signal about the nature of the event without needing to read the label. Green means success, blue and indigo mean engagement, yellow means a temporary issue, orange means a rejection you should investigate, red means a serious failure or complaint, and purple means the recipient has opted out. Gray is neutral — it simply marks the starting point of the email's journey.
+
+<CardGroup cols={2}>
+  <Card title="Message Details" icon="mail" href="/learn/events/message-details">
+    How to read the full event timeline for a single message
+  </Card>
+  <Card title="Webhook Event Types" icon="webhook" href="/learn/webhooks/event-types">
+    Complete payload reference for handling these events programmatically
+  </Card>
+  <Card title="Suppressions" icon="ban" href="/learn/suppressions/introduction">
+    How bounces and complaints automatically update your suppression list
+  </Card>
+</CardGroup>
