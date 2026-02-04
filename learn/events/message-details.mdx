@@ -1,0 +1,84 @@
+---
+title: Message Details
+description: "How to read the per-message event timeline in the Events dashboard"
+---
+
+# Message Details
+
+When you click **View Details** on an event in the Events list, you're taken to the Message Details page. This page shows the complete event history for a single email message — every event that occurred from injection through delivery, engagement, or failure — in a two-panel layout.
+
+## The Event Timeline (Left Panel)
+
+The left panel lists every event associated with this message in chronological order. Each entry shows a color-coded badge for the event type and the timestamp when it occurred. Click on any event in the list to load its details in the right panel.
+
+By default, the most recent event is selected. This means when you first open Message Details, you're looking at the latest thing that happened to the message — which is usually what you want when troubleshooting.
+
+If new events occur after you've loaded the page (for example, if you're watching a recently sent email and waiting for a delivery confirmation), click the **Refresh Events** button at the top of the page to reload the timeline without navigating away.
+
+## Message Summary
+
+At the top of the right panel, you'll see a summary card with four key pieces of information about the email:
+
+- **From** — The sender address as it appeared in the email, including any display name (e.g., `Acme Team <hello@acme.com>`).
+- **Subject** — The subject line of the email.
+- **To** — The recipient address.
+- **ID** — The message ID, which is a unique identifier assigned to this specific email. You can copy it using the copy button next to it. This ID is useful if you need to reference this message in support tickets or when correlating with other systems.
+
+## Event Details
+
+Below the summary, the **Event Details** section shows information specific to the currently selected event in the timeline:
+
+- **Event Type** — The type of event, shown as a color-coded badge (see [Event Types](/learn/events/event-types) for what each one means).
+- **Timestamp** — When the event occurred, in UTC.
+- **Event ID** — A unique identifier for this specific event occurrence.
+- **User Agent** — The email client or system that triggered the event. For open and click events, this is the recipient's email client. For other event types, this field may be empty.
+- **Geo IP** — The approximate geographic location associated with the IP address that triggered the event. This is derived from IP geolocation and is an approximation.
+- **IP Address** — The IP address from which the event was triggered.
+
+## Recipient Information
+
+The **Recipient** section provides details about where the email was routed:
+
+- **Mailbox Provider** — The email service provider that operates the recipient's mailbox (e.g., Gmail, Outlook, Yahoo).
+- **Mailbox Provider Region** — The geographic region of the mailbox provider's infrastructure that handled the email.
+- **Routing Domain** — The domain that the email was actually routed to during delivery. This may differ from the recipient's visible domain in some cases.
+- **Recipient Domain** — The domain portion of the recipient's email address.
+- **Recipient Address** — The recipient's email address as it was specified when you sent the email.
+- **Recipient Address (raw)** — The unprocessed recipient address, which may include additional routing information.
+- **Recipient Metadata** — Any custom metadata you attached to this recipient when sending the email. This is the per-recipient data from your `substitution_data` or metadata fields. See [Metadata](/learn/sending/metadata) for how to attach this information at send time.
+
+## Sender Information
+
+The **Sender** section shows details about how the email was sent:
+
+- **Sending Domain** — The verified domain that was used to send this email.
+- **Friendly From** — The "From" address as it appeared to the recipient, including the display name.
+- **Sending IP** — The IP address from which Lettr delivered the email to the recipient's mail server.
+- **Message From** — The raw "From" header value in the email.
+
+## Using Message Details for Troubleshooting
+
+Message Details is your primary tool for understanding why a specific email did or didn't reach its destination. Here are some common patterns to look for:
+
+If the timeline stops at **Injection** with no subsequent events, the email is likely still being processed or has stalled. Check back after a short time or use the Refresh button.
+
+If you see **Delayed** followed eventually by **Delivery**, the message experienced a temporary hiccup but was ultimately delivered successfully. No action is needed.
+
+If you see **Bounced**, look at the Recipient section to identify the domain and mailbox provider. If the same domain is bouncing consistently across multiple messages, there may be a domain-level issue or your sending reputation with that provider needs attention.
+
+If you see **Spam** in the timeline, the recipient actively reported the email. Check the content and sending practices associated with this message, and review your [suppression list](/learn/suppressions/complaints-unsubscribes) to confirm the address has been suppressed.
+
+<CardGroup cols={2}>
+  <Card title="Event Types" icon="tag" href="/learn/events/event-types">
+    What each event type and badge color means
+  </Card>
+  <Card title="Metadata" icon="tag" href="/learn/sending/metadata">
+    How to attach custom data to emails and recipients
+  </Card>
+  <Card title="Suppressions" icon="ban" href="/learn/suppressions/introduction">
+    How bounces and complaints affect future sends
+  </Card>
+  <Card title="Logs" icon="scroll-text" href="/learn/logs/introduction">
+    If you need to investigate the API request that sent this email
+  </Card>
+</CardGroup>

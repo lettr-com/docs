@@ -1,0 +1,92 @@
+---
+title: Filtering and Breakdowns
+description: "How to use the Configure modal to select metrics, apply filters, and set up breakdowns"
+---
+
+# Filtering and Breakdowns
+
+The **Configure** button in the top-right corner of the Analytics page opens a modal where you control exactly what data the dashboard shows. It has two active tabs: **Metrics** and **Filters**.
+
+## Selecting Metrics
+
+The Metrics tab organizes all available metrics into three collapsible groups: Injection Metrics, Delivery Metrics, and Engagement Metrics. Each group has a brief description of what that category covers.
+
+Within each group, the individual metrics are shown as checkboxes. Check or uncheck them to add or remove them from the chart and summary footer. A **Clear All** button at the bottom of the modal lets you deselect everything and start fresh.
+
+The default selection when you first visit Analytics is four metrics: **Targeted**, **Accepted**, **Bounces**, and **Unique Opens**. These four together give a reasonable overview of the email pipeline — how many were sent, how many arrived, how many failed, and how many were opened.
+
+When you're done selecting, click **Apply** to update the chart immediately. If you change your mind, click **Cancel** to discard your changes without affecting the dashboard.
+
+<Tip>
+  If you're investigating a specific problem — like a bounce spike — try selecting only the metrics relevant to that problem. Viewing Bounces alongside Targeted, for example, makes the ratio much easier to read on the chart than when it's mixed with Delivered and Unique Opens.
+</Tip>
+
+## Applying Filters
+
+The Filters tab lets you narrow the data to a subset of your sends based on specific criteria. Each filter has three parts: a **type** (what you're filtering on), an **operator** (how to compare), and a **value** (what to match against).
+
+### Filter Types
+
+| Type | What It Filters |
+|------|----------------|
+| Recipient Domain | The domain of the recipient's email address (e.g., gmail.com) |
+| Sending IP | The IP address Lettr used to deliver the email |
+| Campaign ID | A campaign identifier you attached to the email at send time |
+| Mailbox Provider | The email service provider of the recipient (e.g., gmail, outlook) |
+| Mailbox Provider Region | The geographic region of the recipient's mailbox provider |
+| Sending Domain | The verified domain you sent the email from |
+
+### Filter Operators
+
+| Operator | Behavior |
+|----------|----------|
+| is equal to | Matches the value exactly |
+| contains | Matches if the value appears anywhere in the field |
+| is not equal to | Excludes exact matches |
+| does not contain | Excludes entries where the value appears anywhere in the field |
+
+### Adding and Removing Filters
+
+When you open the Filters tab, one empty filter row is shown by default. Set the type, operator, and value, then click **Add Filter** to add another row if you need to filter on multiple criteria. Filters are combined with AND logic — an email must match all active filters to be included in the results.
+
+You can remove any filter row by clicking the X button on it, as long as at least one filter row remains.
+
+<Note>
+  A maximum of 10 values can be added per filter type. If you need to match against a large list of domains or IPs, consider breaking your analysis into multiple sessions or using the breakdown table instead.
+</Note>
+
+## Breakdown Dimensions
+
+Below the chart on the main Analytics page, the **Break Down By** dropdown populates the breakdown table with your metrics sliced along a specific dimension. The available dimensions are:
+
+| Dimension | What It Shows |
+|-----------|---------------|
+| Recipient Domain | Metrics grouped by the recipient's email domain |
+| Sending Domain | Metrics grouped by which of your sending domains was used |
+| Campaign ID | Metrics grouped by the campaign identifier you attached at send time |
+| Sending IP | Metrics grouped by the Lettr IP that delivered the email |
+| Mailbox Provider | Metrics grouped by the recipient's email provider |
+| Mailbox Provider Region | Metrics grouped by the geographic region of the recipient's provider |
+
+The breakdown table reflects the same date range, metrics, and filters as the chart above it. Sorting works by clicking any column header — click once to sort descending, again to sort ascending.
+
+**Recipient Domain** is the most commonly useful breakdown for deliverability troubleshooting. If your overall bounce rate looks healthy but a specific provider is causing problems, breaking down by Recipient Domain or Mailbox Provider will surface it immediately.
+
+**Sending Domain** is useful if you're sending from multiple verified domains and want to compare their performance.
+
+**Campaign ID** is useful if you use campaign identifiers to organize your sends — for example, tagging transactional emails differently from marketing emails.
+
+<CardGroup cols={2}>
+  <Card title="Reading the Dashboard" icon="chart-line" href="/learn/analytics/reading-the-dashboard">
+    How to interpret the chart, summary, and breakdown data
+  </Card>
+  <Card title="Metadata" icon="tag" href="/learn/sending/metadata">
+    How to attach campaign IDs and other custom data at send time
+  </Card>
+  <Card title="Events" icon="calendar-days" href="/learn/events/introduction">
+    Investigate individual emails when a metric flags an issue
+  </Card>
+  <Card title="Tracking" icon="crosshair" href="/learn/sending/tracking">
+    Ensure open and click tracking is enabled for accurate engagement data
+  </Card>
+</CardGroup>

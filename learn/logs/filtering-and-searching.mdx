@@ -1,0 +1,90 @@
+---
+title: Filtering and Searching
+description: "How to find the API requests you're looking for in the Logs dashboard"
+---
+
+# Filtering and Searching Logs
+
+The Logs page provides several filters that let you narrow down your API activity to exactly the requests you care about. All filters are applied together — if you set both an API key filter and a status filter, you'll only see requests that match both.
+
+## Date Range
+
+The date range picker controls which time window Lettr queries for log data. By default it covers the last 7 days. You can extend it up to 30 days into the past — this is the maximum retention period for API logs. Dates beyond that are no longer available.
+
+The picker includes both a start and end date, as well as start and end times. Your local time is converted to UTC before the query runs, so you don't need to think about timezone conversion yourself.
+
+## API Key
+
+If your account has multiple API keys, this filter lets you isolate requests made with a specific key. This is particularly useful when you have separate keys for different environments (staging vs. production) or different services. Select **All API Keys** to see everything, or choose a specific key from the dropdown.
+
+## User Agent
+
+Lettr automatically detects the client type based on the user agent string in each request and groups them into recognizable categories. The available options are:
+
+| Filter Label | What It Matches |
+|--------------|-----------------|
+| SMTP | Requests routed through the SMTP proxy |
+| Node.js | Requests from Node.js HTTP clients (axios, got, node-fetch, undici, and similar) |
+| PHP | Requests from PHP HTTP clients (Guzzle and similar) |
+| Python | Requests from Python HTTP libraries (requests, aiohttp, httpx, urllib) |
+| Ruby | Requests from Ruby HTTP libraries (Faraday, HTTParty, rest-client, Net::HTTP) |
+| GO | Requests from Go's standard HTTP client |
+| Rust | Requests from Rust HTTP libraries (reqwest, hyper) |
+| Java | Requests from Java HTTP clients (Apache HttpClient, OkHttp, HttpURLConnection) |
+| .NET | Requests from .NET HTTP clients (HttpClient, RestSharp) |
+| cURL | Requests made with the cURL command-line tool |
+| Other | Any request whose user agent doesn't match the patterns above |
+
+Selecting **Other** is useful when you're trying to identify unexpected traffic sources on your account.
+
+## HTTP Status Code
+
+Filter by the response status code to focus on successes or errors:
+
+| Status | Meaning |
+|--------|---------|
+| 200 OK | The request succeeded and returned data |
+| 201 Created | A resource was successfully created (e.g., an email was sent) |
+| 400 Bad Request | The request was malformed or contained invalid parameters |
+| 401 Unauthorized | The API key was missing or invalid |
+| 403 Forbidden | The API key doesn't have permission for this action |
+| 404 Not Found | The requested resource doesn't exist |
+| 422 Unprocessable Content | The request was valid syntactically but failed validation (e.g., an invalid email address) |
+| 429 Too Many Requests | You've exceeded the rate limit — see [Rate Limits](/learn/sending/rate-limits) for details |
+| 451 Unavailable For Legal Reasons | The request was blocked for compliance reasons |
+| 500 Internal Server Error | Something went wrong on Lettr's side |
+
+Filtering by 4xx or 5xx status codes is the fastest way to find failed requests when debugging an integration.
+
+## Pagination
+
+Log results are paginated using cursor-based navigation. The footer of the table shows how many requests are displayed on the current page, along with **Previous** and **Next** buttons. Cursor-based pagination means the results are always consistent — new log entries appearing in real time won't cause items to shift between pages as you navigate.
+
+When you apply or change any filter, pagination resets to the first page automatically.
+
+## Inspecting a Log Entry
+
+Click the info icon on any row to open the detail dialog. This shows:
+
+- The full **Request Body** — the exact JSON payload your application sent. This is where you can verify that fields like `from`, `to`, `subject`, `html`, and `options` are structured correctly.
+- The full **Response Body** — exactly what Lettr returned. For successful requests this includes the `request_id` and other confirmation data. For errors, it includes the error code and message.
+- The **IP Address** and **User Agent** string, along with the **API Key** name and prefix.
+
+<Tip>
+  If you're debugging a specific email send that failed, start by filtering Logs by the date and time you attempted the send, then look for a POST request to `/api/emails`. The detail dialog will show you exactly what went wrong in the response.
+</Tip>
+
+<CardGroup cols={2}>
+  <Card title="API Logs Overview" icon="scroll-text" href="/learn/logs/introduction">
+    What logs capture and when to use them
+  </Card>
+  <Card title="Rate Limits" icon="gauge" href="/learn/sending/rate-limits">
+    Understanding and handling 429 responses
+  </Card>
+  <Card title="Errors and Retries" icon="rotate" href="/learn/sending/errors-retries">
+    How to handle common API errors
+  </Card>
+  <Card title="API Keys" icon="key" href="/learn/api-keys/introduction">
+    Managing and securing the keys shown in your logs
+  </Card>
+</CardGroup>

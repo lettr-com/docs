@@ -1,0 +1,52 @@
+---
+title: Analytics
+description: "Visualize email performance metrics and trends over time"
+---
+
+# Analytics
+
+The Analytics dashboard gives you a bird's-eye view of how your email sending is performing. While [Events](/learn/events/introduction) shows you the individual story of each email — what happened to this specific message — Analytics aggregates that data into trends and totals so you can spot patterns, identify problems early, and make informed decisions about your sending.
+
+## Analytics vs. Events vs. Logs
+
+These three dashboard sections each serve a different purpose, and understanding the distinction helps you go to the right place when something needs attention.
+
+**Analytics** answers questions like "How is my delivery rate trending?" or "Which recipient domains are bouncing the most?" It shows metrics over a time range and lets you slice the data by different dimensions.
+
+**Events** answers questions like "What happened to this specific email?" or "Did this message get delivered?" It shows the per-email event timeline.
+
+**Logs** answers questions like "What API calls did my application make?" or "Why did this request fail?" It shows the HTTP-level activity between your application and Lettr.
+
+## What the Dashboard Shows
+
+When you open Analytics, you'll see a line chart plotting one or more metrics over your selected time range. Below the chart is a summary bar showing the total for each metric across the entire period. Further down, a breakdown table lets you slice the same metrics by a dimension of your choice — recipient domain, sending domain, mailbox provider, and others.
+
+The default view shows four metrics: **Targeted** (emails queued for delivery), **Accepted** (emails accepted by recipient servers), **Bounces**, and **Unique Opens**. You can change which metrics are displayed and add filters using the **Configure** button.
+
+<Note>
+  The Analytics dashboard uses time-series data, meaning it plots metrics at regular intervals over your selected date range. The precision of those intervals (how closely spaced the data points are) adjusts automatically based on the time range you've chosen, but you can also select it manually.
+</Note>
+
+## Getting Started
+
+To begin exploring your analytics, navigate to **Analytics** in the sidebar. The dashboard will load with yesterday's data by default. From there you can:
+
+- Adjust the date range using the date picker to zoom out or in on the time period you care about.
+- Change the precision (1 Min, 5 Min, 15 Min, Hour, Day) to control how granular the chart data is.
+- Click **Configure** to choose which metrics to display and add filters to narrow the data.
+- Select a breakdown dimension to populate the table below the chart.
+
+<CardGroup cols={2}>
+  <Card title="Reading the Dashboard" icon="chart-line" href="/learn/analytics/reading-the-dashboard">
+    How to interpret the chart, summary, and breakdown table
+  </Card>
+  <Card title="Filtering and Breakdowns" icon="filter" href="/learn/analytics/filtering-and-breakdowns">
+    How to configure metrics, filters, and breakdown dimensions
+  </Card>
+  <Card title="Events" icon="calendar-days" href="/learn/events/introduction">
+    Drill into individual email events
+  </Card>
+  <Card title="Tracking" icon="crosshair" href="/learn/sending/tracking">
+    How open and click tracking feeds into your analytics
+  </Card>
+</CardGroup>
