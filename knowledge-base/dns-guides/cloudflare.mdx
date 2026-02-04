@@ -17,7 +17,7 @@ To create a sending domain in Lettr:
 1. Select **Domains** in the navigation panel
 2. Select **Sending Domains**
 3. Click **Create Sending Domain**
-4. Enter your desired storage subdomain (e.g. `mailing.company.com`)
+4. Enter your desired sending subdomain (e.g. `mailing.company.com`)
 5. Click **Create Domain**
 
 <img src="/images/lettr-create-sending-domain.png" alt="Create Sending Domain button in Lettr" />
@@ -27,9 +27,9 @@ To create a sending domain in Lettr:
   reputation segmentation and is required if you also plan to receive emails with Lettr.
 </Tip>
 
-Click your new domain the Storage Domains list.
+Click your new domain in the Sending Domains list.
 
-<img src="/images/lettr-sending-list.png" alt="CNAME record Hostname and Value in Lettr" />
+<img src="/images/lettr-sending-list.png" alt="Sending domain listed in Lettr Sending Domains list" />
 
 This will display a list of DNS records that need to be configured. Keep this page open — you will need these values soon.
 
@@ -55,7 +55,7 @@ This will open the domain details page, where you can manage your DNS records.
   <Accordion title="Domain registered with a different registrar?">
     If you registered your domain elsewhere but want to manage DNS on Cloudflare, you must first **update the nameservers**
     at your registrar to Cloudflare's nameservers shown in the domain configuration. Click on your domain in the list, then follow the instructions. 
-    <img src="/images/cloud-nameservers.png" alt="Vercel nameserver configuration options" />
+    <img src="/images/cloud-nameservers.png" alt="Cloudflare nameserver configuration" />
     <Warning>Until the nameservers are updated, any records you add in Cloudflare will not resolve.</Warning>
   </Accordion>
 </AccordionGroup>
@@ -143,14 +143,14 @@ To create an Inbound domain in Lettr:
 1. Select **Domains** in the navigation panel
 2. Select **Inbound Domains**
 3. Click **Create Inbound Domain**
-4. Enter your desired storage subdomain (e.g. `inbound.company.com`)
+4. Enter your desired inbound subdomain (e.g. `inbound.company.com`)
 5. Click **Create Domain**.
 
-<img src="/images/lettr-inbound-new.png" alt="Inbound domain listed in Lettr domain list" />
+<img src="/images/lettr-inbound-new.png" alt="Creating a new inbound domain in Lettr" />
 
-Click on your new domain the Inbound Domains list.
+Click on your new domain in the Inbound Domains list.
 
-<img src="/images/lettr-inbound-list.png" alt="CNAME record Hostname and Value in Lettr" />
+<img src="/images/lettr-inbound-list.png" alt="Inbound domain listed in Lettr Inbound Domains list" />
 
 This will display the MX records that need to be configured.
 
@@ -176,7 +176,7 @@ Omit your domain suffix from the Hostname when pasting into Cloudflare. For exam
 </Info>
 
 <img src="/images/lettr-inbound-1.png" alt="MX record values in Lettr for inbound domain" />
-<img src="/images/cloud-inbound-1.png" alt="MX record values in Lettr for inbound domain" />
+<img src="/images/cloud-inbound-1.png" alt="Adding MX record in Cloudflare DNS settings" />
 
 ### Verify Your Inbound Domain
 
@@ -196,18 +196,18 @@ To create a Tracking domain in Lettr:
 1. Select **Domains** in the navigation panel
 2. Select **Tracking Domains**
 3. Click **Create Tracking Domain**
-4. Enter your desired storage subdomain (e.g. `tracking.company.com`)
+4. Enter your desired tracking subdomain (e.g. `tracking.company.com`)
 5. Click **Create Domain**
 
-<img src="/images/lettr-add-tracking.png" alt="Tracking domain listed in Lettr domain list" />
+<img src="/images/lettr-add-tracking.png" alt="Creating a new tracking domain in Lettr" />
 
-Click on your new domain the Tracking Domains list.
+Click on your new domain in the Tracking Domains list.
 
-<img src="/images/lettr-tracking-list.png" alt="CNAME record Hostname and Value in Lettr" />
+<img src="/images/lettr-tracking-list.png" alt="Tracking domain listed in Lettr Tracking Domains list" />
 
 This will display the CNAME records that need to be configured.
 
-<img src="/images/lettr-tracking-config.png" alt="Creating a new tracking domain in Lettr" />
+<img src="/images/lettr-tracking-config.png" alt="CNAME records displayed in Lettr for tracking domain configuration" />
 
 ### Add SSL Certificate CNAME Record
 
@@ -228,7 +228,7 @@ Omit your domain suffix from the Hostname when pasting into Cloudflare. For exam
 </Info>
 
 <img src="/images/lettr-tracking-1.png" alt="SSL Certificate CNAME record values in Lettr for tracking domain" />
-<img src="/images/cloud-tracking-1.png" alt="SSL Certificate CNAME record values in Lettr for tracking domain" />
+<img src="/images/cloud-tracking-1.png" alt="Adding SSL Certificate CNAME record in Cloudflare DNS settings" />
 
 ### Add Traffic CNAME Record
 
@@ -272,15 +272,15 @@ To create a Storage domain in Lettr:
 4. Enter your desired storage subdomain (e.g. `assets.company.com`)
 5. Click **Create Domain**
 
-<img src="/images/lettr-storage-new.png" alt="Tracking domain listed in Lettr domain list" />
+<img src="/images/lettr-storage-new.png" alt="Creating a new storage domain in Lettr" />
 
-Click on your new domain the Storage Domains list.
+Click on your new domain in the Storage Domains list.
 
-<img src="/images/lettr-storage-list.png" alt="CNAME record Hostname and Value in Lettr" />
+<img src="/images/lettr-storage-list.png" alt="Storage domain listed in Lettr Storage Domains list" />
 
-This will display the CNAME records that need to be configured.
+This will display the TXT and CNAME records that need to be configured.
 
-<img src="/images/lettr-storage-config.png" alt="Creating a new tracking domain in Lettr" />
+<img src="/images/lettr-storage-config.png" alt="TXT and CNAME records displayed in Lettr for storage domain configuration" />
 
 ### Add TXT Record (Certificate Validation)
 
@@ -300,7 +300,7 @@ Omit your domain suffix from the Hostname when pasting into Cloudflare, just as 
 </Info>
 
 <img src="/images/lettr-storage-1.png" alt="Certificate Validation TXT record values in Lettr for storage domain" />
-<img src="/images/cloud-storage-1.png" alt="Certificate Validation TXT record values in Lettr for storage domain" />
+<img src="/images/cloud-storage-1.png" alt="Adding Certificate Validation TXT record in Cloudflare DNS settings" />
 
 ### Add TXT Record (Hostname Pre-validation)
 
