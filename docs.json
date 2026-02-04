@@ -185,6 +185,13 @@
                 ]
               },
               {
+                "group": "MCP",
+                "pages": [
+                  "learn/mcp/introduction",
+                  "learn/mcp/setup"
+                ]
+              },
+              {
                 "group": "Settings",
                 "pages": [
                   "learn/settings/teams",
