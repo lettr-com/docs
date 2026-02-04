@@ -1,6 +1,18 @@
-<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect x="2" y="2" width="28" height="28" rx="6" fill="#6366F1"/>
-  <path d="M8 10L16 18L24 10" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M8 18V24H24V18" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<svg width="204" height="204" viewBox="0 0 204 204" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="203.9" height="203.9" rx="15" fill="#1A1A1A"/>
+<rect x="131.076" y="145.64" width="20.5965" height="20.5965" transform="rotate(-45 131.076 145.64)" fill="white"/>
+<rect x="101.949" y="145.64" width="20.5965" height="20.5965" transform="rotate(-45 101.949 145.64)" fill="white"/>
+<rect x="101.949" y="58.2559" width="20.5965" height="20.5965" transform="rotate(-45 101.949 58.2559)" fill="white"/>
+<rect x="87.3838" y="72.8199" width="20.5965" height="20.5965" transform="rotate(-45 87.3838 72.8199)" fill="white"/>
+<rect x="87.3837" y="101.947" width="20.5965" height="20.5965" transform="rotate(-45 87.3837 101.947)" fill="white"/>
+<rect x="72.8206" y="145.64" width="20.5965" height="20.5965" transform="rotate(-45 72.8206 145.64)" fill="white"/>
+<rect x="87.3837" y="131.076" width="20.5965" height="20.5965" transform="rotate(-45 87.3837 131.076)" fill="white"/>
+<rect x="72.8206" y="58.2559" width="20.5965" height="20.5965" transform="rotate(-45 72.8206 58.2559)" fill="white"/>
+<rect x="43.6923" y="145.64" width="20.5965" height="20.5965" transform="rotate(-45 43.6923 145.64)" fill="white"/>
+<rect x="131.076" y="116.511" width="20.5965" height="20.5965" transform="rotate(-45 131.076 116.511)" fill="white"/>
+<rect x="43.6923" y="116.511" width="20.5965" height="20.5965" transform="rotate(-45 43.6923 116.511)" fill="white"/>
+<rect x="131.076" y="87.3832" width="20.5965" height="20.5965" transform="rotate(-45 131.076 87.3832)" fill="white"/>
+<rect x="43.6923" y="87.3832" width="20.5965" height="20.5965" transform="rotate(-45 43.6923 87.3832)" fill="white"/>
+<rect x="131.076" y="58.2559" width="20.5965" height="20.5965" transform="rotate(-45 131.076 58.2559)" fill="white"/>
+<rect x="43.6923" y="58.2559" width="20.5965" height="20.5965" transform="rotate(-45 43.6923 58.2559)" fill="white"/>
 </svg>
-
