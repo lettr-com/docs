@@ -45,7 +45,7 @@ Specify a template version to use a specific iteration:
 Mail::lettr()
     ->to('user@example.com')
     ->sendTemplate(
-        slug: 'welcome-email',
+        templateSlug: 'welcome-email',
         substitutionData: $data,
         version: 2  // Use version 2 of the template
     );
@@ -62,7 +62,7 @@ If you have multiple projects in Lettr, specify the project ID:
 Mail::lettr()
     ->to('user@example.com')
     ->sendTemplate(
-        slug: 'welcome-email',
+        templateSlug: 'welcome-email',
         substitutionData: $data,
         projectId: 123
     );
