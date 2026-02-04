@@ -155,7 +155,10 @@
             "group": "Templates",
             "pages": [
               "api-reference/templates/list-templates",
+              "api-reference/templates/create-template",
               "api-reference/templates/get-template",
+              "api-reference/templates/update-template",
+              "api-reference/templates/delete-template",
               "api-reference/templates/get-template-merge-tags"
             ]
           },
