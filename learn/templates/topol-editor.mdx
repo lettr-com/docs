@@ -184,19 +184,6 @@ For the complete merge tag syntax including conditionals, loops, and defaults, s
 
 ---
 
-## Export and interoperability: what you get out of the editor
-
-When your template is ready, you typically export it for downstream use. Common outputs include:
-
-- A **rendered HTML package**, intended for systems that accept HTML email templates.
-- A **template definition format** (often JSON-based), intended for re-importing later so you can keep editing the template in the visual editor without losing the structure/block model.
-
-<Note>
-A useful way to think about this is: HTML is the final output used for sending, while the template definition is the editable source representation.
-</Note>
-
----
-
 ## A practical end-to-end workflow
 
 <Steps>
@@ -214,9 +201,6 @@ A useful way to think about this is: HTML is the final output used for sending, 
   </Step>
   <Step title="Review responsiveness">
     Check both desktop and mobile previews to verify stacking, spacing, and visibility rules look correct.
-  </Step>
-  <Step title="Export the template">
-    Export in the format your sending pipeline expects—HTML for sending, or the template definition for continued editing.
   </Step>
 </Steps>
 
