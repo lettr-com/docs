@@ -24,92 +24,18 @@ Mail::lettr()
 
 The array keys correspond to merge tags in your template (e.g., `{{first_name}}`).
 
-## Code Generation
+## Type-Safe Templates
 
-Generate type-safe code from your Lettr templates to catch errors at compile time.
-
-### Generate Template Enum
-
-Create an enum with all your template slugs:
+Generate enums, DTOs, and Mailable classes from your templates for compile-time safety:
 
 ```bash
-php artisan lettr:generate-enum
+php artisan lettr:generate-enum   # Template slug enum
+php artisan lettr:generate-dtos   # Merge tag DTOs
 ```
 
-This creates `app/Enums/LettrTemplate.php`:
-
-```php
-namespace App\Enums;
-
-enum LettrTemplate: string
-{
-    case WelcomeEmail = 'welcome-email';
-    case OrderConfirmation = 'order-confirmation';
-    case PasswordReset = 'password-reset';
-    // ... all your templates
-}
-```
-
-Use it in your code:
-
-```php
-use App\Enums\LettrTemplate;
-
-Mail::lettr()
-    ->to('user@example.com')
-    ->sendTemplate(LettrTemplate::WelcomeEmail->value, $data);
-```
-
-### Generate DTOs
-
-Create data transfer objects for each template's merge tags:
-
-```bash
-php artisan lettr:generate-dtos
-```
-
-This creates DTOs like `app/Dto/Lettr/WelcomeEmailData.php`:
-
-```php
-namespace App\Dto\Lettr;
-
-class WelcomeEmailData
-{
-    public function __construct(
-        public string $first_name,
-        public string $activation_url,
-        public ?string $company_name = null,
-    ) {}
-
-    public function toArray(): array
-    {
-        return array_filter([
-            'first_name' => $this->first_name,
-            'activation_url' => $this->activation_url,
-            'company_name' => $this->company_name,
-        ], fn($v) => $v !== null);
-    }
-}
-```
-
-Use DTOs for validated template data:
-
-```php
-use App\Dto\Lettr\WelcomeEmailData;
-
-$data = new WelcomeEmailData(
-    first_name: 'John',
-    activation_url: $activationUrl,
-);
-
-Mail::lettr()
-    ->to('user@example.com')
-    ->sendTemplate('welcome-email', $data->toArray());
-```
-
-### Generate Both at Once
-
-During `lettr:init`, you can generate both enums and DTOs automatically.
+<Card title="Type Safety" icon="shield-check" href="/quickstart/laravel/type-safety">
+  Generate enums, DTOs, and Mailables for compile-time safety
+</Card>
 
 ## Template Versioning
 
