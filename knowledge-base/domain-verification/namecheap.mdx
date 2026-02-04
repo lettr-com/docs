@@ -1,0 +1,205 @@
+---
+title: Namecheap
+description: "Verify your domain on Namecheap with Lettr"
+---
+
+# Namecheap
+
+This guide walks you through adding DNS records on Namecheap to verify your domain with Lettr.
+
+<Tip>
+  It is best practice to use a subdomain (e.g., `sender.example.com`) instead of the root domain. Using a subdomain allows for proper reputation segmentation and is especially important if receiving emails with Lettr.
+</Tip>
+
+## Add Domain to Lettr
+
+First, log in to your [Lettr Dashboard](https://app.lettr.com) and go to **Domains → Add Domain**. Enter your domain name and select the domain type.
+
+## Log in to Namecheap
+
+1. Log in to your [Namecheap account](https://ap.www.namecheap.com)
+2. Click **Manage** next to your domain
+3. Navigate to the **Advanced DNS** tab
+
+---
+
+## Sending Domain Setup
+
+Choose one of the following options based on whether you're using a subdomain or primary domain.
+
+### Option 1: Subdomain (CNAME Verification)
+
+If you're setting up a subdomain like `sender.example.com`, add the following records:
+
+#### Bounce Domain CNAME
+
+1. Click **Add New Record**
+2. Set the **Type** to `CNAME Record`
+3. Enter `sender` for the **Host** (or your chosen subdomain)
+4. Enter `sparkpostmail.com` for the **Value**
+5. Leave **TTL** as `Automatic`
+6. Click the checkmark to save
+
+| Namecheap | Lettr | Example Value |
+|-----------|-------|---------------|
+| Type | Type | `CNAME Record` |
+| Host | Host | `sender` |
+| Value | Value | `sparkpostmail.com` |
+| TTL | - | `Automatic` |
+
+### Option 2: Primary Domain (TXT SPF Verification)
+
+If you're using your root domain `example.com`, add an SPF record:
+
+#### SPF Record
+
+1. Click **Add New Record**
+2. Set the **Type** to `TXT Record`
+3. Enter `@` for the **Host** (root domain)
+4. Enter `v=spf1 include:_spf.sparkpostmail.com ~all` for the **Value**
+5. Leave **TTL** as `Automatic`
+6. Click the checkmark to save
+
+| Namecheap | Lettr | Example Value |
+|-----------|-------|---------------|
+| Type | Type | `TXT Record` |
+| Host | Host | `@` |
+| Value | Value | `v=spf1 include:_spf.sparkpostmail.com ~all` |
+| TTL | - | `Automatic` |
+
+<Info>
+  If you already have an SPF record, merge Lettr's include with your existing record.
+</Info>
+
+### DKIM Record (Required for All Sending Domains)
+
+1. Click **Add New Record**
+2. Set the **Type** to `TXT Record`
+3. Copy the **Host** from your Lettr dashboard (e.g., `scph0226._domainkey.sender`)
+4. Copy the **Value** from your Lettr dashboard
+5. Leave **TTL** as `Automatic`
+6. Click the checkmark to save
+
+| Namecheap | Lettr | Example Value |
+|-----------|-------|---------------|
+| Type | Type | `TXT Record` |
+| Host | Host | `scph0226._domainkey.sender` |
+| Value | Value | `v=DKIM1;k=rsa;h=sha256;p=MIGfMA0...` |
+| TTL | - | `Automatic` |
+
+<Info>
+  Omit your domain from the Host field. Enter only `scph0226._domainkey.sender`, not `scph0226._domainkey.sender.example.com`.
+</Info>
+
+### DMARC Record (Required for All Sending Domains)
+
+1. Click **Add New Record**
+2. Set the **Type** to `TXT Record`
+3. Enter `_dmarc.sender` for the **Host**
+4. Enter `v=DMARC1;p=none;` for the **Value**
+5. Leave **TTL** as `Automatic`
+6. Click the checkmark to save
+
+| Namecheap | Lettr | Example Value |
+|-----------|-------|---------------|
+| Type | Type | `TXT Record` |
+| Host | Host | `_dmarc.sender` |
+| Value | Value | `v=DMARC1;p=none;` |
+| TTL | - | `Automatic` |
+
+---
+
+## Tracking Domain Setup
+
+To set up a custom tracking domain, add two CNAME records:
+
+### SSL Certificate CNAME
+
+1. Click **Add New Record**
+2. Set the **Type** to `CNAME Record`
+3. Copy the **Host** from your Lettr dashboard (e.g., `_acme-challenge.click.sender`)
+4. Copy the **Value** from your Lettr dashboard
+5. Click the checkmark to save
+
+| Namecheap | Lettr | Example Value |
+|-----------|-------|---------------|
+| Type | Type | `CNAME Record` |
+| Host | Host | `_acme-challenge.click.sender` |
+| Value | Value | (provided in dashboard) |
+
+### Traffic CNAME
+
+1. Click **Add New Record**
+2. Set the **Type** to `CNAME Record`
+3. Enter your tracking subdomain for the **Host** (e.g., `click.sender`)
+4. Enter `proxy.lettr-tracking.com` for the **Value**
+5. Click the checkmark to save
+
+| Namecheap | Lettr | Example Value |
+|-----------|-------|---------------|
+| Type | Type | `CNAME Record` |
+| Host | Host | `click.sender` |
+| Value | Value | `proxy.lettr-tracking.com` |
+
+<Tip>
+  SSL certificates are automatically generated and renewed by Lettr. All tracking URLs use HTTPS.
+</Tip>
+
+---
+
+## Inbound Domain Setup
+
+Under the **Mail Settings** section, click the dropdown and select **Custom MX**:
+
+1. Click **Add New Record** in the MX section
+2. Enter `inbound` for the **Host**
+3. Enter `rx1.sparkpostmail.com` for the **Value**
+4. Enter `10` for the **Priority**
+5. Click the checkmark to save
+
+Repeat for the other two MX records:
+
+| Namecheap | Lettr | Example Value |
+|-----------|-------|---------------|
+| Type | Type | `MX Record` |
+| Host | Host | `inbound` |
+| Value | Value | `rx1.sparkpostmail.com` |
+| Priority | Priority | `10` |
+
+| Namecheap | Lettr | Example Value |
+|-----------|-------|---------------|
+| Type | Type | `MX Record` |
+| Host | Host | `inbound` |
+| Value | Value | `rx2.sparkpostmail.com` |
+| Priority | Priority | `10` |
+
+| Namecheap | Lettr | Example Value |
+|-----------|-------|---------------|
+| Type | Type | `MX Record` |
+| Host | Host | `inbound` |
+| Value | Value | `rx3.sparkpostmail.com` |
+| Priority | Priority | `10` |
+
+<Warning>
+  When you configure MX records, all emails sent to that domain/subdomain will be routed to Lettr. We recommend using a subdomain like `inbound.example.com`.
+</Warning>
+
+---
+
+## Complete Verification
+
+Return to your Lettr dashboard and click **Verify**. DNS propagation typically takes up to 72 hours but is often much faster.
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Records not detected">
+    Namecheap DNS can take up to 48 hours to propagate. Use [WhatsMyDNS](https://www.whatsmydns.net/) to check status.
+  </Accordion>
+  <Accordion title="Don't include full domain in Host field">
+    Namecheap automatically appends your domain. Enter only `sender`, not `sender.example.com`.
+  </Accordion>
+  <Accordion title="MX records not working">
+    Ensure Mail Settings is set to **Custom MX**, not Gmail or another provider.
+  </Accordion>
+</AccordionGroup>

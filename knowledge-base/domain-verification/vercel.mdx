@@ -1,0 +1,202 @@
+---
+title: Vercel
+description: "Verify your domain on Vercel with Lettr"
+---
+
+# Vercel
+
+This guide walks you through adding DNS records on Vercel to verify your domain with Lettr.
+
+<Tip>
+  It is best practice to use a subdomain (e.g., `sender.example.com`) instead of the root domain. Using a subdomain allows for proper reputation segmentation and is especially important if receiving emails with Lettr.
+</Tip>
+
+## Add Domain to Lettr
+
+First, log in to your [Lettr Dashboard](https://app.lettr.com) and go to **Domains → Add Domain**. Enter your domain name and select the domain type.
+
+## Log in to Vercel
+
+1. Log in to your [Vercel account](https://vercel.com/login)
+2. Navigate to your project or go to **Settings → Domains**
+3. Click on your domain to manage DNS records
+
+---
+
+## Sending Domain Setup
+
+Choose one of the following options based on whether you're using a subdomain or primary domain.
+
+### Option 1: Subdomain (CNAME Verification)
+
+If you're setting up a subdomain like `sender.example.com`, add the following records:
+
+#### Bounce Domain CNAME
+
+1. Click **Add Record**
+2. Enter `sender` for the **Name** (or your chosen subdomain)
+3. Select `CNAME` from the **Type** dropdown
+4. Enter `sparkpostmail.com` for the **Value**
+5. Click **Add**
+
+| Vercel | Lettr | Example Value |
+|--------|-------|---------------|
+| Type | Type | `CNAME` |
+| Name | Host | `sender` |
+| Value | Value | `sparkpostmail.com` |
+| TTL | - | `60` (default) |
+
+### Option 2: Primary Domain (TXT SPF Verification)
+
+If you're using your root domain `example.com`, add an SPF record:
+
+#### SPF Record
+
+1. Click **Add Record**
+2. Leave **Name** empty or enter `@` (for root domain)
+3. Select `TXT` from the **Type** dropdown
+4. Enter `v=spf1 include:_spf.sparkpostmail.com ~all` for the **Value**
+5. Click **Add**
+
+| Vercel | Lettr | Example Value |
+|--------|-------|---------------|
+| Type | Type | `TXT` |
+| Name | Host | `@` |
+| Value | Value | `v=spf1 include:_spf.sparkpostmail.com ~all` |
+| TTL | - | `60` (default) |
+
+<Info>
+  If you already have an SPF record, merge Lettr's include with your existing record.
+</Info>
+
+### DKIM Record (Required for All Sending Domains)
+
+1. Click **Add Record**
+2. Copy the **Name** from your Lettr dashboard (e.g., `scph0226._domainkey.sender`)
+3. Select `TXT` from the **Type** dropdown
+4. Copy the **Value** from your Lettr dashboard
+5. Click **Add**
+
+| Vercel | Lettr | Example Value |
+|--------|-------|---------------|
+| Type | Type | `TXT` |
+| Name | Host | `scph0226._domainkey.sender` |
+| Value | Value | `v=DKIM1;k=rsa;h=sha256;p=MIGfMA0...` |
+| TTL | - | `60` (default) |
+
+<Info>
+  The DKIM hostname and value are unique to your domain. Copy them exactly from your Lettr dashboard.
+</Info>
+
+### DMARC Record (Required for All Sending Domains)
+
+1. Click **Add Record**
+2. Enter `_dmarc.sender` for the **Name**
+3. Select `TXT` from the **Type** dropdown
+4. Enter `v=DMARC1;p=none;` for the **Value**
+5. Click **Add**
+
+| Vercel | Lettr | Example Value |
+|--------|-------|---------------|
+| Type | Type | `TXT` |
+| Name | Host | `_dmarc.sender` |
+| Value | Value | `v=DMARC1;p=none;` |
+| TTL | - | `60` (default) |
+
+---
+
+## Tracking Domain Setup
+
+To set up a custom tracking domain, add two CNAME records:
+
+### SSL Certificate CNAME
+
+1. Click **Add Record**
+2. Copy the **Name** from your Lettr dashboard (e.g., `_acme-challenge.click.sender`)
+3. Select `CNAME` from the **Type** dropdown
+4. Copy the **Value** from your Lettr dashboard
+5. Click **Add**
+
+| Vercel | Lettr | Example Value |
+|--------|-------|---------------|
+| Type | Type | `CNAME` |
+| Name | Host | `_acme-challenge.click.sender` |
+| Value | Value | (provided in dashboard) |
+
+### Traffic CNAME
+
+1. Click **Add Record**
+2. Enter your tracking subdomain for the **Name** (e.g., `click.sender`)
+3. Select `CNAME` from the **Type** dropdown
+4. Enter `proxy.lettr-tracking.com` for the **Value**
+5. Click **Add**
+
+| Vercel | Lettr | Example Value |
+|--------|-------|---------------|
+| Type | Type | `CNAME` |
+| Name | Host | `click.sender` |
+| Value | Value | `proxy.lettr-tracking.com` |
+
+<Tip>
+  SSL certificates are automatically generated and renewed by Lettr. All tracking URLs use HTTPS.
+</Tip>
+
+---
+
+## Inbound Domain Setup
+
+To receive emails at your domain, add MX records:
+
+1. Click **Add Record**
+2. Enter `inbound` for the **Name**
+3. Select `MX` from the **Type** dropdown
+4. Enter `rx1.sparkpostmail.com` for the **Value**
+5. Enter `10` for the **Priority**
+6. Click **Add**
+
+Repeat for the other two MX records:
+
+| Vercel | Lettr | Example Value |
+|--------|-------|---------------|
+| Type | Type | `MX` |
+| Name | Host | `inbound` |
+| Value | Value | `rx1.sparkpostmail.com` |
+| Priority | Priority | `10` |
+
+| Vercel | Lettr | Example Value |
+|--------|-------|---------------|
+| Type | Type | `MX` |
+| Name | Host | `inbound` |
+| Value | Value | `rx2.sparkpostmail.com` |
+| Priority | Priority | `10` |
+
+| Vercel | Lettr | Example Value |
+|--------|-------|---------------|
+| Type | Type | `MX` |
+| Name | Host | `inbound` |
+| Value | Value | `rx3.sparkpostmail.com` |
+| Priority | Priority | `10` |
+
+<Warning>
+  When you configure MX records, all emails sent to that domain/subdomain will be routed to Lettr. We recommend using a subdomain like `inbound.example.com`.
+</Warning>
+
+---
+
+## Complete Verification
+
+Return to your Lettr dashboard and click **Verify**. Vercel propagates DNS changes very quickly, typically within 1-5 minutes.
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Records not detected">
+    Vercel DNS changes are usually instant. If not detected, double-check the record values for typos.
+  </Accordion>
+  <Accordion title="Conflicting records">
+    If you have an existing A or CNAME record for the same subdomain, remove it before adding the Lettr record.
+  </Accordion>
+  <Accordion title="Domain not connected to Vercel">
+    Ensure your domain's nameservers point to Vercel, or that you're managing DNS directly in Vercel.
+  </Accordion>
+</AccordionGroup>

@@ -1,0 +1,195 @@
+---
+title: AWS Route 53
+description: "Verify your domain on AWS Route 53 with Lettr"
+---
+
+# AWS Route 53
+
+This guide walks you through adding DNS records on AWS Route 53 to verify your domain with Lettr.
+
+<Tip>
+  It is best practice to use a subdomain (e.g., `sender.example.com`) instead of the root domain. Using a subdomain allows for proper reputation segmentation and is especially important if receiving emails with Lettr.
+</Tip>
+
+## Add Domain to Lettr
+
+First, log in to your [Lettr Dashboard](https://app.lettr.com) and go to **Domains → Add Domain**. Enter your domain name and select the domain type.
+
+## Log in to Route 53
+
+1. Log in to your [AWS Management Console](https://console.aws.amazon.com/route53/)
+2. Navigate to **Route 53** → **Hosted zones**
+3. Click on your domain to view the records
+4. Click **Create record** to add new DNS records
+
+---
+
+## Sending Domain Setup
+
+Choose one of the following options based on whether you're using a subdomain or primary domain.
+
+### Option 1: Subdomain (CNAME Verification)
+
+If you're setting up a subdomain like `sender.example.com`, add the following records:
+
+#### Bounce Domain CNAME
+
+1. Click **Create record**
+2. Enter `sender` for the **Record name** (or your chosen subdomain)
+3. Set **Record type** to `CNAME`
+4. Enter `sparkpostmail.com` for the **Value**
+5. Leave **TTL** as default (300)
+6. Click **Create records**
+
+| Route 53 | Lettr | Example Value |
+|----------|-------|---------------|
+| Record type | Type | `CNAME` |
+| Record name | Host | `sender` |
+| Value | Value | `sparkpostmail.com` |
+| TTL | - | `300` |
+
+### Option 2: Primary Domain (TXT SPF Verification)
+
+If you're using your root domain `example.com`, add an SPF record:
+
+#### SPF Record
+
+1. Click **Create record**
+2. Leave **Record name** empty (for root domain)
+3. Set **Record type** to `TXT`
+4. Enter `"v=spf1 include:_spf.sparkpostmail.com ~all"` for the **Value** (include quotes)
+5. Click **Create records**
+
+| Route 53 | Lettr | Example Value |
+|----------|-------|---------------|
+| Record type | Type | `TXT` |
+| Record name | Host | (empty for root) |
+| Value | Value | `"v=spf1 include:_spf.sparkpostmail.com ~all"` |
+| TTL | - | `300` |
+
+<Info>
+  TXT record values in Route 53 should be wrapped in double quotes. If you already have an SPF record, merge the includes.
+</Info>
+
+### DKIM Record (Required for All Sending Domains)
+
+1. Click **Create record**
+2. Copy the **Record name** from your Lettr dashboard (e.g., `scph0226._domainkey.sender`)
+3. Set **Record type** to `TXT`
+4. Copy the **Value** from your Lettr dashboard and wrap in quotes
+5. Click **Create records**
+
+| Route 53 | Lettr | Example Value |
+|----------|-------|---------------|
+| Record type | Type | `TXT` |
+| Record name | Host | `scph0226._domainkey.sender` |
+| Value | Value | `"v=DKIM1;k=rsa;h=sha256;p=MIGfMA0..."` |
+| TTL | - | `300` |
+
+<Info>
+  The DKIM hostname and value are unique to your domain. Copy them exactly from your Lettr dashboard.
+</Info>
+
+### DMARC Record (Required for All Sending Domains)
+
+1. Click **Create record**
+2. Enter `_dmarc.sender` for the **Record name**
+3. Set **Record type** to `TXT`
+4. Enter `"v=DMARC1;p=none;"` for the **Value**
+5. Click **Create records**
+
+| Route 53 | Lettr | Example Value |
+|----------|-------|---------------|
+| Record type | Type | `TXT` |
+| Record name | Host | `_dmarc.sender` |
+| Value | Value | `"v=DMARC1;p=none;"` |
+| TTL | - | `300` |
+
+---
+
+## Tracking Domain Setup
+
+To set up a custom tracking domain, add two CNAME records:
+
+### SSL Certificate CNAME
+
+1. Click **Create record**
+2. Copy the **Record name** from your Lettr dashboard (e.g., `_acme-challenge.click.sender`)
+3. Set **Record type** to `CNAME`
+4. Copy the **Value** from your Lettr dashboard
+5. Click **Create records**
+
+| Route 53 | Lettr | Example Value |
+|----------|-------|---------------|
+| Record type | Type | `CNAME` |
+| Record name | Host | `_acme-challenge.click.sender` |
+| Value | Value | (provided in dashboard) |
+
+### Traffic CNAME
+
+1. Click **Create record**
+2. Enter your tracking subdomain for the **Record name** (e.g., `click.sender`)
+3. Set **Record type** to `CNAME`
+4. Enter `proxy.lettr-tracking.com` for the **Value**
+5. Click **Create records**
+
+| Route 53 | Lettr | Example Value |
+|----------|-------|---------------|
+| Record type | Type | `CNAME` |
+| Record name | Host | `click.sender` |
+| Value | Value | `proxy.lettr-tracking.com` |
+
+<Tip>
+  SSL certificates are automatically generated and renewed by Lettr. All tracking URLs use HTTPS.
+</Tip>
+
+---
+
+## Inbound Domain Setup
+
+To receive emails at your domain, add MX records:
+
+1. Click **Create record**
+2. Enter `inbound` for the **Record name**
+3. Set **Record type** to `MX`
+4. Enter the following values (one per line with priority):
+   ```
+   10 rx1.sparkpostmail.com
+   10 rx2.sparkpostmail.com
+   10 rx3.sparkpostmail.com
+   ```
+5. Click **Create records**
+
+| Route 53 | Lettr | Example Value |
+|----------|-------|---------------|
+| Record type | Type | `MX` |
+| Record name | Host | `inbound` |
+| Value | Value | `10 rx1.sparkpostmail.com` |
+
+<Info>
+  Route 53 allows adding multiple MX values in a single record. Enter each value on a new line with the priority number first.
+</Info>
+
+<Warning>
+  When you configure MX records, all emails sent to that domain/subdomain will be routed to Lettr. We recommend using a subdomain like `inbound.example.com`.
+</Warning>
+
+---
+
+## Complete Verification
+
+Return to your Lettr dashboard and click **Verify**. Route 53 typically propagates DNS changes within 5-60 minutes.
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="TXT records not being detected">
+    Ensure TXT record values are wrapped in double quotes.
+  </Accordion>
+  <Accordion title="CNAME record at apex domain">
+    Route 53 doesn't support CNAME records at the zone apex (root domain). Use an Alias record or a subdomain instead.
+  </Accordion>
+  <Accordion title="Slow propagation">
+    Route 53 changes typically propagate within 60 seconds, but external resolvers may cache old values based on TTL.
+  </Accordion>
+</AccordionGroup>

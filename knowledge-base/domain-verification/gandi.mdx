@@ -1,0 +1,204 @@
+---
+title: Gandi
+description: "Verify your domain on Gandi with Lettr"
+---
+
+# Gandi
+
+This guide walks you through adding DNS records on Gandi to verify your domain with Lettr.
+
+<Tip>
+  It is best practice to use a subdomain (e.g., `sender.example.com`) instead of the root domain. Using a subdomain allows for proper reputation segmentation and is especially important if receiving emails with Lettr.
+</Tip>
+
+## Add Domain to Lettr
+
+First, log in to your [Lettr Dashboard](https://app.lettr.com) and go to **Domains → Add Domain**. Enter your domain name and select the domain type.
+
+## Log in to Gandi
+
+1. Log in to your [Gandi account](https://admin.gandi.net/domain/)
+2. Select your domain from the **Domain** list
+3. Navigate to the **DNS Records** tab to manage records
+
+---
+
+## Sending Domain Setup
+
+Choose one of the following options based on whether you're using a subdomain or primary domain.
+
+### Option 1: Subdomain (CNAME Verification)
+
+If you're setting up a subdomain like `sender.example.com`, add the following records:
+
+#### Bounce Domain CNAME
+
+1. Click **Add record**
+2. Select `CNAME` as the **Type**
+3. Enter `sender` for the **Name** (or your chosen subdomain)
+4. Enter `sparkpostmail.com.` for the **Hostname** (note the trailing period)
+5. Use the default **TTL** of `10800`
+6. Click **Create**
+
+| Gandi | Lettr | Example Value |
+|-------|-------|---------------|
+| Type | Type | `CNAME` |
+| Name | Host | `sender` |
+| Hostname | Value | `sparkpostmail.com.` |
+| TTL | - | `10800` |
+
+<Info>
+  Gandi requires a trailing period on CNAME values. Add `.` at the end of the hostname.
+</Info>
+
+### Option 2: Primary Domain (TXT SPF Verification)
+
+If you're using your root domain `example.com`, add an SPF record:
+
+#### SPF Record
+
+1. Click **Add record**
+2. Select `TXT` as the **Type**
+3. Enter `@` for the **Name** (root domain)
+4. Enter `v=spf1 include:_spf.sparkpostmail.com ~all` for the **Text value**
+5. Click **Create**
+
+| Gandi | Lettr | Example Value |
+|-------|-------|---------------|
+| Type | Type | `TXT` |
+| Name | Host | `@` |
+| Text value | Value | `v=spf1 include:_spf.sparkpostmail.com ~all` |
+| TTL | - | `10800` |
+
+<Info>
+  If you already have an SPF record, merge Lettr's include with your existing record.
+</Info>
+
+### DKIM Record (Required for All Sending Domains)
+
+1. Click **Add record**
+2. Select `TXT` as the **Type**
+3. Copy the **Name** from your Lettr dashboard (e.g., `scph0226._domainkey.sender`)
+4. Copy the **Text value** from your Lettr dashboard
+5. Click **Create**
+
+| Gandi | Lettr | Example Value |
+|-------|-------|---------------|
+| Type | Type | `TXT` |
+| Name | Host | `scph0226._domainkey.sender` |
+| Text value | Value | `v=DKIM1;k=rsa;h=sha256;p=MIGfMA0...` |
+| TTL | - | `10800` |
+
+<Info>
+  The DKIM hostname and value are unique to your domain. Copy them exactly from your Lettr dashboard.
+</Info>
+
+### DMARC Record (Required for All Sending Domains)
+
+1. Click **Add record**
+2. Select `TXT` as the **Type**
+3. Enter `_dmarc.sender` for the **Name**
+4. Enter `v=DMARC1;p=none;` for the **Text value**
+5. Click **Create**
+
+| Gandi | Lettr | Example Value |
+|-------|-------|---------------|
+| Type | Type | `TXT` |
+| Name | Host | `_dmarc.sender` |
+| Text value | Value | `v=DMARC1;p=none;` |
+| TTL | - | `10800` |
+
+---
+
+## Tracking Domain Setup
+
+To set up a custom tracking domain, add two CNAME records:
+
+### SSL Certificate CNAME
+
+1. Click **Add record**
+2. Select `CNAME` as the **Type**
+3. Copy the **Name** from your Lettr dashboard (e.g., `_acme-challenge.click.sender`)
+4. Copy the **Hostname** from your Lettr dashboard (add trailing period)
+5. Click **Create**
+
+| Gandi | Lettr | Example Value |
+|-------|-------|---------------|
+| Type | Type | `CNAME` |
+| Name | Host | `_acme-challenge.click.sender` |
+| Hostname | Value | (provided in dashboard) |
+
+### Traffic CNAME
+
+1. Click **Add record**
+2. Select `CNAME` as the **Type**
+3. Enter your tracking subdomain for the **Name** (e.g., `click.sender`)
+4. Enter `proxy.lettr-tracking.com.` for the **Hostname** (note trailing period)
+5. Click **Create**
+
+| Gandi | Lettr | Example Value |
+|-------|-------|---------------|
+| Type | Type | `CNAME` |
+| Name | Host | `click.sender` |
+| Hostname | Value | `proxy.lettr-tracking.com.` |
+
+<Tip>
+  SSL certificates are automatically generated and renewed by Lettr. All tracking URLs use HTTPS.
+</Tip>
+
+---
+
+## Inbound Domain Setup
+
+To receive emails at your domain, add MX records:
+
+1. Click **Add record**
+2. Select `MX` as the **Type**
+3. Enter `inbound` for the **Name**
+4. Enter `rx1.sparkpostmail.com.` for the **Hostname** (note trailing period)
+5. Enter `10` for the **Priority**
+6. Click **Create**
+
+Repeat for the other two MX records:
+
+| Gandi | Lettr | Example Value |
+|-------|-------|---------------|
+| Type | Type | `MX` |
+| Name | Host | `inbound` |
+| Hostname | Value | `rx1.sparkpostmail.com.` |
+| Priority | Priority | `10` |
+
+| Gandi | Lettr | Example Value |
+|-------|-------|---------------|
+| Type | Type | `MX` |
+| Name | Host | `inbound` |
+| Hostname | Value | `rx2.sparkpostmail.com.` |
+| Priority | Priority | `10` |
+
+| Gandi | Lettr | Example Value |
+|-------|-------|---------------|
+| Type | Type | `MX` |
+| Name | Host | `inbound` |
+| Hostname | Value | `rx3.sparkpostmail.com.` |
+| Priority | Priority | `10` |
+
+<Warning>
+  When you configure MX records, all emails sent to that domain/subdomain will be routed to Lettr. We recommend using a subdomain like `inbound.example.com`.
+</Warning>
+
+---
+
+## Complete Verification
+
+Return to your Lettr dashboard and click **Verify**. DNS propagation typically takes a few hours.
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Records not detected">
+    Gandi DNS may take several hours to propagate. Use [WhatsMyDNS](https://www.whatsmydns.net/) to check status.
+  </Accordion>
+  <Accordion title="Missing trailing period">
+    Gandi requires trailing periods on CNAME and MX values. Add `.` at the end.
+  </Accordion>
+</AccordionGroup>
