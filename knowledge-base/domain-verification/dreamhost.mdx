@@ -1,0 +1,192 @@
+---
+title: DreamHost
+description: "How to verify your domain on DreamHost"
+---
+
+# Verify Your Domain on DreamHost
+
+This guide walks you through adding DNS records for Lettr on DreamHost.
+
+## Prerequisites
+
+- A domain registered or hosted with DreamHost
+- Access to the DreamHost Panel
+- A Lettr account with your domain added
+
+## Step 1: Add Domain to Lettr
+
+1. Log in to your [Lettr dashboard](https://app.lettr.com)
+2. Navigate to **Domains**
+3. Click **Add Domain**
+4. Enter your domain name and select the domain type
+5. Copy the DNS records provided
+
+## Step 2: Access DreamHost DNS
+
+1. Log in to your [DreamHost Panel](https://panel.dreamhost.com)
+2. Navigate to **Domains** → **Manage Domains**
+3. Click **DNS** under your domain name
+4. You'll see the DNS management page
+
+<Info>
+  If you don't see the DNS option, ensure your domain is set to use DreamHost's nameservers under **Domains** → **Registrations**.
+</Info>
+
+## Step 3: Sending Domain Setup
+
+Choose the setup that matches your needs:
+
+### Option A: Subdomain (Recommended)
+
+Use a subdomain like `sender.example.com` for sending emails.
+
+#### Bounce Domain CNAME
+
+1. Click **Add Record**
+2. Enter `sender` in the **Name** field (or your chosen subdomain)
+3. Select **CNAME** as the type
+4. Enter `sparkpostmail.com` in the **Value** field
+5. Click **Add Record Now!**
+
+| DreamHost | Lettr | Example Value |
+|-----------|-------|---------------|
+| Name | Host | `sender` |
+| Type | Type | `CNAME` |
+| Value | Value | `sparkpostmail.com` |
+
+### Option B: Primary Domain
+
+Use your root domain with TXT SPF verification.
+
+#### SPF Record
+
+1. Click **Add Record**
+2. Leave the **Name** field empty (for root domain)
+3. Select **TXT** as the type
+4. Enter `v=spf1 include:_spf.sparkpostmail.com ~all` in the **Value** field
+5. Click **Add Record Now!**
+
+| DreamHost | Lettr | Example Value |
+|-----------|-------|---------------|
+| Name | Host | (empty) |
+| Type | Type | `TXT` |
+| Value | Value | `v=spf1 include:_spf.sparkpostmail.com ~all` |
+
+<Warning>
+  If you already have an SPF record, merge it by adding `include:_spf.sparkpostmail.com` before the `~all` or `-all` mechanism.
+</Warning>
+
+### DKIM Record (Required for both options)
+
+1. Click **Add Record**
+2. Enter the DKIM hostname from your Lettr dashboard (e.g., `scph0226._domainkey.sender`)
+3. Select **TXT** as the type
+4. Enter the DKIM value from your dashboard
+5. Click **Add Record Now!**
+
+| DreamHost | Lettr | Example Value |
+|-----------|-------|---------------|
+| Name | Host | `scph0226._domainkey.sender` |
+| Type | Type | `TXT` |
+| Value | Value | `v=DKIM1;k=rsa;h=sha256;p=MIGf...` |
+
+### DMARC Record (Required for both options)
+
+1. Click **Add Record**
+2. Enter `_dmarc.sender` (subdomain) or `_dmarc` (root domain) in the **Name** field
+3. Select **TXT** as the type
+4. Enter `v=DMARC1;p=none;` in the **Value** field
+5. Click **Add Record Now!**
+
+| DreamHost | Lettr | Example Value |
+|-----------|-------|---------------|
+| Name | Host | `_dmarc.sender` or `_dmarc` |
+| Type | Type | `TXT` |
+| Value | Value | `v=DMARC1;p=none;` |
+
+## Step 4: Tracking Domain Setup
+
+Custom tracking domains require two CNAME records.
+
+### SSL Certificate CNAME
+
+1. Click **Add Record**
+2. Enter the SSL verification hostname from your dashboard (e.g., `_acme-challenge.click.sender`)
+3. Select **CNAME** as the type
+4. Enter the SSL verification value from your dashboard
+5. Click **Add Record Now!**
+
+### Traffic CNAME
+
+1. Click **Add Record**
+2. Enter your tracking subdomain (e.g., `click.sender`)
+3. Select **CNAME** as the type
+4. Enter `proxy.lettr-tracking.com` in the **Value** field
+5. Click **Add Record Now!**
+
+| DreamHost | Lettr | Example Value |
+|-----------|-------|---------------|
+| Name | Host | `click.sender` |
+| Type | Type | `CNAME` |
+| Value | Value | `proxy.lettr-tracking.com` |
+
+<Tip>
+  SSL certificates are automatically generated and renewed by Lettr.
+</Tip>
+
+## Step 5: Inbound Domain Setup
+
+To receive emails at your domain, add MX records.
+
+1. Click **Add Record**
+2. Enter `inbound` in the **Name** field (or your chosen subdomain)
+3. Select **MX** as the type
+4. Enter `10` for **Priority** (or in the value field)
+5. Enter `rx1.sparkpostmail.com` in the **Value** field
+6. Click **Add Record Now!**
+7. Repeat for `rx2.sparkpostmail.com` and `rx3.sparkpostmail.com`
+
+| DreamHost Name | Priority | Value |
+|----------------|----------|-------|
+| `inbound` | 10 | `rx1.sparkpostmail.com` |
+| `inbound` | 10 | `rx2.sparkpostmail.com` |
+| `inbound` | 10 | `rx3.sparkpostmail.com` |
+
+<Warning>
+  Use a subdomain like `inbound.example.com` for receiving emails. Using your root domain will route ALL email to Lettr and may interfere with DreamHost email services.
+</Warning>
+
+## Step 6: Complete Verification
+
+1. Return to your [Lettr dashboard](https://app.lettr.com)
+2. Navigate to **Domains**
+3. Click **Verify** next to your domain
+4. Wait for DNS propagation (usually 15-60 minutes for DreamHost)
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="DNS changes not appearing">
+    DreamHost DNS can take 15-60 minutes to propagate. If records still don't appear:
+    - Clear your browser cache and try again
+    - Use [WhatsMyDNS](https://www.whatsmydns.net/) to check propagation
+    - Ensure no conflicting records exist
+  </Accordion>
+  <Accordion title="Conflict with DreamHost email">
+    If you're using DreamHost email, be careful not to override existing MX records at your root domain. Use a subdomain for inbound emails.
+  </Accordion>
+  <Accordion title="CNAME at root domain">
+    DreamHost doesn't support CNAME records at the root domain. Use the subdomain option or TXT SPF verification for root domains.
+  </Accordion>
+</AccordionGroup>
+
+## Need Help?
+
+<CardGroup cols={2}>
+  <Card title="Domain Verification Overview" icon="globe" href="/knowledge-base/domain-verification/introduction">
+    General DNS setup guide
+  </Card>
+  <Card title="Contact Support" icon="headset" href="mailto:support@lettr.com">
+    Get help from our team
+  </Card>
+</CardGroup>

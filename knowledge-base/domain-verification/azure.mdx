@@ -1,0 +1,226 @@
+---
+title: Azure DNS
+description: "How to verify your domain on Microsoft Azure DNS"
+---
+
+# Verify Your Domain on Azure DNS
+
+This guide walks you through adding DNS records for Lettr using Microsoft Azure DNS.
+
+## Prerequisites
+
+- A DNS zone configured in Azure DNS
+- Access to the Azure Portal
+- A Lettr account with your domain added
+
+## Step 1: Add Domain to Lettr
+
+1. Log in to your [Lettr dashboard](https://app.lettr.com)
+2. Navigate to **Domains**
+3. Click **Add Domain**
+4. Enter your domain name and select the domain type
+5. Copy the DNS records provided
+
+## Step 2: Access Azure DNS
+
+1. Log in to the [Azure Portal](https://portal.azure.com)
+2. Search for **DNS zones** in the top search bar
+3. Select your domain's DNS zone
+4. You'll see the DNS records management page
+
+## Step 3: Sending Domain Setup
+
+Choose the setup that matches your needs:
+
+### Option A: Subdomain (Recommended)
+
+Use a subdomain like `sender.example.com` for sending emails.
+
+#### Bounce Domain CNAME
+
+1. Click **+ Record set**
+2. Enter `sender` in the **Name** field (or your chosen subdomain)
+3. Select **CNAME** as the **Type**
+4. Enter `sparkpostmail.com` in the **Alias** field
+5. Set **TTL** as desired (default is fine)
+6. Click **OK**
+
+| Azure | Lettr | Example Value |
+|-------|-------|---------------|
+| Name | Host | `sender` |
+| Type | Type | `CNAME` |
+| Alias | Value | `sparkpostmail.com` |
+
+### Option B: Primary Domain
+
+Use your root domain with TXT SPF verification.
+
+#### SPF Record
+
+1. Click **+ Record set**
+2. Enter `@` in the **Name** field (for root domain)
+3. Select **TXT** as the **Type**
+4. Enter `v=spf1 include:_spf.sparkpostmail.com ~all` in the **Value** field
+5. Click **OK**
+
+| Azure | Lettr | Example Value |
+|-------|-------|---------------|
+| Name | Host | `@` |
+| Type | Type | `TXT` |
+| Value | Value | `v=spf1 include:_spf.sparkpostmail.com ~all` |
+
+<Warning>
+  If you already have an SPF record, merge it by adding `include:_spf.sparkpostmail.com` before the `~all` or `-all` mechanism.
+</Warning>
+
+### DKIM Record (Required for both options)
+
+1. Click **+ Record set**
+2. Enter the DKIM hostname from your Lettr dashboard (e.g., `scph0226._domainkey.sender`)
+3. Select **TXT** as the **Type**
+4. Enter the DKIM value from your dashboard in the **Value** field
+5. Click **OK**
+
+| Azure | Lettr | Example Value |
+|-------|-------|---------------|
+| Name | Host | `scph0226._domainkey.sender` |
+| Type | Type | `TXT` |
+| Value | Value | `v=DKIM1;k=rsa;h=sha256;p=MIGf...` |
+
+<Info>
+  Long DKIM values may need to be split into multiple strings. Azure handles this automatically in most cases.
+</Info>
+
+### DMARC Record (Required for both options)
+
+1. Click **+ Record set**
+2. Enter `_dmarc.sender` (subdomain) or `_dmarc` (root domain) in the **Name** field
+3. Select **TXT** as the **Type**
+4. Enter `v=DMARC1;p=none;` in the **Value** field
+5. Click **OK**
+
+| Azure | Lettr | Example Value |
+|-------|-------|---------------|
+| Name | Host | `_dmarc.sender` or `_dmarc` |
+| Type | Type | `TXT` |
+| Value | Value | `v=DMARC1;p=none;` |
+
+## Step 4: Tracking Domain Setup
+
+Custom tracking domains require two CNAME records.
+
+### SSL Certificate CNAME
+
+1. Click **+ Record set**
+2. Enter the SSL verification hostname from your dashboard (e.g., `_acme-challenge.click.sender`)
+3. Select **CNAME** as the **Type**
+4. Enter the SSL verification value from your dashboard in the **Alias** field
+5. Click **OK**
+
+### Traffic CNAME
+
+1. Click **+ Record set**
+2. Enter your tracking subdomain (e.g., `click.sender`)
+3. Select **CNAME** as the **Type**
+4. Enter `proxy.lettr-tracking.com` in the **Alias** field
+5. Click **OK**
+
+| Azure | Lettr | Example Value |
+|-------|-------|---------------|
+| Name | Host | `click.sender` |
+| Type | Type | `CNAME` |
+| Alias | Value | `proxy.lettr-tracking.com` |
+
+<Tip>
+  SSL certificates are automatically generated and renewed by Lettr.
+</Tip>
+
+## Step 5: Inbound Domain Setup
+
+To receive emails at your domain, add MX records.
+
+1. Click **+ Record set**
+2. Enter `inbound` in the **Name** field (or your chosen subdomain)
+3. Select **MX** as the **Type**
+4. Add the following mail exchanges:
+   - `rx1.sparkpostmail.com` with priority `10`
+   - `rx2.sparkpostmail.com` with priority `10`
+   - `rx3.sparkpostmail.com` with priority `10`
+5. Click **OK**
+
+| Azure Name | Priority | Mail Exchange |
+|------------|----------|---------------|
+| `inbound` | 10 | `rx1.sparkpostmail.com` |
+| `inbound` | 10 | `rx2.sparkpostmail.com` |
+| `inbound` | 10 | `rx3.sparkpostmail.com` |
+
+<Note>
+  In Azure, you can add multiple mail exchanges in a single MX record set.
+</Note>
+
+<Warning>
+  Use a subdomain like `inbound.example.com` for receiving emails. Using your root domain will route ALL email to Lettr.
+</Warning>
+
+## Step 6: Complete Verification
+
+1. Return to your [Lettr dashboard](https://app.lettr.com)
+2. Navigate to **Domains**
+3. Click **Verify** next to your domain
+4. Wait for DNS propagation (usually 5-15 minutes for Azure DNS)
+
+## Using Azure CLI
+
+You can also add records using Azure CLI:
+
+```bash
+# Add CNAME record for subdomain
+az network dns record-set cname set-record \
+  --resource-group <resource-group> \
+  --zone-name example.com \
+  --record-set-name sender \
+  --cname sparkpostmail.com
+
+# Add TXT record for DKIM
+az network dns record-set txt add-record \
+  --resource-group <resource-group> \
+  --zone-name example.com \
+  --record-set-name "scph0226._domainkey.sender" \
+  --value "v=DKIM1;k=rsa;h=sha256;p=MIGf..."
+
+# Add MX records for inbound
+az network dns record-set mx add-record \
+  --resource-group <resource-group> \
+  --zone-name example.com \
+  --record-set-name inbound \
+  --exchange rx1.sparkpostmail.com \
+  --preference 10
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Records not appearing">
+    Azure DNS typically propagates within minutes. If records aren't showing:
+    - Verify the DNS zone is correctly configured
+    - Check that nameservers are pointing to Azure
+    - Ensure no typos in record values
+  </Accordion>
+  <Accordion title="TXT record value issues">
+    For long TXT values like DKIM, Azure may display them split across multiple lines. This is normal and the record will work correctly.
+  </Accordion>
+  <Accordion title="Permission errors">
+    Ensure you have the **DNS Zone Contributor** role or equivalent permissions on the DNS zone resource.
+  </Accordion>
+</AccordionGroup>
+
+## Need Help?
+
+<CardGroup cols={2}>
+  <Card title="Domain Verification Overview" icon="globe" href="/knowledge-base/domain-verification/introduction">
+    General DNS setup guide
+  </Card>
+  <Card title="Contact Support" icon="headset" href="mailto:support@lettr.com">
+    Get help from our team
+  </Card>
+</CardGroup>

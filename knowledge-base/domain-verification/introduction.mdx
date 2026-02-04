@@ -1,5 +1,5 @@
 ---
-title: Domain Verification
+title: Introduction
 description: "Step-by-step guides to verify your domain with popular DNS providers"
 ---
 
@@ -14,20 +14,29 @@ This section contains step-by-step guides for configuring DNS records at popular
 ## DNS Provider Guides
 
 <CardGroup cols={2}>
+  <Card title="Azure DNS" icon="microsoft" href="/knowledge-base/domain-verification/azure">
+    Verify your domain on Azure DNS
+  </Card>
   <Card title="Cloudflare" icon="cloud" href="/knowledge-base/domain-verification/cloudflare">
     Verify your domain on Cloudflare
+  </Card>
+  <Card title="DigitalOcean" icon="digital-ocean" href="/knowledge-base/domain-verification/digitalocean">
+    Verify your domain on DigitalOcean
+  </Card>
+  <Card title="DreamHost" icon="server" href="/knowledge-base/domain-verification/dreamhost">
+    Verify your domain on DreamHost
+  </Card>
+  <Card title="Dynadot" icon="server" href="/knowledge-base/domain-verification/dynadot">
+    Verify your domain on Dynadot
+  </Card>
+  <Card title="Gandi" icon="server" href="/knowledge-base/domain-verification/gandi">
+    Verify your domain on Gandi
   </Card>
   <Card title="GoDaddy" icon="globe" href="/knowledge-base/domain-verification/godaddy">
     Verify your domain on GoDaddy
   </Card>
-  <Card title="Namecheap" icon="server" href="/knowledge-base/domain-verification/namecheap">
-    Verify your domain on Namecheap
-  </Card>
-  <Card title="AWS Route 53" icon="aws" href="/knowledge-base/domain-verification/route53">
-    Verify your domain on Route 53
-  </Card>
-  <Card title="Vercel" icon="triangle" href="/knowledge-base/domain-verification/vercel">
-    Verify your domain on Vercel
+  <Card title="Google Cloud DNS" icon="google" href="/knowledge-base/domain-verification/google-cloud">
+    Verify your domain on Google Cloud DNS
   </Card>
   <Card title="Hetzner" icon="server" href="/knowledge-base/domain-verification/hetzner">
     Verify your domain on Hetzner
@@ -38,17 +47,26 @@ This section contains step-by-step guides for configuring DNS records at popular
   <Card title="IONOS" icon="server" href="/knowledge-base/domain-verification/ionos">
     Verify your domain on IONOS
   </Card>
+  <Card title="Namecheap" icon="server" href="/knowledge-base/domain-verification/namecheap">
+    Verify your domain on Namecheap
+  </Card>
+  <Card title="Netlify" icon="server" href="/knowledge-base/domain-verification/netlify">
+    Verify your domain on Netlify
+  </Card>
   <Card title="Porkbun" icon="server" href="/knowledge-base/domain-verification/porkbun">
     Verify your domain on Porkbun
   </Card>
-  <Card title="Gandi" icon="server" href="/knowledge-base/domain-verification/gandi">
-    Verify your domain on Gandi
+  <Card title="AWS Route 53" icon="aws" href="/knowledge-base/domain-verification/route53">
+    Verify your domain on Route 53
   </Card>
   <Card title="Squarespace" icon="square" href="/knowledge-base/domain-verification/squarespace">
     Verify your domain on Squarespace
   </Card>
   <Card title="Strato" icon="server" href="/knowledge-base/domain-verification/strato">
     Verify your domain on Strato
+  </Card>
+  <Card title="Vercel" icon="triangle" href="/knowledge-base/domain-verification/vercel">
+    Verify your domain on Vercel
   </Card>
 </CardGroup>
 
@@ -121,7 +139,7 @@ To receive emails at your domain, add MX records:
 
 After adding DNS records, verification typically takes:
 
-- **Cloudflare, Vercel**: 1-5 minutes (fast propagation)
+- **Cloudflare, Vercel, Netlify**: 1-5 minutes (fast propagation)
 - **Most providers**: 15 minutes to 1 hour
 - **Slow propagation**: Up to 48 hours in rare cases
 

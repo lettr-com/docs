@@ -1,0 +1,228 @@
+---
+title: Google Cloud DNS
+description: "How to verify your domain on Google Cloud DNS"
+---
+
+# Verify Your Domain on Google Cloud DNS
+
+This guide walks you through adding DNS records for Lettr using Google Cloud DNS.
+
+<Info>
+  This guide is for Google Cloud DNS. If you registered your domain through Google Domains (now part of Squarespace), see the [Squarespace guide](/knowledge-base/domain-verification/squarespace) instead.
+</Info>
+
+## Prerequisites
+
+- A managed zone configured in Google Cloud DNS
+- Access to Google Cloud Console
+- A Lettr account with your domain added
+
+## Step 1: Add Domain to Lettr
+
+1. Log in to your [Lettr dashboard](https://app.lettr.com)
+2. Navigate to **Domains**
+3. Click **Add Domain**
+4. Enter your domain name and select the domain type
+5. Copy the DNS records provided
+
+## Step 2: Access Google Cloud DNS
+
+1. Log in to the [Google Cloud Console](https://console.cloud.google.com)
+2. Navigate to **Network services** → **Cloud DNS**
+3. Select your managed zone
+4. You'll see the DNS records management page
+
+## Step 3: Sending Domain Setup
+
+Choose the setup that matches your needs:
+
+### Option A: Subdomain (Recommended)
+
+Use a subdomain like `sender.example.com` for sending emails.
+
+#### Bounce Domain CNAME
+
+1. Click **Add record set**
+2. Enter `sender` in the **DNS Name** field (or your chosen subdomain)
+3. Select **CNAME** from the **Resource Record Type** dropdown
+4. Enter `sparkpostmail.com.` in the **Canonical name** field (note the trailing period)
+5. Click **Create**
+
+| Google Cloud | Lettr | Example Value |
+|--------------|-------|---------------|
+| DNS Name | Host | `sender` |
+| Resource Record Type | Type | `CNAME` |
+| Canonical name | Value | `sparkpostmail.com.` |
+
+<Note>
+  Google Cloud DNS requires a trailing period (`.`) on CNAME targets.
+</Note>
+
+### Option B: Primary Domain
+
+Use your root domain with TXT SPF verification.
+
+#### SPF Record
+
+1. Click **Add record set**
+2. Leave the **DNS Name** field empty (for root domain)
+3. Select **TXT** from the **Resource Record Type** dropdown
+4. Enter `"v=spf1 include:_spf.sparkpostmail.com ~all"` in the **TXT data** field (include quotes)
+5. Click **Create**
+
+| Google Cloud | Lettr | Example Value |
+|--------------|-------|---------------|
+| DNS Name | Host | (empty) |
+| Resource Record Type | Type | `TXT` |
+| TXT data | Value | `"v=spf1 include:_spf.sparkpostmail.com ~all"` |
+
+<Warning>
+  If you already have an SPF record, edit it and add `include:_spf.sparkpostmail.com` before the `~all` or `-all` mechanism.
+</Warning>
+
+### DKIM Record (Required for both options)
+
+1. Click **Add record set**
+2. Enter the DKIM hostname from your Lettr dashboard (e.g., `scph0226._domainkey.sender`)
+3. Select **TXT** from the **Resource Record Type** dropdown
+4. Enter the DKIM value from your dashboard, wrapped in quotes
+5. Click **Create**
+
+| Google Cloud | Lettr | Example Value |
+|--------------|-------|---------------|
+| DNS Name | Host | `scph0226._domainkey.sender` |
+| Resource Record Type | Type | `TXT` |
+| TXT data | Value | `"v=DKIM1;k=rsa;h=sha256;p=MIGf..."` |
+
+<Info>
+  For long DKIM values, you may need to split them into multiple quoted strings (e.g., `"part1" "part2"`). Google Cloud DNS handles this for values over 255 characters.
+</Info>
+
+### DMARC Record (Required for both options)
+
+1. Click **Add record set**
+2. Enter `_dmarc.sender` (subdomain) or `_dmarc` (root domain) in the **DNS Name** field
+3. Select **TXT** from the **Resource Record Type** dropdown
+4. Enter `"v=DMARC1;p=none;"` in the **TXT data** field
+5. Click **Create**
+
+| Google Cloud | Lettr | Example Value |
+|--------------|-------|---------------|
+| DNS Name | Host | `_dmarc.sender` or `_dmarc` |
+| Resource Record Type | Type | `TXT` |
+| TXT data | Value | `"v=DMARC1;p=none;"` |
+
+## Step 4: Tracking Domain Setup
+
+Custom tracking domains require two CNAME records.
+
+### SSL Certificate CNAME
+
+1. Click **Add record set**
+2. Enter the SSL verification hostname from your dashboard (e.g., `_acme-challenge.click.sender`)
+3. Select **CNAME** from the **Resource Record Type** dropdown
+4. Enter the SSL verification value from your dashboard (with trailing period)
+5. Click **Create**
+
+### Traffic CNAME
+
+1. Click **Add record set**
+2. Enter your tracking subdomain (e.g., `click.sender`)
+3. Select **CNAME** from the **Resource Record Type** dropdown
+4. Enter `proxy.lettr-tracking.com.` in the **Canonical name** field
+5. Click **Create**
+
+| Google Cloud | Lettr | Example Value |
+|--------------|-------|---------------|
+| DNS Name | Host | `click.sender` |
+| Resource Record Type | Type | `CNAME` |
+| Canonical name | Value | `proxy.lettr-tracking.com.` |
+
+<Tip>
+  SSL certificates are automatically generated and renewed by Lettr.
+</Tip>
+
+## Step 5: Inbound Domain Setup
+
+To receive emails at your domain, add MX records.
+
+1. Click **Add record set**
+2. Enter `inbound` in the **DNS Name** field (or your chosen subdomain)
+3. Select **MX** from the **Resource Record Type** dropdown
+4. Add the following mail servers:
+   - Priority: `10`, Mail server: `rx1.sparkpostmail.com.`
+   - Priority: `10`, Mail server: `rx2.sparkpostmail.com.`
+   - Priority: `10`, Mail server: `rx3.sparkpostmail.com.`
+5. Click **Create**
+
+| Google Cloud DNS Name | Priority | Mail Server |
+|-----------------------|----------|-------------|
+| `inbound` | 10 | `rx1.sparkpostmail.com.` |
+| `inbound` | 10 | `rx2.sparkpostmail.com.` |
+| `inbound` | 10 | `rx3.sparkpostmail.com.` |
+
+<Warning>
+  Use a subdomain like `inbound.example.com` for receiving emails. Using your root domain will route ALL email to Lettr.
+</Warning>
+
+## Step 6: Complete Verification
+
+1. Return to your [Lettr dashboard](https://app.lettr.com)
+2. Navigate to **Domains**
+3. Click **Verify** next to your domain
+4. Wait for DNS propagation (usually 5-15 minutes for Google Cloud DNS)
+
+## Using gcloud CLI
+
+You can also add records using the gcloud CLI:
+
+```bash
+# Add CNAME record for subdomain
+gcloud dns record-sets create sender.example.com. \
+  --zone="my-zone" \
+  --type="CNAME" \
+  --ttl="300" \
+  --rrdatas="sparkpostmail.com."
+
+# Add TXT record for DKIM
+gcloud dns record-sets create scph0226._domainkey.sender.example.com. \
+  --zone="my-zone" \
+  --type="TXT" \
+  --ttl="300" \
+  --rrdatas="\"v=DKIM1;k=rsa;h=sha256;p=MIGf...\""
+
+# Add MX records for inbound
+gcloud dns record-sets create inbound.example.com. \
+  --zone="my-zone" \
+  --type="MX" \
+  --ttl="300" \
+  --rrdatas="10 rx1.sparkpostmail.com.","10 rx2.sparkpostmail.com.","10 rx3.sparkpostmail.com."
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Missing trailing period">
+    Google Cloud DNS requires a trailing period (`.`) for fully qualified domain names in CNAME and MX values. Add it if records aren't resolving correctly.
+  </Accordion>
+  <Accordion title="TXT record formatting">
+    TXT values should be wrapped in quotes. For long values, split into multiple quoted strings: `"part1" "part2"`.
+  </Accordion>
+  <Accordion title="Permission errors">
+    Ensure you have the **DNS Administrator** role or equivalent permissions on the project containing your DNS zone.
+  </Accordion>
+  <Accordion title="Records not propagating">
+    Check that your domain's nameservers are pointing to Google Cloud DNS. You can find your zone's nameservers in the zone details.
+  </Accordion>
+</AccordionGroup>
+
+## Need Help?
+
+<CardGroup cols={2}>
+  <Card title="Domain Verification Overview" icon="globe" href="/knowledge-base/domain-verification/introduction">
+    General DNS setup guide
+  </Card>
+  <Card title="Contact Support" icon="headset" href="mailto:support@lettr.com">
+    Get help from our team
+  </Card>
+</CardGroup>
