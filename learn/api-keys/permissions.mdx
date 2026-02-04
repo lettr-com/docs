@@ -1,0 +1,152 @@
+---
+title: Permissions
+description: "Configure API key permissions"
+---
+
+# API Key Permissions
+
+Control what each API key can access with granular permissions.
+
+## Permission Types
+
+### Email Permissions
+
+| Permission | Description |
+|------------|-------------|
+| `emails:send` | Send emails |
+| `emails:read` | Read email details and status |
+| `emails:list` | List emails |
+| `emails:delete` | Cancel scheduled emails |
+
+### Domain Permissions
+
+| Permission | Description |
+|------------|-------------|
+| `domains:create` | Add new domains |
+| `domains:read` | View domain details |
+| `domains:update` | Modify domain settings |
+| `domains:delete` | Remove domains |
+
+### API Key Permissions
+
+| Permission | Description |
+|------------|-------------|
+| `api-keys:create` | Create new API keys |
+| `api-keys:read` | View API key details |
+| `api-keys:delete` | Revoke API keys |
+
+### Webhook Permissions
+
+| Permission | Description |
+|------------|-------------|
+| `webhooks:create` | Create webhooks |
+| `webhooks:read` | View webhook details |
+| `webhooks:update` | Modify webhooks |
+| `webhooks:delete` | Remove webhooks |
+
+### Analytics Permissions
+
+| Permission | Description |
+|------------|-------------|
+| `analytics:read` | View analytics and reports |
+
+## Creating Restricted Keys
+
+```javascript
+// Send-only key for your application
+const sendOnlyKey = await lettr.apiKeys.create({
+  name: 'App Send Only',
+  permissions: ['emails:send']
+});
+
+// Read-only key for analytics dashboard
+const analyticsKey = await lettr.apiKeys.create({
+  name: 'Analytics Dashboard',
+  permissions: ['emails:read', 'emails:list', 'analytics:read']
+});
+
+// Full access for admin operations
+const adminKey = await lettr.apiKeys.create({
+  name: 'Admin Key',
+  permissions: ['*'] // All permissions
+});
+```
+
+## Permission Shortcuts
+
+| Shortcut | Expands To |
+|----------|------------|
+| `*` | All permissions |
+| `emails:*` | All email permissions |
+| `domains:*` | All domain permissions |
+
+## Domain Restrictions
+
+Limit keys to specific domains:
+
+```javascript
+const key = await lettr.apiKeys.create({
+  name: 'Marketing Only',
+  permissions: ['emails:send'],
+  domainRestrictions: ['marketing.example.com']
+});
+
+// This key can only send from marketing.example.com
+```
+
+## IP Restrictions
+
+Restrict keys to specific IP addresses:
+
+```javascript
+const key = await lettr.apiKeys.create({
+  name: 'Production Server',
+  permissions: ['emails:send', 'emails:read'],
+  ipRestrictions: [
+    '203.0.113.50',      // Single IP
+    '198.51.100.0/24'    // CIDR range
+  ]
+});
+```
+
+## Rate Limits per Key
+
+Set custom rate limits:
+
+```javascript
+const key = await lettr.apiKeys.create({
+  name: 'Limited Key',
+  permissions: ['emails:send'],
+  rateLimit: {
+    requests: 100,
+    period: 'minute'
+  }
+});
+```
+
+## Viewing Key Permissions
+
+```javascript
+const key = await lettr.apiKeys.get('key_123');
+
+console.log({
+  permissions: key.permissions,
+  domainRestrictions: key.domainRestrictions,
+  ipRestrictions: key.ipRestrictions,
+  rateLimit: key.rateLimit
+});
+```
+
+## Permission Errors
+
+When a key lacks required permissions:
+
+```json
+{
+  "error": {
+    "code": "forbidden",
+    "message": "API key lacks required permission: emails:send"
+  }
+}
+```
+
