@@ -1,0 +1,318 @@
+---
+title: Email Editor Best Practices
+description: A comprehensive best practices guide for new Topol Email editor users.
+---
+
+# Best Practices for New Topol Email Editor Users
+
+This guide is for new Topol Email editor users who want a clear, hands-on feel for how the editor works—what the main features do, how they connect, and what to watch out for so you don’t run into the usual headaches. 
+
+---
+
+## Basic Building Blocks: Structures and Content Blocks
+
+Email templates are built from **structures** and **content blocks**. Understanding the relationship between these two concepts makes the editor much easier to use.
+
+A **structure** defines the layout. It controls how many columns appear in a row and how content behaves on desktop and mobile devices. A structure can have one, two, three, or four columns. You add a structure by opening the **Structure** tab and dragging a structure into the template.
+
+<img src="/images/editor-structures.png" alt="Create Sending Domain button in Lettr" />
+
+**Content blocks** live inside structures. Content blocks include text, image, button, divider, spacer, social icons, video, GIF, product blocks, and custom code. You add content by opening the **Content** tab and dragging a block into a column inside a structure.
+
+<img src="/images/editor-blocks.png" alt="Create Sending Domain button in Lettr" />
+
+We recommend building templates from **multiple structures**, rather than placing everything into one or two large ones. This helps divide content clearly and prevents layout issues, especially in the mobile responsive view.
+
+<Tip>
+Structures behave similarly to tables: if you want content to stack neatly on smaller screens, dividing it into separate structures is often the cleanest solution.
+</Tip>
+
+
+
+---
+
+
+
+## Working with Structures
+
+When you click inside any structure, a border around it will appear with multiple action icons. Use them to drag the structure to move it, duplicate it, save it and more.
+
+<img src="/images/editor-structure-actions.png" alt="Create Sending Domain button in Lettr" />
+
+In the left-side panel, structure-level settings allow you to control the number of columns, background color or background image, structure width, border style, layout (narrow or stretched), top and bottom margins, and column properties.
+
+<img src="/images/editor-structure-properties.png" alt="Create Sending Domain button in Lettr" />
+
+<Tip>
+A good practice is to be consistent about what represents a “section.” If your hero area is one structure, keep it that way. Avoid spreading a single conceptual section across multiple structures unless you need different background or spacing rules. This makes templates easier to edit later, especially for teammates.
+</Tip>
+
+---
+
+## Working with Columns
+
+Each structure can hold up to 8 columns, and each column can hold as many content blocks as needed. The number of columns in a structure can be changed at any time by selecting the structure and adjusting the number of columns in the left-side panel.
+
+<img src="/images/editor-columns.png" alt="Create Sending Domain button in Lettr" />
+
+Columns have their own properties as well. You can adjust the background color, border, margin or padding and more for each column independently. To see these options, select the structure that holds these columns and scroll to the bottom of the left-side panel to see Columns properties section.
+
+<img src="/images/editor-column-props.png" alt="Create Sending Domain button in Lettr" />
+
+When working with columns, it is important to remember that they stack on top of each other on mobile by default. If you want columns to appear next to each other on mobile as well, switch off the "Stack columns on mobile" switch.
+
+<img src="/images/editor-column-stack.png" alt="Create Sending Domain button in Lettr" />
+
+---
+
+## Working with Content Blocks
+
+There are 10 types of Basic Content Blocks, each designed for displaying a specific type of content. Similar to Structures, you can perform multiple actions directly through the buttons on the border of each block.
+
+<img src="/images/editor-block-controls.png" alt="Create Sending Domain button in Lettr" />
+
+Let’s learn how to work with them.
+
+### Text blocks
+
+Text editing happens directly in the template, with all the formatting controls being available right in the toolbar that appears above an active Text block. These settings initially inherit the the global styles defined in the Settings tab, but can be adjusted.
+
+<img src="/images/editor-text-block.png" alt="Create Sending Domain button in Lettr" />
+
+<Tip>
+Text blocks should be clear, easy to scan, and consistent throughout the template. Use short paragraphs and simple sentences so readers can quickly understand the message, especially on mobile devices.
+</Tip>
+
+Toolbar also gives access to all defined Merge tags. Select the tag from a dropdown and it will be inserted at the cursor position. When pasted, they inherit the formatting already applied in the template.
+
+<img src="/images/editor-text-mt.png" alt="Create Sending Domain button in Lettr" />
+
+<Tip>
+Always check how Merge tags appear in Preview Mode to ensure they read naturally and do not break formatting.
+</Tip>
+
+### Images
+
+Images should support the message of the email, not overwhelm it. Use images intentionally and avoid adding decorative visuals that do not add value. To insert an image to your template, drag the Image block into a Structure. This will reserve that space for an image, but no image will be displayed yet.
+
+<img src="/images/editor-image-drop.png" alt="Create Sending Domain button in Lettr" />
+
+You can upload images directly from your computer by dragging them into the Image block area, or by clicking it to open the editor's File Manager. There, you can either select any of your previously uploaded images, or upload a new one. File Manager also allows you to create folders to keep your library organized, or search for images by name.
+
+<img src="/images/editor-fm.png" alt="Create Sending Domain button in Lettr" />
+
+<Tip>
+If you have no suitable image available, you can search for it on Pexels image library directly from the File Manager.
+</Tip>
+
+
+<Info>
+Images uploaded to File Manager are available team-wide, so they can be reused across templates. They are stored in your team's [Storage Domain](/knowledge-base/dns-guides/storage-domains), so they are served from a custom domain you specify.
+</Info>
+
+When you select an Image block, the left-side panel allows you to adjust its alignment, size, and margins. You can also add a link to the image, where user will be redirected when image is clicked.
+
+<img src="/images/editor-image-props.png" alt="Create Sending Domain button in Lettr" />
+
+<Tip>
+Always include alternative text for images. Many email clients block images by default, and alt text ensures the message remains understandable even when images are not displayed. Alt text should describe the purpose of the image rather than its visual details.
+</Tip>
+
+Keep image files optimized for email. Use JPEG or PNG formats, keep file sizes under 2 MB, and avoid widths greater than 600 pixels to ensure proper rendering across email clients. Large or unoptimized images increase loading time and can negatively affect both user experience and data usage.
+
+<Tip>
+If you need to adjust the image itself, you can do so directly in the email editor. Click the Edit button to open the integrated Image editor. From there, you can crop, resize, mask, and adjust other properties.
+</Tip>
+
+### GIFs
+
+GIFs can add motion and draw attention, but they should be used sparingly and with purpose. Short, subtle animations work best and help avoid distractions.
+
+Working with GIFs is similar to working with images, but instead of uploading them to a File Manager, you have to link a GIF directly from an external source. Other than that, you can adjust most of the same properties as with images in the left-side panel.
+
+<img src="/images/editor-gif-props.png" alt="Create Sending Domain button in Lettr" />
+
+<Tip>
+You can search for a gif on Giphy directly from the editor, speeding up your workflow.
+</Tip>
+
+
+
+<Tip>
+GIFs can increase email size, so use them only when they add significant value to the message. Large GIFs can slow down rendering and increase data usage, especially on mobile.
+</Tip>
+
+### Buttons
+
+Buttons should always have a clear purpose and guide readers toward one specific action. Use short, direct text that clearly describes what will happen after the click, such as “Shop now” or “Read more”. In most cases, one to three words are enough.
+
+To make buttons work this way, you have to add a link to the button. You can do this by selecting the button and adding the link in the left-side panel.
+
+<img src="/images/editor-buttons.png" alt="Create Sending Domain button in Lettr" />
+
+<Tip>
+Avoid vague labels like “Click here!”, which do not clearly communicate value or intent.
+</Tip>
+
+Make sure buttons are easy to tap on mobile devices by using enough padding and spacing around them. Buttons should stand out visually from the surrounding content, using colors that contrast well with both the background and the button text.
+
+<Tip>
+For consistency and speed, define your main button style in the Settings tab instead of styling each button individually.
+</Tip>
+
+### Spacers
+
+Spacer blocks are used to control vertical spacing between elements in a template. They help create visual breathing room and improve readability without affecting the content itself.
+
+<img src="/images/editor-spacer.png" alt="Create Sending Domain button in Lettr" />
+
+<Tip>
+To speed up the workflow, you can simply clik inside the Spacer block and drag up or down to adjust the height.
+</Tip>
+
+Spacer blocks should be used to control vertical spacing in a clean and predictable way. They are the preferred method for adding space between elements such as text, images, buttons, or entire sections, and should be used instead of empty text blocks or repeated line breaks.
+
+<Tip>
+Avoid using excessively large spacers, as too much empty space can push important content too far down, especially on mobile devices.
+</Tip>
+
+### Dividers
+
+Divider blocks are used to visually separate sections and help structure the content of an email. They provide a clear visual break between different parts of a template without adding extra text.
+
+When selected, the left-side panel allows you to adjust the divider's color, thickness, style, margin, and height.
+
+<img src="/images/editor-divider.png" alt="Create Sending Domain button in Lettr" />
+
+Keep divider styles simple. Thin lines with subtle colors usually look more professional and work better across different email clients.
+
+<Tip>
+As with spacers, preview the template on both desktop and mobile to ensure dividers do not appear too dominant or too subtle on smaller screens.
+</Tip>
+
+### Social
+
+Social blocks are used to link recipients to your brand’s social media profiles on networks such as Facebook, Instagram, X (Twitter), LinkedIn, or custom URLs. Each icon can be enabled or disabled individually, reordered, and linked to the correct destination.
+
+<img src="/images/editor-social.png" alt="Create Sending Domain button in Lettr" />
+
+Keep social icons visually consistent across templates. Use the same icon style, size, and alignment so they feel like a natural part of the design rather than an afterthought.
+
+<Tip>
+Social blocks are most commonly placed in the footer, but they can also work well near the end of a message when aligned with the content flow.
+</Tip>
+
+
+### Video
+
+The Video block lets you include video content in a safe, email-friendly way. Because most email clients do not support embedded video playback, the Video block displays a clickable thumbnail image that links to the video.
+
+<img src="/images/editor-video.png" alt="Create Sending Domain button in Lettr" />
+
+You can paste a video URL (for example from YouTube or Vimeo), and the editor automatically generates a preview image. You can then adjust alignment, size, margins, and the link destination.
+
+When clicked, the video opens in the recipient’s browser or video platform app.
+
+<Tip>
+Keep the video placement intentional and close to related text so recipients understand what they will see after clicking.
+</Tip>
+
+### HTML
+
+HTML blocks allow you to insert custom HTML code directly into your template. This is useful for advanced layouts, custom tracking elements, or integrations that cannot be achieved with standard content blocks.
+
+<img src="/images/editor-html.png" alt="Create Sending Domain button in Lettr" />
+
+<Warning>
+HTML blocks should be used carefully. Scripts and complex interactive elements are not supported by most email clients and may break rendering or affect deliverability.
+</Warning>
+
+Our integrated HTML editor comes with a spell checker that helps you write valid HTML. Still, use HTML blocks carefully and only when you fully understand the code being added. When in doubt, rely on native content blocks instead of custom HTML.
+
+### Product
+
+Product blocks are designed for e-commerce emails and work together with Product Feeds. A Product block represents a complete product unit, including image, name, description, price, and button.
+
+To use a Product block, drag it into a structure and select a product feed and product in the Product block properties within the left-side panel.
+
+<img src="/images/editor-product-base.png" alt="Create Sending Domain button in Lettr" />
+
+Once connected, the block automatically pulls product data from the XML feed.
+
+<img src="/images/editor-product.png" alt="Create Sending Domain button in Lettr" />
+
+Product blocks behave as single units. You can reorder or hide elements within the block using layout options, but you cannot add additional content blocks inside a Product block.
+
+<Tip>
+If you need extra text or visuals near products, place them in a separate structure above or below the Product block.
+</Tip>
+
+## Ideal Workflow Example
+
+A reliable workflow that works for most templates looks like this:
+
+Place structures for your layout. Do not worry about their content yet. Focus only on creating the main skeleton of the template, such as the header area, hero section, main content sections, product areas, and footer.
+
+<Tip>
+If you want to move faster, you can start with a pre-made structure and customize it to match your design.
+</Tip>
+
+Open the **Settings** tab and define your global styles. This includes background color, block color, button color, link color, text styles, spacing and much more.
+
+<img src="/images/editor-settings.png" alt="Create Sending Domain button in Lettr" />
+
+<Tip>
+Setting these values early reduces the amount of manual styling later.
+</Tip>
+
+Add content blocks. Drag text, images, buttons, dividers, spacers, social icons, videos, GIFs, or product blocks into the structures you prepared.
+
+<Info>
+This workflow reduces rework. When global styles are defined first, individual blocks require fewer adjustments, and the final template looks more consistent.
+</Info>
+
+## Top Bar Options
+
+<img src="/images/editor-topbar.png" alt="Create Sending Domain button in Lettr" />
+
+Preview mode and testing are essential steps before sending any email template. They help you verify that the layout, content, and links behave as expected across different screen sizes and prevent issues that are difficult to spot while editing.
+
+Use Preview mode to switch between desktop and mobile views and review the overall structure of the template. Pay close attention to spacing, content order, image scaling, and button placement, especially on mobile devices where elements stack vertically.
+
+Send test emails regularly, not just at the final stage. Viewing the email in a real inbox helps you catch issues related to fonts, spacing, image loading, and contrast that may not be obvious inside the editor. Always click through buttons, images, and links in test emails to confirm they lead to the correct destinations.
+
+When using dynamic content such as merge tags, product data, or conditional sections, preview and test carefully to ensure the content reads naturally and appears as intended. Treat preview and testing as a routine part of building templates, not a final checklist item, as early testing saves time and prevents last-minute corrections.
+
+---
+
+## 13. Common mistakes and how to avoid them
+
+:::warning
+Avoid placing all content into one structure. Use multiple structures to improve mobile behavior.
+:::
+
+:::warning
+Avoid styling everything manually instead of using the Settings panel.
+:::
+
+:::warning
+Avoid oversized images and heavy GIFs.
+:::
+
+:::warning
+Avoid breaking Product blocks by forcing extra content inside them.
+:::
+
+---
+
+## 14. A final quality check before export
+
+Before exporting, preview both desktop and mobile views, send a test email to yourself, and confirm spacing, images, and buttons behave as expected. For product emails, confirm that products stack correctly on mobile devices.
+
+---
+
+## Final advice
+
+Topol PRO works best when you think structurally. Start with layouts, define styles early, reuse saved blocks, and preview often. If something feels difficult, there is usually a simpler, built-in way to achieve it.
+
+Once you are comfortable with structures, content blocks, and settings, creating professional, responsive email templates becomes fast, repeatable, and reliable.
