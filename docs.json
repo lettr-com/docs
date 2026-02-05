@@ -344,9 +344,22 @@
             "group": "DNS Guides",
             "pages": [
               "knowledge-base/dns-guides/aws-route53",
+              "knowledge-base/dns-guides/azure-dns",
               "knowledge-base/dns-guides/cloudflare",
+              "knowledge-base/dns-guides/digitalocean",
+              "knowledge-base/dns-guides/dreamhost",
+              "knowledge-base/dns-guides/dynadot",
+              "knowledge-base/dns-guides/gandi",
               "knowledge-base/dns-guides/godaddy",
+              "knowledge-base/dns-guides/google-cloud-dns",
               "knowledge-base/dns-guides/hetzner",
+              "knowledge-base/dns-guides/hostinger",
+              "knowledge-base/dns-guides/ionos",
+              "knowledge-base/dns-guides/namecheap",
+              "knowledge-base/dns-guides/netlify",
+              "knowledge-base/dns-guides/porkbun",
+              "knowledge-base/dns-guides/squarespace",
+              "knowledge-base/dns-guides/strato",
               "knowledge-base/dns-guides/vercel"
             ]
           },
@@ -380,6 +393,7 @@
           {
             "group": "Best Practices",
             "pages": [
+              "knowledge-base/best-practices/email-editor-best-practices",
               "knowledge-base/best-practices/deliverability",
               "knowledge-base/best-practices/sending-reputation",
               "knowledge-base/best-practices/list-hygiene",
