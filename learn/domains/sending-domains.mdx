@@ -58,7 +58,7 @@ Create a sending domain:
 
 ```bash
 curl -X POST https://app.lettr.com/api/domains \
-  -H "Authorization: Bearer le_xxxxxxxxxxxx" \
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxx" \
   -H "Content-Type: application/json" \
   -d '{
     "domain": "example.com"
@@ -138,7 +138,7 @@ After configuring DNS records, verify your domain:
 
 ```bash
 curl -X POST https://app.lettr.com/api/domains/example.com/verify \
-  -H "Authorization: Bearer le_xxxxxxxxxxxx"
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxx"
 ```
 
 Response:
@@ -189,7 +189,7 @@ Sending domains also have an approval status that determines whether you can sen
 
 ```bash
 curl https://app.lettr.com/api/domains/example.com \
-  -H "Authorization: Bearer le_xxxxxxxxxxxx"
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxx"
 ```
 
 ```json
@@ -214,7 +214,7 @@ Once verified, you can send emails from any address on your domain:
 
 ```bash
 curl -X POST https://app.lettr.com/api/emails \
-  -H "Authorization: Bearer le_xxxxxxxxxxxx" \
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxx" \
   -H "Content-Type: application/json" \
   -d '{
     "from": "hello@example.com",
@@ -230,7 +230,7 @@ Customize the sender display name:
 
 ```bash
 curl -X POST https://app.lettr.com/api/emails \
-  -H "Authorization: Bearer le_xxxxxxxxxxxx" \
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxx" \
   -H "Content-Type: application/json" \
   -d '{
     "from": "hello@example.com",
@@ -272,7 +272,7 @@ Link a [tracking domain](/learn/domains/tracking-domains) to your sending domain
 
 ```bash
 curl -X PATCH https://app.lettr.com/api/domains/example.com \
-  -H "Authorization: Bearer le_xxxxxxxxxxxx" \
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxx" \
   -H "Content-Type: application/json" \
   -d '{
     "tracking_domain": "links.example.com"
@@ -283,7 +283,7 @@ curl -X PATCH https://app.lettr.com/api/domains/example.com \
 
 ```bash
 curl https://app.lettr.com/api/domains \
-  -H "Authorization: Bearer le_xxxxxxxxxxxx"
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxx"
 ```
 
 ```json
@@ -332,7 +332,7 @@ curl https://app.lettr.com/api/domains \
 
 ```bash
 curl -X DELETE https://app.lettr.com/api/domains/example.com \
-  -H "Authorization: Bearer le_xxxxxxxxxxxx"
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxx"
 ```
 
 ## Troubleshooting

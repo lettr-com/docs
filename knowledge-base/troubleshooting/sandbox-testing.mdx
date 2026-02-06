@@ -30,7 +30,7 @@ When integrating with the API, send test emails to addresses you control to veri
 
 ```bash
 curl -X POST https://app.lettr.com/api/emails \
-  -H "Authorization: Bearer le_xxxxxxxxxxxx" \
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxx" \
   -H "Content-Type: application/json" \
   -d '{
     "from": "you@yourdomain.com",
@@ -55,7 +55,7 @@ Use this ID to check the email's delivery status:
 
 ```bash
 curl https://app.lettr.com/api/emails/em_xxxxxxxxxxxxxx \
-  -H "Authorization: Bearer le_xxxxxxxxxxxx"
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxx"
 ```
 
 The response includes the current status and event history:

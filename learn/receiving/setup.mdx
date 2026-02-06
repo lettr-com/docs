@@ -47,7 +47,7 @@ Before setting up email receiving, ensure you have:
 const response = await fetch('https://app.lettr.com/api/domains/inbound', {
   method: 'POST',
   headers: {
-    'Authorization': 'Bearer le_xxxxxxxxxxxx',
+    'Authorization': 'Bearer lttr_xxxxxxxxxxxx',
     'Content-Type': 'application/json'
   },
   body: JSON.stringify({
@@ -121,7 +121,7 @@ const response = await fetch(
   {
     method: 'POST',
     headers: {
-      'Authorization': 'Bearer le_xxxxxxxxxxxx'
+      'Authorization': 'Bearer lttr_xxxxxxxxxxxx'
     }
   }
 );

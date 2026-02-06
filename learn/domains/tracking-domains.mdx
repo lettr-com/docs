@@ -64,7 +64,7 @@ Create a tracking domain:
 
 ```bash
 curl -X POST https://app.lettr.com/api/domains/tracking \
-  -H "Authorization: Bearer le_xxxxxxxxxxxx" \
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxx" \
   -H "Content-Type: application/json" \
   -d '{
     "domain": "links.example.com"
@@ -172,7 +172,7 @@ SSL provisioning typically completes within a few minutes after DNS verification
 
 ```bash
 curl -X POST https://app.lettr.com/api/domains/tracking/links.example.com/verify \
-  -H "Authorization: Bearer le_xxxxxxxxxxxx"
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxx"
 ```
 
 Response:
@@ -213,7 +213,7 @@ Associate your tracking domain with a sending domain so all emails from that dom
 
 ```bash
 curl -X PATCH https://app.lettr.com/api/domains/example.com \
-  -H "Authorization: Bearer le_xxxxxxxxxxxx" \
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxx" \
   -H "Content-Type: application/json" \
   -d '{
     "tracking_domain": "links.example.com"
@@ -264,7 +264,7 @@ Enable tracking when sending emails:
 
 ```bash
 curl -X POST https://app.lettr.com/api/emails \
-  -H "Authorization: Bearer le_xxxxxxxxxxxx" \
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxx" \
   -H "Content-Type: application/json" \
   -d '{
     "from": "hello@example.com",
@@ -284,7 +284,7 @@ curl -X POST https://app.lettr.com/api/emails \
 
 ```bash
 curl https://app.lettr.com/api/domains/tracking/links.example.com \
-  -H "Authorization: Bearer le_xxxxxxxxxxxx"
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxx"
 ```
 
 ```json
@@ -309,7 +309,7 @@ curl https://app.lettr.com/api/domains/tracking/links.example.com \
 
 ```bash
 curl https://app.lettr.com/api/domains/tracking \
-  -H "Authorization: Bearer le_xxxxxxxxxxxx"
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxx"
 ```
 
 ```json
@@ -350,7 +350,7 @@ curl https://app.lettr.com/api/domains/tracking \
 
 ```bash
 curl -X DELETE https://app.lettr.com/api/domains/tracking/links.example.com \
-  -H "Authorization: Bearer le_xxxxxxxxxxxx"
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxx"
 ```
 
 ## Troubleshooting

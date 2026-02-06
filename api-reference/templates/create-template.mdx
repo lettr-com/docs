@@ -2,3 +2,7 @@
 title: Create Template
 openapi: POST /templates
 ---
+
+Creates a new email template with either HTML or JSON content. Provide `html` for raw HTML templates or `json` for visual editor (Topol) templates — these fields are mutually exclusive.
+
+The template is automatically assigned a URL-friendly slug based on its name. You can optionally assign it to a specific project and folder using `project_id` and `folder_id`. If omitted, the template is added to your team's default project.

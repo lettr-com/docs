@@ -53,7 +53,7 @@ Create a sending domain:
 
 ```bash
 curl -X POST https://app.lettr.com/api/domains \
-  -H "Authorization: Bearer le_xxxxxxxxxxxx" \
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxx" \
   -H "Content-Type: application/json" \
   -d '{
     "domain": "example.com"
@@ -107,7 +107,7 @@ Check domain status via API:
 
 ```bash
 curl https://app.lettr.com/api/domains/example.com \
-  -H "Authorization: Bearer le_xxxxxxxxxxxx"
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxx"
 ```
 
 ```json
