@@ -71,7 +71,7 @@ const response = await fetch(
   {
     method: 'PATCH',
     headers: {
-      'Authorization': 'Bearer le_xxxxxxxxxxxx',
+      'Authorization': 'Bearer lttr_xxxxxxxxxxxx',
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
@@ -344,7 +344,7 @@ app.post('/api/report-spam', async (req, res) => {
   await fetch('https://app.lettr.com/api/inbound/report-spam', {
     method: 'POST',
     headers: {
-      'Authorization': 'Bearer le_xxxxxxxxxxxx',
+      'Authorization': 'Bearer lttr_xxxxxxxxxxxx',
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({ emailId })

@@ -30,7 +30,7 @@ This error means the API could not authenticate your request. You will receive a
     Every request must include the `Authorization` header with a valid Bearer token:
     ```bash
     curl https://app.lettr.com/api/domains \
-      -H "Authorization: Bearer le_xxxxxxxxxxxx"
+      -H "Authorization: Bearer lttr_xxxxxxxxxxxx"
     ```
     If the header is missing entirely, the API will reject the request with a 401 status.
   </Accordion>
@@ -95,7 +95,7 @@ Run a simple test request to confirm your key is valid and working:
 
 ```bash
 curl -i https://app.lettr.com/api/domains \
-  -H "Authorization: Bearer le_xxxxxxxxxxxx"
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxx"
 ```
 
 **If the key is valid**, you will receive an HTTP 200 response with your domain data.
@@ -122,13 +122,13 @@ All requests to the Lettr API must include the `Authorization` header with a Bea
 **GET request:**
 ```bash
 curl https://app.lettr.com/api/domains \
-  -H "Authorization: Bearer le_xxxxxxxxxxxx"
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxx"
 ```
 
 **POST request:**
 ```bash
 curl -X POST https://app.lettr.com/api/emails \
-  -H "Authorization: Bearer le_xxxxxxxxxxxx" \
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxx" \
   -H "Content-Type: application/json" \
   -d '{
     "from": "you@yourdomain.com",
@@ -151,12 +151,12 @@ Never hard-code API keys in your source code. Store them in environment variable
 **Using a `.env` file:**
 ```bash
 # .env
-LETTR_API_KEY=le_xxxxxxxxxxxx
+LETTR_API_KEY=lttr_xxxxxxxxxxxx
 ```
 
 **Exporting in your shell:**
 ```bash
-export LETTR_API_KEY=le_xxxxxxxxxxxx
+export LETTR_API_KEY=lttr_xxxxxxxxxxxx
 ```
 
 **Using the variable in a curl request:**

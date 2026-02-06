@@ -1,0 +1,8 @@
+---
+title: Delete Template
+openapi: DELETE /templates/{slug}
+---
+
+Permanently deletes a template and all of its versions. This action cannot be undone. Any future [Send Email](/api-reference/emails/send-email) calls referencing this template's slug will fail.
+
+Use the `project_id` query parameter if you have templates with the same slug across different projects.

@@ -13,7 +13,7 @@ Retrieve a paginated list of emails sent from your account:
 
 ```bash
 curl -X GET "https://app.lettr.com/api/emails" \
-  -H "Authorization: Bearer le_xxxxxxxxxxxx"
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxx"
 ```
 
 ### Query Parameters
@@ -67,7 +67,7 @@ Retrieve details for a specific email using its request ID:
 
 ```bash
 curl -X GET "https://app.lettr.com/api/emails/7582751837467401763" \
-  -H "Authorization: Bearer le_xxxxxxxxxxxx"
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxx"
 ```
 
 The request ID is returned when you send an email:
@@ -162,7 +162,7 @@ const response = await fetch(
   `https://app.lettr.com/api/emails?from=${sevenDaysAgo.toISOString()}&to=${new Date().toISOString()}`,
   {
     headers: {
-      'Authorization': 'Bearer le_xxxxxxxxxxxx'
+      'Authorization': 'Bearer lttr_xxxxxxxxxxxx'
     }
   }
 );
@@ -176,7 +176,7 @@ Find all emails sent to a specific address:
 
 ```bash
 curl -X GET "https://app.lettr.com/api/emails?recipients=customer@example.com" \
-  -H "Authorization: Bearer le_xxxxxxxxxxxx"
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxx"
 ```
 
 ## Pagination
@@ -195,7 +195,7 @@ async function getAllEmails() {
 
     const response = await fetch(url, {
       headers: {
-        'Authorization': 'Bearer le_xxxxxxxxxxxx'
+        'Authorization': 'Bearer lttr_xxxxxxxxxxxx'
       }
     });
 
@@ -225,7 +225,7 @@ async function getCustomerEmailHistory(email) {
     `https://app.lettr.com/api/emails?recipients=${encodeURIComponent(email)}`,
     {
       headers: {
-        'Authorization': 'Bearer le_xxxxxxxxxxxx'
+        'Authorization': 'Bearer lttr_xxxxxxxxxxxx'
       }
     }
   );
@@ -245,7 +245,7 @@ async function checkEmailStatus(requestId) {
     `https://app.lettr.com/api/emails/${requestId}`,
     {
       headers: {
-        'Authorization': 'Bearer le_xxxxxxxxxxxx'
+        'Authorization': 'Bearer lttr_xxxxxxxxxxxx'
       }
     }
   );
@@ -277,7 +277,7 @@ async function getDailySendReport() {
     `https://app.lettr.com/api/emails?from=${today.toISOString()}&per_page=100`,
     {
       headers: {
-        'Authorization': 'Bearer le_xxxxxxxxxxxx'
+        'Authorization': 'Bearer lttr_xxxxxxxxxxxx'
       }
     }
   );

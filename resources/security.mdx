@@ -56,12 +56,12 @@ Always use API keys in headers, not URLs:
 // ✅ Good
 fetch('https://app.lettr.com/api/emails', {
   headers: {
-    'Authorization': 'Bearer le_xxxx'
+    'Authorization': 'Bearer lttr_xxxx'
   }
 });
 
 // ❌ Bad - API key in URL
-fetch('https://app.lettr.com/api/emails?api_key=le_xxxx');
+fetch('https://app.lettr.com/api/emails?api_key=lttr_xxxx');
 ```
 
 ### IP Allowlisting

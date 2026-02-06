@@ -41,14 +41,14 @@ When emails are not reaching your recipients, work through the steps below to id
 
     ```bash
     curl -X POST https://app.lettr.com/api/domains/yourdomain.com/verify \
-      -H "Authorization: Bearer le_xxxxxxxxxxxx"
+      -H "Authorization: Bearer lttr_xxxxxxxxxxxx"
     ```
 
     You can also check the current domain status:
 
     ```bash
     curl https://app.lettr.com/api/domains \
-      -H "Authorization: Bearer le_xxxxxxxxxxxx"
+      -H "Authorization: Bearer lttr_xxxxxxxxxxxx"
     ```
 
     <Note>
@@ -105,7 +105,7 @@ You can also retrieve an email by its ID through the API:
 
 ```bash
 curl https://app.lettr.com/api/emails/{id} \
-  -H "Authorization: Bearer le_xxxxxxxxxxxx"
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxx"
 ```
 
 The response will include the current delivery status and any error information associated with the message.
@@ -160,7 +160,7 @@ Send a test email to an address you control to confirm your setup is working end
 
 ```bash
 curl -X POST https://app.lettr.com/api/emails \
-  -H "Authorization: Bearer le_xxxxxxxxxxxx" \
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxx" \
   -H "Content-Type: application/json" \
   -d '{
     "from": "test@yourdomain.com",

@@ -48,7 +48,7 @@ Create an inbound domain:
 
 ```bash
 curl -X POST https://app.lettr.com/api/domains/inbound \
-  -H "Authorization: Bearer le_xxxxxxxxxxxx" \
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxx" \
   -H "Content-Type: application/json" \
   -d '{
     "domain": "mail.example.com"
@@ -120,7 +120,7 @@ Lower numbers = higher priority. If the primary server is unavailable, senders t
 
 ```bash
 curl -X POST https://app.lettr.com/api/domains/inbound/mail.example.com/verify \
-  -H "Authorization: Bearer le_xxxxxxxxxxxx"
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxx"
 ```
 
 Response:
@@ -203,7 +203,7 @@ Query inbound emails via the API:
 
 ```bash
 curl https://app.lettr.com/api/inbound \
-  -H "Authorization: Bearer le_xxxxxxxxxxxx"
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxx"
 ```
 
 ## Check Inbound Domain Status
@@ -212,7 +212,7 @@ curl https://app.lettr.com/api/inbound \
 
 ```bash
 curl https://app.lettr.com/api/domains/inbound/mail.example.com \
-  -H "Authorization: Bearer le_xxxxxxxxxxxx"
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxx"
 ```
 
 ```json
@@ -231,7 +231,7 @@ curl https://app.lettr.com/api/domains/inbound/mail.example.com \
 
 ```bash
 curl https://app.lettr.com/api/domains/inbound \
-  -H "Authorization: Bearer le_xxxxxxxxxxxx"
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxx"
 ```
 
 ```json
@@ -268,7 +268,7 @@ curl https://app.lettr.com/api/domains/inbound \
 
 ```bash
 curl -X DELETE https://app.lettr.com/api/domains/inbound/mail.example.com \
-  -H "Authorization: Bearer le_xxxxxxxxxxxx"
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxx"
 ```
 
 ## Use Cases

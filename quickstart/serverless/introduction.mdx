@@ -1,12 +1,69 @@
 ---
-title: Introduction
-description: "Deploy Lettr on serverless platforms"
+title: Serverless Quickstart
+description: "Send emails from serverless functions with Lettr"
 ---
 
 # Serverless Quickstart
 
-<Info>
-  This section is a work in progress. Check back soon for detailed serverless integration guides.
-</Info>
+Deploy email sending on serverless platforms. Lettr's REST API works seamlessly with serverless functions — no persistent connections or background workers needed.
 
-In the meantime, check out the [API Reference](/api-reference/introduction) to get started with the Lettr API.
+## Prerequisites
+
+Before you begin, make sure you have:
+
+1. A Lettr account — [sign up at app.lettr.com](https://app.lettr.com)
+2. An [API key](/learn/api-keys/introduction) created in your dashboard
+3. A [verified sending domain](/learn/domains/introduction)
+
+## Choose Your Platform
+
+<CardGroup cols={3}>
+  <Card title="AWS Lambda" icon="aws" href="/quickstart/serverless/aws-lambda">
+    Send emails from AWS Lambda functions
+  </Card>
+  <Card title="Vercel Functions" icon="bolt" href="/quickstart/serverless/vercel-functions">
+    Integrate with Vercel serverless functions
+  </Card>
+  <Card title="Cloudflare Workers" icon="cloudflare" href="/quickstart/serverless/cloudflare-workers">
+    Send emails from Cloudflare Workers
+  </Card>
+</CardGroup>
+
+## Why Lettr Works Well with Serverless
+
+Serverless functions are stateless and short-lived, which makes SMTP connections impractical. Lettr's HTTP API is ideal for serverless environments because:
+
+- **No connection pooling** — Each request is independent, no persistent SMTP connections needed
+- **Fast cold starts** — A single HTTP call is all it takes to send an email
+- **Built-in retries** — Lettr handles delivery retries, so your function doesn't need to
+- **Async by design** — Fire-and-forget sending keeps function execution time short
+
+## Generic Example
+
+On any serverless platform, sending email is a single HTTP POST:
+
+```javascript
+export async function handler(event) {
+  const response = await fetch('https://app.lettr.com/api/emails', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${process.env.LETTR_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      from: 'you@yourdomain.com',
+      to: ['recipient@example.com'],
+      subject: 'Hello from Lettr',
+      html: '<p>Sent from a serverless function!</p>',
+    }),
+  });
+
+  return { statusCode: response.status };
+}
+```
+
+<Tip>
+  Store your API key in environment variables or your platform's secrets manager — never hardcode it in your function source.
+</Tip>
+
+For the full API reference, see the [Send Email endpoint](/api-reference/emails/send-email).
