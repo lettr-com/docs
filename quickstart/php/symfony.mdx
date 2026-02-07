@@ -1,13 +1,26 @@
 ---
-title: Symfony
-description: "Integrate Lettr with Symfony"
+title: Send emails with Symfony
+description: "Send your first email using the Lettr Symfony Mailer bridge"
 ---
 
-# Symfony Integration
+# Send emails with Symfony
 
-Learn how to integrate Lettr with your Symfony application.
+Learn how to send your first email using the Lettr Symfony Mailer bridge.
 
-## Installation
+## Prerequisites
+
+To get the most out of this guide, you will need to:
+
+<CardGroup cols={2}>
+  <Card title="API Key" icon="key" href="https://app.lettr.com/api-keys">
+    Create an API key in the Lettr dashboard
+  </Card>
+  <Card title="Verified Domain" icon="globe" href="/learn/domains/sending-domains">
+    Add and verify your sending domain
+  </Card>
+</CardGroup>
+
+## 1. Install
 
 Install the Lettr Symfony bundle via Composer:
 
@@ -15,24 +28,30 @@ Install the Lettr Symfony bundle via Composer:
 composer require lettr/lettr-symfony
 ```
 
-## Configuration
+## 2. Configure the Mailer
 
-Add your API key to your `.env` file:
+In your `.env.local` (create it if needed), add your Lettr API key:
 
 ```env
 LETTR_API_KEY=your-api-key
 ```
 
-Configure the bundle in `config/packages/lettr.yaml`:
+The bundle registers a Lettr transport with Symfony Mailer. If the bundle exposes a DSN, you can alternatively set:
+
+```env
+MAILER_DSN=lettr+api://%env(LETTR_API_KEY)%@default
+```
+
+Otherwise ensure the bundle is configured in `config/packages/lettr.yaml`:
 
 ```yaml
 lettr:
     api_key: '%env(LETTR_API_KEY)%'
 ```
 
-## Using Symfony Mailer
+## 3. Send your first email
 
-Lettr integrates with Symfony's Mailer component:
+In a controller, inject the `MailerInterface` and send an email using Symfony's `Email` class:
 
 ```php
 <?php
@@ -40,102 +59,68 @@ Lettr integrates with Symfony's Mailer component:
 namespace App\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
 
 class EmailController extends AbstractController
 {
-    public function sendEmail(MailerInterface $mailer): Response
-    {
-        $email = (new Email())
-            ->from('you@example.com')
-            ->to('recipient@example.com')
-            ->subject('Hello from Lettr')
-            ->html('<p>Welcome to Lettr!</p>');
+    public function __construct(
+        private readonly MailerInterface $mailer,
+    ) {
+    }
 
-        $mailer->send($email);
+    public function send(): Response
+    {
+        $this->mailer->send(
+            (new Email())
+                ->from('Acme <onboarding@yourdomain.com>')
+                ->to('delivered@example.com')
+                ->subject('Hello world')
+                ->html('<strong>it works!</strong>')
+        );
 
         return new Response('Email sent!');
     }
 }
 ```
 
-## Using the Lettr Service
+Learn more about sending emails in [Symfony's Mailer documentation](https://symfony.com/doc/current/mailer.html#creating-sending-messages).
 
-You can also inject the Lettr service directly:
+## 4. Using the Lettr client directly
+
+For Lettr-specific features (templates, metadata, tracking options), inject the Lettr client:
 
 ```php
-<?php
-
-namespace App\Controller;
-
 use Lettr\LettrClient;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
-class EmailController extends AbstractController
+public function __construct(
+    private readonly LettrClient $lettr,
+) {}
+
+public function sendWithTemplate(): Response
 {
-    public function __construct(
-        private LettrClient $lettr
-    ) {}
+    $this->lettr->emails->send([
+        'from'    => 'hello@yourdomain.com',
+        'to'      => ['user@example.com'],
+        'subject' => 'Welcome, {{first_name}}!',
+        'template_slug' => 'welcome-email',
+        'substitution_data' => [
+            'first_name' => 'John',
+            'company'    => 'Acme Inc',
+        ],
+    ]);
 
-    public function sendEmail(): Response
-    {
-        $this->lettr->emails->send([
-            'from' => 'you@example.com',
-            'to' => ['recipient@example.com'],
-            'subject' => 'Hello from Lettr',
-            'html' => '<p>Welcome to Lettr!</p>'
-        ]);
-
-        return new Response('Email sent!');
-    }
+    return new Response('Email sent!');
 }
 ```
 
-## Messenger Integration
+## 5. Try it yourself
 
-Use Lettr with Symfony Messenger for async email delivery:
+<Card title="Symfony bundle on GitHub" icon="arrow-up-right-from-square" href="https://github.com/lettr-com/lettr-symfony">
+  See the full source and examples.
+</Card>
 
-```php
-<?php
-
-namespace App\Message;
-
-class SendEmailMessage
-{
-    public function __construct(
-        public readonly string $to,
-        public readonly string $subject,
-        public readonly string $html
-    ) {}
-}
-```
-
-```php
-<?php
-
-namespace App\MessageHandler;
-
-use App\Message\SendEmailMessage;
-use Lettr\LettrClient;
-use Symfony\Component\Messenger\Attribute\AsMessageHandler;
-
-#[AsMessageHandler]
-class SendEmailMessageHandler
-{
-    public function __construct(
-        private LettrClient $lettr
-    ) {}
-
-    public function __invoke(SendEmailMessage $message): void
-    {
-        $this->lettr->emails->send([
-            'from' => 'you@example.com',
-            'to' => [$message->to],
-            'subject' => $message->subject,
-            'html' => $message->html
-        ]);
-    }
-}
-```
-
+<Card title="PHP quickstart" icon="file-code" href="/quickstart/php/introduction">
+  General PHP and Lettr overview.
+</Card>

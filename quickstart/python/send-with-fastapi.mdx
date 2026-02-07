@@ -1,0 +1,68 @@
+---
+title: Send emails with FastAPI
+description: "Send your first email using FastAPI and the Lettr Python SDK"
+---
+
+# Send emails with FastAPI
+
+Learn how to send your first email using FastAPI and the Lettr Python SDK.
+
+## Prerequisites
+
+To get the most out of this guide, you'll need to:
+
+<CardGroup cols={2}>
+  <Card title="API Key" icon="key" href="https://app.lettr.com/api-keys">
+    Create an API key in the Lettr dashboard
+  </Card>
+  <Card title="Verified Domain" icon="globe" href="/learn/domains/sending-domains">
+    Add and verify your sending domain
+  </Card>
+</CardGroup>
+
+## 1. Install
+
+Get the Lettr Python SDK and FastAPI.
+
+```bash
+pip install lettr fastapi uvicorn
+```
+
+## 2. Send email using HTML
+
+The easiest way to send an email is by using the `html` parameter. Create an endpoint and call the Lettr client.
+
+```python
+import os
+from typing import Any, Dict
+
+import lettr
+from fastapi import FastAPI
+
+client = lettr.Lettr(os.environ["LETTR_API_KEY"])
+
+app = FastAPI()
+
+
+@app.post("/send")
+def send_mail() -> Dict[str, Any]:
+    response = client.emails.send(
+        from_email="Acme <onboarding@yourdomain.com>",
+        to=["delivered@example.com"],
+        subject="hello world",
+        html="<strong>it works!</strong>",
+    )
+    return {"request_id": response.request_id, "accepted": response.accepted}
+```
+
+Run the app with `uvicorn main:app --reload` (and `LETTR_API_KEY` set), then `POST /send` to trigger the send.
+
+## 3. Try it yourself
+
+<Card title="Python SDK" icon="arrow-up-right-from-square" href="/quickstart/python/send-with-python">
+  More options: templates, attachments, and configuration.
+</Card>
+
+<Card title="Python SDK on GitHub" icon="arrow-up-right-from-square" href="https://github.com/lettr-com/lettr-python">
+  View the full source and examples.
+</Card>

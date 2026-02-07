@@ -57,7 +57,10 @@
               },
               {
                 "group": "PHP",
-                "pages": ["quickstart/php/introduction"]
+                "pages": [
+                  "quickstart/php/introduction",
+                  "quickstart/php/symfony"
+                ]
               },
               {
                 "group": "SMTP",
@@ -85,7 +88,11 @@
               },
               {
                 "group": "Python",
-                "pages": ["quickstart/python/send-with-python"]
+                "pages": [
+                  "quickstart/python/send-with-python",
+                  "quickstart/python/send-with-flask",
+                  "quickstart/python/send-with-fastapi"
+                ]
               }
             ]
           }
