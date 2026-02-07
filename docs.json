@@ -69,6 +69,22 @@
               {
                 "group": "Node.js",
                 "pages": ["quickstart/nodejs/introduction"]
+              },
+              {
+                "group": "Go",
+                "pages": ["quickstart/go/send-with-go"]
+              },
+              {
+                "group": "Rust",
+                "pages": ["quickstart/rust/send-with-rust"]
+              },
+              {
+                "group": "Java",
+                "pages": ["quickstart/java/send-with-java"]
+              },
+              {
+                "group": "Python",
+                "pages": ["quickstart/python/send-with-python"]
               }
             ]
           }

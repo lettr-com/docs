@@ -1,0 +1,119 @@
+---
+title: Send emails with Python
+description: "Send your first email using the Lettr Python SDK"
+---
+
+# Send emails with Python
+
+Learn how to send your first email using the Lettr Python SDK.
+
+## Prerequisites
+
+To get the most out of this guide, you'll need to:
+
+<CardGroup cols={2}>
+  <Card title="API Key" icon="key" href="https://app.lettr.com/api-keys">
+    Create an API key in the Lettr dashboard
+  </Card>
+  <Card title="Verified Domain" icon="globe" href="/learn/domains/sending-domains">
+    Add and verify your sending domain
+  </Card>
+</CardGroup>
+
+## 1. Install
+
+Get the Lettr Python SDK.
+
+```bash
+pip install lettr
+```
+
+Requires Python 3.8+. The `httpx` dependency is installed automatically.
+
+## 2. Send email using HTML
+
+The easiest way to send an email is by using the `html` parameter.
+
+```python
+import lettr
+
+client = lettr.Lettr("your-api-key")
+
+response = client.emails.send(
+    from_email="Acme <onboarding@yourdomain.com>",
+    to=["delivered@example.com"],
+    subject="Hello from Lettr",
+    html="<strong>hello world</strong>",
+)
+
+print("Email sent! Request ID:", response.request_id)
+```
+
+## 3. Send with more options
+
+Add a display name, plain text, CC, BCC, and reply-to:
+
+```python
+response = client.emails.send(
+    from_email="onboarding@yourdomain.com",
+    from_name="Acme",
+    to=["delivered@example.com"],
+    cc=["cc@example.com"],
+    bcc=["bcc@example.com"],
+    reply_to="support@example.com",
+    subject="Welcome!",
+    html="<h1>Hello</h1><p>Thanks for signing up.</p>",
+    text="Hello\n\nThanks for signing up.",
+    options=lettr.EmailOptions(
+        click_tracking=True,
+        open_tracking=True,
+    ),
+)
+```
+
+## 4. Configuration
+
+### Environment variable
+
+Use the `LETTR_API_KEY` environment variable instead of hardcoding your key:
+
+```python
+import os
+import lettr
+
+client = lettr.Lettr(os.environ.get("LETTR_API_KEY"))
+```
+
+### Reading from a `.env` file
+
+Use [python-dotenv](https://pypi.org/project/python-dotenv/) to load a `.env` file:
+
+```bash
+pip install python-dotenv
+```
+
+```python
+from dotenv import load_dotenv
+import os
+import lettr
+
+load_dotenv()
+client = lettr.Lettr(os.environ["LETTR_API_KEY"])
+```
+
+## 5. Try it yourself
+
+<Card title="Python SDK on GitHub" icon="arrow-up-right-from-square" href="https://github.com/lettr-com/lettr-python">
+  View the full source and examples.
+</Card>
+
+## What's next
+
+<CardGroup cols={2}>
+  <Card title="Templates" icon="file-code" href="/api-reference/emails/send-email">
+    Send with template slugs and substitution data
+  </Card>
+  <Card title="API Reference" icon="book" href="/api-reference/introduction">
+    Complete Lettr API documentation
+  </Card>
+</CardGroup>

@@ -20,7 +20,7 @@ Official Lettr SDKs for all major programming languages.
     composer require lettr/lettr-php
     ```
   </Card>
-  <Card title="Python" icon="python" href="https://github.com/lettr/lettr-python">
+  <Card title="Python" icon="python" href="/quickstart/python/send-with-python">
     ```bash
     pip install lettr
     ```
@@ -30,16 +30,17 @@ Official Lettr SDKs for all major programming languages.
     gem install lettr
     ```
   </Card>
-  <Card title="Go" icon="golang" href="https://github.com/lettr/lettr-go">
+  <Card title="Go" icon="golang" href="/quickstart/go/send-with-go">
     ```bash
-    go get github.com/lettr/lettr-go
+    go get github.com/lettr-com/lettr-go
     ```
   </Card>
-  <Card title="Java" icon="java" href="https://github.com/lettr/lettr-java">
+  <Card title="Java" icon="java" href="/quickstart/java/send-with-java">
     ```xml
     <dependency>
-      <groupId>dev.lettr</groupId>
+      <groupId>com.lettr</groupId>
       <artifactId>lettr-java</artifactId>
+      <version>0.1.0</version>
     </dependency>
     ```
   </Card>
@@ -129,20 +130,20 @@ pip install lettr
 ### Usage
 
 ```python
-from lettr import Lettr
+import lettr
 
-lettr = Lettr('your-api-key')
+client = lettr.Lettr("your-api-key")
 
 # Send email
-email = lettr.emails.send(
-    from_email='you@example.com',
-    to=['recipient@example.com'],
-    subject='Hello',
-    html='<p>Hello World</p>'
+response = client.emails.send(
+    from_email="you@example.com",
+    to=["recipient@example.com"],
+    subject="Hello",
+    html="<p>Hello World</p>",
 )
 
 # List emails
-emails = lettr.emails.list(limit=10)
+email_list = client.emails.list(per_page=10)
 ```
 
 ## Go SDK
@@ -150,7 +151,7 @@ emails = lettr.emails.list(limit=10)
 ### Installation
 
 ```bash
-go get github.com/lettr/lettr-go
+go get github.com/lettr-com/lettr-go
 ```
 
 ### Usage
@@ -159,17 +160,18 @@ go get github.com/lettr/lettr-go
 package main
 
 import (
-    "github.com/lettr/lettr-go"
+    "context"
+    lettr "github.com/lettr-com/lettr-go"
 )
 
 func main() {
-    client := lettr.New("your-api-key")
+    client := lettr.NewClient("your-api-key")
 
-    email, err := client.Emails.Send(&lettr.SendEmailParams{
+    resp, err := client.Emails.Send(context.Background(), &lettr.SendEmailRequest{
         From:    "you@example.com",
         To:      []string{"recipient@example.com"},
         Subject: "Hello",
-        HTML:    "<p>Hello World</p>",
+        Html:    "<p>Hello World</p>",
     })
 }
 ```
