@@ -1,0 +1,233 @@
+---
+title: Type Safety
+description: "Generate type-safe enums, DTOs, and Mailables from your Lettr templates"
+---
+
+# Type Safety
+
+Generate type-safe PHP code from your Lettr templates. Catch errors at compile time instead of runtime.
+
+## Why Code Generation?
+
+Using string literals for template slugs and merge tags is error-prone:
+
+```php
+// ❌ Typos cause runtime errors
+Mail::lettr()->sendTemplate('welcom-email', ['nme' => 'John']);
+```
+
+With generated code, your IDE catches mistakes immediately:
+
+```php
+// ✅ Type-safe, autocomplete-friendly
+Mail::lettr()->sendTemplate(
+    LettrTemplate::WelcomeEmail->value,
+    new WelcomeEmailData(name: 'John')
+);
+```
+
+## Generate Everything at Once
+
+The `lettr:init` command can generate all code for you during setup:
+
+```bash
+php artisan lettr:init
+```
+
+Or generate individually using the commands below.
+
+---
+
+## Template Enum
+
+Generate an enum containing all your template slugs:
+
+```bash
+php artisan lettr:generate-enum
+```
+
+This creates `app/Enums/LettrTemplate.php`:
+
+```php
+namespace App\Enums;
+
+enum LettrTemplate: string
+{
+    case WelcomeEmail = 'welcome-email';
+    case OrderConfirmation = 'order-confirmation';
+    case PasswordReset = 'password-reset';
+    case InvoiceReady = 'invoice-ready';
+    // ... all your templates
+}
+```
+
+### Usage
+
+```php
+use App\Enums\LettrTemplate;
+
+// IDE autocomplete shows all available templates
+Mail::lettr()
+    ->to($user->email)
+    ->sendTemplate(LettrTemplate::WelcomeEmail->value, $data);
+```
+
+### Benefits
+
+- **Autocomplete** - Your IDE suggests available templates
+- **Refactoring** - Rename templates safely across your codebase
+- **Discovery** - See all templates without leaving your editor
+
+---
+
+## Template DTOs
+
+Generate data transfer objects for each template's merge tags:
+
+```bash
+php artisan lettr:generate-dtos
+```
+
+This creates a DTO for each template in `app/Dto/Lettr/`:
+
+```php
+namespace App\Dto\Lettr;
+
+class WelcomeEmailData
+{
+    public function __construct(
+        public string $first_name,
+        public string $activation_url,
+        public ?string $company_name = null,
+    ) {}
+
+    public function toArray(): array
+    {
+        return array_filter([
+            'first_name' => $this->first_name,
+            'activation_url' => $this->activation_url,
+            'company_name' => $this->company_name,
+        ], fn($v) => $v !== null);
+    }
+}
+```
+
+### Usage
+
+```php
+use App\Dto\Lettr\WelcomeEmailData;
+
+$data = new WelcomeEmailData(
+    first_name: 'John',
+    activation_url: $url,
+);
+
+Mail::lettr()
+    ->to($user->email)
+    ->sendTemplate('welcome-email', $data->toArray());
+```
+
+### Benefits
+
+- **Required fields** - Constructor enforces required merge tags
+- **Type hints** - Know exactly what data each template needs
+- **Documentation** - DTOs serve as living documentation
+
+---
+
+## Mailable Classes
+
+Generate Mailable classes for your templates:
+
+```bash
+php artisan lettr:pull --with-mailables
+```
+
+This creates Mailables in `app/Mail/Lettr/`:
+
+```php
+namespace App\Mail\Lettr;
+
+use Lettr\Laravel\Mail\LettrMailable;
+use Illuminate\Mail\Mailables\Envelope;
+
+class WelcomeEmail extends LettrMailable
+{
+    public function __construct(
+        private string $firstName,
+        private string $activationUrl,
+    ) {}
+
+    public function envelope(): Envelope
+    {
+        return new Envelope(
+            subject: 'Welcome to Our App',
+        );
+    }
+
+    public function build(): static
+    {
+        return $this
+            ->template('welcome-email')
+            ->substitutionData([
+                'first_name' => $this->firstName,
+                'activation_url' => $this->activationUrl,
+            ]);
+    }
+}
+```
+
+### Usage
+
+```php
+use App\Mail\Lettr\WelcomeEmail;
+
+Mail::to($user->email)->send(
+    new WelcomeEmail(
+        firstName: $user->first_name,
+        activationUrl: $url,
+    )
+);
+```
+
+### Benefits
+
+- **Standard Laravel** - Works with queues, events, and testing
+- **Encapsulation** - Template logic stays in one place
+- **Familiar API** - Same patterns you already use
+
+---
+
+## Keeping Code in Sync
+
+When you add or modify templates in Lettr, regenerate your code:
+
+```bash
+# Regenerate enum with new templates
+php artisan lettr:generate-enum
+
+# Regenerate DTOs with updated merge tags
+php artisan lettr:generate-dtos
+```
+
+<Tip>
+  Add these commands to your CI/CD pipeline to ensure code stays in sync with your templates.
+</Tip>
+
+## Configuration
+
+Customize paths in `config/lettr.php`:
+
+```php
+'templates' => [
+    'enum_path' => app_path('Enums'),
+    'enum_namespace' => 'App\\Enums',
+    'enum_class' => 'LettrTemplate',
+
+    'dto_path' => app_path('Dto/Lettr'),
+    'dto_namespace' => 'App\\Dto\\Lettr',
+
+    'mailable_path' => app_path('Mail/Lettr'),
+    'mailable_namespace' => 'App\\Mail\\Lettr',
+],
+```

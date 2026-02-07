@@ -125,9 +125,7 @@ Test that everything is configured correctly:
 ```php
 use Lettr\Laravel\Facades\Lettr;
 
-// List your verified domains
-$domains = Lettr::domains()->list();
-dd($domains);
+Lettr::health()->authCheck();
 ```
 
-If you see your domains, you're ready to send emails.
+If no exception is thrown, your API key is valid and you're ready to send emails.

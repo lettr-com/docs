@@ -41,7 +41,7 @@ Mail::lettr()
     ->cc('manager@example.com')
     ->bcc('archive@example.com')
     ->sendTemplate(
-        slug: 'order-confirmation',
+        templateSlug: 'order-confirmation',
         substitutionData: [
             'order_id' => $order->id,
             'items' => $order->items->toArray(),

@@ -51,7 +51,8 @@
                   "quickstart/laravel/introduction",
                   "quickstart/laravel/installation",
                   "quickstart/laravel/sending-emails",
-                  "quickstart/laravel/templates"
+                  "quickstart/laravel/templates",
+                  "quickstart/laravel/type-safety"
                 ]
               },
               {
