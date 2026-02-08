@@ -5,6 +5,11 @@ description: "Step-by-step guide to configuring DNS records for Lettr on Google 
 
 This guide walks you through adding the required DNS records for Lettr using Google Cloud DNS. Google Cloud DNS is a fast, reliable, and cost-effective domain name system managed through the [Google Cloud Console](https://console.cloud.google.com).
 
+<Info>
+  This guide is for Google Cloud DNS. If you registered your domain through Google Domains (now part of Squarespace),
+  see the [Squarespace guide](/knowledge-base/dns-guides/squarespace) instead.
+</Info>
+
 You will configure a **sending domain** (CNAME, DKIM TXT, and DMARC TXT records) and, optionally, an **inbound domain** (MX records), **tracking domain** (two CNAME records), and **storage domain** (CNAME and two TXT records).
 
 ---
@@ -325,9 +330,41 @@ After adding all three records, go back to Lettr and click **Verify DNS Records*
 
 ---
 
+## Using gcloud CLI
+
+You can also add records using the gcloud CLI:
+
+```bash
+# Add CNAME record for subdomain
+gcloud dns record-sets create mailing.example.com. \
+  --zone="my-zone" \
+  --type="CNAME" \
+  --ttl="300" \
+  --rrdatas="sparkpostmail.com."
+
+# Add TXT record for DKIM
+gcloud dns record-sets create scph0126._domainkey.mailing.example.com. \
+  --zone="my-zone" \
+  --type="TXT" \
+  --ttl="300" \
+  --rrdatas="\"v=DKIM1;k=rsa;h=sha256;p=MIGf...\""
+
+# Add MX records for inbound
+gcloud dns record-sets create inbound.example.com. \
+  --zone="my-zone" \
+  --type="MX" \
+  --ttl="300" \
+  --rrdatas="10 rx1.sparkpostmail.com.","10 rx2.sparkpostmail.com.","10 rx3.sparkpostmail.com."
+```
+
+---
+
 ## Troubleshooting
 
 <AccordionGroup>
+  <Accordion title="Permission Errors">
+    Ensure you have the **DNS Administrator** role or equivalent permissions on the project containing your DNS zone.
+  </Accordion>
   <Accordion title="Missing Trailing Period">
     Google Cloud DNS requires trailing periods on CNAME and MX target values. If your records are not resolving, check that
     each CNAME canonical name and MX exchange ends with a period (e.g. `sparkpostmail.com.` not `sparkpostmail.com`). Edit the

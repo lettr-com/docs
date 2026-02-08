@@ -376,6 +376,10 @@ After adding all three records, go back to Lettr and click **Verify DNS Records*
     | Storage hostname pre-validation | TXT |
     | Storage domain routing | CNAME |
   </Accordion>
+  <Accordion title="Multiple TXT Records">
+    DigitalOcean supports multiple TXT records on the same hostname. Add each record separately (e.g. SPF and DKIM
+    records can coexist on related hostnames without conflict).
+  </Accordion>
   <Accordion title="DKIM Value Truncated">
     The DKIM TXT value is a long string. After saving the record, click **Edit** to confirm the full value was stored. If
     it appears truncated, delete the record and re-add it, pasting the full value carefully.

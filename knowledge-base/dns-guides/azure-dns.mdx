@@ -328,9 +328,42 @@ After adding all three records, go back to Lettr and click **Verify DNS Records*
 
 ---
 
+## Using Azure CLI
+
+You can also add records using the Azure CLI:
+
+```bash
+# Add CNAME record for subdomain
+az network dns record-set cname set-record \
+  --resource-group <resource-group> \
+  --zone-name example.com \
+  --record-set-name mailing \
+  --cname sparkpostmail.com
+
+# Add TXT record for DKIM
+az network dns record-set txt add-record \
+  --resource-group <resource-group> \
+  --zone-name example.com \
+  --record-set-name "scph0126._domainkey.mailing" \
+  --value "v=DKIM1;k=rsa;h=sha256;p=MIGf..."
+
+# Add MX records for inbound
+az network dns record-set mx add-record \
+  --resource-group <resource-group> \
+  --zone-name example.com \
+  --record-set-name inbound \
+  --exchange rx1.sparkpostmail.com \
+  --preference 10
+```
+
+---
+
 ## Troubleshooting
 
 <AccordionGroup>
+  <Accordion title="Permission Errors">
+    Ensure you have the **DNS Zone Contributor** role or equivalent permissions on the DNS zone resource in Azure.
+  </Accordion>
   <Accordion title="Records Not Propagating">
     Azure DNS typically propagates within minutes, but in some cases it can take longer. If verification fails after adding
     records, check the following:

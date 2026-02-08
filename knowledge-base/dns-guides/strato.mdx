@@ -7,6 +7,11 @@ This guide walks you through adding the required DNS records for Lettr using Str
 
 You will configure a **sending domain** (CNAME, DKIM TXT, and DMARC TXT records) and, optionally, an **inbound domain** (MX records), **tracking domain** (two CNAME records), and **storage domain** (CNAME and two TXT records).
 
+<Info>
+  By default, Strato domains use Strato's mail server. For sending domains, you may need to create a subdomain and
+  configure DNS records there to avoid conflicts with Strato's default mail configuration.
+</Info>
+
 ---
 
 ## Sending Domain Setup
@@ -37,7 +42,7 @@ This will display a list of DNS records that need to be configured. Keep this pa
 
 ### Configure Strato DNS
 
-Log in to your [Strato Control Panel](https://www.strato.de) and navigate to **Domains** → **Manage Domain**. Select your domain and access its DNS settings.
+Log in to your [Strato Control Panel](https://www.strato.de) and navigate to **Domains** → **Manage Domain**. Select your domain and access its DNS settings. For subdomains, you may need to first create the subdomain in Strato, then navigate to the subdomain's settings and open the **DNS** tab.
 
 {/* TODO: Add screenshot of Strato DNS management page */}
 
@@ -95,6 +100,10 @@ Copy the TXT values from Lettr to Strato:
 
 {/* TODO: Add screenshot of DKIM TXT record in Strato */}
 
+<Info>
+  DKIM records are case-sensitive. Copy the value exactly using the copy icon in your Lettr dashboard.
+</Info>
+
 ### Add TXT Record (DMARC)
 
 The DMARC record tells receiving mail servers how to handle emails that fail authentication checks, protecting your domain from spoofing.
@@ -146,6 +155,8 @@ This will display the MX records that need to be configured.
 
 MX records tell other mail servers where to deliver emails addressed to your domain.
 
+For inbound subdomains on Strato, you may need to first create the subdomain, navigate to the subdomain's settings, go to the **DNS** tab, click **manage** on MX records, and select **own mail server** before adding the records.
+
 Copy the MX values from Lettr to Strato:
 
 1. In the DNS settings, click **Add record**.
@@ -155,6 +166,11 @@ Copy the MX values from Lettr to Strato:
 5. Set **Priority** to `10`.
 6. Click **Save**.
 7. Repeat this process for the second (`rx2.sparkpostmail.com`) and third (`rx3.sparkpostmail.com`) MX records, each with priority `10`.
+
+<Info>
+  Strato may require a trailing period on MX values (e.g. `rx1.sparkpostmail.com.`). Try adding it if verification
+  fails.
+</Info>
 
 <img src="/images/lettr-inbound-1.png" alt="MX record values in Lettr for inbound domain" />
 
@@ -371,6 +387,11 @@ After adding all three records, go back to Lettr and click **Verify DNS Records*
     | Storage certificate validation | TXT |
     | Storage hostname pre-validation | TXT |
     | Storage domain routing | CNAME |
+  </Accordion>
+  <Accordion title="Conflict with Strato Mail Server">
+    Strato domains use Strato's mail server by default. If you encounter conflicts when adding sending or inbound
+    records, create a dedicated subdomain (e.g. `mailing.company.com` or `inbound.company.com`) to avoid interfering
+    with Strato's default mail configuration.
   </Accordion>
   <Accordion title="DKIM Value Truncated">
     The DKIM TXT value is a long string. After saving the record, re-open the DNS settings and confirm the full value is

@@ -391,6 +391,10 @@ After adding all three records, go back to Lettr and click **Verify DNS Records*
     | Storage domain routing | CNAME |
 
   </Accordion>
+  <Accordion title="MX Record Trailing Period">
+    Hetzner may require a trailing period on MX values (e.g. `rx1.sparkpostmail.com.`). Try adding it if verification
+    fails.
+  </Accordion>
   <Accordion title="DKIM Value Truncated">
     The DKIM TXT value is a long string. After saving the record in Hetzner, re-open it to confirm the full value was stored. If it appears truncated, try pasting the value again. Hetzner's DNS Console supports long TXT values, but copying errors can occasionally cut off the string.
   </Accordion>

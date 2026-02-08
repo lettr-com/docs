@@ -372,6 +372,10 @@ After adding all three records, go back to Lettr and click **Verify DNS Records*
     | Storage hostname pre-validation | TXT |
     | Storage domain routing | CNAME |
   </Accordion>
+  <Accordion title="CNAME Conflict">
+    Remove any existing A or CNAME records for the same hostname before adding new CNAME records. Duplicate records on
+    the same hostname can cause verification failures.
+  </Accordion>
   <Accordion title="DKIM Value Truncated">
     The DKIM TXT value is a long string. After saving the record, re-open the DNS management page and confirm the full value
     is displayed in the Content field. If it appears truncated, delete the record and re-add it, pasting the full value

@@ -1,9 +1,9 @@
 ---
-title: "Netlify"
-description: "Step-by-step guide to configuring DNS records for Lettr on Netlify."
+title: "Linode"
+description: "Step-by-step guide to configuring DNS records for Lettr on Linode DNS Manager."
 ---
 
-This guide walks you through adding the required DNS records for Lettr using Netlify's DNS management. Netlify is a platform for deploying and hosting web applications that also provides DNS hosting for domains connected to your Netlify sites, managed through the [Netlify dashboard](https://app.netlify.com).
+This guide walks you through adding the required DNS records for Lettr using Linode DNS Manager (now part of Akamai). Linode is a cloud infrastructure provider that offers DNS hosting through the [Linode Cloud Manager](https://cloud.linode.com).
 
 You will configure a **sending domain** (CNAME, DKIM TXT, and DMARC TXT records) and, optionally, an **inbound domain** (MX records), **tracking domain** (two CNAME records), and **storage domain** (CNAME and two TXT records).
 
@@ -35,52 +35,47 @@ This will display a list of DNS records that need to be configured. Keep this pa
 
 <img src="/images/lettr-mailing-config.png" alt="DNS records displayed in Lettr after creating a sending domain" />
 
-### Configure Netlify DNS
+### Configure Linode DNS
 
-Log in to the [Netlify dashboard](https://app.netlify.com) and navigate to your site's **Domain management** settings. If your domain is managed through Netlify DNS, you can add records directly here.
+Log in to the [Linode Cloud Manager](https://cloud.linode.com) and click **Domains** in the left sidebar. Select your domain from the list to open the DNS records management page.
 
-{/* TODO: Add screenshot of Netlify Domain management page */}
+{/* TODO: Add screenshot of Linode Domains page */}
 
 <Tip>
-  If your domain was purchased through Netlify or your nameservers already point to Netlify, skip nameserver
-  configuration entirely. Your domain is already using Netlify's nameservers by default — proceed directly to adding the
+  If your domain was purchased through Linode or your nameservers already point to Linode, skip nameserver
+  configuration entirely. Your domain is already using Linode's nameservers by default — proceed directly to adding the
   DNS records below.
 </Tip>
 
 <AccordionGroup>
   <Accordion title="Domain registered with a different registrar?">
-    If you registered your domain elsewhere but want to manage DNS on Netlify, you must first **update the nameservers**
-    at your registrar to Netlify's nameservers shown in your domain management settings.
+    If you registered your domain elsewhere but want to manage DNS on Linode, you must first **update the nameservers**
+    at your registrar to Linode's nameservers (`ns1.linode.com` through `ns5.linode.com`).
 
-    <Warning>Until the nameservers are updated, any records you add in Netlify will not resolve.</Warning>
+    <Warning>Until the nameservers are updated, any records you add in Linode will not resolve.</Warning>
   </Accordion>
 </AccordionGroup>
 
-{/* TODO: Add screenshot of Netlify nameserver configuration inside the accordion above */}
-
-<Warning>
-  If you have existing Netlify sites using subdomains that overlap with the subdomains you are configuring for Lettr (e.g.
-  `mailing.company.com`), you may need to remove or reconfigure those site assignments before adding the DNS records.
-</Warning>
+{/* TODO: Add screenshot of Linode nameserver configuration inside the accordion above */}
 
 ### Add CNAME Record
 
 The CNAME record verifies domain ownership with Lettr's email infrastructure.
 
-Copy the CNAME values from Lettr to Netlify:
+Copy the CNAME values from Lettr to Linode:
 
-1. Click **Add a custom record** in the DNS records section.
-2. Set **Type** to **CNAME**.
-3. Copy the **Hostname** from Lettr and paste it into the **Name** field (without your domain suffix). For example, paste only `mailing`.
-4. Copy the **Value** from Lettr and paste it into the **Value** field.
-5. Click **Create record**.
+1. Click **Add a CNAME Record**.
+2. Copy the **Hostname** from Lettr and paste it into the **Hostname** field in Linode (without your domain suffix). For example, paste only `mailing`.
+3. Copy the **Value** from Lettr and paste it into the **Alias to** field in Linode.
+4. Set **TTL** to **Default** (or your preferred value).
+5. Click **Save**.
 
 <img src="/images/lettr-mailing-1.png" alt="CNAME record Hostname and Value in Lettr" />
 
-{/* TODO: Add screenshot of CNAME record in Netlify */}
+{/* TODO: Add screenshot of CNAME record in Linode DNS Manager */}
 
 <Info>
-  Netlify automatically appends your domain to the record name. Always paste only the subdomain portion (e.g.
+  Linode automatically appends your domain to the record name. Always paste only the subdomain portion (e.g.
   `mailing`, not `mailing.company.com`).
 </Info>
 
@@ -88,37 +83,40 @@ Copy the CNAME values from Lettr to Netlify:
 
 The DKIM record adds a cryptographic signature to your outgoing emails, allowing recipients to verify they were sent by an authorized sender.
 
-Copy the TXT values from Lettr to Netlify:
+Copy the TXT values from Lettr to Linode:
 
-1. Click **Add a custom record** in the DNS records section.
-2. Set **Type** to **TXT**.
-3. Copy the **Hostname** from Lettr and paste it into the **Name** field (without your domain suffix). For example, paste only `scph0126._domainkey.mailing`.
-4. Copy the **Value** from Lettr and paste it into the **Value** field.
-5. Click **Create record**.
+1. Click **Add a TXT Record**.
+2. Copy the **Hostname** from Lettr and paste it into the **Hostname** field in Linode (without your domain suffix). For example, paste only `scph0126._domainkey.mailing`.
+3. Copy the **Value** from Lettr and paste it into the **Value** field in Linode.
+4. Click **Save**.
 
 <img src="/images/lettr-mailing-2.png" alt="DKIM TXT record Hostname and Value in Lettr" />
 
-{/* TODO: Add screenshot of DKIM TXT record in Netlify */}
+{/* TODO: Add screenshot of DKIM TXT record in Linode DNS Manager */}
+
+<Info>
+  DKIM values are long strings. Linode handles long TXT records automatically — enter the complete value without
+  line breaks.
+</Info>
 
 ### Add TXT Record (DMARC)
 
 The DMARC record tells receiving mail servers how to handle emails that fail authentication checks, protecting your domain from spoofing.
 
-Copy the TXT values from Lettr to Netlify:
+Copy the TXT values from Lettr to Linode:
 
-1. Click **Add a custom record** in the DNS records section.
-2. Set **Type** to **TXT**.
-3. Copy the **Hostname** from Lettr and paste it into the **Name** field (without your domain suffix). For example, paste only `_dmarc.mailing`.
-4. Copy the **Value** from Lettr and paste it into the **Value** field.
-5. Click **Create record**.
+1. Click **Add a TXT Record**.
+2. Copy the **Hostname** from Lettr and paste it into the **Hostname** field in Linode (without your domain suffix). For example, paste only `_dmarc.mailing`.
+3. Copy the **Value** from Lettr (e.g. `v=DMARC1;p=none;`) and paste it into the **Value** field in Linode.
+4. Click **Save**.
 
 <img src="/images/lettr-mailing-3.png" alt="DMARC TXT record Hostname and Value in Lettr" />
 
-{/* TODO: Add screenshot of DMARC TXT record in Netlify */}
+{/* TODO: Add screenshot of DMARC TXT record in Linode DNS Manager */}
 
 ### Verify Your Sending Domain
 
-After adding all three DNS records, go back to Lettr and click **Verify DNS Records**. DNS propagation can take up to 24–48 hours, though it typically completes within a few minutes.
+After adding all three DNS records, go back to Lettr and click **Verify DNS Records**. DNS propagation can take up to 24–48 hours, though it typically completes within 5–30 minutes for Linode.
 
 <img src="/images/lettr-verified.png" alt="Sending domain verified successfully in Lettr" />
 
@@ -151,24 +149,18 @@ This will display the MX records that need to be configured.
 
 MX records tell other mail servers where to deliver emails addressed to your domain.
 
-Copy the MX values from Lettr to Netlify:
+Copy the MX values from Lettr to Linode:
 
-1. Click **Add a custom record** in the DNS records section.
-2. Set **Type** to **MX**.
-3. Copy the **Hostname** from Lettr and paste it into the **Name** field (without your domain suffix). For example, paste only `inbound`.
-4. Copy the first MX record value from Lettr (e.g. `rx1.sparkpostmail.com`) and paste it into the **Value** field.
-5. Set **Priority** to `10`.
-6. Click **Create record**.
-7. Repeat this process for the second (`rx2.sparkpostmail.com`) and third (`rx3.sparkpostmail.com`) MX records, each with priority `10`.
+1. Click **Add a MX Record**.
+2. Copy the **Hostname** from Lettr and paste it into the **Hostname** field in Linode (without your domain suffix). For example, paste only `inbound`.
+3. Copy the first **Required MX Record** value (without the priority number) from Lettr and paste it into the **Mail Server** field in Linode.
+4. Set **Preference** to `10`.
+5. Click **Save**.
+6. Repeat this process for the second (`rx2.sparkpostmail.com`) and third (`rx3.sparkpostmail.com`) MX records, each with preference `10`.
 
 <img src="/images/lettr-inbound-1.png" alt="MX record values in Lettr for inbound domain" />
 
-{/* TODO: Add screenshot of MX records in Netlify */}
-
-<Info>
-  Netlify MX records may require the priority in the value field (e.g. `10 rx1.sparkpostmail.com`). If you don't see a
-  separate Priority field, include the priority number before the mail server value.
-</Info>
+{/* TODO: Add screenshot of MX records in Linode DNS Manager */}
 
 <Warning>
   Adding MX records to a domain or subdomain will route all incoming email for that address to Lettr. Use a dedicated
@@ -177,7 +169,7 @@ Copy the MX values from Lettr to Netlify:
 
 ### Verify Your Inbound Domain
 
-After adding all three MX records, go back to Lettr and click **Verify DNS Records**. DNS propagation can take up to 24–48 hours, though it typically completes within a few minutes.
+After adding all three MX records, go back to Lettr and click **Verify DNS Records**. DNS propagation can take up to 24–48 hours, though it typically completes within 5–30 minutes for Linode.
 
 <img src="/images/lettr-inbound-verified.png" alt="Inbound domain verified successfully in Lettr" />
 
@@ -210,33 +202,31 @@ This will display the CNAME records that need to be configured.
 
 The SSL Certificate CNAME record provisions an SSL certificate for your custom tracking domain, enabling secure HTTPS connections for tracked links.
 
-Add the record in Netlify:
+Add the record in Linode:
 
-1. Click **Add a custom record** in the DNS records section.
-2. Set **Type** to **CNAME**.
-3. Copy the **Hostname** from Lettr and paste it into the **Name** field (without your domain suffix).
-4. Copy the **Value** from Lettr and paste it into the **Value** field.
-5. Click **Create record**.
+1. Click **Add a CNAME Record**.
+2. Copy the **Hostname** from Lettr and paste it into the **Hostname** field (without your domain suffix).
+3. Copy the **Value** from Lettr and paste it into the **Alias to** field.
+4. Click **Save**.
 
 <img src="/images/lettr-tracking-1.png" alt="SSL Certificate CNAME record values in Lettr for tracking domain" />
 
-{/* TODO: Add screenshot of SSL Certificate CNAME record in Netlify */}
+{/* TODO: Add screenshot of SSL Certificate CNAME record in Linode DNS Manager */}
 
 ### Add Traffic CNAME Record
 
 The Traffic CNAME record routes click and open tracking requests from your custom domain to Lettr's tracking servers.
 
-Add the record in Netlify:
+Add the record in Linode:
 
-1. Click **Add a custom record** in the DNS records section.
-2. Set **Type** to **CNAME**.
-3. Copy the **Hostname** from Lettr and paste it into the **Name** field (without your domain suffix).
-4. Copy the **Value** from Lettr and paste it into the **Value** field.
-5. Click **Create record**.
+1. Click **Add a CNAME Record**.
+2. Copy the **Hostname** from Lettr and paste it into the **Hostname** field (without your domain suffix).
+3. Copy the **Value** from Lettr and paste it into the **Alias to** field.
+4. Click **Save**.
 
 <img src="/images/lettr-tracking-2.png" alt="Traffic CNAME record values in Lettr for tracking domain" />
 
-{/* TODO: Add screenshot of Traffic CNAME record in Netlify */}
+{/* TODO: Add screenshot of Traffic CNAME record in Linode DNS Manager */}
 
 ### Verify Your Tracking Domain
 
@@ -273,49 +263,46 @@ This will display the TXT and CNAME records that need to be configured.
 
 The Certificate Validation TXT record provisions an SSL certificate for your custom storage domain, enabling secure HTTPS delivery of email assets.
 
-Add the record in Netlify:
+Add the record in Linode:
 
-1. Click **Add a custom record** in the DNS records section.
-2. Set **Type** to **TXT**.
-3. Copy the **Hostname** from Lettr and paste it into the **Name** field (without your domain suffix).
-4. Copy the **Value** from Lettr and paste it into the **Value** field.
-5. Click **Create record**.
+1. Click **Add a TXT Record**.
+2. Copy the **Hostname** from Lettr and paste it into the **Hostname** field (without your domain suffix).
+3. Copy the **Value** from Lettr and paste it into the **Value** field.
+4. Click **Save**.
 
 <img src="/images/lettr-storage-1.png" alt="Certificate Validation TXT record values in Lettr for storage domain" />
 
-{/* TODO: Add screenshot of Certificate Validation TXT record in Netlify */}
+{/* TODO: Add screenshot of Certificate Validation TXT record in Linode DNS Manager */}
 
 ### Add TXT Record (Hostname Pre-validation)
 
 The Hostname Pre-validation TXT record verifies ownership of the storage domain before Lettr provisions a custom hostname for it.
 
-Add the record in Netlify:
+Add the record in Linode:
 
-1. Click **Add a custom record** in the DNS records section.
-2. Set **Type** to **TXT**.
-3. Copy the **Hostname** from Lettr and paste it into the **Name** field (without your domain suffix).
-4. Copy the **Value** from Lettr and paste it into the **Value** field.
-5. Click **Create record**.
+1. Click **Add a TXT Record**.
+2. Copy the **Hostname** from Lettr and paste it into the **Hostname** field (without your domain suffix).
+3. Copy the **Value** from Lettr and paste it into the **Value** field.
+4. Click **Save**.
 
 <img src="/images/lettr-storage-2.png" alt="Hostname Pre-validation TXT record values in Lettr for storage domain" />
 
-{/* TODO: Add screenshot of Hostname Pre-validation TXT record in Netlify */}
+{/* TODO: Add screenshot of Hostname Pre-validation TXT record in Linode DNS Manager */}
 
 ### Add CNAME Record (Domain Routing)
 
 The Domain Routing CNAME record routes asset requests from your custom domain to Lettr's storage infrastructure.
 
-Add the record in Netlify:
+Add the record in Linode:
 
-1. Click **Add a custom record** in the DNS records section.
-2. Set **Type** to **CNAME**.
-3. Copy the **Hostname** from Lettr and paste it into the **Name** field (without your domain suffix).
-4. Copy the **Value** from Lettr and paste it into the **Value** field.
-5. Click **Create record**.
+1. Click **Add a CNAME Record**.
+2. Copy the **Hostname** from Lettr and paste it into the **Hostname** field (without your domain suffix).
+3. Copy the **Value** from Lettr and paste it into the **Alias to** field.
+4. Click **Save**.
 
 <img src="/images/lettr-storage-3.png" alt="Domain Routing CNAME record values in Lettr for storage domain" />
 
-{/* TODO: Add screenshot of Domain Routing CNAME record in Netlify */}
+{/* TODO: Add screenshot of Domain Routing CNAME record in Linode DNS Manager */}
 
 ### Verify Your Storage Domain
 
@@ -328,18 +315,9 @@ After adding all three records, go back to Lettr and click **Verify DNS Records*
 ## Troubleshooting
 
 <AccordionGroup>
-  <Accordion title="Root Domain CNAME Issues">
-    Netlify uses ALIAS records for root domains. CNAME records cannot be added at the root domain. For email sending,
-    use the subdomain approach or TXT SPF verification for root domains.
-  </Accordion>
-  <Accordion title="Subdomain Conflicts with Netlify Site">
-    If a subdomain is already assigned to a Netlify site (e.g. `mailing.company.com` is a deployed site), Netlify may not
-    allow you to add a CNAME record for that subdomain. Remove the site assignment first, or use a different subdomain for
-    your Lettr sending domain.
-  </Accordion>
   <Accordion title="Records Not Propagating">
-    DNS propagation on Netlify typically takes 1–15 minutes, but can occasionally take longer. If verification fails after
-    adding records, check the following:
+    Linode DNS typically propagates within 5–30 minutes. If verification fails after adding records, check the
+    following:
 
     - **Wait at least 30 minutes** before your first verification attempt.
     - **Confirm the records exist** using command-line tools:
@@ -364,7 +342,23 @@ After adding all three records, go back to Lettr and click **Verify DNS Records*
     dig CNAME assets.yourdomain.com +short
     ```
 
-    - **Use a web tool** like [dnschecker.org](https://dnschecker.org) to verify propagation across multiple DNS servers worldwide.
+    - **Use a web tool** like [WhatsMyDNS](https://www.whatsmydns.net) or [dnschecker.org](https://dnschecker.org) to verify propagation across multiple DNS servers worldwide.
+  </Accordion>
+  <Accordion title="CNAME at Root Domain Not Supported">
+    Linode doesn't support CNAME records at the root domain. Use a subdomain for your sending domain
+    (e.g. `mailing.company.com`). This is also a DNS protocol limitation — CNAME records cannot coexist with other
+    record types at the same name.
+  </Accordion>
+  <Accordion title="Nameservers Not Pointing to Linode">
+    If your records are saved in Linode but not resolving, confirm that your domain registrar is pointing to Linode's
+    nameservers. You can check this with:
+
+    ```bash
+    dig NS yourdomain.com +short
+    ```
+
+    The output should include Linode nameservers (`ns1.linode.com` through `ns5.linode.com`). If it shows a different
+    provider's nameservers, update them at your domain registrar.
   </Accordion>
   <Accordion title="Wrong Record Type">
     A common mistake is selecting the wrong record type:
@@ -382,13 +376,14 @@ After adding all three records, go back to Lettr and click **Verify DNS Records*
     | Storage domain routing | CNAME |
   </Accordion>
   <Accordion title="DKIM Value Truncated">
-    The DKIM TXT value is a long string. After creating the record, click on it in the DNS records list to confirm the full
-    value was stored. If it appears truncated, delete the record and re-add it, pasting the full value carefully.
+    The DKIM TXT value is a long string. After saving the record, re-open it to confirm the full value was stored. If
+    it appears truncated, delete the record and re-add it, pasting the full value carefully. Linode handles long TXT
+    records automatically.
   </Accordion>
   <Accordion title="When to Contact Support">
-    If your DNS records are correctly configured (confirmed with `dig` or dnschecker.org) and verification still fails after
-    48 hours, contact Lettr support at **support@lettr.com** or through the in-app chat. Include your domain name and the
-    output of the `dig` commands above.
+    If your DNS records are correctly configured (confirmed with `dig` or dnschecker.org) and verification still fails
+    after 48 hours, contact Lettr support at **support@lettr.com** or through the in-app chat. Include your domain name
+    and the output of the `dig` commands above.
   </Accordion>
 </AccordionGroup>
 

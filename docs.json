@@ -3,7 +3,6 @@
   "name": "Lettr",
   "theme": "mint",
   "buildCommand": "curl -s https://app.lettr.com/openapi.json -o openapi.json",
-  "openapi": "/openapi.json",
   "api": {
     "baseUrl": "https://app.lettr.com/api",
     "auth": {
@@ -131,6 +130,8 @@
                   "learn/domains/tracking-domains",
                   "learn/domains/inbound-domains",
                   "learn/domains/storage-domains",
+                  "learn/domains/spf",
+                  "learn/domains/dkim",
                   "learn/domains/dmarc",
                   "learn/domains/bimi"
                 ]
@@ -214,7 +215,8 @@
                 "group": "Logs",
                 "pages": [
                   "learn/logs/introduction",
-                  "learn/logs/filtering-and-searching"
+                  "learn/logs/filtering-and-searching",
+                  "learn/logs/status-codes"
                 ]
               },
               {
@@ -248,71 +250,8 @@
         ]
       },
       {
-        "tab": "Learn",
-        "groups": [
-          {
-            "group": "Domains",
-            "pages": [
-              "learn/domains/introduction",
-              "learn/domains/sending-domains",
-              "learn/domains/tracking-domains",
-              "learn/domains/inbound-domains",
-              "learn/domains/storage-domains",
-              "learn/domains/spf",
-              "learn/domains/dkim",
-              "learn/domains/dmarc",
-              "learn/domains/bimi"
-            ]
-          },
-          {
-            "group": "Domain Verification Guides",
-            "pages": [
-              "knowledge-base/domain-verification/introduction",
-              "knowledge-base/domain-verification/azure",
-              "knowledge-base/domain-verification/cloudflare",
-              "knowledge-base/domain-verification/digitalocean",
-              "knowledge-base/domain-verification/godaddy",
-              "knowledge-base/domain-verification/google-cloud",
-              "knowledge-base/domain-verification/hetzner",
-              "knowledge-base/domain-verification/hostinger",
-              "knowledge-base/domain-verification/ionos",
-              "knowledge-base/domain-verification/linode",
-              "knowledge-base/domain-verification/namecheap",
-              "knowledge-base/domain-verification/netlify",
-              "knowledge-base/domain-verification/route53",
-              "knowledge-base/domain-verification/squarespace",
-              "knowledge-base/domain-verification/strato",
-              "knowledge-base/domain-verification/vercel"
-            ]
-          },
-          {
-            "group": "API Keys",
-            "pages": [
-              "learn/api-keys/introduction"
-            ]
-          },
-          {
-            "group": "Logs",
-            "pages": [
-              "learn/logs/introduction",
-              "learn/logs/status-codes"
-            ]
-          }
-        ]
-      },
-      {
-        "tab": "MCP",
-        "groups": [
-          {
-            "group": "MCP",
-            "pages": [
-              "mcp/introduction"
-            ]
-          }
-        ]
-      },
-      {
         "tab": "API Reference",
+        "openapi": "/openapi.json",
         "groups": [
           {
             "group": "API Reference",
@@ -391,6 +330,7 @@
               "knowledge-base/dns-guides/hetzner",
               "knowledge-base/dns-guides/hostinger",
               "knowledge-base/dns-guides/ionos",
+              "knowledge-base/dns-guides/linode",
               "knowledge-base/dns-guides/namecheap",
               "knowledge-base/dns-guides/netlify",
               "knowledge-base/dns-guides/porkbun",
