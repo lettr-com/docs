@@ -65,55 +65,19 @@ v=spf1 include:_spf.sparkpostmail.com include:spf.protection.outlook.com include
 
 ## SPF Lookup Limit
 
-SPF has a limit of **10 DNS lookups** per record. Each `include:` statement counts as at least one lookup.
+SPF has a limit of **10 DNS lookups** per record. Each `include:` statement counts as at least one lookup (and nested includes add more). If you use several email services, you can exceed the limit.
 
-### Check Your SPF Lookups
+### Check your lookup count
 
-```javascript
-const domain = await lettr.domains.get('dom_123');
+Use a public SPF checker to see how many lookups your record uses:
 
-console.log({
-  spfStatus: domain.spfStatus,
-  spfLookups: domain.spfLookups, // Number of DNS lookups
-  spfValid: domain.spfValid
-});
-```
+- **[MXToolbox SPF Record Lookup](https://mxtoolbox.com/spf.aspx)** – Enter your domain to see the resolved SPF record and lookup count.
+- **[DMARC Analyzer SPF Lookup](https://www.dmarcanalyzer.com/spf/spf-record-check/)** – Shows lookup chain and warns if you exceed 10.
 
 If you exceed 10 lookups, consider:
 
 - Removing unused email services from your SPF
 - Using SPF flattening services that replace includes with IP addresses
-
-## Custom Return-Path
-
-By default, Lettr uses the `send` subdomain for the Return-Path address (e.g., `send.example.com`). You can customize this:
-
-### Via Dashboard
-
-When adding a domain, expand **Advanced options** and set your custom return path.
-
-### Via API
-
-```javascript
-const domain = await lettr.domains.create({
-  name: 'example.com',
-  customReturnPath: 'bounce' // Results in bounce.example.com
-});
-```
-
-### Return-Path DNS Record
-
-When using a custom return-path, add this CNAME record:
-
-```
-Type:  CNAME
-Host:  bounce (or your chosen subdomain)
-Value: bounce.lettr.dev
-```
-
-<Note>
-  Custom return paths must be 63 characters or less, start with a letter, end with a letter or number, and contain only letters, numbers, and hyphens.
-</Note>
 
 ## Verify SPF Setup
 

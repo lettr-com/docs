@@ -5,7 +5,7 @@ description: "Set up custom domains for click and open tracking in your emails"
 
 # Tracking Domains
 
-Tracking domains allow you to use your own custom domain for click and open tracking links instead of Lettr's default tracking domain. This improves brand consistency and can enhance deliverability.
+Tracking domains let you use your own domain for click and open tracking links instead of Lettr's default. Lettr uses **SSL for all tracking** and **automatically provisions and renews SSL certificates** for your tracking domain—HTTPS is important for deliverability and is set up for you once you add the required DNS records.
 
 ## What is Email Tracking?
 
@@ -30,7 +30,7 @@ Lettr can track two types of email engagement:
 Custom tracking domains provide several benefits:
 
 - **Brand Consistency** - All links show your domain, not Lettr's
-- **Improved Deliverability** - Some spam filters are more lenient with first-party tracking domains
+- **Improved Deliverability** - First-party HTTPS tracking domains are trusted more by filters; Lettr automatically provisions SSL for your domain so links are always served over HTTPS
 - **User Trust** - Recipients see familiar domains when hovering over links
 - **Professional Appearance** - Consistent branding across all email elements
 - **Bypasses Link Blockers** - Some security tools block known tracking domains
@@ -38,33 +38,44 @@ Custom tracking domains provide several benefits:
 ## Setup Custom Tracking Domain
 
 <Steps>
-  <Step title="Choose a Subdomain">
-    Select a subdomain for tracking, such as:
-    - `links.example.com`
-    - `track.example.com`
-    - `click.example.com`
-    - `go.example.com`
+  <Step title="Add domain in Dashboard">
+    Go to **Domains → Tracking Domains** and click **+ New Tracking Domain**. Enter your subdomain (e.g. `links.example.com`, `click.example.com`).
   </Step>
-  <Step title="Add DNS Record">
-    Add a CNAME record pointing your subdomain to Lettr.
-  </Step>
-  <Step title="Configure in Dashboard">
-    Go to **Domains → Tracking Domains** and click **+ New Tracking Domain**. Enter your subdomain.
+  <Step title="Add two CNAME records">
+    In your DNS provider, add both CNAME records shown in the dashboard: **CNAME (SSL)** and **CNAME (Proxy)**. Copy the exact NAME and VALUE from the dashboard for each.
   </Step>
   <Step title="Verify Domain">
-    Click **Verify** to confirm DNS propagation and SSL provisioning.
+    Click **Verify** in the dashboard. After DNS propagates, Lettr automatically provisions an SSL certificate for your domain. Tracking will then use your custom domain over HTTPS.
   </Step>
 </Steps>
 
 ## DNS Configuration
 
-Add this CNAME record to your domain's DNS:
+You need **two CNAME records** for each tracking domain. The exact values are shown in the dashboard when you add the domain; add both to your DNS.
 
-```
-Type:  CNAME
-Host:  links (or your chosen subdomain)
-Value: track.lettr.dev
-```
+### CNAME Record (SSL)
+
+Enables **automatic SSL certificate issuance and renewal** for your tracking domain. All tracking links are served over HTTPS, which is important for deliverability and recipient trust.
+
+| Field | Example | Where to get it |
+|-------|---------|-----------------|
+| **NAME** | `_acme-challenge.links.example.com` | Shown in dashboard (copy from **CNAME Record (SSL)**) |
+| **VALUE** | (DCV target, e.g. `links.example.com.xxxxx.dcv.cloudflare.com`) | Shown in dashboard |
+
+Without this record, Lettr cannot issue or renew the SSL certificate for your domain.
+
+### CNAME Record (Proxy)
+
+Routes your tracking domain's traffic through Lettr's secure proxy so clicks and opens are logged correctly.
+
+| Field | Example | Where to get it |
+|-------|---------|-----------------|
+| **NAME** | `links` (or your subdomain label) | Your tracking subdomain |
+| **VALUE** | `proxy.lettr-tracking.com` | Shown in dashboard (copy from **CNAME Record (Proxy)**) |
+
+<Info>
+  **SSL and deliverability:** Lettr provisions and renews SSL certificates for your tracking domain automatically. Tracking links are always served over HTTPS, which helps with spam filters and deliverability. Complete both CNAME records so SSL can be activated.
+</Info>
 
 ## Via API
 
@@ -75,8 +86,8 @@ const domain = await lettr.domains.create({
   type: 'tracking'
 });
 
+// Response includes DNS records to add: CNAME (SSL) and CNAME (Proxy)
 console.log(domain.dnsRecords);
-// [{ type: 'CNAME', host: 'links', value: 'track.lettr.dev' }]
 ```
 
 ### Associate with Sending Domain
@@ -89,22 +100,14 @@ await lettr.domains.update('dom_sending_123', {
 });
 ```
 
-## SSL Certificate
+## SSL and Deliverability
 
-Lettr automatically provisions and renews SSL certificates for your tracking domain. All tracking URLs use HTTPS for security and compatibility.
+Lettr uses SSL for all tracking and **automatically provisions and renews** SSL certificates for your custom tracking domain. You do not need to buy or upload certificates—once both CNAME records (SSL and Proxy) are in place and verified, Lettr issues and renews the certificate.
 
-```javascript
-const domain = await lettr.domains.get('dom_123');
-
-console.log({
-  trackingDomain: domain.name,
-  sslStatus: domain.sslStatus,       // 'provisioning', 'active', 'failed'
-  sslExpiresAt: domain.sslExpiresAt
-});
-```
+**Why this matters for deliverability:** Tracking links served over HTTPS from your own domain are trusted more by spam filters and look correct to recipients. Insecure or third-party tracking URLs can hurt deliverability. With automatic SSL, your tracking domain is always HTTPS and aligned with best practices.
 
 <Info>
-  SSL provisioning typically takes 5-10 minutes after DNS verification. During this time, tracking will use Lettr's default domain.
+  SSL provisioning usually finishes within a few minutes after DNS verification. Until then, tracking may use Lettr's default domain. Check the domain status in the dashboard for SSL state.
 </Info>
 
 ## Using Custom Tracking
@@ -286,7 +289,7 @@ You can use different tracking domains for different purposes:
 | Links not being tracked | Verify `tracking.clicks` is `true` in send options |
 | SSL errors | Wait for SSL provisioning to complete |
 | Old links using default domain | Only new emails use the custom tracking domain |
-| Tracking domain not verifying | Ensure CNAME points to `track.lettr.dev` |
+| Tracking domain not verifying | Add both CNAME records (SSL and Proxy) and use the exact NAME/VALUE from the dashboard |
 
 <Warning>
   Changing your tracking domain won't affect previously sent emails. Only new emails will use the updated tracking domain.

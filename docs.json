@@ -116,7 +116,7 @@
             ]
           },
           {
-            "group": "Domain Verification",
+            "group": "Domain Verification Guides",
             "pages": [
               "knowledge-base/domain-verification/introduction",
               "knowledge-base/domain-verification/azure",

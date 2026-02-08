@@ -23,7 +23,7 @@ Email providers are increasingly strict about authentication. Verified sending d
     Go to **Domains → Sending Domains** and click **+ New Sending Domain**. Enter your domain name.
   </Step>
   <Step title="Configure DNS Records">
-    Add the SPF and DKIM records to your domain's DNS settings.
+    Add the required DNS records (see table below—root domains need SPF, DKIM, DMARC; subdomains need DKIM, DMARC, and Bounce CNAME only).
   </Step>
   <Step title="Verify Domain">
     Click **Verify** to confirm DNS propagation. Verification typically takes a few minutes but can take up to 48 hours.
@@ -52,7 +52,7 @@ On success (201), use `data.dkim` to add your DKIM DNS record. For full DNS reco
 
 ## Required DNS Records
 
-You need SPF, DKIM, and DMARC for every sending domain. The records differ slightly for a **primary (root) domain** (e.g. `example.com`) vs a **subdomain** (e.g. `mail.example.com`).
+Required records differ for a **primary (root) domain** (e.g. `example.com`) vs a **subdomain** (e.g. `mail.example.com`). For subdomains, SPF for the return-path is handled automatically—you only add the Bounce CNAME.
 
 <Tip>
   **We recommend using a subdomain** (e.g. `mail.example.com`, `news.example.com`) for sending. Subdomains isolate your sending reputation from your root domain and make it easier to add the Bounce CNAME required for return-path.
@@ -72,19 +72,18 @@ If you already have an SPF record, merge the include: `v=spf1 include:_spf.spark
 
 | Record | Type | Host | Value |
 |--------|------|------|-------|
-| **SPF** | TXT | `mail` (your subdomain label) | `v=spf1 include:_spf.sparkpostmail.com ~all` |
 | **DKIM** | CNAME | `lettr._domainkey.mail` | (from Get Domain / create response) |
 | **DMARC** | TXT | `_dmarc` | `v=DMARC1;p=none;` |
 | **Bounce** | CNAME | `bounce` (or `send`) | `sparkpostmail.com` |
 
-The Bounce CNAME is the custom return-path for the subdomain; primary domains use SPF for the return-path. See [Custom Return-Path and Bounce Record](#custom-return-path-and-bounce-record) below.
+No SPF record is needed for the subdomain—return-path (bounce) is handled automatically via the Bounce CNAME. See [Custom Return-Path and Bounce Record](#custom-return-path-and-bounce-record) below.
 
 See our [DMARC guide](/learn/domains/dmarc) for detailed configuration and safe rollout to enforcement.
 
 ## Custom Return-Path and Bounce Record
 
 - **Primary (root) domains** use an **SPF record** (TXT) to authorize sending and bounces.
-- **Subdomains** use a **Bounce record**: a CNAME custom return-path. Add a CNAME with value `sparkpostmail.com` for the subdomain you use for the Return-Path (e.g. `bounce` or `send`):
+- **Subdomains** use a **Bounce record** (CNAME to `sparkpostmail.com`) for the return-path; SPF for the subdomain is not required and is handled automatically. Add the Bounce CNAME for the subdomain you use (e.g. `bounce` or `send`):
 
 ```
 Type:  CNAME
@@ -182,7 +181,7 @@ const response = await fetch('https://app.lettr.com/api/domains', {
 });
 ```
 
-DNS records for subdomains (use `include:_spf.sparkpostmail.com` for SPF and `v=DMARC1;p=none;` for DMARC; add the Bounce CNAME as in the table above).
+DNS records for subdomains: DKIM, DMARC, and Bounce CNAME as in the [Required DNS Records](#required-dns-records) table (no SPF needed for subdomains).
 
 ## Domain Status
 

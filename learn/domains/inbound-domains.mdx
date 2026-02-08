@@ -26,7 +26,7 @@ Inbound email processing enables powerful features:
 └──────────────┘         └──────────────┘         └──────────────┘
 ```
 
-1. Configure your domain's MX records to point to Lettr
+1. Add the three MX records (shown in the dashboard) so your domain’s mail is received by Lettr
 2. Emails sent to any address `*@yourdomain.com` are received by Lettr
 3. Lettr parses the email and sends a webhook to your application
 4. Your application processes the email data
@@ -35,121 +35,162 @@ Inbound email processing enables powerful features:
 
 <Steps>
   <Step title="Add domain in Dashboard">
-    Go to **Domains → Inbound Domains** and click **+ New Inbound Domain**. Enter your domain.
+    Go to **Domains → Inbound Domains** and click **+ New Inbound Domain**. Enter your domain (e.g. `inbound.example.com`).
   </Step>
-  <Step title="Add MX Record">
-    Add the MX record to your domain's DNS settings.
+  <Step title="Add MX records">
+    In the dashboard you’ll see the **MX Records** section: “Required for receiving inbound emails on this domain.” Copy the **HOSTNAME** and **MX RECORD 1**, **MX RECORD 2**, **MX RECORD 3** values and add them to your DNS. Use the provider guide button (e.g. **AWS Route53 guide**) if your DNS is on a supported provider.
   </Step>
-  <Step title="Configure Webhook">
-    Set up a webhook endpoint to receive incoming emails.
+  <Step title="Configure webhook">
+    Set up a webhook endpoint to receive incoming emails (see [Webhooks](/learn/webhooks/introduction)).
   </Step>
-  <Step title="Verify Domain">
-    Click **Verify** to confirm DNS propagation.
+  <Step title="Verify MX records">
+    In the dashboard, click **Verify MX Records**. Status will move from **Pending** to verified once DNS has propagated.
   </Step>
 </Steps>
 
 ## DNS Configuration
 
-Add this MX record to your domain:
+The dashboard shows the exact values for your domain. You need **three MX records** (all priority `10`) pointing to Lettr’s inbound servers:
 
-```
-Type:     MX
-Host:     @ (or subdomain like 'inbound')
-Value:    inbound.lettr.dev
-Priority: 10
-```
+| Record    | Type | Host (your domain/subdomain) | Value (mail server)     | Priority |
+|-----------|------|------------------------------|-------------------------|----------|
+| MX Record 1 | MX   | `@` or e.g. `inbound`        | `rx1.sparkpostmail.com` | 10       |
+| MX Record 2 | MX   | `@` or e.g. `inbound`        | `rx2.sparkpostmail.com` | 10       |
+| MX Record 3 | MX   | `@` or e.g. `inbound`        | `rx3.sparkpostmail.com` | 10       |
+
+In the dashboard, the **MX Records** section lists **HOSTNAME** (your domain) and **MX RECORD 1**, **MX RECORD 2**, **MX RECORD 3** (each with a copy button). Add these in your DNS; status stays **Pending** until you click **Verify MX Records** and DNS has propagated.
 
 <Tip>
-  We recommend using a subdomain like `inbound.example.com` to keep your main domain's MX records separate for your regular email.
+  Use a subdomain like `inbound.example.com` so your main domain’s MX records stay unchanged for regular email.
 </Tip>
 
 ## Via API
 
+Create the inbound domain with `POST /domains`. The request body contains only the domain name; the dashboard then shows the MX records to add.
+
 ```javascript
-// Create inbound domain
-const domain = await lettr.domains.create({
-  name: 'inbound.example.com',
-  type: 'inbound'
+const response = await fetch('https://app.lettr.com/api/domains', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer YOUR_API_KEY'
+  },
+  body: JSON.stringify({ domain: 'inbound.example.com' })
 });
 
-// Set up webhook for incoming emails
-await lettr.webhooks.create({
-  url: 'https://yourapp.com/webhooks/inbound-email',
-  events: ['inbound.email.received']
-});
+const { message, data } = await response.json();
+// Then add the three MX records (rx1/rx2/rx3.sparkpostmail.com, priority 10) in your DNS—values are shown in the dashboard for this domain.
 ```
+
+Configure a webhook for incoming email events via the dashboard or the [Webhooks API](/api-reference/webhooks/list-webhooks). See [Create Domain](/api-reference/domains/create-domain) for the full request/response schema.
 
 ## Webhook Payload
 
-When an email is received, Lettr sends a webhook with the following structure:
+Inbound webhooks send a payload wrapped in `msys.relay_event`. Use the `type` field to distinguish events.
+
+### relay_injection
+
+Sent when an inbound message is received (injected):
 
 ```json
 {
-  "event": "inbound.email.received",
-  "timestamp": "2024-01-15T10:30:00Z",
-  "data": {
-    "id": "inb_abc123",
-    "from": {
-      "email": "sender@example.org",
-      "name": "John Doe"
-    },
-    "to": [
-      {
-        "email": "support@inbound.example.com",
-        "name": ""
-      }
-    ],
-    "cc": [],
-    "bcc": [],
-    "subject": "Question about my order",
-    "text": "Plain text content...",
-    "html": "<html>HTML content...</html>",
-    "headers": {
-      "message-id": "<abc123@example.org>",
-      "in-reply-to": "<original-message-id>",
-      "references": "<thread-message-ids>"
-    },
-    "attachments": [
-      {
-        "filename": "document.pdf",
-        "contentType": "application/pdf",
-        "size": 102400,
-        "url": "https://inbound.lettr.dev/attachments/xyz789"
-      }
-    ],
-    "spam_score": 0.2,
-    "spf_result": "pass",
-    "dkim_result": "pass"
+  "msys": {
+    "relay_event": {
+      "event_id": "92356927693813856",
+      "rcpt_to": "recipient@example.com",
+      "rcpt_hash": "2aae6c35c94fcfb415dbe95f408b9ce91ee846ed",
+      "raw_rcpt_to": "recipient@example.com",
+      "msg_size": "1337",
+      "routing_domain": "example.com",
+      "customer_id": "1",
+      "sending_ip": "18.236.253.72",
+      "type": "relay_injection",
+      "subaccount_id": "101",
+      "timestamp": "1460989507",
+      "ip_pool": "example-ip-pool",
+      "origination": "inbound",
+      "message_id": "000443ee14578172be22",
+      "msg_from": "sender@example.com",
+      "recv_method": "esmtp",
+      "injection_time": "2016-04-18T14:25:07.000Z",
+      "relay_id": "123-456-789"
+    }
   }
 }
 ```
 
+### relay_delivery
+
+Sent when the inbound message has been delivered:
+
+```json
+{
+  "msys": {
+    "relay_event": {
+      "event_id": "92356927693813856",
+      "routing_domain": "example.com",
+      "rcpt_to": "recipient@example.com",
+      "rcpt_hash": "2aae6c35c94fcfb415dbe95f408b9ce91ee846ed",
+      "raw_rcpt_to": "recipient@example.com",
+      "type": "relay_delivery",
+      "message_id": "000443ee14578172be22",
+      "msg_from": "sender@example.com",
+      "recv_method": "esmtp",
+      "subaccount_id": "101",
+      "ip_pool": "example-ip-pool",
+      "queue_time": "12",
+      "customer_id": "1",
+      "timestamp": "1460989507",
+      "num_retries": "2",
+      "origination": "inbound",
+      "delv_method": "esmtp",
+      "sending_ip": "18.236.253.72",
+      "injection_time": "2016-04-18T14:25:07.000Z",
+      "relay_id": "123-456-789"
+    }
+  }
+}
+```
+
+### Common fields
+
+| Field | Description |
+|-------|-------------|
+| `type` | `relay_injection` (message received) or `relay_delivery` (message delivered) |
+| `origination` | `inbound` for inbound relay events |
+| `msg_from` | Sender address |
+| `rcpt_to` / `raw_rcpt_to` | Recipient address |
+| `routing_domain` | Domain that received the message |
+| `message_id` | Message identifier |
+| `event_id` | Event identifier |
+| `timestamp` | Unix timestamp |
+| `injection_time` | ISO 8601 injection time |
+| `relay_id` | Relay identifier |
+
 ## Handling Incoming Emails
 
-Example webhook handler:
+Example webhook handler using the relay payload:
 
 ```javascript
 app.post('/webhooks/inbound-email', async (req, res) => {
-  const { event, data } = req.body;
+  const event = req.body?.msys?.relay_event;
+  if (!event || event.origination !== 'inbound') {
+    return res.status(200).send('OK');
+  }
 
-  if (event === 'inbound.email.received') {
-    const { from, subject, text, attachments } = data;
-
-    // Create support ticket
+  if (event.type === 'relay_injection') {
+    // New inbound message received
+    const { msg_from, rcpt_to, message_id, routing_domain } = event;
     await createTicket({
-      email: from.email,
-      subject: subject,
-      body: text,
-      attachments: attachments
+      from: msg_from,
+      to: rcpt_to,
+      messageId: message_id,
+      domain: routing_domain
     });
-
-    // Send auto-reply
-    await lettr.emails.send({
-      from: 'support@example.com',
-      to: [from.email],
-      subject: `Re: ${subject}`,
-      text: 'Thanks for contacting us! We\'ll respond within 24 hours.'
-    });
+  } else if (event.type === 'relay_delivery') {
+    // Inbound message delivered
+    const { message_id } = event;
+    await markInboundDelivered(message_id);
   }
 
   res.status(200).send('OK');
@@ -164,75 +205,14 @@ With an inbound domain, all addresses are automatically catch-all:
 - `sales@inbound.example.com` ✓
 - `anything@inbound.example.com` ✓
 
-You can route emails based on the recipient address in your webhook handler.
-
-## Spam Filtering
-
-Lettr automatically scans incoming emails for spam. The `spam_score` field indicates the likelihood of spam (0-10, higher = more likely spam).
-
-```javascript
-if (data.spam_score > 5) {
-  // Handle as spam
-  await moveToSpam(data.id);
-} else {
-  // Process normally
-  await processEmail(data);
-}
-```
-
-## Reply Tracking
-
-To match incoming replies to original outgoing emails, use the `in-reply-to` and `references` headers:
-
-```javascript
-const inReplyTo = data.headers['in-reply-to'];
-
-if (inReplyTo) {
-  // Find the original email
-  const originalEmail = await findEmailByMessageId(inReplyTo);
-
-  // Link reply to conversation
-  await addReplyToConversation(originalEmail.conversationId, data);
-}
-```
-
-## Attachment Handling
-
-Attachments are stored temporarily and accessible via URL:
-
-```javascript
-for (const attachment of data.attachments) {
-  // Download attachment
-  const response = await fetch(attachment.url);
-  const buffer = await response.buffer();
-
-  // Save to your storage
-  await saveAttachment(attachment.filename, buffer);
-}
-```
-
-<Warning>
-  Attachment URLs expire after 7 days. Download and store attachments in your own storage if you need long-term access.
-</Warning>
-
-## Email Validation
-
-Lettr validates incoming emails and provides authentication results:
-
-| Field | Values | Description |
-|-------|--------|-------------|
-| `spf_result` | pass, fail, softfail, neutral, none | SPF check result |
-| `dkim_result` | pass, fail, none | DKIM signature verification |
-| `spam_score` | 0-10 | Spam likelihood score |
+You can route emails based on `rcpt_to` (or `raw_rcpt_to`) in the webhook payload.
 
 ## Troubleshooting
 
 | Issue | Solution |
 |-------|----------|
-| Not receiving emails | Verify MX record points to `inbound.lettr.dev` |
-| Webhook not called | Check webhook URL is accessible and returns 2xx |
-| Missing attachments | Ensure attachment URLs are downloaded before expiry |
-| High spam scores | Check sender's SPF/DKIM configuration |
+| Not receiving emails | Add all three MX records (rx1, rx2, rx3 .sparkpostmail.com, priority 10) and click **Verify MX Records** in the dashboard |
+| Webhook not called | Check webhook URL is accessible and returns 2xx; ensure payload is read from `body.msys.relay_event` |
 
 ## Next Steps
 
