@@ -46,7 +46,7 @@ for (const record of domain.dnsRecords) {
 
 ## Required DNS Records
 
-You need to add two DNS records for email authentication:
+You need to add three DNS records for email authentication:
 
 ### SPF Record
 
@@ -72,30 +72,9 @@ Host:  lettr._domainkey
 Value: dkim.lettr.dev
 ```
 
-## Optional DNS Records
-
-### Custom Return-Path
-
-By default, Lettr uses `send.yourdomain.com` for the Return-Path. You can customize this:
-
-```
-Type:  CNAME
-Host:  bounce (or your chosen subdomain)
-Value: bounce.lettr.dev
-```
-
-Configure via API:
-
-```javascript
-const domain = await lettr.domains.create({
-  name: 'example.com',
-  customReturnPath: 'bounce'
-});
-```
-
 ### DMARC Record
 
-While optional, DMARC is highly recommended for additional protection:
+DMARC is required for sending domains. Add a DMARC TXT record:
 
 ```
 Type:  TXT
@@ -103,7 +82,28 @@ Host:  _dmarc
 Value: v=DMARC1; p=none; rua=mailto:dmarc@example.com
 ```
 
-See our [DMARC guide](/learn/domains/dmarc) for detailed configuration.
+See our [DMARC guide](/learn/domains/dmarc) for detailed configuration and safe rollout to enforcement.
+
+## Custom Return-Path and Bounce Record
+
+- **Primary (root) domains** use an **SPF record** (TXT) to authorize sending and bounces.
+- **Subdomains** use a **Bounce record**: a CNAME custom return-path. Add a CNAME with value `sparkpostmail.com` for the subdomain you use for the Return-Path (e.g. `bounce` or `send`):
+
+```
+Type:  CNAME
+Host:  bounce (or send / your chosen subdomain)
+Value: sparkpostmail.com
+```
+
+Configure via API:
+
+```javascript
+const domain = await lettr.domains.create({
+  name: 'mail.example.com',
+  type: 'sending',
+  customReturnPath: 'bounce'
+});
+```
 
 ## Verify DNS Records
 
@@ -219,44 +219,6 @@ console.log({
 });
 ```
 
-## Domain Reputation
-
-Monitor your sending domain's reputation over time:
-
-```javascript
-const reputation = await lettr.domains.getReputation('dom_123');
-
-console.log({
-  score: reputation.score,           // 0-100
-  status: reputation.status,         // 'good', 'fair', 'poor'
-  bounceRate: reputation.bounceRate, // Percentage
-  spamRate: reputation.spamRate,     // Percentage
-  openRate: reputation.openRate      // Percentage
-});
-```
-
-### Reputation Factors
-
-| Factor | Impact | Recommendation |
-|--------|--------|----------------|
-| Bounce Rate | High impact | Keep below 2% |
-| Spam Complaints | Very high impact | Keep below 0.1% |
-| Engagement | Moderate impact | Higher open/click rates help |
-| Volume Consistency | Moderate impact | Avoid sudden spikes |
-
-## Multiple Sending Domains
-
-You can verify multiple domains for different purposes:
-
-```javascript
-// List all domains
-const domains = await lettr.domains.list({ type: 'sending' });
-
-for (const domain of domains.data) {
-  console.log(`${domain.name}: ${domain.status}`);
-}
-```
-
 ## Troubleshooting
 
 | Issue | Solution |
@@ -264,7 +226,7 @@ for (const domain of domains.data) {
 | SPF not verifying | Ensure TXT record is on root domain (`@`) |
 | DKIM not verifying | Check CNAME record at `lettr._domainkey` |
 | Sending fails | Verify domain status is `verified` |
-| Emails going to spam | Check reputation and ensure DMARC is configured |
+| Emails going to spam | Ensure DMARC is configured and enforced |
 
 ## Next Steps
 

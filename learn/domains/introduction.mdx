@@ -34,10 +34,10 @@ Lettr supports four types of domains, each serving a specific purpose:
 
 | Domain Type | Purpose | Required DNS Records |
 |-------------|---------|---------------------|
-| Sending | Send emails from your domain | SPF (TXT), DKIM (CNAME), optional DMARC |
-| Tracking | Custom tracking links | CNAME pointing to Lettr |
-| Inbound | Receive emails | MX record pointing to Lettr |
-| Storage | Host email images | CNAME pointing to Lettr CDN |
+| Sending | Send emails from your domain | SPF (TXT) or CNAME, DKIM (CNAME), DMARC |
+| Tracking | Custom tracking links | CNAME (SSL), CNAME (proxy) |
+| Inbound | Receive emails | MX records pointing to Lettr |
+| Storage | Host email images | CNAME (SSL), CNAME (proxy) |
 
 ## Why Use Custom Domains?
 
