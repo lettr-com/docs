@@ -28,24 +28,6 @@ SPF is an email authentication standard that allows you to specify which mail se
                      └───────────────────┘
 ```
 
-## Adding SPF for Lettr
-
-Add a TXT record to your domain's DNS:
-
-```
-Type:  TXT
-Host:  @ (or leave blank for root domain)
-Value: v=spf1 include:_spf.sparkpostmail.com ~all
-```
-
-### SPF Record Breakdown
-
-| Component | Meaning |
-|-----------|---------|
-| `v=spf1` | SPF version 1 (required) |
-| `include:_spf.sparkpostmail.com` | Authorize Lettr's mail servers |
-| `~all` | Soft fail for unauthorized senders |
-
 ## SPF Qualifiers
 
 The qualifier at the end of your SPF record determines how receiving servers handle emails from unauthorized sources:
