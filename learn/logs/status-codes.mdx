@@ -1,0 +1,56 @@
+---
+title: Status Codes
+description: "HTTP status codes returned by the Lettr API and how to interpret them"
+---
+
+# Status Codes
+
+The Lettr API uses standard HTTP status codes in every response. When viewing [API Logs](https://app.lettr.com/logs), you can filter by status code to quickly find successful requests or errors.
+
+## Success (2xx)
+
+| Code | Name | When you'll see it |
+|------|------|--------------------|
+| **200** | OK | Successful GET, PATCH, or DELETE requests. The response body contains the requested or updated resource. |
+| **201** | Created | Successful POST requests that create a resource (e.g. sending an email, creating a domain). The response body contains the new resource. |
+| **204** | No Content | Successful DELETE requests with no response body. |
+
+## Client errors (4xx)
+
+These indicate a problem with the request (missing or invalid API key, bad parameters, or missing resource).
+
+| Code | Name | Cause | What to do |
+|------|------|-------|------------|
+| **400** | Bad Request | Invalid request format, malformed JSON, or invalid parameters. | Check the response body for an error message and fix your request. |
+| **401** | Unauthorized | Missing API key or invalid API key. | Ensure the `Authorization: Bearer <api_key>` header is set with a valid [API key](/learn/api-keys/introduction). |
+| **403** | Forbidden | API key is valid but does not have permission for this action. | Use an API key with the required [permissions](/learn/api-keys/permissions) or create a new key. |
+| **404** | Not Found | The requested resource does not exist (e.g. wrong domain name, email ID, or template slug). | Verify the ID or identifier in the URL path. |
+| **409** | Conflict | Resource already exists or state conflict (e.g. domain already added). | Check the response message; you may need to use a different identifier or update the existing resource. |
+| **422** | Unprocessable Content | Request body failed validation (e.g. invalid email address, missing required field). | The response includes an `errors` object with field-level messages. Fix the listed fields and retry. |
+| **429** | Too Many Requests | Rate limit exceeded. | Retry after the time indicated in the `Retry-After` header. See [rate limits](/knowledge-base/troubleshooting/rate-limits). |
+| **451** | Unavailable For Legal Reasons | Request blocked for legal or compliance reasons. | Contact support if you believe this is in error. |
+
+## Server errors (5xx)
+
+These indicate a temporary problem on Lettr's side. Retrying later usually succeeds.
+
+| Code | Name | When you'll see it |
+|------|------|--------------------|
+| **500** | Internal Server Error | An unexpected server error occurred. |
+| **502** | Bad Gateway | The server received an invalid response from an upstream service. |
+| **503** | Service Unavailable | The service is temporarily overloaded or in maintenance. |
+
+<Tip>
+  In the [Logs](https://app.lettr.com/logs) dashboard, filter by 4xx or 5xx to quickly find failed requests and debug integration issues.
+</Tip>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="API Logs" icon="list" href="/learn/logs/introduction">
+    Filter, search, and export API logs
+  </Card>
+  <Card title="Troubleshooting" icon="wrench" href="/knowledge-base/troubleshooting/authentication">
+    Fix common authentication and delivery issues
+  </Card>
+</CardGroup>

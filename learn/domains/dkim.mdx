@@ -28,20 +28,6 @@ DKIM is an email authentication method that allows the recipient to verify that 
 └──────────────┘                     └──────────────┘
 ```
 
-## Adding DKIM for Lettr
-
-Add a CNAME record to your domain's DNS:
-
-```
-Type:  CNAME
-Host:  lettr._domainkey
-Value: dkim.lettr.dev
-```
-
-<Info>
-  Lettr uses CNAME records for DKIM to simplify key management. This allows automatic key rotation without requiring you to update DNS records.
-</Info>
-
 ## DKIM Record Explained
 
 A DKIM public key record contains:
@@ -81,38 +67,6 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
 | `h` | Headers included in signature |
 | `bh` | Body hash |
 | `b` | Signature |
-
-## Multiple DKIM Keys
-
-You can have multiple DKIM keys for different purposes (e.g., different email services). Each key uses a different selector:
-
-| Service | Selector | DNS Record Host |
-|---------|----------|-----------------|
-| Lettr | `lettr` | `lettr._domainkey` |
-| Google | `google` | `google._domainkey` |
-| Mailchimp | `k1` | `k1._domainkey` |
-
-<Tip>
-  Unlike SPF, you can have multiple DKIM records. Each service uses its own selector, so they don't conflict.
-</Tip>
-
-## DKIM Key Rotation
-
-Lettr automatically rotates DKIM keys to maintain security. Because you use a CNAME record pointing to `dkim.lettr.dev`, key rotation happens seamlessly without any DNS changes on your end.
-
-## Verify DKIM Setup
-
-```javascript
-const domain = await lettr.domains.get('dom_123');
-
-if (domain.dkimStatus === 'verified') {
-  console.log('DKIM is correctly configured!');
-} else {
-  console.log('DKIM status:', domain.dkimStatus);
-  console.log('Expected record host:', domain.dkimRecordHost);
-  console.log('Expected record value:', domain.dkimRecordValue);
-}
-```
 
 ## DKIM Alignment for DMARC
 

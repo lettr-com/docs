@@ -35,7 +35,7 @@ Add a TXT record to your domain's DNS:
 ```
 Type:  TXT
 Host:  @ (or leave blank for root domain)
-Value: v=spf1 include:spf.lettr.dev ~all
+Value: v=spf1 include:_spf.sparkpostmail.com ~all
 ```
 
 ### SPF Record Breakdown
@@ -43,7 +43,7 @@ Value: v=spf1 include:spf.lettr.dev ~all
 | Component | Meaning |
 |-----------|---------|
 | `v=spf1` | SPF version 1 (required) |
-| `include:spf.lettr.dev` | Authorize Lettr's mail servers |
+| `include:_spf.sparkpostmail.com` | Authorize Lettr's mail servers |
 | `~all` | Soft fail for unauthorized senders |
 
 ## SPF Qualifiers
@@ -68,13 +68,13 @@ You can only have **one SPF record** per domain. If you use multiple email servi
 ### Example: Lettr + Google Workspace
 
 ```
-v=spf1 include:spf.lettr.dev include:_spf.google.com ~all
+v=spf1 include:_spf.sparkpostmail.com include:_spf.google.com ~all
 ```
 
 ### Example: Lettr + Microsoft 365 + Mailchimp
 
 ```
-v=spf1 include:spf.lettr.dev include:spf.protection.outlook.com include:servers.mcsv.net ~all
+v=spf1 include:_spf.sparkpostmail.com include:spf.protection.outlook.com include:servers.mcsv.net ~all
 ```
 
 <Warning>
@@ -153,7 +153,7 @@ if (domain.spfStatus === 'verified') {
 | SPF not verifying | Ensure TXT record is on root domain, not a subdomain |
 | Multiple SPF records | Merge all services into one TXT record |
 | Too many lookups | Remove unused includes or use SPF flattening |
-| Emails still failing | Check that Lettr's include is present: `include:spf.lettr.dev` |
+| Emails still failing | Check that Lettr's include is present: `include:_spf.sparkpostmail.com` |
 
 ## Next Steps
 

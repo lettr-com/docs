@@ -155,39 +155,6 @@ v=BIMI1; l=https://example.com/bimi/logo.svg
 
 This will work for email clients that support basic BIMI (Apple Mail, Fastmail).
 
-## Setup BIMI in Lettr
-
-### Via Dashboard
-
-1. Go to **Domains** and select your sending domain
-2. Navigate to the **BIMI** section
-3. Enter your logo URL and optional VMC URL
-4. Save and verify the configuration
-
-### Via API
-
-```javascript
-await lettr.domains.update('dom_123', {
-  bimi: {
-    logoUrl: 'https://example.com/bimi/logo.svg',
-    vmcUrl: 'https://example.com/bimi/vmc.pem'  // Optional
-  }
-});
-```
-
-## Verify BIMI Setup
-
-```javascript
-const domain = await lettr.domains.get('dom_123');
-
-console.log({
-  bimiStatus: domain.bimiStatus,     // 'active', 'pending', 'invalid'
-  bimiLogoUrl: domain.bimiLogoUrl,
-  bimiVmcUrl: domain.bimiVmcUrl,
-  bimiRecord: domain.bimiRecord
-});
-```
-
 ## Hosting Your Logo
 
 Your logo must be hosted on a publicly accessible HTTPS URL:
@@ -202,22 +169,6 @@ Requirements for hosting:
 - **No authentication** - Logo must be publicly accessible
 - **Reliable hosting** - Logo must always be available
 - **Correct Content-Type** - Server must return `image/svg+xml`
-
-### Using Lettr Storage
-
-You can host your BIMI logo on your [storage domain](/learn/domains/storage-domains):
-
-```javascript
-const logo = await lettr.storage.upload({
-  file: fs.readFileSync('./bimi-logo.svg'),
-  filename: 'bimi-logo.svg',
-  contentType: 'image/svg+xml',
-  path: 'bimi/'
-});
-
-console.log(logo.url);
-// https://images.example.com/bimi/bimi-logo.svg
-```
 
 ## Testing BIMI
 

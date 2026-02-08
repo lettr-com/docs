@@ -57,8 +57,10 @@ Add a TXT record to your domain's DNS:
 ```
 Type:  TXT
 Host:  _dmarc
-Value: v=DMARC1; p=none; rua=mailto:dmarc@example.com
+Value: v=DMARC1;p=none;
 ```
+
+You can optionally add `rua=mailto:dmarc@example.com` to receive aggregate reports (see [DMARC Reports](#dmarc-reports)).
 
 ## DMARC Record Components
 
@@ -189,18 +191,6 @@ To use DMARCeye, update your DMARC record with their reporting address:
 
 ```
 v=DMARC1; p=none; rua=mailto:your-id@rua.dmarceye.com
-```
-
-## Check DMARC Status
-
-```javascript
-const domain = await lettr.domains.get('dom_123');
-
-console.log({
-  dmarcStatus: domain.dmarcStatus,     // 'verified', 'pending', 'not_found'
-  dmarcPolicy: domain.dmarcPolicy,     // 'none', 'quarantine', 'reject'
-  dmarcRecord: domain.dmarcRecord      // Full DMARC record
-});
 ```
 
 ## Lettr DMARC Compliance
