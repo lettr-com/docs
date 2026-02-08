@@ -5,8 +5,68 @@ description: "Get started with Lettr"
 
 # Quickstart
 
-<Info>
-  This section is a work in progress. Check back soon for detailed quickstart guides for various frameworks and platforms.
-</Info>
+Get up and running with Lettr in minutes. Choose the integration path that matches your stack.
 
-In the meantime, check out the [API Reference](/api-reference/introduction) to get started with the Lettr API.
+## Prerequisites
+
+Before you begin, make sure you have:
+
+1. A Lettr account — [sign up at app.lettr.com](https://app.lettr.com)
+2. An [API key](/learn/api-keys/introduction) created in your dashboard
+3. A [verified sending domain](/learn/domains/introduction)
+
+## Choose Your Integration
+
+### By Language / Framework
+
+<CardGroup cols={2}>
+  <Card title="PHP" icon="php" href="/quickstart/php/introduction">
+    Laravel, Symfony, or plain PHP
+  </Card>
+  <Card title="Node.js" icon="node-js" href="/quickstart/nodejs/introduction">
+    Next.js, Nuxt, or plain Node.js
+  </Card>
+</CardGroup>
+
+### By Protocol
+
+<CardGroup cols={2}>
+  <Card title="SMTP" icon="envelope" href="/quickstart/smtp/introduction">
+    Connect via SMTP relay — works with any language or framework
+  </Card>
+  <Card title="REST API" icon="code" href="/api-reference/introduction">
+    Send emails with a single HTTP POST request
+  </Card>
+</CardGroup>
+
+### By Platform
+
+<CardGroup cols={3}>
+  <Card title="AWS Lambda" icon="aws" href="/quickstart/serverless/aws-lambda">
+    Serverless email sending on AWS
+  </Card>
+  <Card title="Vercel" icon="bolt" href="/quickstart/serverless/vercel-functions">
+    Send emails from Vercel functions
+  </Card>
+  <Card title="Cloudflare Workers" icon="cloudflare" href="/quickstart/serverless/cloudflare-workers">
+    Send emails from Workers
+  </Card>
+</CardGroup>
+
+## Fastest Path
+
+The quickest way to send your first email is a single API call:
+
+```bash
+curl -X POST https://app.lettr.com/api/emails \
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "from": "you@yourdomain.com",
+    "to": ["recipient@example.com"],
+    "subject": "Hello from Lettr",
+    "html": "<p>Your first email!</p>"
+  }'
+```
+
+For the complete API reference, see the [Send Email endpoint](/api-reference/emails/send-email).

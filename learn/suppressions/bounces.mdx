@@ -1,162 +1,309 @@
 ---
 title: Bounces
-description: "Handle and manage bounced email addresses"
+description: "Understanding bounce types, categories, and how to handle them"
 ---
 
-# Managing Bounces
+# Email Bounces
 
-Understand and manage bounced email addresses to maintain list hygiene.
+Bounces occur when an email cannot be delivered to the recipient. Understanding different bounce types and handling them correctly is essential for maintaining good deliverability.
 
 ## Bounce Types
 
 ### Hard Bounces
 
-Permanent delivery failures - addresses are automatically suppressed.
+Hard bounces are permanent delivery failures. The recipient's mail server has definitively rejected the email, and retrying will not succeed.
 
-| Category | Cause | Action |
-|----------|-------|--------|
-| `invalid_address` | Address doesn't exist | Auto-suppress |
-| `domain_not_found` | Domain doesn't exist | Auto-suppress |
-| `blocked` | Recipient blocked sender | Auto-suppress |
+**Common causes:**
+- Email address doesn't exist
+- Domain doesn't exist
+- Recipient has blocked the sender
+- Mailbox has been deactivated
+
+```json
+{
+  "id": "evt_abc123",
+  "type": "email.bounced",
+  "createdAt": "2024-01-15T10:30:05Z",
+  "data": {
+    "emailId": "email_123",
+    "requestId": "req_456",
+    "to": "invalid@nonexistent.com",
+    "bounceType": "hard",
+    "bounceCategory": "invalid_address",
+    "bounceCode": "550",
+    "message": "550 5.1.1 The email account that you tried to reach does not exist",
+    "bouncedAt": "2024-01-15T10:30:05Z"
+  }
+}
+```
+
+<Warning>
+  Hard-bounced addresses are automatically suppressed and should be removed from your mailing lists. Continuing to send to these addresses damages your sender reputation.
+</Warning>
 
 ### Soft Bounces
 
-Temporary delivery failures - Lettr retries automatically.
+Soft bounces are temporary delivery failures. The email might be deliverable if retried later.
 
-| Category | Cause | Action |
-|----------|-------|--------|
-| `mailbox_full` | Recipient's inbox is full | Retry |
-| `server_error` | Receiving server issue | Retry |
-| `rate_limited` | Too many emails sent | Retry with backoff |
+**Common causes:**
+- Mailbox is full
+- Server is temporarily unavailable
+- Message is too large
+- Rate limiting by the recipient server
 
-## View Bounces
+```json
+{
+  "id": "evt_def456",
+  "type": "email.bounced",
+  "createdAt": "2024-01-15T10:30:05Z",
+  "data": {
+    "emailId": "email_456",
+    "requestId": "req_789",
+    "to": "full@example.com",
+    "bounceType": "soft",
+    "bounceCategory": "mailbox_full",
+    "bounceCode": "452",
+    "message": "452 4.2.2 Mailbox full",
+    "bouncedAt": "2024-01-15T10:30:05Z"
+  }
+}
+```
+
+Lettr automatically retries soft bounces with exponential backoff. If delivery continues to fail, the address may eventually be suppressed.
+
+## Automatic Handling
+
+Lettr automatically handles bounces for you:
+
+<Steps>
+  <Step title="Tracks Bounces">
+    All bounces are logged and tracked in your dashboard with full details.
+  </Step>
+  <Step title="Suppresses Hard Bounces">
+    Hard-bounced addresses are automatically added to your suppression list.
+  </Step>
+  <Step title="Retries Soft Bounces">
+    Soft bounces are automatically retried up to 3 times with exponential backoff.
+  </Step>
+  <Step title="Sends Webhooks">
+    Bounce events are sent to your configured webhook endpoints in real-time.
+  </Step>
+</Steps>
+
+## Bounce Categories
+
+| Category | Type | Description | Recommended Action |
+|----------|------|-------------|-------------------|
+| `invalid_address` | Hard | Email address doesn't exist | Remove from list |
+| `domain_not_found` | Hard | Domain doesn't exist or has no mail server | Remove from list |
+| `mailbox_full` | Soft | Recipient's mailbox is over quota | Wait and retry |
+| `blocked` | Hard | Recipient or their server blocked delivery | Investigate and remove |
+| `spam_related` | Hard | Rejected due to spam detection | Review content |
+| `policy_related` | Hard | Rejected due to server policy | Contact recipient |
+| `server_error` | Soft | Temporary server-side issue | Automatic retry |
+| `protocol_error` | Soft | Technical delivery problem | Automatic retry |
+| `unknown` | Varies | Unclassified bounce | Review manually |
+
+## Handling Bounces
+
+### Webhook Integration
+
+The most reliable way to handle bounces is through webhooks. Set up a webhook endpoint to receive `email.bounced` events:
 
 ```javascript
-const bounces = await lettr.bounces.list({
-  startDate: '2024-01-01',
-  endDate: '2024-01-31',
-  type: 'hard'
-});
+app.post('/webhooks/lettr', async (req, res) => {
+  const event = req.body;
 
-bounces.forEach(bounce => {
-  console.log({
-    email: bounce.email,
-    type: bounce.type,
-    category: bounce.category,
-    message: bounce.message,
-    bouncedAt: bounce.createdAt
-  });
+  if (event.type === 'email.bounced') {
+    const {
+      to,
+      bounceType,
+      bounceCategory,
+      bounceCode,
+      message
+    } = event.data;
+
+    // Log the bounce for analysis
+    await logBounce({
+      email: to,
+      type: bounceType,
+      category: bounceCategory,
+      code: bounceCode,
+      message: message,
+      timestamp: new Date()
+    });
+
+    if (bounceType === 'hard') {
+      // Remove from mailing list immediately
+      await db.subscribers.update({
+        where: { email: to },
+        data: {
+          status: 'bounced',
+          bounceType: bounceCategory,
+          lastBounceAt: new Date()
+        }
+      });
+
+      // Notify relevant team members
+      if (bounceCategory === 'blocked' || bounceCategory === 'spam_related') {
+        await notifyTeam({
+          type: 'reputation_concern',
+          email: to,
+          reason: message
+        });
+      }
+    }
+  }
+
+  res.sendStatus(200);
 });
 ```
 
-## Bounce Statistics
+### Querying Email Events
+
+You can retrieve bounce events for specific emails using the API:
+
+```bash
+curl "https://app.lettr.com/api/emails/req_456" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+Response includes all events for that email, including bounces:
+
+```json
+{
+  "data": {
+    "requestId": "req_456",
+    "events": [
+      {
+        "type": "injection",
+        "timestamp": "2024-01-15T10:30:00Z",
+        "rcpt_to": "recipient@example.com"
+      },
+      {
+        "type": "bounce",
+        "timestamp": "2024-01-15T10:30:05Z",
+        "rcpt_to": "recipient@example.com",
+        "reason": "550 5.1.1 User unknown",
+        "raw_reason": "550 5.1.1 The email account that you tried to reach does not exist",
+        "error_code": "550"
+      }
+    ]
+  }
+}
+```
+
+### Listing Bounces via SDK
+
+You can also query bounces and statistics using the Lettr SDK:
 
 ```javascript
+// List all bounces for a date range
+const bounces = await lettr.bounces.list({
+  startDate: '2024-01-01',
+  endDate: '2024-01-31'
+});
+
+// Get bounce rate statistics
 const stats = await lettr.stats.get({
   startDate: '2024-01-01',
   endDate: '2024-01-31'
 });
 
-console.log({
-  totalSent: stats.sent,
-  totalBounced: stats.bounced,
-  hardBounces: stats.hardBounces,
-  softBounces: stats.softBounces,
-  bounceRate: stats.bounceRate
-});
+console.log(`Bounce rate: ${stats.bounceRate}%`);
 ```
 
 ## Bounce Rate Guidelines
 
-| Rate | Status | Action |
-|------|--------|--------|
+Monitor your bounce rates to maintain good deliverability:
+
+| Bounce Rate | Status | Action |
+|-------------|--------|--------|
 | < 2% | Healthy | Maintain current practices |
 | 2-5% | Warning | Review list hygiene |
 | > 5% | Critical | Clean list immediately |
 
-## Clean Your List
+<Note>
+  ISPs closely monitor bounce rates. A bounce rate consistently above 5% can result in your emails being blocked or filtered to spam.
+</Note>
 
-Remove bounced addresses from your mailing list:
-
-```javascript
-// Get all hard bounces
-const bounces = await lettr.bounces.list({
-  type: 'hard',
-  limit: 1000
-});
-
-// Remove from your database
-for (const bounce of bounces) {
-  await yourDatabase.subscribers.delete({
-    email: bounce.email
-  });
-}
-```
-
-## Re-Enable a Bounced Address
-
-If you're certain an address is now valid:
-
-```javascript
-await lettr.suppressions.delete('previously-bounced@example.com');
-```
-
-<Warning>
-  Only remove bounce suppressions if you have strong evidence the address is now valid. Sending to known bad addresses hurts your reputation.
-</Warning>
-
-## Bounce Webhooks
-
-Handle bounces in real-time:
-
-```javascript
-app.post('/webhooks/lettr', (req, res) => {
-  const event = req.body;
-  
-  if (event.type === 'email.bounced') {
-    const { to, bounceType, bounceCategory } = event.data;
-    
-    if (bounceType === 'hard') {
-      // Update your database
-      markAsInvalid(to);
-      
-      // Notify relevant team
-      notifyTeam(to, bounceCategory);
-    }
-  }
-  
-  res.sendStatus(200);
-});
-```
-
-## Prevent Bounces
+## Preventing Bounces
 
 <AccordionGroup>
   <Accordion title="Use Double Opt-In">
-    Confirm email addresses before adding to your list.
+    Require subscribers to confirm their email address before adding them to your list. This ensures addresses are valid and owned by the person who signed up.
   </Accordion>
-  <Accordion title="Validate on Entry">
-    Use email validation when collecting addresses.
+  <Accordion title="Validate on Collection">
+    Use email validation at the point of collection. Check for common typos, invalid formats, and disposable email addresses.
   </Accordion>
-  <Accordion title="Regular Cleaning">
-    Remove inactive subscribers periodically.
+  <Accordion title="Clean Lists Regularly">
+    Remove subscribers who haven't engaged in 6-12 months. Inactive addresses are more likely to bounce over time.
+  </Accordion>
+  <Accordion title="Process Bounces Immediately">
+    Set up webhook handlers to process bounce events in real-time. Don't wait for batch processing.
   </Accordion>
   <Accordion title="Monitor Engagement">
-    Stop sending to recipients who never engage.
+    Track open and click rates. Low engagement often precedes bounces as users abandon email addresses.
   </Accordion>
 </AccordionGroup>
 
-## Email Validation
+## Deferred Delivery
 
-Validate addresses before adding to your list:
+Sometimes emails are temporarily delayed rather than bounced. Lettr tracks these as `email.deferred` events:
 
-```javascript
-const validation = await lettr.validate('user@example.com');
-
-if (validation.valid) {
-  // Safe to add to list
-} else {
-  console.log(`Invalid: ${validation.reason}`);
+```json
+{
+  "id": "evt_jkl012",
+  "type": "email.deferred",
+  "createdAt": "2024-01-15T10:30:05Z",
+  "data": {
+    "emailId": "email_123",
+    "requestId": "req_456",
+    "to": "recipient@example.com",
+    "reason": "421 Server temporarily unavailable",
+    "retryCount": 1,
+    "nextRetryAt": "2024-01-15T10:45:00Z",
+    "deferredAt": "2024-01-15T10:30:05Z"
+  }
 }
 ```
 
+Deferred emails are automatically retried. You don't need to take action unless deferrals persist, which may indicate a delivery issue.
+
+## Out-of-Band Bounces
+
+Some bounces arrive asynchronously after the initial delivery attempt appears successful. These are called out-of-band (OOB) bounces:
+
+```json
+{
+  "id": "evt_oob789",
+  "type": "email.out_of_band",
+  "createdAt": "2024-01-15T11:00:00Z",
+  "data": {
+    "emailId": "email_123",
+    "requestId": "req_456",
+    "to": "recipient@example.com",
+    "reason": "552 5.2.2 Mailbox full",
+    "bouncedAt": "2024-01-15T11:00:00Z"
+  }
+}
+```
+
+Handle OOB bounces the same way as regular bounces—update your records and suppress hard bounces.
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Webhook Events" icon="bell" href="/learn/webhooks/event-types">
+    Complete reference for all webhook event types
+  </Card>
+  <Card title="Handling Webhooks" icon="code" href="/learn/webhooks/handling">
+    Best practices for webhook implementation
+  </Card>
+  <Card title="Sending Best Practices" icon="paper-plane" href="/learn/sending/best-practices">
+    Tips for improving deliverability
+  </Card>
+  <Card title="Analytics" icon="chart-line" href="/learn/analytics/introduction">
+    Monitor your email performance
+  </Card>
+</CardGroup>

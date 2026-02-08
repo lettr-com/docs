@@ -1,0 +1,384 @@
+---
+title: Personalization and Dynamic Content
+description: "Use merge tags, conditional blocks, and dynamic sections to create personalized, relevant emails"
+---
+
+# Personalization and Dynamic Content
+
+Personalized emails outperform generic ones. Recipients are more likely to open, read, and act on emails that address them by name, reference their specific activity, and show content relevant to their situation. Lettr's [template language](/learn/templates/template-language) provides merge tags, conditionals, loops, and filters that let you build a single template that renders differently for each recipient.
+
+---
+
+## Merge Tags
+
+Merge tags are placeholders in your template that get replaced with recipient-specific data at send time. They use double curly braces.
+
+### Basic Substitution
+
+```html
+<p style="font-size: 16px; color: #4a4a68;">
+  Hello {{ name }},
+</p>
+<p style="font-size: 16px; color: #4a4a68;">
+  Your account ({{ email }}) has been active since {{ signup_date }}.
+</p>
+```
+
+Pass the substitution data in your API request:
+
+```javascript
+await fetch('https://app.lettr.com/api/emails', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer your-api-key',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    from: 'hello@mail.example.com',
+    to: 'alice@example.com',
+    templateId: 'welcome-email',
+    substitutionData: {
+      name: 'Alice',
+      email: 'alice@example.com',
+      signup_date: 'January 15, 2025'
+    }
+  })
+});
+```
+
+### Default Values
+
+Always provide defaults for personalization fields. An email that reads "Hello ," because the name field is missing looks broken.
+
+```html
+<!-- Provide fallback values with the 'or' keyword -->
+<p>Hello {{ name or 'there' }},</p>
+<p>Your {{ plan_name or 'current' }} plan includes {{ email_limit or '1,000' }} emails per month.</p>
+```
+
+<Warning>
+  Never assume all substitution data will be present. Missing fields render as empty strings by default, which creates gaps in your content. Use the `or` keyword on every variable that appears in visible text.
+</Warning>
+
+### HTML Escaping
+
+By default, merge tags are HTML-escaped to prevent cross-site scripting. If you need to render trusted HTML content, use triple curly braces:
+
+```html
+<!-- HTML-escaped (safe for user-provided data) -->
+<p>{{ user_message }}</p>
+
+<!-- Unescaped (use only with trusted, system-generated content) -->
+<div>{{{ custom_html_block }}}</div>
+```
+
+<Warning>
+  Only use triple curly braces (`{{{ }}}`) with content you control — never with user-submitted data. Unescaped content can inject arbitrary HTML into your emails.
+</Warning>
+
+---
+
+## Conditional Content
+
+Show different content to different recipients based on their attributes, plan level, activity, or any other data you pass.
+
+### Basic Conditionals
+
+```html
+{{if premium}}
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+    <tr>
+      <td style="padding: 16px; background-color: #eef2ff; border-radius: 8px;">
+        <p style="margin: 0; color: #4338ca; font-weight: bold;">Premium Member</p>
+        <p style="margin: 8px 0 0; color: #4a4a68;">
+          Enjoy free priority support and advanced analytics.
+        </p>
+      </td>
+    </tr>
+  </table>
+{{else}}
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+    <tr>
+      <td style="padding: 16px; background-color: #f3f4f6; border-radius: 8px;">
+        <p style="margin: 0; color: #4a4a68;">
+          <a href="https://example.com/upgrade" style="color: #6366F1; text-decoration: underline;">
+            Upgrade to Premium
+          </a>
+          for priority support and advanced analytics.
+        </p>
+      </td>
+    </tr>
+  </table>
+{{end}}
+```
+
+### Multi-Branch Conditionals
+
+Use `{{elseif}}` for more than two branches:
+
+```html
+{{if plan == 'enterprise'}}
+  <p style="color: #4a4a68;">
+    Your Enterprise plan includes unlimited emails and dedicated support.
+  </p>
+{{elseif plan == 'pro'}}
+  <p style="color: #4a4a68;">
+    Your Pro plan includes 50,000 emails per month.
+    <a href="https://example.com/upgrade" style="color: #6366F1;">Upgrade to Enterprise</a>
+    for unlimited sending.
+  </p>
+{{elseif plan == 'starter'}}
+  <p style="color: #4a4a68;">
+    Your Starter plan includes 5,000 emails per month.
+    <a href="https://example.com/upgrade" style="color: #6366F1;">Upgrade your plan</a>
+    to send more.
+  </p>
+{{else}}
+  <p style="color: #4a4a68;">
+    <a href="https://example.com/pricing" style="color: #6366F1;">Choose a plan</a>
+    to get started.
+  </p>
+{{end}}
+```
+
+### Practical Use Cases for Conditionals
+
+| Use Case | Condition | Effect |
+|----------|-----------|--------|
+| Show upgrade CTA to free users | `{{if plan == 'free'}}` | Display upgrade banner only for free-tier recipients |
+| Trial expiry warning | `{{if days_remaining <= 3}}` | Show urgent renewal message for expiring trials |
+| Locale-specific content | `{{if locale == 'de'}}` | Show German-language support links for German users |
+| Feature announcement | `{{if feature_enabled}}` | Show feature details only to users who have access |
+| Empty state handling | `{{if items_count == 0}}` | Show "no activity" message instead of an empty list |
+
+---
+
+## Dynamic Loops
+
+Use `{{each}}` to iterate over arrays of data — order items, activity logs, recommendations, or any list.
+
+### Order Items
+
+```html
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+  <tr>
+    <td style="padding: 0 0 8px; border-bottom: 2px solid #1a1a2e;">
+      <table role="presentation" width="100%">
+        <tr>
+          <td style="font-weight: bold; color: #1a1a2e; font-size: 14px;">Item</td>
+          <td style="font-weight: bold; color: #1a1a2e; font-size: 14px; text-align: center;">Qty</td>
+          <td style="font-weight: bold; color: #1a1a2e; font-size: 14px; text-align: right;">Price</td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+  {{each items}}
+  <tr>
+    <td style="padding: 12px 0; border-bottom: 1px solid #e5e7eb;">
+      <table role="presentation" width="100%">
+        <tr>
+          <td style="color: #4a4a68; font-size: 14px;">{{ name }}</td>
+          <td style="color: #4a4a68; font-size: 14px; text-align: center;">{{ quantity }}</td>
+          <td style="color: #4a4a68; font-size: 14px; text-align: right;">{{ price }}</td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+  {{end}}
+  <tr>
+    <td style="padding: 12px 0;">
+      <table role="presentation" width="100%">
+        <tr>
+          <td style="font-weight: bold; color: #1a1a2e; font-size: 16px;">Total</td>
+          <td style="font-weight: bold; color: #1a1a2e; font-size: 16px; text-align: right;">
+            {{ order_total }}
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+```
+
+With this substitution data:
+
+```json
+{
+  "items": [
+    { "name": "Widget Pro", "quantity": "2", "price": "$29.99" },
+    { "name": "Adapter Cable", "quantity": "1", "price": "$9.99" },
+    { "name": "Carrying Case", "quantity": "1", "price": "$19.99" }
+  ],
+  "order_total": "$89.96"
+}
+```
+
+### Combining Loops with Conditionals
+
+```html
+{{each notifications}}
+  <tr>
+    <td style="padding: 12px 0; border-bottom: 1px solid #e5e7eb;">
+      {{if type == 'alert'}}
+        <p style="margin: 0; color: #dc2626; font-weight: bold;">⚠ {{ message }}</p>
+      {{elseif type == 'success'}}
+        <p style="margin: 0; color: #16a34a;">✓ {{ message }}</p>
+      {{else}}
+        <p style="margin: 0; color: #4a4a68;">{{ message }}</p>
+      {{end}}
+      <p style="margin: 4px 0 0; color: #9ca3af; font-size: 12px;">{{ timestamp }}</p>
+    </td>
+  </tr>
+{{end}}
+```
+
+---
+
+## Per-Recipient Personalization at Scale
+
+When sending to multiple recipients in a single API call, pass individual substitution data for each recipient:
+
+```javascript
+await fetch('https://app.lettr.com/api/emails', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer your-api-key',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    from: 'billing@mail.example.com',
+    to: [
+      {
+        email: 'alice@example.com',
+        substitutionData: {
+          name: 'Alice',
+          plan: 'pro',
+          usage: '12,450',
+          limit: '50,000',
+          invoice_url: 'https://example.com/invoices/inv_001'
+        }
+      },
+      {
+        email: 'bob@example.com',
+        substitutionData: {
+          name: 'Bob',
+          plan: 'starter',
+          usage: '4,820',
+          limit: '5,000',
+          invoice_url: 'https://example.com/invoices/inv_002'
+        }
+      }
+    ],
+    templateId: 'monthly-usage-report'
+  })
+});
+```
+
+<Tip>
+  Batch sending with per-recipient substitution data is the most efficient way to send personalized emails at scale. One API call with 200 recipients and individual data is much faster than 200 separate calls.
+</Tip>
+
+---
+
+## Personalization Strategy
+
+### What to Personalize
+
+Not everything needs personalization. Focus on elements that make the email feel relevant and useful.
+
+| Element | Impact | Example |
+|---------|--------|---------|
+| **Recipient name** | Medium | "Hello Alice" vs "Hello" |
+| **Account-specific data** | High | Usage stats, plan details, recent activity |
+| **Contextual actions** | High | "Upgrade your plan" vs "Manage your Enterprise account" |
+| **Timing references** | Medium | "Your trial ends in 3 days" vs "Your trial is ending soon" |
+| **Product recommendations** | High | Items based on purchase history or browsing behavior |
+
+### What Not to Personalize
+
+| Element | Why |
+|---------|-----|
+| Subject lines with first names only | Overused; no longer increases open rates for most audiences |
+| Location unless action-relevant | "Hello from Seattle!" feels surveillance-like if not contextually useful |
+| Personal details you shouldn't know | Avoid revealing data the recipient didn't knowingly provide |
+
+---
+
+## Testing Personalized Templates
+
+### Preview with Sample Data
+
+Before sending, test your template with different substitution data to verify all branches render correctly.
+
+```javascript
+// Test case 1: Premium user with items
+const premiumData = {
+  name: 'Alice',
+  premium: true,
+  plan: 'enterprise',
+  items: [
+    { name: 'Item A', quantity: '1', price: '$10.00' }
+  ]
+};
+
+// Test case 2: Free user with no items
+const freeData = {
+  name: '',  // Test missing name → should fall back to default
+  premium: false,
+  plan: 'free',
+  items: []  // Test empty loop
+};
+
+// Test case 3: Edge case — very long values
+const edgeCaseData = {
+  name: 'Alexandrina Konstantinopolskaya-Featherington',
+  premium: true,
+  plan: 'pro',
+  items: Array(20).fill({ name: 'Item', quantity: '1', price: '$5.00' })
+};
+```
+
+<Note>
+  Pay special attention to empty states. What does your template look like when `items` is an empty array? When `name` is missing? When a conditional branch has no matching case? Every possible state should render cleanly.
+</Note>
+
+---
+
+## Common Mistakes
+
+<AccordionGroup>
+  <Accordion title="Missing default values on merge tags">
+    Forgetting the `or` keyword results in empty strings when data is missing. "Hello ," or "Your plan includes emails per month" looks broken. Always add fallbacks: `{{ name or 'there' }}`.
+  </Accordion>
+  <Accordion title="Over-personalizing subject lines">
+    Using "Hey {{ name }}!" in every subject line has diminishing returns. Recipients learn to ignore it, and some find it off-putting. Save name personalization for the email body and keep subject lines focused on the content.
+  </Accordion>
+  <Accordion title="Not testing all conditional branches">
+    If you have 4 plan tiers, you need to test all 4 renderings plus the `else` fallback. A broken conditional in a branch you didn't test will surprise you in production.
+  </Accordion>
+  <Accordion title="Using unescaped output with user data">
+    Triple curly braces (`{{{ }}}`) skip HTML escaping. If user-submitted data contains HTML tags or scripts, it renders raw in the email. Only use triple braces with system-generated, trusted content.
+  </Accordion>
+  <Accordion title="Sending the same test data every time">
+    Testing always with `name: 'Test User'` and `plan: 'pro'` misses edge cases. Vary your test data to cover missing fields, empty arrays, long strings, and unusual characters.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Template Language" icon="code" href="/learn/templates/template-language">
+    Full reference for merge tags, conditionals, loops, and filters
+  </Card>
+  <Card title="Templates" icon="paintbrush" href="/learn/templates/introduction">
+    Build and manage email templates with the Topol editor
+  </Card>
+  <Card title="Batch Sending" icon="layer-group" href="/learn/sending/batch-sending">
+    Send to multiple recipients with per-recipient data
+  </Card>
+  <Card title="Template Versions" icon="code-branch" href="/learn/templates/versions">
+    Manage and publish template versions
+  </Card>
+</CardGroup>

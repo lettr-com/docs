@@ -1,0 +1,417 @@
+---
+title: "Hostinger"
+description: "Step-by-step guide to configuring DNS records for Lettr on Hostinger."
+---
+
+This guide walks you through adding the required DNS records for Lettr using Hostinger's DNS management. Hostinger is a web hosting provider that offers DNS hosting for domains managed through its [hPanel dashboard](https://www.hostinger.com).
+
+You will configure a **sending domain** (CNAME, DKIM TXT, and DMARC TXT records) and, optionally, an **inbound domain** (MX records), **tracking domain** (two CNAME records), and **storage domain** (CNAME and two TXT records).
+
+---
+
+## Sending Domain Setup
+
+A sending domain authenticates your outgoing emails with DKIM and DMARC, ensuring they are delivered reliably and not marked as spam. This requires a CNAME record for domain verification, a TXT record for DKIM signing, and a TXT record for DMARC policy.
+
+To create a sending domain in Lettr:
+1. Select **Domains** in the navigation panel
+2. Select **Sending Domains**
+3. Click **Create Sending Domain**
+4. Enter your desired sending subdomain (e.g. `mailing.company.com`)
+5. Click **Create Domain**
+
+<img src="/images/lettr-create-sending-domain.png" alt="Create Sending Domain button in Lettr" />
+
+<Tip>
+  Use a subdomain (e.g. `mailing.company.com`) instead of the root domain (`company.com`). A subdomain provides proper
+  reputation segmentation and is required if you also plan to receive emails with Lettr.
+</Tip>
+
+Click your new domain in the Sending Domains list.
+
+<img src="/images/lettr-sending-list.png" alt="Sending domain listed in Lettr Sending Domains list" />
+
+This will display a list of DNS records that need to be configured. Keep this page open — you will need these values soon.
+
+<img src="/images/lettr-mailing-config.png" alt="DNS records displayed in Lettr after creating a sending domain" />
+
+### Configure Hostinger DNS
+
+Log in to your [Hostinger hPanel](https://www.hostinger.com) and navigate to **Domains** → **DNS**. Select the domain you want to configure.
+
+{/* TODO: Add screenshot of Hostinger DNS management page */}
+
+<Tip>
+  If your domain was purchased through Hostinger or your nameservers already point to Hostinger, skip nameserver
+  configuration entirely. Your domain is already using Hostinger's nameservers by default — proceed directly to adding the
+  DNS records below.
+</Tip>
+
+<AccordionGroup>
+  <Accordion title="Domain registered with a different registrar?">
+    If you registered your domain elsewhere but want to manage DNS on Hostinger, you must first **update the nameservers**
+    at your registrar to Hostinger's nameservers shown in your domain configuration.
+
+    <Warning>Until the nameservers are updated, any records you add in Hostinger will not resolve.</Warning>
+  </Accordion>
+</AccordionGroup>
+
+{/* TODO: Add screenshot of Hostinger nameserver configuration inside the accordion above */}
+
+### Add CNAME Record
+
+The CNAME record verifies domain ownership with Lettr's email infrastructure.
+
+Copy the CNAME values from Lettr to Hostinger:
+
+1. In the DNS management page, scroll to the **CNAME records** section and click **Add new**.
+2. Set **Name** to the **Hostname** value from Lettr (without your domain suffix). For example, paste only `mailing`.
+3. Set **Target** to the **Value** from Lettr.
+4. Set **TTL** to **3600**.
+5. Click **Save**.
+
+<img src="/images/lettr-mailing-1.png" alt="CNAME record Hostname and Value in Lettr" />
+
+{/* TODO: Add screenshot of CNAME record in Hostinger */}
+
+<Info>
+  Hostinger automatically appends your domain to the record name. Always paste only the subdomain portion (e.g.
+  `mailing`, not `mailing.company.com`).
+</Info>
+
+### Add TXT Record (DKIM)
+
+The DKIM record adds a cryptographic signature to your outgoing emails, allowing recipients to verify they were sent by an authorized sender.
+
+Copy the TXT values from Lettr to Hostinger:
+
+1. In the DNS management page, scroll to the **TXT records** section and click **Add new**.
+2. Set **Name** to the **Hostname** value from Lettr (without your domain suffix). For example, paste only `scph0126._domainkey.mailing`.
+3. Set **Content** to the **Value** from Lettr.
+4. Set **TTL** to **3600**.
+5. Click **Save**.
+
+<img src="/images/lettr-mailing-2.png" alt="DKIM TXT record Hostname and Value in Lettr" />
+
+{/* TODO: Add screenshot of DKIM TXT record in Hostinger */}
+
+### Add TXT Record (DMARC)
+
+The DMARC record tells receiving mail servers how to handle emails that fail authentication checks, protecting your domain from spoofing.
+
+Copy the TXT values from Lettr to Hostinger:
+
+1. In the DNS management page, scroll to the **TXT records** section and click **Add new**.
+2. Set **Name** to the **Hostname** value from Lettr (without your domain suffix). For example, paste only `_dmarc.mailing`.
+3. Set **Content** to the **Value** from Lettr (e.g. `v=DMARC1;p=none;`).
+4. Set **TTL** to **3600**.
+5. Click **Save**.
+
+<img src="/images/lettr-mailing-3.png" alt="DMARC TXT record Hostname and Value in Lettr" />
+
+{/* TODO: Add screenshot of DMARC TXT record in Hostinger */}
+
+### Verify Your Sending Domain
+
+After adding all three DNS records, go back to Lettr and click **Verify DNS Records**. DNS propagation can take up to 24–48 hours, though it typically completes within a few minutes.
+
+<img src="/images/lettr-verified.png" alt="Sending domain verified successfully in Lettr" />
+
+---
+
+## Inbound Domain Setup
+
+An inbound domain allows Lettr to receive emails on your behalf. This requires three MX records that direct incoming mail to Lettr's mail servers.
+
+### Add Inbound Domain to Lettr
+
+To create an Inbound domain in Lettr:
+1. Select **Domains** in the navigation panel
+2. Select **Inbound Domains**
+3. Click **Create Inbound Domain**
+4. Enter your desired inbound subdomain (e.g. `inbound.company.com`)
+5. Click **Create Domain**.
+
+<img src="/images/lettr-inbound-new.png" alt="Creating a new inbound domain in Lettr" />
+
+Click on your new domain in the Inbound Domains list.
+
+<img src="/images/lettr-inbound-list.png" alt="Inbound domain listed in Lettr Inbound Domains list" />
+
+This will display the MX records that need to be configured.
+
+<img src="/images/lettr-inbound-config.png" alt="MX record configuration displayed in Lettr for inbound domain" />
+
+### Add MX Records
+
+MX records tell other mail servers where to deliver emails addressed to your domain.
+
+Copy the MX values from Lettr to Hostinger:
+
+1. In the DNS management page, scroll to the **MX records** section and click **Add new**.
+2. Set **Name** to the **Hostname** value from Lettr (without your domain suffix). For example, paste only `inbound`.
+3. Set **Mail server** to `rx1.sparkpostmail.com`.
+4. Set **Priority** to `10`.
+5. Set **TTL** to **3600**.
+6. Click **Save**.
+7. Repeat this process for the second (`rx2.sparkpostmail.com`) and third (`rx3.sparkpostmail.com`) MX records, each with priority `10`.
+
+<img src="/images/lettr-inbound-1.png" alt="MX record values in Lettr for inbound domain" />
+
+{/* TODO: Add screenshot of MX records in Hostinger */}
+
+<Warning>
+  All emails sent to the domain or subdomain where MX records are configured will be routed to Lettr. Use a dedicated
+  subdomain (e.g. `inbound.company.com`) to avoid affecting your primary email.
+</Warning>
+
+### Verify Your Inbound Domain
+
+After adding all three MX records, go back to Lettr and click **Verify DNS Records**. DNS propagation can take up to 24–48 hours, though it typically completes within a few minutes.
+
+<img src="/images/lettr-inbound-verified.png" alt="Inbound domain verified successfully in Lettr" />
+
+---
+
+## Tracking Domain Setup
+
+A tracking domain allows Lettr to track email opens and link clicks using your own custom domain instead of the default Lettr tracking domain. This requires two CNAME records: one for the SSL certificate and one for routing tracking traffic to Lettr's infrastructure.
+
+### Add Tracking Domain to Lettr
+
+To create a Tracking domain in Lettr:
+1. Select **Domains** in the navigation panel
+2. Select **Tracking Domains**
+3. Click **Create Tracking Domain**
+4. Enter your desired tracking subdomain (e.g. `tracking.company.com`)
+5. Click **Create Domain**
+
+<img src="/images/lettr-add-tracking.png" alt="Creating a new tracking domain in Lettr" />
+
+Click on your new domain in the Tracking Domains list.
+
+<img src="/images/lettr-tracking-list.png" alt="Tracking domain listed in Lettr Tracking Domains list" />
+
+This will display the CNAME records that need to be configured.
+
+<img src="/images/lettr-tracking-config.png" alt="CNAME records displayed in Lettr for tracking domain configuration" />
+
+### Add SSL Certificate CNAME Record
+
+The SSL Certificate CNAME record provisions an SSL certificate for your custom tracking domain, enabling secure HTTPS connections for tracked links.
+
+Add the record in Hostinger:
+
+1. In the DNS management page, scroll to the **CNAME records** section and click **Add new**.
+2. Set **Name** to the **Hostname** from Lettr (without your domain suffix).
+3. Set **Target** to the **Value** from Lettr.
+4. Set **TTL** to **3600**.
+5. Click **Save**.
+
+<img src="/images/lettr-tracking-1.png" alt="SSL Certificate CNAME record values in Lettr for tracking domain" />
+
+{/* TODO: Add screenshot of SSL Certificate CNAME record in Hostinger */}
+
+### Add Traffic CNAME Record
+
+The Traffic CNAME record routes click and open tracking requests from your custom domain to Lettr's tracking servers.
+
+Add the record in Hostinger:
+
+1. In the DNS management page, scroll to the **CNAME records** section and click **Add new**.
+2. Set **Name** to the **Hostname** from Lettr (without your domain suffix).
+3. Set **Target** to the **Value** from Lettr.
+4. Set **TTL** to **3600**.
+5. Click **Save**.
+
+<img src="/images/lettr-tracking-2.png" alt="Traffic CNAME record values in Lettr for tracking domain" />
+
+{/* TODO: Add screenshot of Traffic CNAME record in Hostinger */}
+
+### Verify Your Tracking Domain
+
+After adding both CNAME records, go back to Lettr and click **Verify DNS Records**.
+
+<img src="/images/lettr-tracking-verified.png" alt="Tracking domain verified successfully in Lettr" />
+
+---
+
+## Storage Domain Setup
+
+A storage domain lets you serve email assets (images, attachments) from your own custom domain instead of the default Lettr storage URL. This requires two TXT records for certificate validation and ownership verification, and a CNAME record for routing asset requests to Lettr's storage infrastructure.
+
+### Add Storage Domain to Lettr
+
+To create a Storage domain in Lettr:
+1. Select **Domains** in the navigation panel
+2. Select **Storage Domains**
+3. Click **Create Storage Domain**
+4. Enter your desired storage subdomain (e.g. `assets.company.com`)
+5. Click **Create Domain**
+
+<img src="/images/lettr-storage-new.png" alt="Creating a new storage domain in Lettr" />
+
+Click on your new domain in the Storage Domains list.
+
+<img src="/images/lettr-storage-list.png" alt="Storage domain listed in Lettr Storage Domains list" />
+
+This will display the TXT and CNAME records that need to be configured.
+
+<img src="/images/lettr-storage-config.png" alt="TXT and CNAME records displayed in Lettr for storage domain configuration" />
+
+### Add TXT Record (Certificate Validation)
+
+The Certificate Validation TXT record provisions an SSL certificate for your custom storage domain, enabling secure HTTPS delivery of email assets.
+
+Add the record in Hostinger:
+
+1. In the DNS management page, scroll to the **TXT records** section and click **Add new**.
+2. Set **Name** to the **Hostname** from Lettr (without your domain suffix).
+3. Set **Content** to the **Value** from Lettr.
+4. Set **TTL** to **3600**.
+5. Click **Save**.
+
+<img src="/images/lettr-storage-1.png" alt="Certificate Validation TXT record values in Lettr for storage domain" />
+
+{/* TODO: Add screenshot of Certificate Validation TXT record in Hostinger */}
+
+### Add TXT Record (Hostname Pre-validation)
+
+The Hostname Pre-validation TXT record verifies ownership of the storage domain before Lettr provisions a custom hostname for it.
+
+Add the record in Hostinger:
+
+1. In the DNS management page, scroll to the **TXT records** section and click **Add new**.
+2. Set **Name** to the **Hostname** from Lettr (without your domain suffix).
+3. Set **Content** to the **Value** from Lettr.
+4. Set **TTL** to **3600**.
+5. Click **Save**.
+
+<img src="/images/lettr-storage-2.png" alt="Hostname Pre-validation TXT record values in Lettr for storage domain" />
+
+{/* TODO: Add screenshot of Hostname Pre-validation TXT record in Hostinger */}
+
+### Add CNAME Record (Domain Routing)
+
+The Domain Routing CNAME record routes asset requests from your custom domain to Lettr's storage infrastructure.
+
+Add the record in Hostinger:
+
+1. In the DNS management page, scroll to the **CNAME records** section and click **Add new**.
+2. Set **Name** to the **Hostname** from Lettr (without your domain suffix).
+3. Set **Target** to the **Value** from Lettr.
+4. Set **TTL** to **3600**.
+5. Click **Save**.
+
+<img src="/images/lettr-storage-3.png" alt="Domain Routing CNAME record values in Lettr for storage domain" />
+
+{/* TODO: Add screenshot of Domain Routing CNAME record in Hostinger */}
+
+### Verify Your Storage Domain
+
+After adding all three records, go back to Lettr and click **Verify DNS Records**.
+
+<img src="/images/lettr-storage-verified.png" alt="Storage domain verified successfully in Lettr" />
+
+---
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Records Not Propagating">
+    Hostinger DNS may take up to 24 hours to propagate. If verification fails after adding records, check the following:
+
+    - **Wait at least 2–3 hours** before your first verification attempt.
+    - **Confirm the records exist** using command-line tools:
+
+    ```bash
+    # Check CNAME record
+    dig CNAME mailing.yourdomain.com +short
+
+    # Check DKIM record
+    dig TXT scph0126._domainkey.mailing.yourdomain.com +short
+
+    # Check DMARC record
+    dig TXT _dmarc.mailing.yourdomain.com +short
+
+    # Check MX records (inbound)
+    dig MX inbound.yourdomain.com +short
+
+    # Check tracking domain CNAME
+    dig CNAME track.yourdomain.com +short
+
+    # Check storage domain CNAME
+    dig CNAME assets.yourdomain.com +short
+    ```
+
+    - **Use a web tool** like [WhatsMyDNS](https://www.whatsmydns.net) or [dnschecker.org](https://dnschecker.org) to verify propagation across multiple DNS servers worldwide.
+  </Accordion>
+  <Accordion title="Nameservers Not Pointing to Hostinger">
+    If your records are saved in Hostinger but not resolving, confirm that your domain registrar is pointing to Hostinger's
+    nameservers. You can check this with:
+
+    ```bash
+    dig NS yourdomain.com +short
+    ```
+
+    The output should include Hostinger nameservers (e.g. `ns1.hostinger.com`, `ns2.hostinger.com`). If it shows a different
+    provider's nameservers, update them at your domain registrar.
+  </Accordion>
+  <Accordion title="Wrong Record Type">
+    A common mistake is adding a record to the wrong section in Hostinger's DNS page:
+
+    | Record | Correct Type |
+    |--------|-------------|
+    | Sending verification | CNAME |
+    | DKIM | TXT |
+    | DMARC | TXT |
+    | Inbound mail | MX |
+    | Tracking SSL certificate | CNAME |
+    | Tracking traffic | CNAME |
+    | Storage certificate validation | TXT |
+    | Storage hostname pre-validation | TXT |
+    | Storage domain routing | CNAME |
+  </Accordion>
+  <Accordion title="CNAME Conflict">
+    Remove any existing A or CNAME records for the same hostname before adding new CNAME records. Duplicate records on
+    the same hostname can cause verification failures.
+  </Accordion>
+  <Accordion title="DKIM Value Truncated">
+    The DKIM TXT value is a long string. After saving the record, re-open the DNS management page and confirm the full value
+    is displayed in the Content field. If it appears truncated, delete the record and re-add it, pasting the full value
+    carefully.
+  </Accordion>
+  <Accordion title="When to Contact Support">
+    If your DNS records are correctly configured (confirmed with `dig` or dnschecker.org) and verification still fails after
+    48 hours, contact Lettr support at **support@lettr.com** or through the in-app chat. Include your domain name and the
+    output of the `dig` commands above.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Sending Domains" icon="paper-plane" href="/learn/domains/sending-domains">
+    Learn about sending domain setup, SPF, DKIM, and DMARC.
+  </Card>
+  <Card title="Inbound Domains" icon="inbox" href="/learn/domains/inbound-domains">
+    Configure MX records to receive emails with Lettr.
+  </Card>
+  <Card title="Tracking Domains" icon="link" href="/learn/domains/tracking-domains">
+    Set up a custom tracking domain for click and open tracking.
+  </Card>
+  <Card title="Storage Domains" icon="hard-drive" href="/learn/domains/storage-domains">
+    Serve email assets from your own custom domain.
+  </Card>
+  <Card title="Domains Overview" icon="globe" href="/learn/domains/introduction">
+    Understand domain types and how they work in Lettr.
+  </Card>
+  <Card
+    title="Domain Verification Failures"
+    icon="circle-exclamation"
+    href="/knowledge-base/troubleshooting/domain-verification">
+    Troubleshoot common DNS configuration and propagation issues.
+  </Card>
+</CardGroup>

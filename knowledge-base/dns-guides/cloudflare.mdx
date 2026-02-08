@@ -1,0 +1,468 @@
+---
+title: "Cloudflare"
+description: "Step-by-step guide to configuring DNS records for Lettr on Cloudflare."
+---
+
+This guide walks you through adding the required DNS records for Lettr using Cloudflare's DNS management. Cloudflare is a web infrastructure and security company that provides DNS hosting, CDN, and DDoS protection for domains managed through its dashboard at [dash.cloudflare.com](https://dash.cloudflare.com).
+
+You will configure a **sending domain** (CNAME, DKIM TXT, and DMARC TXT records) and, optionally, an **inbound domain** (MX records), **tracking domain** (two CNAME records), and **storage domain** (CNAME and two TXT records).
+
+---
+
+## Sending Domain Setup
+
+A sending domain authenticates your outgoing emails with DKIM and DMARC, ensuring they are delivered reliably and not marked as spam. This requires a CNAME record for domain verification, a TXT record for DKIM signing, and a TXT record for DMARC policy.
+
+To create a sending domain in Lettr:
+1. Select **Domains** in the navigation panel
+2. Select **Sending Domains**
+3. Click **Create Sending Domain**
+4. Enter your desired sending subdomain (e.g. `mailing.company.com`)
+5. Click **Create Domain**
+
+<img src="/images/lettr-create-sending-domain.png" alt="Create Sending Domain button in Lettr" />
+
+<Tip>
+  Use a subdomain (e.g. `mailing.company.com`) instead of the root domain (`company.com`). A subdomain provides proper
+  reputation segmentation and is required if you also plan to receive emails with Lettr.
+</Tip>
+
+Click your new domain in the Sending Domains list.
+
+<img src="/images/lettr-sending-list.png" alt="Sending domain listed in Lettr Sending Domains list" />
+
+This will display a list of DNS records that need to be configured. Keep this page open — you will need these values soon.
+
+<img src="/images/lettr-mailing-config.png" alt="DNS records displayed in Lettr after creating a sending domain" />
+
+### Configure Cloudflare DNS
+
+Log in to the [Cloudflare dashboard](https://dash.cloudflare.com), click **Domains** in the left-hand sidebar to view a list of your domains. Select the domain you want to configure, or create a new one.
+
+<img src="/images/cloud-domains-list.png" alt="Cloudflare dashboard showing the Domains page" />
+
+This will open the domain details page, where you can manage your DNS records.
+
+<img src="/images/cloud-dns-config.png" alt="Cloudflare nameserver configuration on domain details page" />
+
+<Tip>
+  If your domain was purchased through Cloudflare or your nameservers already point to Cloudflare, skip nameserver
+  configuration entirely. Your domain is already using Cloudflare's nameservers by default — proceed directly to adding the
+  DNS records below.
+</Tip>
+
+<AccordionGroup>
+  <Accordion title="Domain registered with a different registrar?">
+    If you registered your domain elsewhere but want to manage DNS on Cloudflare, you must first **update the nameservers**
+    at your registrar to Cloudflare's nameservers shown in the domain configuration. Click on your domain in the list, then follow the instructions. 
+    <img src="/images/cloud-nameservers.png" alt="Cloudflare nameserver configuration" />
+    <Warning>Until the nameservers are updated, any records you add in Cloudflare will not resolve.</Warning>
+  </Accordion>
+</AccordionGroup>
+
+### Add CNAME Record
+
+The CNAME record verifies domain ownership with Lettr's email infrastructure.
+
+Copy the CNAME values from Lettr to Cloudflare:
+
+1. Click **Add record** on the Cloudflare DNS page.
+2. Select **CNAME** from the **Type** dropdown.
+3. Copy the **Hostname** from Lettr and paste it into the **Name** field in Cloudflare.
+4. Copy the **Value** from Lettr and paste it into the **Target** field in Cloudflare.
+5. Set **Proxy status** to **DNS only** (grey cloud). Click the orange cloud icon to toggle it off.
+6. Leave **TTL** set to Auto.
+7. Click **Save**.
+
+<Warning>
+Cloudflare's proxy mode (orange cloud) rewrites DNS responses and will cause CNAME verification to fail. All CNAME records for Lettr **must** use **DNS only** (grey cloud) mode.
+</Warning>
+
+<Info>
+Omit your domain suffix from the Hostname when pasting into Cloudflare. For example, instead of `mailing.lettr-demo.com`, paste only `mailing`.
+</Info>
+
+<img src="/images/lettr-mailing-1.png" alt="CNAME record Hostname and Value in Lettr" />
+<img src="/images/cloud-sending-1.png" alt="Adding CNAME record in Cloudflare DNS settings" />
+
+### Add TXT Record (DKIM)
+
+The DKIM record adds a cryptographic signature to your outgoing emails, allowing recipients to verify they were sent by an authorized sender.
+
+Copy the TXT values from Lettr to Cloudflare:
+
+1. Click **Add record** on the Cloudflare DNS page.
+2. Select **TXT** from the **Type** dropdown.
+3. Copy the **Hostname** from Lettr and paste it into the **Name** field in Cloudflare.
+4. Copy the **Value** from Lettr and paste it into the **Content** field in Cloudflare.
+5. Leave **TTL** set to Auto.
+6. Click **Save**.
+
+<Info>
+Omit your domain suffix from the Hostname when pasting into Cloudflare. For example, instead of `scph0126._domainkey.mailing.lettr-demo.com`, paste only `scph0126._domainkey.mailing`.
+</Info>
+
+<img src="/images/lettr-mailing-2.png" alt="DKIM TXT record Hostname and Value in Lettr" />
+<img src="/images/cloud-sending-2.png" alt="Adding DKIM TXT record in Cloudflare DNS settings" />
+
+### Add TXT Record (DMARC)
+
+The DMARC record tells receiving mail servers how to handle emails that fail authentication checks, protecting your domain from spoofing.
+
+Copy the TXT values from Lettr to Cloudflare:
+
+1. Click **Add record** on the Cloudflare DNS page.
+2. Select **TXT** from the **Type** dropdown.
+3. Copy the **Hostname** from Lettr and paste it into the **Name** field in Cloudflare.
+4. Copy the **Value** from Lettr and paste it into the **Content** field in Cloudflare.
+5. Leave **TTL** set to Auto.
+6. Click **Save**.
+
+<Info>
+Omit your domain suffix from the Hostname when pasting into Cloudflare. For example, instead of `_dmarc.mailing.lettr-demo.com`, paste only `_dmarc.mailing`.
+</Info>
+
+<img src="/images/lettr-mailing-3.png" alt="DMARC TXT record Hostname and Value in Lettr" />
+<img src="/images/cloud-sending-3.png" alt="Adding DMARC TXT record in Cloudflare DNS settings" />
+
+### Verify Your Sending Domain
+
+After adding all three DNS records, go back to Lettr and click **Verify DNS Records**. DNS propagation can take up to 24–48 hours, though it typically completes within a few minutes.
+
+<img src="/images/lettr-verified.png" alt="Sending domain verified successfully in Lettr" />
+
+---
+
+## Inbound Domain Setup
+
+An inbound domain allows Lettr to receive emails on your behalf. This requires three MX records that direct incoming mail to Lettr's mail servers.
+
+### Add Inbound Domain to Lettr
+
+To create an Inbound domain in Lettr:
+1. Select **Domains** in the navigation panel
+2. Select **Inbound Domains**
+3. Click **Create Inbound Domain**
+4. Enter your desired inbound subdomain (e.g. `inbound.company.com`)
+5. Click **Create Domain**.
+
+<img src="/images/lettr-inbound-new.png" alt="Creating a new inbound domain in Lettr" />
+
+Click on your new domain in the Inbound Domains list.
+
+<img src="/images/lettr-inbound-list.png" alt="Inbound domain listed in Lettr Inbound Domains list" />
+
+This will display the MX records that need to be configured.
+
+<img src="/images/lettr-inbound-config.png" alt="MX record configuration displayed in Lettr for inbound domain" />
+
+### Add MX Records
+
+MX records tell other mail servers where to deliver emails addressed to your domain.
+
+Copy the MX values from Lettr to Cloudflare:
+
+1. Click **Add record** on the Cloudflare DNS page.
+2. Select **MX** from the **Type** dropdown.
+3. Copy the **Hostname** from Lettr and paste it into the **Name** field in Cloudflare.
+4. Copy the first **Required MX Record** value (without the priority number) from Lettr and paste it into the **Mail server** field in Cloudflare.
+5. Copy the **Priority** number (e.g. `10`) from Lettr and paste it into the **Priority** field in Cloudflare.
+6. Leave **TTL** set to Auto.
+7. Click **Save**.
+8. Repeat this process for the second (rx2.sparkpostmail.com) and third (rx3.sparkpostmail.com) MX records.
+
+<Info>
+Omit your domain suffix from the Hostname when pasting into Cloudflare. For example, instead of `inbound.lettr-demo.com`, paste only `inbound`.
+</Info>
+
+<img src="/images/lettr-inbound-1.png" alt="MX record values in Lettr for inbound domain" />
+<img src="/images/cloud-inbound-1.png" alt="Adding MX record in Cloudflare DNS settings" />
+
+### Verify Your Inbound Domain
+
+After adding all three MX records, go back to Lettr and click **Verify DNS Records**. DNS propagation can take up to 24–48 hours, though it typically completes within a few minutes.
+
+<img src="/images/lettr-inbound-verified.png" alt="Inbound domain verified successfully in Lettr" />
+
+---
+
+## Tracking Domain Setup
+
+A tracking domain allows Lettr to track email opens and link clicks using your own custom domain instead of the default Lettr tracking domain. This requires two CNAME records: one for the SSL certificate and one for routing tracking traffic to Lettr's infrastructure.
+
+### Add Tracking Domain to Lettr
+
+To create a Tracking domain in Lettr:
+1. Select **Domains** in the navigation panel
+2. Select **Tracking Domains**
+3. Click **Create Tracking Domain**
+4. Enter your desired tracking subdomain (e.g. `tracking.company.com`)
+5. Click **Create Domain**
+
+<img src="/images/lettr-add-tracking.png" alt="Creating a new tracking domain in Lettr" />
+
+Click on your new domain in the Tracking Domains list.
+
+<img src="/images/lettr-tracking-list.png" alt="Tracking domain listed in Lettr Tracking Domains list" />
+
+This will display the CNAME records that need to be configured.
+
+<img src="/images/lettr-tracking-config.png" alt="CNAME records displayed in Lettr for tracking domain configuration" />
+
+### Add SSL Certificate CNAME Record
+
+The SSL Certificate CNAME record provisions an SSL certificate for your custom tracking domain, enabling secure HTTPS connections for tracked links.
+
+Add the record in Cloudflare:
+
+1. Click **Add record** on the Cloudflare DNS page.
+2. Select **CNAME** from the **Type** dropdown.
+3. Copy the **Hostname** from Lettr and paste it into the **Name** field in Cloudflare.
+4. Copy the **Value** from Lettr and paste it into the **Target** field in Cloudflare.
+5. Set **Proxy status** to **DNS only** (grey cloud).
+6. Leave **TTL** set to Auto.
+7. Click **Save**.
+
+<Info>
+Omit your domain suffix from the Hostname when pasting into Cloudflare. For example, instead of `track.lettr-demo.com`, paste only `track`.
+</Info>
+
+<img src="/images/lettr-tracking-1.png" alt="SSL Certificate CNAME record values in Lettr for tracking domain" />
+<img src="/images/cloud-tracking-1.png" alt="Adding SSL Certificate CNAME record in Cloudflare DNS settings" />
+
+### Add Traffic CNAME Record
+
+The Traffic CNAME record routes click and open tracking requests from your custom domain to Lettr's tracking servers.
+
+Add the record in Cloudflare:
+
+1. Click **Add record** on the Cloudflare DNS page.
+2. Select **CNAME** from the **Type** dropdown.
+3. Copy the **Hostname** from Lettr and paste it into the **Name** field in Cloudflare.
+4. Copy the **Value** from Lettr and paste it into the **Target** field in Cloudflare.
+5. Set **Proxy status** to **DNS only** (grey cloud).
+6. Leave **TTL** set to Auto.
+7. Click **Save**.
+
+<Info>
+Omit your domain suffix from the Hostname when pasting into Cloudflare. For example, instead of `track.lettr-demo.com`, paste only `track`.
+</Info>
+
+<img src="/images/lettr-tracking-2.png" alt="Traffic CNAME record values in Lettr for tracking domain" />
+<img src="/images/cloud-tracking-2.png" alt="Adding Traffic CNAME record in Cloudflare DNS settings" />
+
+### Verify Your Tracking Domain
+
+After adding both CNAME records, go back to Lettr and click **Verify DNS Records**.
+
+<img src="/images/lettr-tracking-verified.png" alt="Tracking domain verified successfully in Lettr" />
+
+---
+
+## Storage Domain Setup
+
+A storage domain lets you serve email assets (images, attachments) from your own custom domain instead of the default Lettr storage URL. This requires two TXT records for certificate validation and ownership verification, and a CNAME record for routing asset requests to Lettr's storage infrastructure.
+
+### Add Storage Domain to Lettr
+
+To create a Storage domain in Lettr:
+1. Select **Domains** in the navigation panel
+2. Select **Storage Domains**
+3. Click **Create Storage Domain**
+4. Enter your desired storage subdomain (e.g. `assets.company.com`)
+5. Click **Create Domain**
+
+<img src="/images/lettr-storage-new.png" alt="Creating a new storage domain in Lettr" />
+
+Click on your new domain in the Storage Domains list.
+
+<img src="/images/lettr-storage-list.png" alt="Storage domain listed in Lettr Storage Domains list" />
+
+This will display the TXT and CNAME records that need to be configured.
+
+<img src="/images/lettr-storage-config.png" alt="TXT and CNAME records displayed in Lettr for storage domain configuration" />
+
+### Add TXT Record (Certificate Validation)
+
+The Certificate Validation TXT record provisions an SSL certificate for your custom storage domain, enabling secure HTTPS delivery of email assets.
+
+Add the record in Cloudflare:
+
+1. Click **Add record** on the Cloudflare DNS page.
+2. Select **TXT** from the **Type** dropdown.
+3. Copy the **Hostname** from Lettr and paste it into the **Name** field in Cloudflare.
+4. Copy the **Value** from Lettr and paste it into the **Content** field in Cloudflare.
+5. Leave **TTL** set to Auto.
+6. Click **Save**.
+
+<Info>
+Omit your domain suffix from the Hostname when pasting into Cloudflare, just as with the CNAME record above.
+</Info>
+
+<img src="/images/lettr-storage-1.png" alt="Certificate Validation TXT record values in Lettr for storage domain" />
+<img src="/images/cloud-storage-1.png" alt="Adding Certificate Validation TXT record in Cloudflare DNS settings" />
+
+### Add TXT Record (Hostname Pre-validation)
+
+The Hostname Pre-validation TXT record verifies ownership of the storage domain before Lettr provisions a custom hostname for it.
+
+Add the record in Cloudflare:
+
+1. Click **Add record** on the Cloudflare DNS page.
+2. Select **TXT** from the **Type** dropdown.
+3. Copy the **Hostname** from Lettr and paste it into the **Name** field in Cloudflare.
+4. Copy the **Value** from Lettr and paste it into the **Content** field in Cloudflare.
+5. Leave **TTL** set to Auto.
+6. Click **Save**.
+
+<Info>
+Omit your domain suffix from the Hostname when pasting into Cloudflare, just as with the CNAME record above.
+</Info>
+
+<img src="/images/lettr-storage-2.png" alt="Hostname Pre-validation TXT record values in Lettr for storage domain" />
+<img src="/images/cloud-storage-2.png" alt="Adding Hostname Pre-validation TXT record in Cloudflare DNS settings" />
+
+### Add CNAME Record (Domain Routing)
+
+The Domain Routing CNAME record routes asset requests from your custom domain to Lettr's storage infrastructure.
+
+Add the record in Cloudflare:
+
+1. Click **Add record** on the Cloudflare DNS page.
+2. Select **CNAME** from the **Type** dropdown.
+3. Copy the **Hostname** from Lettr and paste it into the **Name** field in Cloudflare.
+4. Copy the **Value** from Lettr and paste it into the **Target** field in Cloudflare.
+5. Set **Proxy status** to **DNS only** (grey cloud).
+6. Leave **TTL** set to Auto.
+7. Click **Save**.
+
+<Info>
+Omit your domain suffix from the Hostname when pasting into Cloudflare. For example, instead of `assets.lettr-demo.com`, paste only `assets`.
+</Info>
+
+<img src="/images/lettr-storage-3.png" alt="Domain Routing CNAME record values in Lettr for storage domain" />
+<img src="/images/cloud-storage-3.png" alt="Adding Domain Routing CNAME record in Cloudflare DNS settings" />
+
+### Verify Your Storage Domain
+
+After adding all three records, go back to Lettr and click **Verify DNS Records**.
+
+<img src="/images/lettr-storage-verified.png" alt="Storage domain verified successfully in Lettr" />
+
+---
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Proxy Mode Enabled (Orange Cloud)">
+    This is the most common issue when using Cloudflare with Lettr. Cloudflare's proxy mode (orange cloud icon) intercepts and rewrites DNS responses, which causes CNAME verification to fail because Lettr cannot see the original CNAME target.
+
+    **How to fix:**
+
+    1. Go to your domain in the [Cloudflare dashboard](https://dash.cloudflare.com).
+    2. Open the **DNS** tab.
+    3. Find each CNAME record you added for Lettr.
+    4. Click the orange cloud icon next to the record to toggle it to **DNS only** (grey cloud).
+    5. Wait a few minutes for the change to propagate, then re-verify in Lettr.
+
+    <Warning>
+    All CNAME records for Lettr (sending verification, tracking SSL, tracking traffic, and storage domain routing) must be set to **DNS only** (grey cloud). TXT and MX records are not affected by proxy mode.
+    </Warning>
+  </Accordion>
+  <Accordion title="Domain Suffix Not Omitted">
+    Cloudflare automatically appends your domain to the record name. If you paste the full hostname (e.g. `mailing.lettr-demo.com`), the resulting record will be `mailing.lettr-demo.com.lettr-demo.com`, which will fail verification.
+
+    Always paste only the subdomain portion (e.g. `mailing`, `scph0126._domainkey.mailing`, `_dmarc.mailing`).
+  </Accordion>
+  <Accordion title="Records Not Propagating">
+    If verification fails after adding records, check the following:
+
+    - **Wait at least 30 minutes** before your first verification attempt. Most records propagate within 1–2 hours.
+    - **Confirm proxy mode is off** for all CNAME records (see above).
+    - **Confirm the records exist** using command-line tools:
+
+    ```bash
+    # Check CNAME record
+    dig CNAME mailing.yourdomain.com +short
+
+    # Check DKIM record
+    dig TXT scph0126._domainkey.mailing.yourdomain.com +short
+
+    # Check DMARC record
+    dig TXT _dmarc.mailing.yourdomain.com +short
+
+    # Check MX records (inbound)
+    dig MX inbound.yourdomain.com +short
+
+    # Check tracking domain CNAME
+    dig CNAME track.yourdomain.com +short
+
+    # Check storage domain CNAME
+    dig CNAME assets.yourdomain.com +short
+    ```
+
+    - **Use a web tool** like [dnschecker.org](https://dnschecker.org) to verify propagation across multiple DNS servers worldwide.
+
+    <Tip>
+    If a `dig CNAME` query returns an IP address instead of a hostname, the record is still proxied (orange cloud). Toggle it to DNS only and check again.
+    </Tip>
+  </Accordion>
+  <Accordion title="Wrong Record Type">
+    A common mistake is selecting the wrong type in Cloudflare's dropdown:
+
+    | Record | Correct Type |
+    |--------|-------------|
+    | Sending verification | CNAME |
+    | DKIM | TXT |
+    | DMARC | TXT |
+    | Inbound mail | MX |
+    | Tracking SSL certificate | CNAME |
+    | Tracking traffic | CNAME |
+    | Storage certificate validation | TXT |
+    | Storage hostname pre-validation | TXT |
+    | Storage domain routing | CNAME |
+  </Accordion>
+  <Accordion title="DKIM Value Truncated">
+    The DKIM TXT value is a long string. Cloudflare handles long TXT values well, but copying errors can occasionally cut off the string. After saving the record, click **Edit** on the record to confirm the full value was stored. If it appears truncated, try pasting the value again.
+  </Accordion>
+  <Accordion title="Nameservers Not Pointing to Cloudflare">
+    If your records are saved in Cloudflare but not resolving, confirm that your domain registrar is pointing to Cloudflare's nameservers. You can check this with:
+
+    ```bash
+    dig NS yourdomain.com +short
+    ```
+
+    The output should include the two Cloudflare nameservers assigned to your domain (e.g. `anna.ns.cloudflare.com`, `bob.ns.cloudflare.com`). These are displayed on the domain overview page in the Cloudflare dashboard. If the output shows a different provider's nameservers, update them at your domain registrar.
+  </Accordion>
+  <Accordion title="CNAME Flattening at Root">
+    If you are adding a CNAME record at the root of your domain (e.g. `company.com` instead of `mailing.company.com`), Cloudflare will automatically apply CNAME flattening. This resolves the CNAME to an A record, which can cause verification to fail. Use a subdomain for your sending domain to avoid this issue.
+  </Accordion>
+  <Accordion title="When to Contact Support">
+    If your DNS records are correctly configured (confirmed with `dig` or dnschecker.org), proxy mode is disabled for all CNAME records, and verification still fails after 48 hours, contact Lettr support at **support@lettr.com** or through the in-app chat. Include your domain name and the output of the `dig` commands above.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Sending Domains" icon="paper-plane" href="/learn/domains/sending-domains">
+    Learn about sending domain setup, SPF, DKIM, and DMARC.
+  </Card>
+  <Card title="Inbound Domains" icon="inbox" href="/learn/domains/inbound-domains">
+    Configure MX records to receive emails with Lettr.
+  </Card>
+  <Card title="Tracking Domains" icon="link" href="/learn/domains/tracking-domains">
+    Set up a custom tracking domain for click and open tracking.
+  </Card>
+  <Card title="Storage Domains" icon="hard-drive" href="/learn/domains/storage-domains">
+    Serve email assets from your own custom domain.
+  </Card>
+  <Card title="Domains Overview" icon="globe" href="/learn/domains/introduction">
+    Understand domain types and how they work in Lettr.
+  </Card>
+  <Card title="Domain Verification Failures" icon="circle-exclamation" href="/knowledge-base/troubleshooting/domain-verification">
+    Troubleshoot common DNS configuration and propagation issues.
+  </Card>
+</CardGroup>

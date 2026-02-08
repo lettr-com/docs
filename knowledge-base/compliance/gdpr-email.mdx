@@ -1,0 +1,184 @@
+---
+title: "GDPR and Email Sending"
+description: "How GDPR affects email practices, consent requirements, and handling EU recipient data"
+---
+
+## What Is GDPR
+
+The **General Data Protection Regulation (GDPR)** is the European Union's comprehensive data protection law that took effect on May 25, 2018. It governs how organizations collect, store, process, and share personal data of individuals located in the EU and European Economic Area (EEA).
+
+<Warning>
+  GDPR applies to **any organization** that processes personal data of EU/EEA residents, regardless of where the organization itself is located. If you send email to recipients in the EU, GDPR applies to you.
+</Warning>
+
+## How GDPR Applies to Email
+
+Under GDPR, an email address is **personal data**. Sending an email to someone constitutes **processing** their personal data. This means every email you send through Lettr to an EU/EEA recipient falls within the scope of GDPR.
+
+Specifically, the following activities are all considered data processing:
+
+- Collecting email addresses
+- Storing recipient lists
+- Sending emails (marketing, transactional, or otherwise)
+- Tracking opens, clicks, and other engagement events
+- Retaining delivery logs and email history
+
+You must have a **lawful basis** for each of these processing activities.
+
+## Lawful Bases for Email
+
+GDPR defines six lawful bases for processing personal data. Three are most relevant to email sending:
+
+| Lawful Basis | When It Applies | Examples |
+|---|---|---|
+| **Consent** | Explicit opt-in for marketing email. Must be freely given, specific, informed, and unambiguous. | Newsletters, promotional campaigns, product announcements |
+| **Legitimate Interest** | Some transactional or relationship emails where you can demonstrate a legitimate business reason. Must pass a balancing test against the individual's rights. | Account security alerts, product updates for active customers |
+| **Contractual Necessity** | Emails required to fulfill a contract the recipient has entered into with you. | Order confirmations, shipping notifications, invoice delivery |
+
+<Note>
+  Consent is the **safest and most common** lawful basis for marketing email. If in doubt, obtain explicit consent.
+</Note>
+
+## Consent Requirements
+
+GDPR sets a high bar for what constitutes valid consent. All of the following must be met:
+
+### Must Be Affirmative Action
+
+The recipient must take a clear, positive action to opt in. Pre-checked boxes, silence, or inactivity do **not** count as consent.
+
+### Must Be Specific
+
+Consent must be obtained separately for different processing purposes. A single checkbox covering marketing emails, third-party data sharing, and analytics is not valid. Each purpose needs its own consent mechanism.
+
+### Must Be Informed
+
+At the point of collection, the recipient must clearly understand what they are consenting to — who will send the emails, what kind of content, and how often.
+
+### Must Be Revocable
+
+Recipients must be able to withdraw consent at any time, and it must be **as easy to withdraw as it was to give**. An unsubscribe link in every email is the minimum requirement.
+
+### Must Be Documented
+
+You must keep records of **when** and **how** consent was obtained. This includes timestamps, the version of the form used, and what information was presented at the time.
+
+<Tip>
+  Store consent records with a timestamp, the source (e.g., signup form URL), the IP address, and the exact text the recipient agreed to. This evidence is critical if you ever need to demonstrate compliance.
+</Tip>
+
+## Data Subject Rights Relevant to Email
+
+GDPR grants individuals a set of rights over their personal data. The following are most relevant to email operations:
+
+| Right | What It Means | Your Obligation |
+|---|---|---|
+| **Right to Access** | Individuals can request a copy of all personal data you hold about them. | Provide email addresses, sending history, engagement data, and any metadata you have stored. |
+| **Right to Erasure** | Also known as the "right to be forgotten." Individuals can request deletion of their data. | Delete their data from your lists, CRM, and any other systems. Ensure they are added to a suppression list so you do not re-add them. |
+| **Right to Object** | Individuals can object to processing for direct marketing at any time, with no exceptions. | Stop all marketing emails immediately upon request. |
+| **Right to Data Portability** | Individuals can request their data in a structured, machine-readable format. | Provide their data in a common format such as CSV or JSON. |
+
+<Warning>
+  The right to object to direct marketing is **absolute** under GDPR. There is no balancing test — you must stop immediately when someone objects.
+</Warning>
+
+## Practical Implementation
+
+### Double Opt-In for EU Recipients
+
+Double opt-in (confirmation email after signup) is the strongest evidence of consent. The recipient provides their email, receives a confirmation message, and clicks a link to verify. This creates a clear audit trail.
+
+### Clear Privacy Notice at Point of Collection
+
+Every signup form must include or link to a privacy notice that explains how you will use the email address, who the data controller is, and how the recipient can exercise their rights.
+
+### Easy Unsubscribe Mechanism
+
+Include a visible unsubscribe link in every marketing email. Process unsubscribe requests promptly. Lettr supports list-unsubscribe headers which enable one-click unsubscribe in supported email clients.
+
+### Data Retention Policy
+
+Do not keep email data indefinitely. Define how long you retain recipient data, delivery logs, and engagement events, and delete data that is no longer needed.
+
+### Honor Erasure Requests
+
+When a recipient requests erasure:
+
+1. Remove them from all mailing lists
+2. Delete their personal data from your systems
+3. Add them to a suppression list to prevent future sends
+4. Confirm the deletion to the requester
+
+<Note>
+  Suppression lists are permitted under GDPR even after an erasure request. You need to retain the minimum data necessary (the email address) to ensure you do not contact the person again.
+</Note>
+
+## Data Processing with Lettr
+
+When you send email through Lettr, Lettr acts as a **data processor** on your behalf. You remain the **data controller** and are responsible for ensuring lawful processing.
+
+Lettr processes the following personal data for you:
+
+- Recipient email addresses
+- Email content (which may contain personal data)
+- Delivery and engagement events (opens, clicks, bounces)
+- Any custom data you pass via the `metadata` parameter
+
+<Warning>
+  **Do not store sensitive personal data** in `substitution_data` or `metadata` fields. Avoid including information such as health data, financial account numbers, government IDs, or other special category data. Use opaque identifiers (such as internal user IDs) in metadata instead of directly including PII.
+</Warning>
+
+<Tip>
+  Instead of passing `"customer_name": "John Smith"` in metadata, use `"customer_id": "usr_48291"` and resolve the name in your own systems. This minimizes the personal data flowing through your email infrastructure.
+</Tip>
+
+## GDPR vs CAN-SPAM Key Differences
+
+| Aspect | GDPR (EU) | CAN-SPAM (US) |
+|---|---|---|
+| **Consent Model** | Opt-in required before sending marketing email | Opt-out — you can send until someone unsubscribes |
+| **Geographic Scope** | Applies to any organization processing EU resident data | Applies to commercial email sent to US recipients |
+| **Penalties** | Up to €20 million or 4% of global annual revenue, whichever is higher | Up to $51,744 per individual email violation |
+| **Transactional Email** | Requires a lawful basis (usually contractual necessity) | Largely exempt from CAN-SPAM requirements |
+| **Enforcement** | National Data Protection Authorities in each EU member state | Federal Trade Commission (FTC) |
+
+## Common Mistakes
+
+<AccordionGroup>
+  <Accordion title="Assuming GDPR doesn't apply outside the EU">
+    GDPR applies based on where the **recipient** is located, not where your organization is based. A US company sending email to EU residents must comply with GDPR.
+  </Accordion>
+
+  <Accordion title="Using pre-checked consent boxes">
+    Pre-checked boxes are explicitly prohibited under GDPR. Consent must be an affirmative action taken by the individual. Forms with pre-checked "Subscribe to our newsletter" boxes are non-compliant.
+  </Accordion>
+
+  <Accordion title="Not keeping consent records">
+    If you cannot demonstrate when and how consent was obtained, you effectively have no valid consent. Maintain detailed records including timestamps, form versions, and the text presented to the user.
+  </Accordion>
+
+  <Accordion title="Ignoring erasure requests">
+    Failing to respond to a data erasure request within the required timeframe (one month) is a GDPR violation. Establish a clear internal process for handling these requests promptly.
+  </Accordion>
+
+  <Accordion title="Operating without a data processing agreement">
+    If you use any third-party service to send email (including Lettr), GDPR requires a Data Processing Agreement (DPA) between you (the controller) and the service (the processor). Ensure this is in place before processing EU recipient data.
+  </Accordion>
+</AccordionGroup>
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="CAN-SPAM Compliance" href="/knowledge-base/compliance/can-spam">
+    US email compliance requirements and how they compare to GDPR.
+  </Card>
+  <Card title="Unsubscribe Best Practices" href="/knowledge-base/compliance/unsubscribe-best-practices">
+    Implementing effective and compliant unsubscribe mechanisms.
+  </Card>
+  <Card title="Data Privacy and Metadata" href="/knowledge-base/compliance/data-privacy-metadata">
+    How to handle personal data in email metadata and substitution variables.
+  </Card>
+  <Card title="List Hygiene" href="/knowledge-base/best-practices/list-hygiene">
+    Maintaining clean, compliant recipient lists.
+  </Card>
+</CardGroup>

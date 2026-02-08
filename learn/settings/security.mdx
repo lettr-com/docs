@@ -1,0 +1,94 @@
+---
+title: Account Security
+description: "Set up two-factor authentication, manage recovery codes, and secure your account"
+---
+
+# Account Security
+
+Lettr supports two-factor authentication (2FA) to add an extra layer of security to your account. When enabled, you'll need both your password and a time-based verification code from an authenticator app to sign in.
+
+## Setting Up Two-Factor Authentication
+
+<Steps>
+  <Step title="Go to Security Settings">
+    Navigate to **Settings** → **Two-Factor Authentication** in the sidebar.
+  </Step>
+  <Step title="Enable 2FA">
+    Click **Enable Two-Factor Authentication**. You'll be prompted to confirm your password.
+  </Step>
+  <Step title="Scan the QR Code">
+    Open your authenticator app (such as Google Authenticator, Authy, or 1Password) and scan the QR code displayed on screen.
+  </Step>
+  <Step title="Enter Verification Code">
+    Enter the 6-digit code from your authenticator app to confirm the setup.
+  </Step>
+  <Step title="Save Recovery Codes">
+    After enabling 2FA, you'll receive a set of recovery codes. **Store these in a safe place** — they're the only way to access your account if you lose your authenticator device.
+  </Step>
+</Steps>
+
+<Warning>
+  Recovery codes are shown only once. Store them securely (e.g., in a password manager). If you lose both your authenticator device and your recovery codes, you will not be able to access your account.
+</Warning>
+
+## Signing In with 2FA
+
+After enabling two-factor authentication, the sign-in process adds one step:
+
+1. Enter your email and password as usual
+2. When prompted, enter the 6-digit code from your authenticator app
+3. Alternatively, use a recovery code if you don't have access to your authenticator
+
+## Recovery Codes
+
+Recovery codes are single-use backup codes that let you sign in when you don't have access to your authenticator app. Each code can only be used once.
+
+To regenerate recovery codes:
+
+1. Go to **Settings** → **Two-Factor Authentication**
+2. Click **Regenerate Recovery Codes**
+3. Store the new codes securely
+
+<Note>
+  Regenerating recovery codes invalidates all previous codes. Make sure to update your stored codes.
+</Note>
+
+## Disabling 2FA
+
+To disable two-factor authentication:
+
+1. Go to **Settings** → **Two-Factor Authentication**
+2. Click **Disable Two-Factor Authentication**
+3. Confirm your password
+
+## Requiring 2FA for Your Team
+
+Team owners can require all team members to enable two-factor authentication. When this is enabled, members without 2FA will be redirected to set it up before they can access any team resources.
+
+To enable this requirement:
+
+1. Go to **Settings** → **Team**
+2. In the **Security** section, toggle on **Require Two-Factor Authentication**
+
+Members who haven't set up 2FA will see a setup prompt when they try to access the dashboard. They can still sign in, but they won't be able to use any team features until 2FA is configured.
+
+<Tip>
+  The team settings page shows which members have 2FA enabled (green shield icon) and which don't (gray shield with alert). Review this before enabling the requirement to give your team advance notice.
+</Tip>
+
+For more about team security settings, see [Teams](/learn/settings/teams).
+
+## Password Management
+
+You can update your password from **Settings** → **Password**. Enter your current password and your new password to make the change.
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Teams" icon="users" href="/learn/settings/teams">
+    Team roles, invitations, and security settings
+  </Card>
+  <Card title="API Keys" icon="key" href="/learn/api-keys/introduction">
+    Manage API authentication
+  </Card>
+</CardGroup>

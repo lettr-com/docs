@@ -1,0 +1,291 @@
+---
+title: Order Confirmation Emails
+description: "Structure, required information, delivery timing, and template design for e-commerce order confirmation emails"
+---
+
+# Order Confirmation Emails
+
+Order confirmation emails have the highest open rates of any email type — often above 60%. They're the first touchpoint after a customer commits money, so they set expectations for the entire post-purchase experience. A missing or delayed confirmation creates immediate anxiety and support tickets. This guide covers what to include, how to structure the content, and how to deliver confirmations reliably.
+
+---
+
+## Why Order Confirmations Matter
+
+| Factor | Impact |
+|--------|--------|
+| **Highest open rates** | 60–80% open rates — far above marketing email benchmarks |
+| **Legal requirement** | Many jurisdictions require a purchase confirmation or receipt |
+| **Support deflection** | A clear confirmation reduces "did my order go through?" tickets |
+| **Trust building** | Immediate confirmation reinforces trust in your platform |
+| **Reference document** | Customers save and search for these emails later |
+
+---
+
+## Required Information
+
+An order confirmation should include everything a customer needs to understand what they bought, what they paid, and what happens next.
+
+### Essential Fields
+
+<Steps>
+  <Step title="Order number">
+    A unique, human-readable identifier the customer can reference in support inquiries. Display it prominently at the top.
+  </Step>
+  <Step title="Items ordered">
+    Product names, quantities, individual prices, and any selected variants (size, color, plan tier). Include product images where practical.
+  </Step>
+  <Step title="Price breakdown">
+    Subtotal, discounts or promo codes applied, tax, shipping cost, and total charged. Match exactly what the payment processor charged.
+  </Step>
+  <Step title="Payment method">
+    Show the payment type and last four digits of the card (e.g., "Visa ending in 4242"). Never include the full card number.
+  </Step>
+  <Step title="Shipping or delivery details">
+    Delivery address, estimated delivery date or timeframe, and shipping method selected.
+  </Step>
+  <Step title="Next steps">
+    What happens next — when they'll receive a shipping notification, how to track the order, or when to expect access (for digital products).
+  </Step>
+</Steps>
+
+### Optional but Recommended
+
+- **Customer name** — personalize the greeting
+- **Order date and time** — useful for record-keeping
+- **Return/refund policy summary** — or a link to it
+- **Support contact** — how to get help with the order
+- **Account link** — where to view order status online
+
+---
+
+## Email Structure and Template
+
+### HTML Template Example
+
+```html
+<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; color: #1a1a1a;">
+
+  <!-- Header -->
+  <div style="text-align: center; padding: 24px 0;">
+    <h1 style="font-size: 24px; margin: 0;">Order Confirmed</h1>
+    <p style="color: #6b6b6b; margin: 8px 0 0;">
+      Thank you for your order, {{customerName}}.
+    </p>
+  </div>
+
+  <!-- Order Number -->
+  <div style="background-color: #f5f3ff; border-radius: 8px; padding: 16px; text-align: center; margin-bottom: 24px;">
+    <p style="margin: 0; font-size: 14px; color: #6b6b6b;">Order Number</p>
+    <p style="margin: 4px 0 0; font-size: 20px; font-weight: 600;">#{{orderNumber}}</p>
+  </div>
+
+  <!-- Items -->
+  <table style="width: 100%; border-collapse: collapse;">
+    <tr style="border-bottom: 1px solid #e5e5e5;">
+      <td style="padding: 12px 0;">
+        <strong>{{itemName}}</strong><br>
+        <span style="color: #6b6b6b; font-size: 14px;">Qty: {{quantity}} × {{unitPrice}}</span>
+      </td>
+      <td style="text-align: right; padding: 12px 0;">{{lineTotal}}</td>
+    </tr>
+  </table>
+
+  <!-- Totals -->
+  <table style="width: 100%; margin-top: 16px;">
+    <tr>
+      <td style="padding: 4px 0; color: #6b6b6b;">Subtotal</td>
+      <td style="text-align: right;">{{subtotal}}</td>
+    </tr>
+    <tr>
+      <td style="padding: 4px 0; color: #6b6b6b;">Shipping</td>
+      <td style="text-align: right;">{{shippingCost}}</td>
+    </tr>
+    <tr>
+      <td style="padding: 4px 0; color: #6b6b6b;">Tax</td>
+      <td style="text-align: right;">{{tax}}</td>
+    </tr>
+    <tr style="border-top: 2px solid #1a1a1a;">
+      <td style="padding: 12px 0; font-weight: 600; font-size: 16px;">Total</td>
+      <td style="text-align: right; font-weight: 600; font-size: 16px;">{{total}}</td>
+    </tr>
+  </table>
+
+  <!-- Shipping Info -->
+  <div style="margin-top: 24px; padding: 16px; background-color: #f9fafb; border-radius: 8px;">
+    <h3 style="margin: 0 0 8px; font-size: 16px;">Shipping To</h3>
+    <p style="margin: 0; color: #4a4a4a; line-height: 1.6;">
+      {{shippingName}}<br>
+      {{shippingAddress}}<br>
+      {{shippingCity}}, {{shippingState}} {{shippingZip}}
+    </p>
+    <p style="margin: 12px 0 0; color: #6b6b6b; font-size: 14px;">
+      Estimated delivery: {{estimatedDelivery}}
+    </p>
+  </div>
+
+  <!-- CTA -->
+  <div style="text-align: center; margin: 32px 0;">
+    <a href="{{orderStatusUrl}}"
+       style="background-color: #6366F1; color: #ffffff; padding: 12px 32px;
+              text-decoration: none; border-radius: 6px; font-weight: 600;">
+      View Order Status
+    </a>
+  </div>
+
+  <!-- Footer -->
+  <p style="color: #6b6b6b; font-size: 13px; line-height: 1.6; text-align: center;">
+    Questions about your order? Contact us at
+    <a href="mailto:support@yourstore.com" style="color: #6366F1;">support@yourstore.com</a>
+  </p>
+</div>
+```
+
+<Tip>
+  Always include a plain-text version of the order confirmation. Some corporate email environments strip HTML, and plain text ensures the customer can always read their receipt.
+</Tip>
+
+---
+
+## Sending with Lettr
+
+```javascript
+const response = await fetch('https://app.lettr.com/api/emails', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${process.env.LETTR_API_KEY}`,
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    from: 'orders@mail.yourstore.com',
+    to: customer.email,
+    subject: `Order confirmed — #${order.number}`,
+    html: orderConfirmationHtml,
+    text: orderConfirmationText,
+    tags: ['order-confirmation'],
+    metadata: {
+      orderId: order.id,
+      customerId: customer.id,
+      orderTotal: order.total,
+    },
+  }),
+});
+```
+
+<Note>
+  Include the order number in the subject line. Customers often search their inbox for order numbers, and including it in the subject makes the email easy to find.
+</Note>
+
+---
+
+## Delivery Timing
+
+Order confirmations should arrive within seconds of the purchase. A delay — even a few minutes — triggers anxiety and support contacts.
+
+### Best Practices for Fast Delivery
+
+- **Send synchronously with the checkout flow** — trigger the email as part of the order completion process, not in a delayed background job
+- **Don't batch order confirmations** — send each one individually as orders come in
+- **Use a dedicated sending domain** with established reputation for transactional email
+- **Monitor delivery latency** — track the time between your API call and the `email.delivered` webhook event
+
+<Warning>
+  If your order confirmation is delayed because it's queued behind a marketing campaign or bulk send, customers will contact support. Keep transactional email on a separate sending path from bulk email. See [Transactional vs Marketing](/knowledge-base/best-practices/transactional-vs-marketing).
+</Warning>
+
+### Handle Send Failures
+
+If the email API call fails, don't fail the order — the customer has already been charged:
+
+```javascript
+async function completeOrder(order, customer) {
+  // 1. Finalize the order in your database first
+  await db.orders.markCompleted(order.id);
+
+  // 2. Attempt to send confirmation
+  try {
+    await sendOrderConfirmation(order, customer);
+  } catch (error) {
+    // Log the failure but don't fail the order
+    logger.error('Order confirmation email failed', {
+      orderId: order.id,
+      error: error.message,
+    });
+
+    // Queue a retry
+    await queue.add('retryOrderConfirmation', {
+      orderId: order.id,
+      attempt: 1,
+    });
+  }
+}
+```
+
+---
+
+## Digital Products and SaaS
+
+For digital products, subscriptions, or SaaS purchases, the confirmation email doubles as a delivery mechanism:
+
+- **Include access instructions** — login URL, download link, or license key
+- **Set access expectations** — "Your account is ready now" vs "Access will be provisioned within 5 minutes"
+- **Provide getting-started guidance** — link to documentation or onboarding resources
+
+```html
+<div style="background-color: #f0fdf4; border-radius: 8px; padding: 16px; margin: 24px 0;">
+  <h3 style="margin: 0 0 8px; font-size: 16px; color: #166534;">Your account is ready</h3>
+  <p style="margin: 0; color: #4a4a4a; line-height: 1.6;">
+    Log in to your dashboard to get started:
+  </p>
+  <div style="text-align: center; margin-top: 16px;">
+    <a href="{{dashboardUrl}}"
+       style="background-color: #16a34a; color: #ffffff; padding: 10px 24px;
+              text-decoration: none; border-radius: 6px; font-weight: 600;">
+      Go to Dashboard
+    </a>
+  </div>
+</div>
+```
+
+---
+
+## Common Mistakes
+
+<AccordionGroup>
+  <Accordion title="Missing or inaccurate price breakdown">
+    The total in the email must match what the customer was charged. Discrepancies — even from rounding — erode trust and can create legal issues. Calculate the email values from the same source as the payment.
+  </Accordion>
+  <Accordion title="Including full payment details">
+    Never show the full credit card number, CVV, or billing address. Show only the card type and last four digits.
+  </Accordion>
+  <Accordion title="Sending the confirmation from a no-reply address">
+    Customers reply to order confirmation emails with questions, changes, or cancellation requests. Use a monitored address like `orders@` or `support@` so replies reach your team.
+  </Accordion>
+  <Accordion title="Adding marketing content or upsells">
+    Order confirmations are transactional. Adding promotional content degrades deliverability and may violate regulations. If you want to cross-sell, send a separate marketing email after a delay.
+  </Accordion>
+  <Accordion title="Not including a plain-text version">
+    Some email clients and corporate filters strip HTML. A plain-text version ensures every customer can read their receipt.
+  </Accordion>
+  <Accordion title="Delaying send behind bulk queues">
+    Order confirmations must arrive immediately. If they're queued behind bulk sends, customers assume the order failed. Use separate queues or priority levels.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Invoice and Billing Emails" icon="file-invoice-dollar" href="/knowledge-base/use-cases/invoice-billing-emails">
+    Recurring billing emails with compliance considerations
+  </Card>
+  <Card title="Templates" icon="paintbrush" href="/learn/templates/introduction">
+    Build and manage email templates with the Topol editor
+  </Card>
+  <Card title="Transactional vs Marketing" icon="arrows-split-up-and-left" href="/knowledge-base/best-practices/transactional-vs-marketing">
+    Why separation matters and how to classify your emails
+  </Card>
+  <Card title="Deliverability Best Practices" icon="inbox" href="/knowledge-base/best-practices/deliverability">
+    Maximize inbox placement for your emails
+  </Card>
+</CardGroup>

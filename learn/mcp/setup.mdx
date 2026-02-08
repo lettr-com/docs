@@ -1,0 +1,282 @@
+---
+title: MCP Setup
+description: "Connect your AI assistant to Lettr using the Model Context Protocol"
+---
+
+# Setting Up MCP
+
+This guide walks you through connecting your AI assistant to Lettr's MCP server. The setup process varies slightly depending on which AI client you're using, but all follow the same general pattern: configure the MCP server URL, authenticate via OAuth, and start interacting.
+
+## Prerequisites
+
+Before connecting an AI client to Lettr's MCP server, you'll need a Lettr account with at least one [verified sending domain](/learn/domains/sending-domains) and an AI assistant that supports the Model Context Protocol—currently Claude, ChatGPT, Cursor, or GitHub Copilot.
+
+<Note>
+  MCP authentication uses your Lettr session—you don't need to create a separate API key for AI assistant access.
+</Note>
+
+## Connection Details
+
+When configuring your AI client, use the following settings:
+
+| Setting | Value |
+|---------|-------|
+| Server URL | `https://app.lettr.com/mcp` |
+| Authentication | OAuth 2.1 (automatic) |
+| Transport | HTTP/SSE |
+
+## Setup by AI Client
+
+<Tabs>
+  <Tab title="Claude">
+    ### Claude Desktop
+
+    Claude Desktop supports MCP servers through its configuration file.
+
+    <Steps>
+      <Step title="Open Claude Desktop Settings">
+        Open Claude Desktop and go to **Settings** (gear icon in the bottom left).
+      </Step>
+      <Step title="Navigate to MCP Servers">
+        Select **Developer** → **MCP Servers** from the settings menu.
+      </Step>
+      <Step title="Add Lettr Server">
+        Click **Add Server** and enter "Lettr" as the name with `https://app.lettr.com/mcp` as the URL.
+      </Step>
+      <Step title="Authenticate">
+        Click **Connect**. A browser window opens to Lettr's OAuth flow. Sign in and authorize Claude to access your account.
+      </Step>
+      <Step title="Verify Connection">
+        Once connected, you'll see "Lettr" listed under your active MCP servers. Start a new conversation and ask Claude about your email infrastructure.
+      </Step>
+    </Steps>
+
+    ### Claude.ai (Web)
+
+    Claude on the web supports MCP through the integrations panel.
+
+    <Steps>
+      <Step title="Open Integrations">
+        In a Claude conversation, click the **Integrations** icon (plug symbol) in the composer area.
+      </Step>
+      <Step title="Add MCP Server">
+        Click **Add Integration** → **MCP Server**.
+      </Step>
+      <Step title="Enter Server URL">
+        Enter `https://app.lettr.com/mcp` as the server URL.
+      </Step>
+      <Step title="Complete OAuth">
+        Follow the OAuth prompts to sign in to Lettr and authorize access.
+      </Step>
+    </Steps>
+  </Tab>
+  <Tab title="ChatGPT">
+    ### ChatGPT
+
+    ChatGPT supports MCP through its plugins and integrations system.
+
+    <Steps>
+      <Step title="Open GPT Settings">
+        In ChatGPT, click your profile icon and select **Settings**.
+      </Step>
+      <Step title="Navigate to Connections">
+        Go to **Data controls** → **Connected apps**.
+      </Step>
+      <Step title="Add MCP Connection">
+        Click **Connect new app** and search for "MCP" or enter the server URL manually:
+
+        ```
+        https://app.lettr.com/mcp
+        ```
+      </Step>
+      <Step title="Authorize Access">
+        Complete the OAuth flow by signing in to Lettr and granting permission.
+      </Step>
+    </Steps>
+  </Tab>
+  <Tab title="Cursor">
+    ### Cursor IDE
+
+    Cursor supports MCP servers for AI-assisted development workflows.
+
+    <Steps>
+      <Step title="Open Cursor Settings">
+        Press `Cmd+,` (Mac) or `Ctrl+,` (Windows/Linux) to open Settings.
+      </Step>
+      <Step title="Navigate to MCP">
+        Search for "MCP" in the settings search bar, or navigate to **Features** → **MCP Servers**.
+      </Step>
+      <Step title="Add Server">
+        Click **Add MCP Server** and enter "Lettr" as the name, `https://app.lettr.com/mcp` as the URL, and select HTTP as the transport.
+      </Step>
+      <Step title="Connect">
+        Click **Connect** and complete the OAuth flow in your browser.
+      </Step>
+    </Steps>
+
+    <Tip>
+      In Cursor, you can ask the AI to send notification emails, check delivery status, or debug email issues—all without leaving your IDE.
+    </Tip>
+  </Tab>
+  <Tab title="GitHub Copilot">
+    ### GitHub Copilot
+
+    GitHub Copilot supports MCP through VS Code extensions.
+
+    <Steps>
+      <Step title="Install MCP Extension">
+        In VS Code, install the GitHub Copilot MCP extension from the marketplace.
+      </Step>
+      <Step title="Configure Server">
+        Open the Command Palette (`Cmd+Shift+P` / `Ctrl+Shift+P`) and run **Copilot: Add MCP Server**.
+      </Step>
+      <Step title="Enter Details">
+        Enter the server URL:
+
+        ```
+        https://app.lettr.com/mcp
+        ```
+      </Step>
+      <Step title="Authenticate">
+        Complete the OAuth flow when prompted.
+      </Step>
+    </Steps>
+  </Tab>
+</Tabs>
+
+## Verifying the Connection
+
+After connecting, verify that your AI assistant can access Lettr by asking a simple question:
+
+> "List my sending domains"
+
+The AI should respond with your verified sending domains. If you see domain information, the connection is working correctly.
+
+## Available Actions
+
+Once connected, your AI assistant gains access to a range of Lettr capabilities. These are organized into categories based on the type of operation.
+
+### Email Operations
+
+For sending emails, your AI assistant can use `send_email` to compose and send messages with specified recipients, subject, and content, or `send_template_email` to send using a pre-built template with merge tag substitution.
+
+| Action | Description |
+|--------|-------------|
+| `send_email` | Send an email with specified recipients, subject, and content |
+| `send_template_email` | Send an email using a pre-built template with merge tags |
+
+### Event Monitoring
+
+To track what happens after emails are sent, the AI can use `browse_email_events` to view delivery events including deliveries, opens, clicks, and bounces. For debugging API integrations, `browse_api_logs` provides access to request history and response data.
+
+| Action | Description |
+|--------|-------------|
+| `browse_email_events` | View delivery events (delivered, opened, clicked, bounced, etc.) |
+| `browse_api_logs` | Inspect API request history and responses |
+
+### Domain Management
+
+Your AI assistant can check the status of your email infrastructure across all domain types. Each domain category has its own listing action that returns verification status and configuration details.
+
+| Action | Description |
+|--------|-------------|
+| `list_sending_domains` | View sending domains with verification status |
+| `list_tracking_domains` | View tracking domains for branded links |
+| `list_inbound_domains` | View inbound email receiving domains |
+| `list_storage_domains` | View asset storage/CDN domains |
+
+### Configuration
+
+Beyond domains, the AI can inspect your account configuration including API keys and webhooks. For security, API keys are shown with prefixes only—never full values.
+
+| Action | Description |
+|--------|-------------|
+| `list_api_keys` | View API keys (prefixes only, for security) |
+| `list_webhooks` | View webhook endpoints and their configuration |
+
+## Example Workflows
+
+### Sending a Quick Email
+
+Ask your AI assistant:
+
+> "Send an email to support@customer.com from hello@mycompany.com with subject 'Your request has been received' and body 'We've received your support request and will respond within 24 hours.'"
+
+The AI will compose and send the email using your verified domain.
+
+### Debugging Delivery Issues
+
+> "Check if the email I sent to john@example.com yesterday was delivered"
+
+The AI will search your email events and report the delivery status, including any bounce information or error codes.
+
+### Using Templates with Personalization
+
+> "Send the 'order-confirmation' template to buyer@example.com with order_id '12345' and customer_name 'Sarah'"
+
+The AI will use your saved template and substitute the merge tags with the provided values.
+
+### Checking Domain Health
+
+> "Are all my sending domains verified and ready to use?"
+
+The AI will list your domains and highlight any with verification issues.
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="OAuth flow doesn't complete">
+    Start by ensuring you're already signed in to Lettr in your browser before initiating the OAuth flow. Check that pop-ups aren't blocked for the AI client's domain. If the flow still fails, try disconnecting and reconnecting the MCP server, or clear your browser cache and attempt the connection again.
+  </Accordion>
+  <Accordion title="AI says it can't access Lettr">
+    First, verify that the MCP server URL is exactly `https://app.lettr.com/mcp` with no trailing slash or typos. Confirm that your Lettr session is active by signing in to the dashboard in your browser. Make sure the AI client has MCP support enabled in its settings. If problems persist, try removing the server connection entirely and adding it fresh.
+  </Accordion>
+  <Accordion title="Actions fail with permission errors">
+    MCP uses your Lettr session permissions, so you can only access resources your account has permission to view or modify. Team members with restricted roles may not have access to all actions. If you need elevated permissions, contact your team administrator to adjust your role.
+  </Accordion>
+  <Accordion title="Emails aren't sending">
+    Verify that your sending domain is both verified and approved in the Lettr dashboard. Check that the "from" address in your email uses one of your verified domains. Ensure the recipient isn't on your suppression list due to previous bounces or complaints. Finally, review your account's sending limits to make sure you haven't exceeded them.
+  </Accordion>
+  <Accordion title="Events not appearing">
+    Email events typically appear within a few seconds of delivery, but there can be slight delays. Check your date range filters, as event queries default to recent activity. For open and click events specifically, ensure that tracking is enabled for the emails you sent—events won't be recorded for emails sent with tracking disabled.
+  </Accordion>
+</AccordionGroup>
+
+## Security Best Practices
+
+When using MCP with Lettr, keep these security considerations in mind.
+
+Only connect AI clients from trusted, official sources. MCP allows these assistants to send emails and access account data on your behalf, so treat authorization requests with the same caution you'd apply to any OAuth connection.
+
+Most AI clients will display the intended action before executing it. Take advantage of this by reviewing email content and recipient lists before confirming sends, especially for bulk operations or sensitive communications.
+
+Periodically audit your connected AI clients and revoke access for any you no longer use. You can manage these connections in your Lettr account settings under **Settings** → **Connected Apps**.
+
+MCP respects your existing Lettr team permissions. This means team members with view-only access won't be able to send emails through MCP, providing an additional layer of protection for your sending capabilities.
+
+## Disconnecting
+
+To revoke an AI client's access to your Lettr account, sign in to the Lettr dashboard, navigate to **Settings** → **Connected Apps**, find the AI client you want to disconnect, and click **Revoke Access**. You can also disconnect from within the AI client's own settings.
+
+## Rate Limits
+
+MCP requests follow the same rate limits as the REST API. Standard sending rate limits apply to emails sent through AI assistants. Event queries return up to 25 results per request, while API log queries return up to 20 results per request. Both support cursor-based pagination for accessing larger result sets.
+
+See [Rate Limits](/learn/sending/rate-limits) for detailed information.
+
+## Learn More
+
+<CardGroup cols={2}>
+  <Card title="MCP Introduction" icon="robot" href="/learn/mcp/introduction">
+    Overview of MCP capabilities and use cases
+  </Card>
+  <Card title="Sending Domains" icon="globe" href="/learn/domains/sending-domains">
+    Set up domains for sending emails
+  </Card>
+  <Card title="Templates" icon="file-code" href="/learn/templates/introduction">
+    Create reusable email templates
+  </Card>
+  <Card title="Email Events" icon="chart-line" href="/learn/webhooks/event-types">
+    Understand email delivery events
+  </Card>
+</CardGroup>

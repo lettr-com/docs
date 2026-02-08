@@ -1,0 +1,309 @@
+---
+title: Dark Mode Email Design
+description: "Design emails that look great in both light and dark mode with defensive CSS strategies and testing techniques"
+---
+
+# Dark Mode Email Design
+
+Most email clients now offer a dark mode that automatically adjusts email colors. Gmail, Apple Mail, Outlook, and Yahoo Mail each handle dark mode differently — some invert colors, some blend backgrounds, and some leave emails untouched. Without defensive design, your carefully crafted email can end up with invisible text, clashing colors, or unreadable content in dark mode.
+
+---
+
+## How Email Clients Handle Dark Mode
+
+Email clients use three different strategies to render emails in dark mode, and the strategy varies by client and platform.
+
+| Strategy | What Happens | Clients |
+|----------|-------------|---------|
+| **No change** | Email renders exactly as coded, even in dark mode | Apple Mail (partial), Gmail (with dark-mode meta support) |
+| **Partial inversion** | Client changes background colors but preserves some text colors | Gmail Android, Outlook.com |
+| **Full inversion** | Client inverts all colors — light backgrounds become dark, dark text becomes light | Outlook Windows (desktop), Gmail iOS, Yahoo Mail |
+
+<Note>
+  You cannot rely on any single strategy. Your email needs to look acceptable under all three scenarios. The techniques in this guide are defensive — they ensure readability regardless of what the client does.
+</Note>
+
+---
+
+## Defensive Design Fundamentals
+
+### Always Set Explicit Colors
+
+The most important rule for dark mode compatibility: never rely on default colors. If you don't set a text color, the email client decides — and in dark mode, that default might become white text on a white background you specified.
+
+```html
+<!-- Bad: missing text color — may become invisible in dark mode -->
+<td style="background-color: #ffffff;">
+  <p>This text has no explicit color.</p>
+</td>
+
+<!-- Good: explicit text and background colors -->
+<td style="background-color: #ffffff; color: #1a1a2e;">
+  <p style="color: #1a1a2e;">This text is always visible.</p>
+</td>
+```
+
+### Set Both bgcolor and background-color
+
+Outlook desktop uses the `bgcolor` HTML attribute, while other clients use CSS `background-color`. Set both.
+
+```html
+<td bgcolor="#ffffff" style="background-color: #ffffff; color: #1a1a2e;">
+  <p style="color: #1a1a2e; margin: 0;">
+    Works in Outlook desktop and all other clients.
+  </p>
+</td>
+```
+
+### Avoid Pure Black and Pure White
+
+Pure white (#ffffff) backgrounds and pure black (#000000) text create harsh contrast in both modes. Use near-white and near-black values that feel softer and adapt better when inverted.
+
+```html
+<!-- Instead of pure white/black -->
+<td style="background-color: #f8f9fa; color: #1a1a2e;">
+  <p style="color: #1a1a2e;">
+    Slightly off-white background, dark (not black) text.
+  </p>
+</td>
+```
+
+---
+
+## Images in Dark Mode
+
+### Add Backgrounds to Transparent Images
+
+Logos and icons with transparent backgrounds are the most common dark mode casualty. A dark logo on a transparent PNG becomes invisible when the background turns dark.
+
+```html
+<!-- Bad: transparent logo disappears on dark backgrounds -->
+<img src="https://cdn.example.com/logo-dark.png" alt="Company Logo" />
+
+<!-- Good: white padding baked into the image, or a background color on the container -->
+<td style="background-color: #ffffff; padding: 12px; border-radius: 8px;">
+  <img
+    src="https://cdn.example.com/logo-dark.png"
+    alt="Company Logo"
+    width="150"
+    height="40"
+    style="display: block;"
+  />
+</td>
+```
+
+<Tip>
+  Export logos as PNG with a built-in white or light padding around the artwork. This creates a visible "safe zone" around the logo regardless of the email background color.
+</Tip>
+
+### Use Images With Built-In Contrast
+
+For hero images and banners, ensure the image itself contains enough contrast to be readable on both light and dark backgrounds. Avoid images that bleed into the email background.
+
+```html
+<!-- Add a subtle border to prevent images from bleeding into dark backgrounds -->
+<img
+  src="https://cdn.example.com/hero-banner.png"
+  alt="Summer sale: 30% off all plans"
+  width="560"
+  height="280"
+  style="display: block; max-width: 100%; height: auto; border: 1px solid #e5e7eb; border-radius: 8px;"
+/>
+```
+
+---
+
+## Dark Mode Meta Tag
+
+Some email clients (notably Apple Mail and some versions of Gmail) support a meta tag that indicates your email is dark-mode-aware. Adding this can prevent the client from applying its own color transformations.
+
+```html
+<head>
+  <meta name="color-scheme" content="light dark" />
+  <meta name="supported-color-schemes" content="light dark" />
+  <style>
+    :root {
+      color-scheme: light dark;
+      supported-color-schemes: light dark;
+    }
+  </style>
+</head>
+```
+
+<Warning>
+  This meta tag tells the email client "I handle dark mode myself." If you add it, you must provide dark mode styles via `@media (prefers-color-scheme: dark)`. Adding the meta tag without corresponding styles can result in a broken appearance.
+</Warning>
+
+---
+
+## CSS Dark Mode Styles
+
+For clients that support `<style>` blocks and the `prefers-color-scheme` media query, you can provide explicit dark mode overrides. Note that many email clients strip `<style>` blocks, so these are progressive enhancements — your email must still look acceptable without them.
+
+```html
+<head>
+  <meta name="color-scheme" content="light dark" />
+  <meta name="supported-color-schemes" content="light dark" />
+  <style>
+    :root {
+      color-scheme: light dark;
+    }
+
+    /* Dark mode overrides for clients that support it */
+    @media (prefers-color-scheme: dark) {
+      .email-body {
+        background-color: #1a1a2e !important;
+      }
+      .email-content {
+        background-color: #2d2d44 !important;
+      }
+      .text-primary {
+        color: #e5e7eb !important;
+      }
+      .text-secondary {
+        color: #9ca3af !important;
+      }
+      .logo-container {
+        background-color: #ffffff !important;
+        border-radius: 8px !important;
+        padding: 8px !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <table role="presentation" width="100%" class="email-body" style="background-color: #f3f4f6;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" style="max-width: 600px;" class="email-content"
+               cellpadding="0" cellspacing="0">
+          <tr>
+            <td style="padding: 32px; background-color: #ffffff;">
+              <td class="logo-container">
+                <img src="https://cdn.example.com/logo.png" alt="Company Logo"
+                     width="120" height="36" style="display: block;" />
+              </td>
+              <h1 class="text-primary" style="color: #1a1a2e; font-size: 24px; margin: 24px 0 8px;">
+                Your Weekly Update
+              </h1>
+              <p class="text-secondary" style="color: #4a4a68; font-size: 16px; line-height: 1.5;">
+                Here's what happened this week...
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+```
+
+<Note>
+  The inline styles serve as the default (light mode) appearance. The `@media (prefers-color-scheme: dark)` block overrides them for clients that support it. The `!important` declarations are necessary because inline styles have higher specificity.
+</Note>
+
+---
+
+## Buttons in Dark Mode
+
+Buttons are particularly vulnerable to dark mode issues. A white button on a light background can become invisible, or a dark button can lose its border against a dark background.
+
+### Bulletproof Dark Mode Buttons
+
+```html
+<!-- This button works in both light and dark mode -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0">
+  <tr>
+    <td align="center"
+        style="background-color: #6366F1; border-radius: 6px; border: 2px solid #6366F1;">
+      <a href="https://example.com/action"
+         style="display: inline-block; padding: 14px 32px; color: #ffffff; text-decoration: none; font-size: 16px; font-weight: bold;">
+        View Dashboard
+      </a>
+    </td>
+  </tr>
+</table>
+```
+
+Key principles:
+- Use a background color with enough contrast against both light and dark email backgrounds
+- Add a border matching the button color — if the background gets inverted, the border maintains the button shape
+- Use white text on colored buttons — white text stays readable against most inverted backgrounds
+
+---
+
+## Testing Dark Mode
+
+### Manual Testing
+
+Test your emails in dark mode on these clients, which cover the main rendering behaviors:
+
+<Steps>
+  <Step title="Apple Mail (macOS)">
+    System Preferences → Appearance → Dark. Apple Mail generally respects `prefers-color-scheme` and applies minimal auto-inversion.
+  </Step>
+  <Step title="Gmail (iOS and Android)">
+    Gmail aggressively inverts colors in dark mode, especially on Android. Enable dark mode in the Gmail app settings and send yourself a test email.
+  </Step>
+  <Step title="Outlook Desktop (Windows)">
+    Outlook's Word-based renderer applies full color inversion. File → Office Account → Office Theme → Dark Gray or Black. This is typically the most aggressive dark mode.
+  </Step>
+  <Step title="Outlook.com (Web)">
+    Click the gear icon → Dark mode. Outlook.com applies partial inversion and sometimes ignores explicit colors.
+  </Step>
+</Steps>
+
+<Tip>
+  Use Lettr's [test email](/learn/sending/test-emails) feature to send tests to your own accounts. Check both light and dark mode every time you update a template.
+</Tip>
+
+### What to Check
+
+| Check | Pass | Fail |
+|-------|------|------|
+| Body text readable | Text visible against all backgrounds | Text disappears or becomes hard to read |
+| Logo visible | Logo has contrast against dark background | Logo blends into dark background |
+| Buttons visible | Button shape and text clearly visible | Button blends in or text disappears |
+| Images look natural | Images have clear boundaries | Images bleed into background |
+| Links distinguishable | Links stand out from body text | Links indistinguishable from text |
+
+---
+
+## Common Mistakes
+
+<AccordionGroup>
+  <Accordion title="Relying on default text colors">
+    If you don't set an explicit text color, the email client assigns one. In dark mode, the client may change it to white — which becomes invisible if you've set a white background that the client didn't invert. Always set explicit colors on every text element.
+  </Accordion>
+  <Accordion title="Using transparent PNGs for logos">
+    A dark-colored logo on a transparent background disappears completely when the email background is inverted to dark. Either export logos with a built-in light background, or wrap the image in a container with an explicit white background.
+  </Accordion>
+  <Accordion title="Adding dark mode meta without dark mode styles">
+    The `color-scheme: light dark` meta tag tells the client you handle dark mode. If you declare this but don't provide `@media (prefers-color-scheme: dark)` styles, the client may not apply any automatic adjustments, leaving your email unreadable in dark mode.
+  </Accordion>
+  <Accordion title="Testing only in one client">
+    Each email client handles dark mode differently. An email that looks perfect in Apple Mail dark mode may be unreadable in Outlook desktop dark mode. Test across at least three clients.
+  </Accordion>
+  <Accordion title="Using background images instead of background colors">
+    Background images in CSS (`background-image`) are unsupported in many email clients and don't adapt to dark mode at all. Use solid background colors for containers.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Templates" icon="paintbrush" href="/learn/templates/introduction">
+    Build and manage email templates with the Topol editor
+  </Card>
+  <Card title="Email Accessibility" icon="universal-access" href="/knowledge-base/best-practices/email-accessibility">
+    Make your emails accessible to all recipients
+  </Card>
+  <Card title="Email Rendering Across Clients" icon="desktop" href="/knowledge-base/fundamentals/email-rendering-clients">
+    How different email clients render HTML email
+  </Card>
+  <Card title="Test Emails" icon="flask-vial" href="/learn/sending/test-emails">
+    Send test emails before going live
+  </Card>
+</CardGroup>

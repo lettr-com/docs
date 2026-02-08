@@ -1,0 +1,166 @@
+---
+title: MCP Tools Reference
+description: "Detailed reference for all Lettr MCP tools available in Claude and other AI assistants"
+---
+
+# MCP Tools Reference
+
+The Lettr MCP server provides 10 tools organized into three categories: email sending, configuration management, and monitoring. This reference documents each tool's parameters and behavior.
+
+For setup instructions, see [MCP Setup](/learn/mcp/setup).
+
+## Email Sending
+
+### send_email
+
+Send an email with plain text, HTML, or AMP HTML content. Supports merge tags for variable substitution.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `from` | string | Yes | Sender email address. Must be from a verified sending domain. |
+| `to` | string | Yes | Recipient email address. |
+| `subject` | string | Yes | Email subject line (max 998 characters). |
+| `html` | string | No | HTML content. Supports merge tags like `{{variable_name}}`. |
+| `text` | string | No | Plain text content. Supports merge tags. |
+| `amp_html` | string | No | AMP HTML content for interactive emails. |
+| `from_name` | string | No | Display name for the sender. |
+| `reply_to` | string | No | Reply-to email address. |
+| `cc` | string | No | CC recipient email address. |
+| `bcc` | string | No | BCC recipient email address. |
+| `substitution_data` | object | No | Key-value pairs for merge tag substitution. |
+
+**Example prompt:** "Send a welcome email to john@example.com from hello@mycompany.com with the subject 'Welcome to Acme'"
+
+---
+
+### send_template_email
+
+Send an email using a pre-defined template specified by its slug.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `from` | string | Yes | Sender email address. Must be from a verified sending domain. |
+| `to` | string | Yes | Recipient email address. |
+| `subject` | string | Yes | Email subject line. Can include merge tags. |
+| `template_slug` | string | Yes | The slug of the template to use (e.g., `welcome-email`). |
+| `from_name` | string | No | Display name for the sender. |
+| `reply_to` | string | No | Reply-to email address. |
+| `project_id` | integer | No | Project ID where the template is located. Uses default project if omitted. |
+| `template_version` | integer | No | Specific version number. Uses active version if omitted. |
+| `substitution_data` | object | No | Key-value pairs for merge tag substitution. |
+
+**Example prompt:** "Send the order-confirmation template to customer@example.com with order_id 12345"
+
+---
+
+## Configuration Management
+
+### list_sending_domains
+
+Lists all sending domains configured for your team with verification status, DNS configuration status, and whether they can be used for sending.
+
+**Parameters:** None
+
+**Example prompt:** "Show me all my sending domains and their verification status"
+
+---
+
+### list_tracking_domains
+
+Lists all tracking domains configured for your team. Tracking domains are used to track email opens and clicks with your own branded domain.
+
+**Parameters:** None
+
+**Example prompt:** "What tracking domains do I have set up?"
+
+---
+
+### list_inbound_domains
+
+Lists all inbound domains configured for your team. Inbound domains receive emails via MX records.
+
+**Parameters:** None
+
+---
+
+### list_storage_domains
+
+Lists all email storage domains configured for your team. Storage domains serve email assets (images, files) from your branded domain.
+
+**Parameters:** None
+
+---
+
+### list_api_keys
+
+Lists all API keys for your team, showing each key's name, prefix, permissions level, and IP whitelist configuration.
+
+**Parameters:** None
+
+**Example prompt:** "List my API keys and their permissions"
+
+---
+
+### list_webhooks
+
+Lists all webhooks configured for your team, including target URL, enabled status, event types, and authentication type.
+
+**Parameters:** None
+
+---
+
+## Monitoring
+
+### browse_email_events
+
+Browse email delivery events with optional filtering and pagination.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `limit` | integer | No | Number of events to return (10, 25, 50, or 100). Default: 25. |
+| `recipient` | string | No | Filter by recipient email address. Supports partial matching. |
+| `from` | string | No | Start date/time in ISO 8601 format. |
+| `to` | string | No | End date/time in ISO 8601 format. |
+| `event_type` | string | No | Filter by event type: `delivery`, `injection`, `open`, `initial_open`, `click`, `bounce`, `out_of_band`, `delay`, `spam_complaint`, `policy_rejection`, `generation_rejection`, `generation_failure`, `list_unsubscribe`, `link_unsubscribe`, `amp_open`, `amp_click` |
+| `cursor` | string | No | Pagination cursor from a previous response. |
+
+**Example prompt:** "Show me the last 10 bounced emails" or "What emails were sent to john@example.com today?"
+
+---
+
+### browse_api_logs
+
+Browse API request logs with optional filtering and pagination.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `limit` | integer | No | Number of log entries (1, 20, 50, or 100). Default: 20. |
+| `from` | string | No | Start date/time in ISO 8601 format. Max 30 days back. Default: 7 days ago. |
+| `to` | string | No | End date/time in ISO 8601 format. Default: now. |
+| `api_key_name` | string | No | Filter by API key name (case-insensitive). |
+| `user_agent` | string | No | Filter by client type: `php`, `curl`, `nodejs`, `python`, `ruby`, `go`, `rust`, `java`, `dotnet`, `smtp`, `other` |
+| `status` | integer | No | Filter by HTTP status code (e.g., 200, 400, 500). |
+| `cursor` | string | No | Pagination cursor from a previous response. |
+
+**Example prompt:** "Show me failed API requests from the last 24 hours" or "Were there any 500 errors today?"
+
+---
+
+## Tool Categories Summary
+
+| Category | Tools | Description |
+|----------|-------|-------------|
+| **Sending** | `send_email`, `send_template_email` | Send emails directly or via templates |
+| **Configuration** | `list_sending_domains`, `list_tracking_domains`, `list_inbound_domains`, `list_storage_domains`, `list_api_keys`, `list_webhooks` | View your team's setup and configuration |
+| **Monitoring** | `browse_email_events`, `browse_api_logs` | Investigate delivery issues and API usage |
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="MCP Setup" icon="plug" href="/learn/mcp/setup">
+    How to connect Lettr MCP to Claude and other AI assistants
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference/introduction">
+    Full REST API documentation
+  </Card>
+</CardGroup>

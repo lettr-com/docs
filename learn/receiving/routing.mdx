@@ -1,0 +1,340 @@
+---
+title: Routing
+description: "Route incoming emails to different handlers based on recipient, content, or rules"
+---
+
+# Email Routing
+
+Route incoming emails to different handlers based on the recipient address, subject line, content, or custom rules. This allows you to build sophisticated email processing workflows.
+
+## Routing by Recipient
+
+The most common routing pattern is based on the recipient email address:
+
+```javascript
+app.post('/webhooks/inbound', async (req, res) => {
+  const { to, from, subject, text, html } = req.body.data;
+  const recipient = to[0].toLowerCase();
+
+  // Route based on recipient address
+  if (recipient.startsWith('support@')) {
+    await createSupportTicket({ from, subject, body: text || html });
+  } else if (recipient.startsWith('sales@')) {
+    await notifySalesTeam({ from, subject, body: text || html });
+  } else if (recipient.startsWith('feedback@')) {
+    await storeFeedback({ from, subject, body: text || html });
+  } else if (recipient.startsWith('billing@')) {
+    await routeToBilling({ from, subject, body: text || html });
+  } else {
+    await handleUnknownRecipient({ recipient, from, subject });
+  }
+
+  res.sendStatus(200);
+});
+```
+
+## Variable Address Routing
+
+Use variable addresses (plus addressing) to encode data in the email address:
+
+```javascript
+app.post('/webhooks/inbound', async (req, res) => {
+  const { to, from, subject, text } = req.body.data;
+  const recipient = to[0];
+
+  // Parse variable address: reply+{ticketId}@mail.example.com
+  const match = recipient.match(/^reply\+([^@]+)@/);
+
+  if (match) {
+    const ticketId = match[1];
+    await addReplyToTicket(ticketId, { from, subject, body: text });
+  }
+
+  res.sendStatus(200);
+});
+```
+
+### Common Variable Address Patterns
+
+| Pattern | Use Case | Example |
+|---------|----------|---------|
+| `reply+{ticketId}@` | Support ticket replies | `reply+TKT-1234@mail.example.com` |
+| `unsubscribe+{userId}@` | Email unsubscriptions | `unsubscribe+usr_abc@mail.example.com` |
+| `confirm+{token}@` | Email confirmations | `confirm+xyz789@mail.example.com` |
+| `order+{orderId}@` | Order communications | `order+ORD-5678@mail.example.com` |
+| `notify+{channelId}@` | Channel notifications | `notify+ch_slack@mail.example.com` |
+
+## Routing by Subject
+
+Route emails based on subject line keywords or patterns:
+
+```javascript
+app.post('/webhooks/inbound', async (req, res) => {
+  const { from, subject, text } = req.body.data;
+  const subjectLower = subject.toLowerCase();
+
+  if (subjectLower.includes('urgent') || subjectLower.includes('emergency')) {
+    await createHighPriorityTicket({ from, subject, body: text });
+  } else if (subjectLower.includes('unsubscribe')) {
+    await processUnsubscribeRequest({ from });
+  } else if (subjectLower.match(/re:\s*ticket #\d+/i)) {
+    const ticketNum = subjectLower.match(/ticket #(\d+)/i)[1];
+    await addReplyToTicket(ticketNum, { from, body: text });
+  } else {
+    await createStandardTicket({ from, subject, body: text });
+  }
+
+  res.sendStatus(200);
+});
+```
+
+## Routing by Sender Domain
+
+Route based on the sender's domain for B2B workflows:
+
+```javascript
+app.post('/webhooks/inbound', async (req, res) => {
+  const { from, subject, text } = req.body.data;
+  const senderDomain = from.split('@')[1].toLowerCase();
+
+  // Check if sender is from a known customer domain
+  const customer = await findCustomerByDomain(senderDomain);
+
+  if (customer) {
+    await routeToAccountManager(customer.accountManagerId, {
+      from,
+      subject,
+      body: text,
+      customerId: customer.id
+    });
+  } else {
+    await routeToGeneralInbox({ from, subject, body: text });
+  }
+
+  res.sendStatus(200);
+});
+```
+
+## Content-Based Routing
+
+Route based on email content analysis:
+
+```javascript
+app.post('/webhooks/inbound', async (req, res) => {
+  const { from, subject, text, html } = req.body.data;
+  const content = text || stripHtml(html);
+  const contentLower = content.toLowerCase();
+
+  // Detect intent from content
+  if (contentLower.includes('cancel') && contentLower.includes('subscription')) {
+    await routeToCancellations({ from, subject, body: content });
+  } else if (contentLower.includes('refund') || contentLower.includes('money back')) {
+    await routeToRefunds({ from, subject, body: content });
+  } else if (contentLower.includes('bug') || contentLower.includes('error')) {
+    await routeToTechnicalSupport({ from, subject, body: content });
+  } else {
+    await routeToGeneralSupport({ from, subject, body: content });
+  }
+
+  res.sendStatus(200);
+});
+```
+
+## Multi-Criteria Routing
+
+Combine multiple routing criteria for complex workflows:
+
+```javascript
+app.post('/webhooks/inbound', async (req, res) => {
+  const { to, from, subject, text, html, spamScore } = req.body.data;
+  const recipient = to[0].toLowerCase();
+  const content = text || html;
+
+  // Define routing rules
+  const rules = [
+    {
+      name: 'spam',
+      condition: () => spamScore > 5,
+      action: async () => await quarantineAsSpam({ from, subject })
+    },
+    {
+      name: 'vip',
+      condition: () => isVipCustomer(from),
+      action: async () => await routeToVipSupport({ from, subject, body: content })
+    },
+    {
+      name: 'ticket-reply',
+      condition: () => recipient.match(/^reply\+/),
+      action: async () => {
+        const ticketId = recipient.match(/^reply\+([^@]+)@/)[1];
+        await addReplyToTicket(ticketId, { from, body: content });
+      }
+    },
+    {
+      name: 'sales',
+      condition: () => recipient.startsWith('sales@'),
+      action: async () => await notifySalesTeam({ from, subject, body: content })
+    },
+    {
+      name: 'default',
+      condition: () => true,
+      action: async () => await createSupportTicket({ from, subject, body: content })
+    }
+  ];
+
+  // Execute first matching rule
+  for (const rule of rules) {
+    if (rule.condition()) {
+      await rule.action();
+      break;
+    }
+  }
+
+  res.sendStatus(200);
+});
+```
+
+## Routing with Priority Queues
+
+For high-volume applications, use priority queues:
+
+```javascript
+import Queue from 'bull';
+
+const highPriorityQueue = new Queue('email-high', redisUrl);
+const normalPriorityQueue = new Queue('email-normal', redisUrl);
+const lowPriorityQueue = new Queue('email-low', redisUrl);
+
+app.post('/webhooks/inbound', async (req, res) => {
+  const { from, subject, text, spamScore } = req.body.data;
+
+  // Determine priority
+  let queue;
+  if (isVipCustomer(from) || subject.toLowerCase().includes('urgent')) {
+    queue = highPriorityQueue;
+  } else if (spamScore > 3) {
+    queue = lowPriorityQueue;
+  } else {
+    queue = normalPriorityQueue;
+  }
+
+  // Add to appropriate queue
+  await queue.add({
+    from,
+    subject,
+    body: text,
+    receivedAt: new Date().toISOString()
+  });
+
+  res.sendStatus(200);
+});
+
+// Process queues with different concurrency
+highPriorityQueue.process(10, processEmail);
+normalPriorityQueue.process(5, processEmail);
+lowPriorityQueue.process(2, processEmail);
+```
+
+## Catch-All Addresses
+
+Handle any address on your inbound domain:
+
+```javascript
+app.post('/webhooks/inbound', async (req, res) => {
+  const { to, from, subject, text } = req.body.data;
+  const recipient = to[0];
+  const localPart = recipient.split('@')[0].toLowerCase();
+
+  // Known addresses
+  const knownAddresses = ['support', 'sales', 'feedback', 'billing'];
+
+  if (knownAddresses.includes(localPart)) {
+    await routeToKnownHandler(localPart, { from, subject, body: text });
+  } else {
+    // Catch-all: log and potentially notify admin
+    await logUnknownAddress(recipient, { from, subject });
+    await notifyAdmin(`Unknown address: ${recipient}`);
+  }
+
+  res.sendStatus(200);
+});
+```
+
+<Tip>
+  Catch-all addresses can receive a lot of spam. Consider implementing spam filtering before processing catch-all emails.
+</Tip>
+
+## Forwarding Emails
+
+Forward received emails to another address:
+
+```javascript
+app.post('/webhooks/inbound', async (req, res) => {
+  const { from, fromName, subject, text, html, attachments } = req.body.data;
+
+  // Forward to internal team
+  await lettr.emails.send({
+    from: 'forwarded@yourdomain.com',
+    to: ['team@yourdomain.com'],
+    subject: `[Forwarded] ${subject}`,
+    html: `
+      <p><strong>Originally from:</strong> ${fromName} &lt;${from}&gt;</p>
+      <hr>
+      ${html || `<pre>${text}</pre>`}
+    `,
+    attachments: attachments.map(att => ({
+      filename: att.filename,
+      url: att.url
+    }))
+  });
+
+  res.sendStatus(200);
+});
+```
+
+## Error Handling
+
+Implement proper error handling in your routing logic:
+
+```javascript
+app.post('/webhooks/inbound', async (req, res) => {
+  try {
+    const { to, from, subject, text } = req.body.data;
+    const recipient = to[0];
+
+    await routeEmail(recipient, { from, subject, body: text });
+
+    res.sendStatus(200);
+  } catch (error) {
+    console.error('Routing error:', error);
+
+    // Store failed email for manual review
+    await storeFailedEmail(req.body.data, error.message);
+
+    // Return 200 to prevent retries if it's a processing error
+    // Return 500 to trigger retry if it's a temporary error
+    if (error.isTemporary) {
+      res.sendStatus(500);
+    } else {
+      res.sendStatus(200);
+    }
+  }
+});
+```
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Webhooks" icon="webhook" href="/learn/webhooks/introduction">
+    Set up webhook endpoints
+  </Card>
+  <Card title="Reply Tracking" icon="reply" href="/learn/receiving/reply-tracking">
+    Track and thread email replies
+  </Card>
+  <Card title="Spam Filtering" icon="shield" href="/learn/receiving/spam-filtering">
+    Filter spam from inbound emails
+  </Card>
+  <Card title="Best Practices" icon="star" href="/learn/receiving/best-practices">
+    Receiving best practices
+  </Card>
+</CardGroup>

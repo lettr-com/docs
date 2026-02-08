@@ -1,0 +1,285 @@
+---
+title: Projects & Folders
+description: "Organize your email templates with projects and folders"
+---
+
+# Projects & Folders
+
+Projects and folders help you organize your email templates. Use projects to separate templates by brand, product, or team, and use folders within projects to group related templates together.
+
+## Overview
+
+The template hierarchy in Lettr works as follows:
+
+```
+Team
+└── Project (e.g., "Marketing Site")
+    ├── Folder (e.g., "Transactional")
+    │   ├── Template: welcome-email
+    │   ├── Template: password-reset
+    │   └── Template: order-confirmation
+    └── Folder (e.g., "Newsletters")
+        ├── Template: weekly-digest
+        └── Template: product-updates
+```
+
+Every team has a default project created automatically. You can create additional projects as needed.
+
+## Projects
+
+### Creating a Project
+
+Create projects in the dashboard to separate templates by purpose:
+
+<Steps>
+  <Step title="Open Projects">
+    Click your project name in the sidebar, then click **New Project**.
+  </Step>
+  <Step title="Name Your Project">
+    Enter a project name and optionally select an emoji for visual identification.
+  </Step>
+  <Step title="Configure Storage">
+    Optionally select a storage domain for templates in this project.
+  </Step>
+</Steps>
+
+### Project Settings
+
+Each project has the following settings:
+
+| Setting | Description |
+|---------|-------------|
+| Name | Display name for the project |
+| Emoji | Visual identifier (optional) |
+| Storage Domain | Default storage domain for template images |
+| Default | Whether this is the default project for new templates |
+
+### Storage Domain per Project
+
+Associate a storage domain with a project to have all template images served from that domain:
+
+```
+Project: "Brand A"
+Storage Domain: assets.brand-a.com
+
+Project: "Brand B"
+Storage Domain: cdn.brand-b.com
+```
+
+This ensures each brand's emails use their own branded image URLs.
+
+## Folders
+
+Folders help organize templates within a project.
+
+### Creating a Folder
+
+1. Open a project in the Templates view
+2. Click **New Folder**
+3. Enter a folder name
+4. Click **Create**
+
+### Folder Structure
+
+Folders are single-level within a project—you cannot nest folders within folders. This keeps the structure simple and navigable:
+
+```
+Project: "E-commerce"
+├── Folder: "Order Lifecycle"
+│   ├── order-confirmation
+│   ├── shipping-notification
+│   └── delivery-confirmation
+├── Folder: "Account"
+│   ├── welcome
+│   ├── password-reset
+│   └── email-verification
+└── Folder: "Marketing"
+    ├── promotional
+    └── newsletter
+```
+
+## Using Projects in API Calls
+
+When sending emails with templates, you can specify which project to use:
+
+```javascript
+await lettr.emails.send({
+  from: 'you@example.com',
+  to: ['recipient@example.com'],
+  subject: 'Welcome',
+  template_slug: 'welcome-email',
+  project_id: 'proj_abc123'
+});
+```
+
+<Note>
+  If you don't specify a `project_id`, Lettr uses the default project for your team.
+</Note>
+
+### Listing Templates by Project
+
+When retrieving templates via API, templates are returned with their project context:
+
+```bash
+curl -X GET "https://app.lettr.com/api/templates" \
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxx"
+```
+
+Response includes project information:
+
+```json
+{
+  "data": [
+    {
+      "slug": "welcome-email",
+      "name": "Welcome Email",
+      "version": 2,
+      "project_id": "proj_abc123"
+    },
+    {
+      "slug": "order-confirmation",
+      "name": "Order Confirmation",
+      "version": 5,
+      "project_id": "proj_abc123"
+    }
+  ]
+}
+```
+
+## Moving Templates
+
+### Move to Another Folder
+
+Move a template to a different folder within the same project:
+
+1. Open the template
+2. Click the **More** menu (three dots)
+3. Select **Move to Folder**
+4. Choose the destination folder
+
+### Move to Another Project
+
+Move a template to a different project:
+
+1. Open the template
+2. Click the **More** menu
+3. Select **Move to Project**
+4. Choose the destination project and folder
+
+<Warning>
+  Moving a template to a different project may affect API calls that reference the template by `project_id`. Update your integration to use the new project ID after moving.
+</Warning>
+
+### Copy to Another Project or Team
+
+Duplicate a template while keeping the original:
+
+1. Open the template
+2. Click the **More** menu
+3. Select **Duplicate to Project** or **Duplicate to Team**
+4. Choose the destination project, folder, or team
+
+This creates an independent copy that can be modified without affecting the original.
+
+#### Cross-Team Duplication
+
+If you belong to multiple teams, you can duplicate templates across teams. This is useful for:
+
+- **Sharing designs between teams** — Copy a polished template from one team to another without recreating it
+- **Agency workflows** — Duplicate a base template to multiple client teams
+- **Environment promotion** — Copy templates from a staging team to production
+
+When duplicating to another team, the template is copied with its content but is otherwise independent — it gets its own version history, and changes in one team don't affect the other.
+
+<Note>
+  You must be a member of the destination team to duplicate templates to it.
+</Note>
+
+## Best Practices
+
+### Project Organization
+
+- **By Brand**: Create separate projects for each brand if you send emails from multiple brands
+- **By Product**: Separate projects for different products or services
+- **By Environment**: Consider separate projects for production vs. staging if testing extensively
+
+### Folder Organization
+
+- **By Email Type**: Group transactional, marketing, and notification emails
+- **By Customer Journey**: Organize by lifecycle stage (onboarding, engagement, retention)
+- **By Frequency**: Separate one-time emails from recurring ones
+
+### Naming Conventions
+
+Use consistent naming patterns:
+
+```
+Projects:
+- "Acme SaaS"
+- "Acme Enterprise"
+- "Internal Communications"
+
+Folders:
+- "Transactional"
+- "Onboarding Sequence"
+- "Product Updates"
+
+Templates (slugs):
+- welcome-email
+- password-reset
+- weekly-digest-v2
+```
+
+## Default Project
+
+Every team has a default project. This project:
+
+- Cannot be deleted
+- Receives templates when no project is specified
+- Is used when API calls don't include a `project_id`
+
+To change the default project:
+
+1. Go to project settings
+2. Click **Set as Default**
+
+<Note>
+  You cannot delete the default project. If you want to delete a project, first set a different project as the default.
+</Note>
+
+## Deleting Projects and Folders
+
+### Deleting a Folder
+
+When you delete a folder:
+
+- Templates in the folder are moved to the project root
+- The folder is removed
+
+### Deleting a Project
+
+When you delete a project:
+
+- All templates and folders in the project are permanently deleted
+- This action cannot be undone
+
+<Warning>
+  Deleting a project permanently removes all its templates. Export or move important templates before deleting.
+</Warning>
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Template Editor" icon="paintbrush" href="/learn/templates/topol-editor">
+    Create templates with the visual editor
+  </Card>
+  <Card title="Templates Introduction" icon="file-lines" href="/learn/templates/introduction">
+    Get started with email templates
+  </Card>
+  <Card title="Template Versions" icon="code-branch" href="/learn/templates/versions">
+    Manage multiple versions of templates
+  </Card>
+  <Card title="Storage Domains" icon="hard-drive" href="/learn/domains/storage-domains">
+    Configure custom domains for template assets
+  </Card>
+</CardGroup>

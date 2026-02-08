@@ -1,0 +1,747 @@
+---
+title: Template Language
+description: "Use merge tags to personalize emails with variables, conditionals, loops, and dynamic content"
+---
+
+# Merge Tags & Template Language
+
+Merge tags are placeholders you insert into a template so values can be filled in automatically at send time. In Lettr templates, merge tags use a structured template language that goes beyond simple field replacement. You can output variables, set defaults when data is missing, conditionally render sections, loop through arrays, and safely generate personalized links—all using a consistent brace-based syntax.
+
+This guide covers what you need to confidently use merge tags in production templates: how data is resolved, how to write expressions and logic, how link substitution behaves, and how to test and troubleshoot common issues.
+
+---
+
+## Providing Data at Send Time
+
+To populate merge tags, include a `substitution_data` object in your API request:
+
+```javascript
+await lettr.emails.send({
+  from: 'you@example.com',
+  to: ['recipient@example.com'],
+  subject: 'Your Order Confirmation',
+  template_slug: 'order-confirmation',
+  substitution_data: {
+    customer_name: 'John Smith',
+    order_id: 'ORD-12345',
+    order_total: '$99.99',
+    items: [
+      { name: 'Widget', quantity: 2, price: '$49.99' },
+      { name: 'Gadget', quantity: 1, price: '$49.99' }
+    ]
+  }
+});
+```
+
+The `substitution_data` object can contain:
+- **Strings**: Simple text values
+- **Numbers**: Numeric values for calculations or display
+- **Booleans**: For conditional rendering
+- **Objects**: Nested data accessible via dot notation
+- **Arrays**: For looping through multiple items
+
+<Note>
+  All values in `substitution_data` are converted to strings when rendered. Numbers and booleans work in conditionals but output as text.
+</Note>
+
+---
+
+## Understanding substitution_data vs metadata
+
+Lettr supports two data objects you can include when sending emails:
+
+| Field | Purpose | Used in Templates | Available in Webhooks |
+|-------|---------|-------------------|----------------------|
+| `substitution_data` | Populate merge tags | Yes | No |
+| `metadata` | Custom tracking data | No | Yes |
+
+**Use `substitution_data`** for any values that should appear in your email content (names, order details, personalized URLs, etc.).
+
+**Use `metadata`** for tracking information you want to receive in webhook payloads (internal IDs, campaign codes, A/B test variants, etc.).
+
+```javascript
+await lettr.emails.send({
+  from: 'you@example.com',
+  to: ['recipient@example.com'],
+  subject: 'Welcome!',
+  template_slug: 'welcome-email',
+  // Used in the email template
+  substitution_data: {
+    name: 'Jane',
+    signup_date: 'January 15, 2026'
+  },
+  // Passed to webhooks, NOT rendered in email
+  metadata: {
+    user_id: '12345',
+    campaign: 'jan-2026-promo'
+  }
+});
+```
+
+---
+
+## Template Variables
+
+Merge tags read values from JSON data provided at send time. The template language supports two common data scopes: **substitution data** and **metadata**. When the same key exists in more than one place, values are resolved using precedence rules: recipient-level data takes priority over transmission-level data, and substitution data takes priority over metadata.
+
+### Key Naming Rules
+
+Variable keys must contain only US-ASCII letters, digits, and underscores. Keys must not start with a digit.
+
+<Warning>
+Certain words are reserved by the template language and cannot be used as custom keys:
+
+`address`, `email`, `email_id`, `env_from`, `return_path`, `and`, `break`, `do`, `else`, `elseif`, `end`, `false`, `for`, `function`, `if`, `local`, `nil`, `not`, `or`, `each`, `return`, `then`, `true`, `until`, `while`
+</Warning>
+
+### Common Built-in Recipient Fields
+
+In addition to your own keys, you can reference common recipient fields when they are present in your send context:
+
+| Field | Description |
+|-------|-------------|
+| `address.name` | Recipient's display name |
+| `address.email` | Recipient's email address |
+| `email` or `email_id` | Shorthand for recipient email |
+| `env_from` | Return-Path/bounce address |
+
+Availability depends on what your system provides at send time.
+
+---
+
+## Expressions: Inserting Values
+
+An **expression** is anything inside double curly braces. Expressions output a value into your template. Whitespace inside the braces is ignored, so `{{value}}` and `{{ value }}` behave the same.
+
+### Basic Variable Output
+
+```html Template
+<p>Hello, {{first_name}}!</p>
+```
+```json Data
+{
+  "first_name": "Jordan"
+}
+```
+```html Result
+<p>Hello, Jordan!</p>
+```
+
+### Missing Variables Become Empty Strings
+
+If a variable does not exist or its value is `null`, it renders as an empty string.
+
+```html Template
+Name: {{name}}
+Age: {{age}}
+Title: {{job}}
+```
+```json Data
+{
+  "name": "Jane",
+  "age": null,
+  "job": "Software Engineer"
+}
+```
+```text Result
+Name: Jane
+Age:
+Title: Software Engineer
+```
+
+### Default Values with `or`
+
+To avoid empty output when data is missing, use `or` to provide a fallback value.
+
+```html Template
+<p>Hello {{ first_name or 'Customer' }},</p>
+```
+```json Data
+{
+  "first_name": null
+}
+```
+```html Result
+<p>Hello Customer,</p>
+```
+
+<Tip>
+Use `or` fallbacks anywhere a blank value would make the copy awkward—greetings and short labels are common examples.
+</Tip>
+
+### Nested Object Paths
+
+You can access nested fields using dot notation or bracket notation. Bracket access is useful for keys with special characters or for dynamic property access.
+
+```html Template
+Street: {{address.street}}
+City: {{address['city']}}
+Dynamic: {{address[part]}}
+```
+```json Data
+{
+  "address": { "street": "Howard Street", "city": "San Francisco" },
+  "part": "street"
+}
+```
+```text Result
+Street: Howard Street
+City: San Francisco
+Dynamic: Howard Street
+```
+
+### Array Indexing
+
+You can access individual array elements using bracket notation. Array indexes start at `1` (not zero).
+
+```html Template
+First item: {{items[1]}}
+Second item name: {{shopping_cart[2].name}}
+```
+```json Data
+{
+  "items": ["apple", "banana", "cherry"],
+  "shopping_cart": [
+    { "name": "Jacket", "price": 39.99 },
+    { "name": "Gloves", "price": 5 }
+  ]
+}
+```
+```text Result
+First item: apple
+Second item name: Gloves
+```
+
+### Escaping: Double vs Triple Braces
+
+The escaping behavior depends on the content type:
+
+- **HTML and AMP HTML content**: Values inserted with `{{ ... }}` are HTML-escaped by default
+- **Plain text content**: Values are NOT HTML-escaped
+
+If you intentionally want unescaped output in HTML content (for example, inserting trusted HTML), use triple braces `{{{ ... }}}`.
+
+```html Template
+Escaped: {{custom_html}}
+Unescaped: {{{custom_html}}}
+```
+```json Data
+{
+  "custom_html": "<b>Hello, World</b>"
+}
+```
+```html Result
+Escaped: &lt;b&gt;Hello, World&lt;/b&gt;
+Unescaped: <b>Hello, World</b>
+```
+
+<Warning>
+Disabling HTML escaping without properly sanitizing the input may expose recipients to CSRF or XSS attacks. Only use triple braces with trusted content.
+</Warning>
+
+---
+
+## Statements: Conditionals and Loops
+
+Statements also use brace syntax but start with keywords such as `if` and `each`. Statements control what gets rendered rather than outputting a direct value.
+
+<Note>
+Statements on their own line will not produce a blank line in the output. Any whitespace after the statement also won't render.
+</Note>
+
+### Conditional Blocks
+
+An `if` block renders when its condition is true. You can include `elseif` branches and a final `else`, closing the block with `end`.
+
+```html Template
+{{if signed_up}}
+  <p>Welcome back!</p>
+{{elseif rejected_sign_up}}
+  <p>We won't follow up again.</p>
+{{else}}
+  <p>Please sign up to get started.</p>
+{{end}}
+```
+```json Data
+{
+  "signed_up": false,
+  "rejected_sign_up": false
+}
+```
+```html Result
+<p>Please sign up to get started.</p>
+```
+
+You can also use the optional `then` keyword after the condition:
+
+```html Template
+{{if signed_up then}}
+  <p>Welcome</p>
+{{end}}
+```
+
+### Operators in Conditions
+
+Conditions support relational comparisons and logical operators:
+
+| Operator | Description |
+|----------|-------------|
+| `==` | Equal to |
+| `!=` | Not equal to |
+| `<` | Less than |
+| `>` | Greater than |
+| `<=` | Less than or equal |
+| `>=` | Greater than or equal |
+| `and` | Logical AND |
+| `or` | Logical OR |
+| `not` | Logical NOT |
+
+```html Template
+{{if age > 30 and address.state == "MD"}}
+  Eligible for the regional offer.
+{{end}}
+```
+```json Data
+{
+  "age": 41,
+  "address": { "state": "MD" }
+}
+```
+
+### Array Length with `#`
+
+Use the `#` prefix to get the length of an array.
+
+```html Template
+Items in cart: {{#shopping_cart}}
+```
+```json Data
+{
+  "shopping_cart": [
+    { "name": "Jacket" },
+    { "name": "Gloves" }
+  ]
+}
+```
+```text Result
+Items in cart: 2
+```
+
+### Arithmetic in Expressions
+
+Basic arithmetic operators are supported: `+`, `-`, `*`, and `/`.
+
+```html Template
+Discounted price: ${{price - 5}}
+```
+```json Data
+{
+  "price": 15
+}
+```
+```text Result
+Discounted price: $10
+```
+
+### Looping with `each`
+
+Use `each` to iterate over an array. Inside the loop, `loop_var` holds the current item and `loop_index` holds the current index. If the array is empty or `null`, nothing is rendered.
+
+<Tip>
+  If you're building templates in the visual editor and don't need code-level loop control, consider using [Loop Blocks](/learn/templates/loop-blocks) instead. Loop Blocks provide the same repeating functionality through a drag-and-drop interface.
+</Tip>
+
+#### Array of Strings
+
+```html Template
+{{each children}}
+You have a child named {{loop_var}}.
+{{end}}
+```
+```json Data
+{
+  "children": ["Rusty", "Audrey"]
+}
+```
+```text Result
+You have a child named Rusty.
+You have a child named Audrey.
+```
+
+#### Array of Objects
+
+```html Template
+{{each shopping_cart}}
+Item: {{loop_var.name}}, Price: {{loop_var.price}}
+{{end}}
+```
+```json Data
+{
+  "shopping_cart": [
+    { "name": "Jacket", "price": 39.99 },
+    { "name": "Gloves", "price": 5 }
+  ]
+}
+```
+```text Result
+Item: Jacket, Price: 39.99
+Item: Gloves, Price: 5
+```
+
+### Nested Loops with `loop_vars`
+
+In nested loops, use `loop_vars.<arrayName>` to reference the current item of a specific loop and avoid ambiguity.
+
+```html Template
+{{each shopping_cart}}
+Item: {{loop_vars.shopping_cart.name}}
+  {{each loop_vars.shopping_cart.a_nested_array}}
+    Nested value: {{loop_vars.a_nested_array.key}}
+  {{end}}
+{{end}}
+```
+
+---
+
+## Links and URLs
+
+Links require extra care because template systems often extract and rewrite URLs for tracking. To ensure a link is recognized correctly, the URL should start with a literal protocol (`http://` or `https://`) in the template itself—not embedded only inside a variable.
+
+<Warning>
+If the protocol (e.g., `https://`) is stored inside a variable rather than written literally in the template, the link won't be recognized correctly and won't be tracked.
+</Warning>
+
+### Query Strings and Encoding
+
+When expressions are used inside link URLs, inserted values are URL-encoded by default (not HTML-escaped). This is usually what you want for query string parameters.
+
+```html Template
+<a href="https://company.com/deals?user={{user}}&code={{offercode}}">Go</a>
+```
+```json Data
+{
+  "user": "john",
+  "offercode": "Daily Deal!"
+}
+```
+```html Result
+<a href="https://company.com/deals?user=john&code=Daily%20Deal%21">Go</a>
+```
+
+<Warning>
+No spaces are allowed when an expression is used inside a query string. Keep expression formatting tight.
+</Warning>
+
+### Disabling URL Encoding
+
+If you need to insert a URL segment that is already correctly encoded, use triple braces inside the URL to disable URL encoding.
+
+```html Template
+<a href="https://{{{link}}}">Open</a>
+```
+```json Data
+{
+  "link": "www.company.com/groups/join?user=clark"
+}
+```
+```html Result
+<a href="https://www.company.com/groups/join?user=clark">Open</a>
+```
+
+<Warning>
+Disabling URL encoding without handling encoding in your application may expose recipients to CSRF or XSS attacks.
+</Warning>
+
+### Links Inside Statements
+
+When links appear inside `if` blocks or `each` loops, keep clean whitespace boundaries (newlines or clear spacing) around statement tags so URL extraction remains reliable.
+
+```html Template
+{{if host}}
+https://{{{host}}}/
+{{else}}
+https://www.example.com/
+{{end}}
+```
+
+### Link Attributes
+
+You can add special attributes to links to control tracking behavior and add metadata.
+
+#### Link Names
+
+Add a custom name to a link for easier identification in analytics:
+
+```html
+<a href="http://www.example.com" data-msys-linkname="banner">Example</a>
+```
+
+<Note>
+Link names are limited to 63 bytes and will be automatically truncated if longer.
+</Note>
+
+#### Unsubscribe Links
+
+Mark a link as an unsubscribe action to generate proper unsubscribe events:
+
+```html
+<a href="http://www.example.com/unsub_handler?id=1234" data-msys-unsubscribe="1">Unsubscribe</a>
+```
+
+<Note>
+Click tracking must be enabled for unsubscribe events to be generated.
+</Note>
+
+#### Disable Click Tracking
+
+Prevent a specific link from being tracked:
+
+```html
+<a href="http://www.example.com/" data-msys-clicktrack="0">Click</a>
+```
+
+#### Custom Sub-Paths
+
+Add a custom path segment to the tracked link URL:
+
+```html
+<a href="http://www.example.com/" data-msys-sublink="custom_path">Click</a>
+```
+
+The generated tracked link will include your custom path: `http://<tracking-domain>/f/custom_path/<encoded-target-url>`
+
+### Text Link Attributes
+
+For plain text email content, use double-bracket notation to add link attributes:
+
+```text
+http://www.example.com[[data-msys-clicktrack="0"]]
+```
+
+---
+
+## Macros: Built-in Helpers
+
+Macros look like function calls: a name followed by parentheses. They provide helpers for common template patterns that are awkward to express with plain expressions.
+
+### `empty(array)`
+
+Returns `true` when an array is empty (or effectively empty). Useful for skipping headings, tables, or repeated sections when there is nothing to show.
+
+```html Template
+{{if not empty(shopping_cart)}}
+  <table>
+    <tr><th>Name</th><th>Price</th></tr>
+    {{each shopping_cart}}
+      <tr>
+        <td>{{loop_var.name}}</td>
+        <td>${{loop_var.price}}</td>
+      </tr>
+    {{end}}
+  </table>
+{{else}}
+  <p><b>Your cart is empty.</b></p>
+{{end}}
+```
+```json Data
+{
+  "shopping_cart": [
+    { "name": "Jacket", "price": 39.99 },
+    { "name": "Gloves", "price": 5 }
+  ]
+}
+```
+```html Result
+<table>
+  <tr><th>Name</th><th>Price</th></tr>
+  <tr>
+    <td>Jacket</td>
+    <td>$39.99</td>
+  </tr>
+  <tr>
+    <td>Gloves</td>
+    <td>$5</td>
+  </tr>
+</table>
+```
+
+### `render_dynamic_content()`
+
+Expressions inside a variable's string value are not evaluated automatically. If you store a chunk of template-ready HTML (containing merge tags and links) inside a variable, render it using `render_dynamic_content()`. This macro executes all expressions and tracks all links within the dynamic content.
+
+Use this macro with content stored in these special variables:
+- `dynamic_html` - for HTML content
+- `dynamic_amp_html` - for AMP HTML content
+- `dynamic_plain` - for plain text content
+
+The dynamic content will be correctly rendered without HTML escaping, regardless of whether double or triple curly braces are used.
+
+#### HTML Dynamic Content
+
+```html Template
+<p>Recommended for you:</p>
+{{ render_dynamic_content(dynamic_html.reco_block) }}
+```
+```json Data
+{
+  "username": "foo",
+  "dynamic_html": {
+    "reco_block": "<p><a href=\"http://www.example.com?q={{username}}\">Click here</a></p>"
+  }
+}
+```
+```html Result
+<p>Recommended for you:</p>
+<p><a href="http://www.example.com?q=foo">Click here</a></p>
+```
+
+#### AMP HTML Dynamic Content
+
+```json Data
+{
+  "substitution_data": {
+    "dynamic_amp_html": {
+      "my_amp_chunk": "<amp-img width=\"30\" height=\"30\" src=\"https://www.example.com?u={{username}}\">"
+    }
+  }
+}
+```
+
+#### Dynamic Content with Loops
+
+You can combine `render_dynamic_content()` with loops to render multiple dynamic blocks:
+
+```html Template
+<h3>Today's special offers</h3>
+<ul>
+{{each offers}}
+<li>{{render_dynamic_content(dynamic_html[loop_var])}}</li>
+{{end}}
+</ul>
+```
+```json Data
+{
+  "offers": ["offer1", "offer2"],
+  "dynamic_html": {
+    "offer1": "<strong>50% off shoes!</strong>",
+    "offer2": "<em>Free shipping on orders over $50</em>"
+  }
+}
+```
+```html Result
+<h3>Today's special offers</h3>
+<ul>
+<li><strong>50% off shoes!</strong></li>
+<li><em>Free shipping on orders over $50</em></li>
+</ul>
+```
+
+### `render_snippet()`
+
+Renders reusable content blocks (snippets) that are managed separately from your templates. The system automatically selects the appropriate content type (HTML, plain text, or AMP HTML) based on the context.
+
+```html Template
+<html>
+<p>Our body content</p>
+{{ render_snippet("ourfooter") }}
+</html>
+```
+
+You can also use a variable to specify the snippet ID:
+
+```html Template
+{{ render_snippet(banner_id) }}
+```
+
+<Warning>
+**Snippet Limitations:**
+- Snippets cannot reference other snippets (no nested `render_snippet` calls)
+- Snippets cannot use `render_dynamic_content`
+- A template may use `render_snippet` at most 5 times
+- If a `render_snippet` call references a non-existent snippet, the message will fail with a generation error
+</Warning>
+
+### Outputting Literal Braces
+
+If you need to output literal curly braces (for example, when documenting syntax or embedding another templating system), use the brace-output macros:
+
+| Macro | Output |
+|-------|--------|
+| `{{opening_single_curly()}}` | `{` |
+| `{{closing_single_curly()}}` | `}` |
+| `{{opening_double_curly()}}` | `{{` |
+| `{{closing_double_curly()}}` | `}}` |
+| `{{opening_triple_curly()}}` | `{{{` |
+| `{{closing_triple_curly()}}` | `}}}` |
+
+---
+
+## Testing Merge Tags
+
+A reliable merge-tag workflow treats templates and data as a pair.
+
+<Steps>
+  <Step title="Define your data contract">
+    Decide which keys must exist, which are optional, and which values need defaults.
+  </Step>
+  <Step title="Add fallbacks for optional fields">
+    Use `or` fallbacks anywhere a blank value would make the copy awkward.
+  </Step>
+  <Step title="Test with complete data">
+    Validate the template renders correctly with all fields populated.
+  </Step>
+  <Step title="Test with sparse data">
+    Validate with intentionally missing fields to expose where you need defaults or conditional blocks.
+  </Step>
+  <Step title="Validate links">
+    Click links in test messages, especially when merge tags appear in query strings.
+  </Step>
+</Steps>
+
+<Tip>
+Remember that URL values are encoded by default inside links, and keep expression formatting tight (avoid unnecessary spaces) in query strings.
+</Tip>
+
+---
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Merge tag appears literally in output">
+    The most common cause is a syntax issue: typos, missing braces, or mismatched quotes. It can also happen when using a reserved keyword as a key. Reinsert the tag carefully and verify the key naming rules.
+  </Accordion>
+
+  <Accordion title="Merge tag resolves to empty value">
+    Confirm whether the input data is missing or `null`. Decide whether a default via `or` is sufficient, or whether an `if` block should hide the surrounding sentence entirely.
+  </Accordion>
+
+  <Accordion title="Link breaks or behaves inconsistently">
+    Confirm the URL starts with a literal `http://` or `https://` in the template. Verify the merge tag is placed in the correct field (link destination for URL-producing values). When links appear inside loops or conditionals, keep statement boundaries clean so link extraction remains reliable.
+  </Accordion>
+
+  <Accordion title="Link is not being tracked">
+    If the protocol is stored inside a variable rather than written literally in the template, the link won't be recognized for tracking. Ensure the protocol appears literally in your template code.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Templates Introduction" icon="file-lines" href="/learn/templates/introduction">
+    Get started with email templates
+  </Card>
+  <Card title="Topol Email Editor" icon="paintbrush" href="/learn/templates/topol-editor">
+    Design emails with the visual editor
+  </Card>
+  <Card title="Loop Blocks" icon="repeat" href="/learn/templates/loop-blocks">
+    Visual drag-and-drop repeating content
+  </Card>
+  <Card title="Test Emails" icon="flask" href="/learn/sending/test-emails">
+    Preview templates before sending
+  </Card>
+  <Card title="Template Versions" icon="code-branch" href="/learn/templates/versions">
+    Manage template versions
+  </Card>
+</CardGroup>

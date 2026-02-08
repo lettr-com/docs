@@ -1,0 +1,257 @@
+---
+title: Saved Blocks
+description: "Create reusable email sections and synced content blocks"
+---
+
+# Saved Blocks
+
+Saved blocks let you create reusable email sections that can be used across multiple templates. Save common components once—like headers, footers, or promotional sections—and reuse them throughout your templates.
+
+## What Are Saved Blocks?
+
+When designing email templates, you'll often create sections that you want to reuse—a branded header, a footer with social links, or a promotional banner. Instead of recreating these sections for each template, you can save them as **saved blocks** and insert them into any template with a single click.
+
+Saved blocks are stored in your team's block library and are accessible to all team members through the **Saved Blocks** panel in the email editor.
+
+## Saved Sections vs Synced Sections
+
+Lettr offers two types of reusable sections, each with different behavior:
+
+| Aspect | Saved Section | Synced Section |
+|--------|---------------|----------------|
+| **After insertion** | Creates an independent copy | Maintains a live link to the original |
+| **When you edit it** | Changes only affect that template | Changes update ALL templates using it |
+| **Best for** | Content that varies per template | Content that must stay consistent everywhere |
+| **Risk level** | Low (isolated changes) | Higher (global impact) |
+
+### How to Choose
+
+**Use a Saved Section when:**
+- You need a starting point but will customize it for each template
+- The content varies between emails (e.g., different promotional messages)
+- You want flexibility without affecting other templates
+
+**Use a Synced Section when:**
+- The content must be identical across all templates (e.g., legal disclaimers)
+- You need to update many templates at once (e.g., changing your company address)
+- Consistency is more important than flexibility
+
+## Types of Blocks
+
+Lettr supports three types of saved content:
+
+| Type | Description | Updates |
+|------|-------------|---------|
+| **Saved Section** | A copy of a section that can be reused | Independent after insertion |
+| **Synced Section** | A linked section that stays synchronized | Updates all templates using it |
+| **Folder** | Organizes blocks into groups | N/A |
+
+## Saved Sections
+
+A saved section is a reusable copy of an email section. When you insert a saved section into a template, it creates an independent copy that can be customized.
+
+### Creating a Saved Section
+
+<Steps>
+  <Step title="Design the Section">
+    In the email editor, create the section you want to save.
+  </Step>
+  <Step title="Save the Section">
+    Select the section and use the save option in the editor toolbar or context menu.
+  </Step>
+  <Step title="Name and Organize">
+    Give the block a name and optionally select a folder.
+  </Step>
+</Steps>
+
+### Using Saved Sections
+
+1. Open the **Saved Blocks** panel in the editor
+2. Drag a saved section into your template
+3. The section is inserted as an independent copy
+4. Customize as needed—changes don't affect the original
+
+<Note>
+  Saved sections are copies. After inserting, the block in your template is independent from the original saved block.
+</Note>
+
+## Synced Sections
+
+Synced sections maintain a live connection to the original block. When you update a synced section, all templates using it are automatically updated.
+
+### Use Cases for Synced Sections
+
+- **Company footer**: Update contact info or social links in one place
+- **Legal disclaimers**: Maintain consistent compliance text
+- **Brand header**: Keep your header consistent across all emails
+- **Promotional banners**: Update a sale banner across all templates instantly
+
+### Creating a Synced Section
+
+<Steps>
+  <Step title="Design the Section">
+    Create the section in the email editor.
+  </Step>
+  <Step title="Save as Synced">
+    Select the section and choose the synced section option when saving. This links the block across all templates that use it.
+  </Step>
+  <Step title="Name the Section">
+    Give it a descriptive name like "Company Footer" or "Legal Disclaimer".
+  </Step>
+</Steps>
+
+### Using Synced Sections
+
+1. Open the **Saved Blocks** panel
+2. Drag a synced section (marked with a sync icon) into your template
+3. The section appears in your template with a link indicator
+4. Any updates to the synced section will propagate to this template
+
+### Editing Synced Sections
+
+To update a synced section:
+
+1. Open any template containing the synced section
+2. Select the synced section in the editor
+3. Use the edit option to modify the source block
+4. Save your changes—they automatically update all templates using this section
+
+<Warning>
+  Changes to synced sections affect all templates that use them. Preview affected templates before saving major changes.
+</Warning>
+
+### Converting Between Types
+
+You can convert between saved and synced sections:
+
+- **Synced to Saved**: Select a synced section in your template and unlink it. This converts it to an independent copy that won't be affected by future updates to the original.
+- **Saved to Synced**: Create a new synced section from any section in the editor.
+
+## Organizing with Folders
+
+Folders help organize your saved blocks library.
+
+### Creating Folders
+
+1. Open the **Saved Blocks** panel
+2. Click **New Folder**
+3. Enter a folder name
+
+### Managing Folders
+
+- Move blocks into folders to organize them
+- Rename or delete folders as needed
+- Folders can be nested within other folders for deeper organization
+
+### Folder Structure Example
+
+```
+Saved Blocks
+├── Headers
+│   ├── Primary Header (synced)
+│   └── Minimal Header (saved)
+├── Footers
+│   ├── Full Footer with Social (synced)
+│   └── Simple Footer (synced)
+├── Promotional
+│   ├── Sale Banner (saved)
+│   └── Feature Highlight (saved)
+└── Legal
+    └── Unsubscribe Block (synced)
+```
+
+## Block Properties
+
+Each saved block includes the following properties in API responses:
+
+| Property | Description |
+|----------|-------------|
+| `id` | Unique identifier for the block |
+| `name` | Display name for the block |
+| `type` | `saved_section`, `synced_section`, or `folder` |
+| `definition` | The block's design and content (JSON object) |
+| `image` | Preview thumbnail URL (optional) |
+| `folder_id` | Parent folder ID, if organized in a folder (optional) |
+| `created_at` | Timestamp when the block was created |
+
+## Team-Wide Blocks
+
+Saved blocks are shared across your entire team. This means:
+
+- All team members can use and manage saved blocks
+- Synced sections update for all team members simultaneously
+- Consistent branding across all team members' work
+
+### Real-Time Updates
+
+When a team member updates a synced section, the changes are broadcast in real-time. If another team member has a template open that uses that synced section, they'll see the updated content automatically without needing to refresh.
+
+## Best Practices
+
+### When to Use Saved Sections
+
+- **Variable content**: Sections that need customization per template
+- **Starting points**: Base designs to modify for specific needs
+- **Template-specific content**: Sections that differ between templates
+
+### When to Use Synced Sections
+
+- **Brand elements**: Headers, footers, logos
+- **Legal content**: Disclaimers, unsubscribe blocks, privacy notices
+- **Contact information**: Address, phone, social links
+- **Time-sensitive content**: Promotional banners, announcements
+
+### Organization Tips
+
+1. **Use descriptive names**: "Primary Header with Logo" instead of "Header 1"
+2. **Create logical folders**: Group by purpose (Headers, Footers, CTAs) or by brand
+3. **Mark synced sections clearly**: Include "(Synced)" in names if helpful
+4. **Review regularly**: Delete unused blocks to keep the library clean
+5. **Document changes**: When updating synced sections, communicate with your team
+
+## Working with Translations
+
+Saved blocks support translations for multi-language email templates. The translation data is stored as a language-keyed object:
+
+```json
+{
+  "en": {
+    "name": "Welcome Header"
+  },
+  "es": {
+    "name": "Encabezado de Bienvenida"
+  },
+  "de": {
+    "name": "Willkommens-Header"
+  }
+}
+```
+
+The translation structure follows the Topol editor's format, where each language code maps to an object containing translatable content. When used in a template with a specific language setting, the block displays the appropriate translated content.
+
+## Limitations
+
+- Blocks are team-scoped (cannot share across teams)
+- Synced sections require the block to exist—deleting a synced block breaks templates using it
+- Block content is stored as Topol editor JSON format
+
+<Warning>
+  Before deleting a synced section, check which templates use it. Deleting breaks the sync and may leave templates incomplete.
+</Warning>
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Template Editor" icon="paintbrush" href="/learn/templates/topol-editor">
+    Design templates with the visual editor
+  </Card>
+  <Card title="Template Versions" icon="code-branch" href="/learn/templates/versions">
+    Manage template versions
+  </Card>
+  <Card title="Projects & Folders" icon="folder" href="/learn/templates/projects">
+    Organize templates in projects
+  </Card>
+  <Card title="Template Language" icon="brackets-curly" href="/learn/templates/template-language">
+    Add dynamic content to templates
+  </Card>
+</CardGroup>

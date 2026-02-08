@@ -1,0 +1,414 @@
+---
+title: Email Parsing
+description: "Understand how Lettr parses incoming emails"
+---
+
+# Email Parsing
+
+When Lettr receives an email on your inbound domain, it automatically parses the raw email into a structured format. This page explains how different parts of the email are extracted and made available in the webhook payload.
+
+## Parsed Email Structure
+
+Lettr extracts and structures the following from each incoming email:
+
+```json
+{
+  "type": "email.received",
+  "data": {
+    "id": "inbound_abc123",
+    "from": "sender@example.com",
+    "fromName": "John Doe",
+    "to": ["support@mail.example.com"],
+    "cc": ["team@mail.example.com"],
+    "bcc": [],
+    "replyTo": "john.doe@example.com",
+    "subject": "Question about my order",
+    "text": "Plain text content of the email...",
+    "html": "<html><body><p>HTML content...</p></body></html>",
+    "attachments": [...],
+    "headers": {
+      "message-id": "<unique-id@example.com>",
+      "date": "Mon, 15 Jan 2024 10:30:00 +0000",
+      "in-reply-to": "<previous-id@example.com>",
+      "references": "<original-id@example.com>",
+      "content-type": "multipart/mixed"
+    },
+    "receivedAt": "2024-01-15T10:30:15Z",
+    "spamScore": 0.5,
+    "domain": "mail.example.com"
+  }
+}
+```
+
+## Sender Information
+
+### From Address
+
+The `from` field contains the sender's email address, extracted from the `From` header:
+
+```javascript
+const { from, fromName } = email.data;
+
+console.log(from);     // "sender@example.com"
+console.log(fromName); // "John Doe" (may be null)
+```
+
+The `fromName` is the display name portion, which is optional:
+
+| From Header | Parsed `from` | Parsed `fromName` |
+|-------------|---------------|-------------------|
+| `John Doe <john@example.com>` | `john@example.com` | `John Doe` |
+| `john@example.com` | `john@example.com` | `null` |
+| `"John Doe" <john@example.com>` | `john@example.com` | `John Doe` |
+
+### Reply-To Address
+
+The `replyTo` field contains the address where replies should be sent:
+
+```javascript
+const replyAddress = email.data.replyTo || email.data.from;
+```
+
+## Recipients
+
+### To, CC, and BCC
+
+Recipients are parsed as arrays:
+
+```javascript
+const { to, cc, bcc } = email.data;
+
+// to: ["support@mail.example.com", "help@mail.example.com"]
+// cc: ["team@mail.example.com"]
+// bcc: [] (usually empty for inbound)
+
+// Process all recipients
+const allRecipients = [...to, ...cc, ...bcc];
+```
+
+<Note>
+  BCC recipients are typically not visible in received emails since they're stripped by the sending server. You'll usually only see BCC recipients if they're on your inbound domain.
+</Note>
+
+## Subject Line
+
+The subject is decoded from any MIME encoding:
+
+```javascript
+const { subject } = email.data;
+
+// Handles encoded subjects like:
+// "=?UTF-8?B?SGVsbG8gV29ybGQ=?=" → "Hello World"
+// "=?ISO-8859-1?Q?=C4pfel?=" → "Äpfel"
+```
+
+### Handling Missing Subjects
+
+```javascript
+const subject = email.data.subject || '(No Subject)';
+```
+
+## Email Body
+
+### Plain Text and HTML
+
+Emails can contain plain text, HTML, or both:
+
+```javascript
+const { text, html } = email.data;
+
+// Use HTML if available, fall back to plain text
+const displayContent = html || `<pre>${escapeHtml(text)}</pre>`;
+
+// Or prefer plain text for processing
+const processableContent = text || stripHtml(html);
+```
+
+### Extracting Text from HTML
+
+```javascript
+import { convert } from 'html-to-text';
+
+function getPlainText(email) {
+  if (email.text) {
+    return email.text;
+  }
+
+  if (email.html) {
+    return convert(email.html, {
+      wordwrap: 130,
+      selectors: [
+        { selector: 'a', options: { ignoreHref: true } },
+        { selector: 'img', format: 'skip' }
+      ]
+    });
+  }
+
+  return '';
+}
+```
+
+### Handling Quoted Content
+
+Strip quoted replies to get just the new content:
+
+```javascript
+function stripQuotedContent(text) {
+  const lines = text.split('\n');
+  const newContent = [];
+
+  for (const line of lines) {
+    // Stop at common quote markers
+    if (line.match(/^>/) ||
+        line.match(/^On .+ wrote:/) ||
+        line.match(/^-{3,}.*Original Message.*-{3,}/i) ||
+        line.match(/^From:.*@/)) {
+      break;
+    }
+    newContent.push(line);
+  }
+
+  return newContent.join('\n').trim();
+}
+
+const newReplyContent = stripQuotedContent(email.data.text);
+```
+
+## Email Headers
+
+### Standard Headers
+
+Common headers available in the `headers` object:
+
+| Header | Description |
+|--------|-------------|
+| `message-id` | Unique identifier for this email |
+| `date` | When the email was sent |
+| `in-reply-to` | Message-ID of the email being replied to |
+| `references` | Chain of Message-IDs in the conversation |
+| `content-type` | MIME type of the email body |
+| `x-mailer` | Email client used to send |
+| `x-priority` | Email priority (1=High, 3=Normal, 5=Low) |
+
+```javascript
+const { headers } = email.data;
+
+// Get the message thread
+const messageId = headers['message-id'];
+const inReplyTo = headers['in-reply-to'];
+const references = headers['references']?.split(/\s+/) || [];
+
+// Check priority
+const priority = headers['x-priority'];
+const isHighPriority = priority === '1' || priority === '2';
+```
+
+### Custom Headers
+
+Access any header by its lowercase name:
+
+```javascript
+// Custom headers set by the sender
+const customHeader = headers['x-custom-header'];
+const mailingList = headers['list-id'];
+const unsubscribeUrl = headers['list-unsubscribe'];
+```
+
+## Date and Time
+
+### Received Timestamp
+
+The `receivedAt` field indicates when Lettr received the email:
+
+```javascript
+const receivedAt = new Date(email.data.receivedAt);
+```
+
+### Sent Timestamp
+
+The original send time is in the `date` header:
+
+```javascript
+const sentAt = new Date(email.data.headers.date);
+
+// Calculate delivery delay
+const deliveryDelay = receivedAt - sentAt; // milliseconds
+```
+
+## Character Encoding
+
+Lettr automatically handles character encoding conversion:
+
+```javascript
+// These are all decoded to UTF-8:
+// - ISO-8859-1 encoded content
+// - Windows-1252 encoded content
+// - Base64 encoded UTF-8
+// - Quoted-Printable encoded content
+
+const { text, subject } = email.data;
+// Both are UTF-8 strings regardless of original encoding
+```
+
+## Multipart Emails
+
+Emails with multiple parts (text + HTML + attachments) are automatically parsed:
+
+```javascript
+// A multipart email:
+// - text/plain part → email.data.text
+// - text/html part → email.data.html
+// - application/pdf attachment → email.data.attachments[0]
+// - image/png attachment → email.data.attachments[1]
+
+const hasRichContent = email.data.html && email.data.text;
+const hasAttachments = email.data.attachments.length > 0;
+```
+
+## Inline Images
+
+Images embedded in HTML (CID references) are extracted as attachments:
+
+```javascript
+const { html, attachments } = email.data;
+
+// Original HTML might reference: <img src="cid:image001">
+// The image is in attachments with a cid property
+
+for (const attachment of attachments) {
+  if (attachment.cid) {
+    // This is an inline image
+    // Replace CID reference with the attachment URL
+    html = html.replace(
+      `cid:${attachment.cid}`,
+      attachment.url
+    );
+  }
+}
+```
+
+## Parsing Examples
+
+### Extract Email Signature
+
+```javascript
+function extractSignature(text) {
+  // Common signature delimiters
+  const delimiters = [
+    /^--\s*$/m,           // Standard delimiter
+    /^_{3,}$/m,           // Underscores
+    /^-{3,}$/m,           // Dashes
+    /^Sent from my /m,    // Mobile signatures
+    /^Get Outlook for /m  // Outlook mobile
+  ];
+
+  let signatureStart = text.length;
+
+  for (const delimiter of delimiters) {
+    const match = text.match(delimiter);
+    if (match && match.index < signatureStart) {
+      signatureStart = match.index;
+    }
+  }
+
+  return {
+    body: text.substring(0, signatureStart).trim(),
+    signature: text.substring(signatureStart).trim()
+  };
+}
+```
+
+### Detect Email Client
+
+```javascript
+function detectEmailClient(headers) {
+  const mailer = headers['x-mailer'] || headers['user-agent'] || '';
+  const received = headers['received'] || '';
+
+  if (mailer.includes('Microsoft Outlook')) return 'Outlook';
+  if (mailer.includes('Apple Mail')) return 'Apple Mail';
+  if (mailer.includes('Thunderbird')) return 'Thunderbird';
+  if (received.includes('gmail.com')) return 'Gmail';
+  if (received.includes('outlook.com')) return 'Outlook.com';
+
+  return 'Unknown';
+}
+```
+
+### Parse Structured Data
+
+```javascript
+// Extract order number from confirmation emails
+function extractOrderNumber(email) {
+  const content = email.text || email.html;
+
+  const patterns = [
+    /order\s*#?\s*:?\s*([A-Z0-9-]+)/i,
+    /order\s+number\s*:?\s*([A-Z0-9-]+)/i,
+    /confirmation\s*#?\s*:?\s*([A-Z0-9-]+)/i
+  ];
+
+  for (const pattern of patterns) {
+    const match = content.match(pattern);
+    if (match) return match[1];
+  }
+
+  return null;
+}
+```
+
+## Handling Edge Cases
+
+### Empty Content
+
+```javascript
+function getEmailContent(email) {
+  const text = email.text?.trim();
+  const html = email.html?.trim();
+
+  if (!text && !html) {
+    return {
+      hasContent: false,
+      content: '',
+      contentType: 'none'
+    };
+  }
+
+  return {
+    hasContent: true,
+    content: text || stripHtml(html),
+    contentType: text ? 'text' : 'html'
+  };
+}
+```
+
+### Malformed Addresses
+
+```javascript
+function parseEmailAddress(address) {
+  if (!address) return null;
+
+  // Handle various formats
+  const match = address.match(/<([^>]+)>/) || // "Name <email>"
+                address.match(/([^\s<>]+@[^\s<>]+)/); // bare email
+
+  return match ? match[1].toLowerCase() : null;
+}
+```
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Webhooks" icon="webhook" href="/learn/webhooks/event-types">
+    Full webhook payload reference
+  </Card>
+  <Card title="Attachments" icon="paperclip" href="/learn/receiving/attachments">
+    Handle file attachments
+  </Card>
+  <Card title="Reply Tracking" icon="reply" href="/learn/receiving/reply-tracking">
+    Track conversation threads
+  </Card>
+  <Card title="Routing" icon="route" href="/learn/receiving/routing">
+    Route emails based on content
+  </Card>
+</CardGroup>

@@ -1,0 +1,304 @@
+---
+title: "Email Rendering Across Clients"
+description: "How Gmail, Outlook, Apple Mail, and other email clients render HTML email differently"
+---
+
+# Email Rendering Across Clients
+
+HTML email does not render like a web page. Unlike web browsers — which follow shared standards and produce largely consistent results — email clients each use their own rendering engine with unique limitations, quirks, and unsupported features. An email that looks perfect in Gmail may break in Outlook, and what works in Apple Mail may not display correctly on a Samsung device.
+
+Understanding these differences is essential for building emails that look good everywhere your recipients read them.
+
+---
+
+## Why Email Clients Render Differently
+
+Web browsers have converged on modern standards (HTML5, CSS3, JavaScript). Email clients have not. Each client uses a different rendering engine, and some of those engines are decades behind modern web standards.
+
+| Email Client | Rendering Engine | Implication |
+|-------------|-----------------|-------------|
+| **Gmail (Web)** | Custom — strips `<style>` tags, limits CSS | No external stylesheets, limited media query support |
+| **Gmail (Mobile App)** | Custom | Supports some CSS that Gmail web does not (e.g., media queries on some devices) |
+| **Outlook 2016–2024 (Windows)** | Microsoft Word's HTML engine | No support for modern CSS. Tables are required for layout. Many CSS properties are ignored. |
+| **Outlook (Web / outlook.com)** | Custom — more capable than desktop Outlook | Better CSS support than desktop, but still strips some properties |
+| **Apple Mail (macOS/iOS)** | WebKit | The most capable email renderer. Supports most CSS including media queries, animations, and modern selectors. |
+| **Thunderbird** | Gecko (Firefox engine) | Good CSS support, similar to a web browser |
+| **Samsung Mail** | Custom (Android) | Limited CSS support, varies by device and OS version |
+| **Yahoo Mail** | Custom | Strips some CSS, rewrites class names |
+
+<Warning>
+  Outlook for Windows uses Microsoft Word as its rendering engine — not a browser engine. This is the single biggest source of email rendering problems. Any CSS property that Word doesn't understand is silently ignored.
+</Warning>
+
+---
+
+## CSS Support Comparison
+
+The most impactful differences between clients come down to which CSS properties they support.
+
+### Layout
+
+| CSS Feature | Gmail | Outlook (Windows) | Apple Mail | Yahoo Mail |
+|------------|-------|-------------------|------------|------------|
+| `<table>` layout | Yes | Yes | Yes | Yes |
+| Flexbox (`display: flex`) | No | No | Yes | No |
+| Grid (`display: grid`) | No | No | Yes | No |
+| `max-width` | Yes | No — use `width` on `<table>` | Yes | Yes |
+| `margin: 0 auto` (centering) | Yes | No — use `align="center"` on `<table>` | Yes | Yes |
+| `padding` | Yes | Partial — unreliable on `<div>`, works on `<td>` | Yes | Yes |
+
+### Typography
+
+| CSS Feature | Gmail | Outlook (Windows) | Apple Mail | Yahoo Mail |
+|------------|-------|-------------------|------------|------------|
+| Web fonts (`@font-face`) | No | No | Yes | No |
+| `line-height` | Yes | Partial — inconsistent | Yes | Yes |
+| `letter-spacing` | Yes | No | Yes | Yes |
+| `text-shadow` | No | No | Yes | No |
+
+### Visual
+
+| CSS Feature | Gmail | Outlook (Windows) | Apple Mail | Yahoo Mail |
+|------------|-------|-------------------|------------|------------|
+| `border-radius` | Yes | No | Yes | Yes |
+| `background-image` | Partial | VML required | Yes | Yes |
+| `box-shadow` | No | No | Yes | No |
+| CSS gradients | No | No | Yes | No |
+| `opacity` | Yes | No | Yes | Yes |
+
+### Responsive
+
+| CSS Feature | Gmail | Outlook (Windows) | Apple Mail | Yahoo Mail |
+|------------|-------|-------------------|------------|------------|
+| Media queries | No (web), Yes (some mobile) | No | Yes | No |
+| `<style>` block in `<head>` | No (stripped) | Yes | Yes | Yes (rewritten) |
+| Inline styles | Yes | Yes | Yes | Yes |
+
+<Tip>
+  The only styling method guaranteed to work in every major email client is **inline CSS** applied directly to HTML elements. Lettr's [Topol editor](/learn/templates/topol-editor) automatically inlines CSS when you export a template.
+</Tip>
+
+---
+
+## Client-Specific Behaviors
+
+### Gmail
+
+- **Strips `<style>` blocks** in the `<head>`. All CSS must be inlined.
+- **Prefixes class names** with a random string, making class-based selectors unreliable.
+- **Clips messages** larger than ~102 KB. If your HTML exceeds this size, Gmail shows a "View entire message" link and truncates the rest. This breaks tracking pixels placed at the bottom of the email.
+- **Supports dark mode** but applies its own color transformations. Light backgrounds may be inverted to dark, and text colors may be overridden.
+- **Blocks external images by default** for users who haven't opted in to image display (less common now but still affects some accounts).
+
+### Outlook (Windows Desktop)
+
+- **Uses Microsoft Word's rendering engine** — the most restrictive of any major client.
+- **Does not support** `border-radius`, `background-image` (use VML), `max-width`, `float`, Flexbox, or Grid.
+- **Requires table-based layouts**. `<div>` elements do not behave predictably for layout purposes.
+- **Adds extra spacing** around images and between table cells. Use `display: block` on images and `cellpadding="0" cellspacing="0"` on tables.
+- **Conditional comments** (`<!--[if mso]>`) let you target Outlook specifically with alternative markup:
+
+```html
+<!--[if mso]>
+<table role="presentation" width="600" cellpadding="0" cellspacing="0">
+  <tr>
+    <td>
+<![endif]-->
+  <div style="max-width: 600px; margin: 0 auto;">
+    <!-- Your content here -->
+  </div>
+<!--[if mso]>
+    </td>
+  </tr>
+</table>
+<![endif]-->
+```
+
+### Apple Mail
+
+- **Most capable renderer** — supports WebKit CSS including media queries, animations, `@font-face`, gradients, and modern selectors.
+- **Supports dark mode** with the `prefers-color-scheme` media query, allowing you to provide explicit dark mode styles.
+- **Mail Privacy Protection** (iOS 15+) pre-fetches tracking pixels through a proxy, which inflates open rates and masks recipient IP addresses. This affects analytics accuracy but not rendering.
+
+### Yahoo Mail
+
+- **Rewrites CSS class names** with a `yiv` prefix, breaking class-based selectors.
+- **Supports `<style>` blocks** but rewrites them, so test carefully.
+- **Strips certain CSS properties** inconsistently across its web and mobile apps.
+
+---
+
+## Building for Maximum Compatibility
+
+### The Foundation: Table-Based Layout
+
+Tables are the only layout mechanism that works reliably in every email client, including Outlook. Use tables with `role="presentation"` (for accessibility) and explicit cell sizing.
+
+```html
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+       style="border-collapse: collapse;">
+  <tr>
+    <td align="center" style="padding: 40px 0;">
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0"
+             style="background-color: #ffffff;">
+        <tr>
+          <td style="padding: 32px; font-family: Arial, Helvetica, sans-serif;
+                     font-size: 16px; line-height: 1.5; color: #333333;">
+            Your content here
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+```
+
+### Inline All CSS
+
+Since Gmail strips `<style>` blocks, inline your CSS on every element. Lettr's Topol editor does this automatically when you export a template.
+
+```html
+<!-- Don't rely on this -->
+<style>
+  .heading { color: #333333; font-size: 24px; }
+</style>
+<h1 class="heading">Hello</h1>
+
+<!-- Do this instead -->
+<h1 style="color: #333333; font-size: 24px; margin: 0 0 16px;">Hello</h1>
+```
+
+### Safe Fonts
+
+Web fonts (`@font-face`) only work in Apple Mail and a handful of other clients. Always specify fallback system fonts:
+
+```css
+font-family: 'Your Web Font', Arial, Helvetica, sans-serif;
+```
+
+Safe font stacks that work everywhere:
+
+| Style | Font Stack |
+|-------|-----------|
+| Sans-serif | `Arial, Helvetica, sans-serif` |
+| Serif | `Georgia, 'Times New Roman', Times, serif` |
+| Monospace | `'Courier New', Courier, monospace` |
+
+### Images
+
+- Always include `alt` text — images may be blocked or slow to load
+- Use `display: block` to prevent Outlook from adding unwanted spacing
+- Set explicit `width` and `height` attributes to prevent layout shifts
+- Use absolute URLs for image sources (Lettr's [email storage](/learn/email-storage/introduction) provides reliable hosting for email assets)
+
+```html
+<img src="https://cdn.yourapp.com/emails/hero.png"
+     alt="Welcome to Your App"
+     width="600" height="300"
+     style="display: block; max-width: 100%; height: auto;"
+     />
+```
+
+### Buttons
+
+CSS-styled buttons (`border-radius`, `background-color` on `<a>` tags) do not render in Outlook. Use a hybrid approach with VML fallback, or use a table-based button:
+
+```html
+<table role="presentation" cellpadding="0" cellspacing="0">
+  <tr>
+    <td style="background-color: #0066cc; border-radius: 4px; padding: 12px 24px;">
+      <a href="https://yourapp.com/action"
+         style="color: #ffffff; text-decoration: none; font-family: Arial, sans-serif;
+                font-size: 16px; display: inline-block;">
+        Click Here
+      </a>
+    </td>
+  </tr>
+</table>
+```
+
+<Note>
+  The `border-radius` on the `<td>` will be ignored in Outlook — the button will appear square. This is an acceptable degradation. The button remains functional in every client.
+</Note>
+
+---
+
+## Dark Mode
+
+Many email clients now support dark mode, which can dramatically change how your email looks. Clients handle dark mode differently:
+
+| Behavior | Clients |
+|----------|---------|
+| **No change** — respects your colors as-is | Some Outlook configurations |
+| **Partial inversion** — darkens light backgrounds, adjusts text | Gmail, Outlook (web) |
+| **Full inversion** — inverts all colors | Some Android clients |
+| **Respects `prefers-color-scheme`** — uses your dark mode CSS | Apple Mail, Thunderbird |
+
+### Defensive Dark Mode Strategies
+
+- Use **transparent backgrounds** where possible instead of white — they adapt naturally to dark mode.
+- Avoid pure white (`#ffffff`) backgrounds — use a very light gray (`#f8f8f8`) that dark mode engines transform more gracefully.
+- **Add a thin transparent border** around logos on transparent backgrounds to prevent them from disappearing against dark backgrounds.
+- For Apple Mail, provide explicit dark mode styles via the `prefers-color-scheme` media query (this only works where `<style>` blocks are supported).
+
+---
+
+## Testing Your Emails
+
+Given the inconsistencies across clients, testing is essential before sending.
+
+| Approach | Description |
+|----------|-------------|
+| **Lettr preview** | Use the preview feature in the Lettr dashboard to see how your template renders with different content |
+| **Send test emails** | Send to your own accounts on Gmail, Outlook, Apple Mail, and Yahoo to check rendering manually |
+| **Email testing tools** | Services like Litmus and Email on Acid render your email across dozens of clients and devices simultaneously |
+| **Outlook conditional checks** | Test with Outlook desktop specifically — it is the most problematic client and cannot be simulated accurately in a browser |
+
+<Tip>
+  At minimum, test every template in **Gmail (web)**, **Outlook (Windows desktop)**, and **Apple Mail (iOS)**. These three clients cover the widest range of rendering behaviors. If your email looks correct in all three, it will work in most other clients.
+</Tip>
+
+---
+
+## Common Mistakes
+
+<AccordionGroup>
+  <Accordion title="Designing for web browsers instead of email clients">
+    If you build an email using Flexbox, Grid, external CSS, or JavaScript, it will break in most email clients. Email HTML is closer to HTML from the early 2000s. Start with table-based layouts and inline CSS — not with modern web development practices.
+  </Accordion>
+
+  <Accordion title="Not testing in Outlook desktop">
+    Outlook for Windows uses Microsoft Word's rendering engine and behaves very differently from Outlook web or Outlook mobile. An email that looks fine in your browser and on your phone can be completely broken in Outlook desktop. Always test with the Windows desktop version.
+  </Accordion>
+
+  <Accordion title="Exceeding Gmail's clipping threshold">
+    Gmail clips emails larger than approximately 102 KB of HTML. When clipped, tracking pixels at the bottom of the email are hidden, and the recipient sees a "View entire message" link. Keep your HTML lean — remove unnecessary whitespace, avoid excessive inlining, and consider whether all that content needs to be in a single email.
+  </Accordion>
+
+  <Accordion title="Ignoring image alt text">
+    When images are blocked (still common in some corporate Outlook environments), the `alt` text is the only thing the recipient sees where the image should be. Write descriptive alt text that communicates the image's purpose: `alt="Your order has shipped"` instead of `alt="image1"` or no alt text at all.
+  </Accordion>
+
+  <Accordion title="Forgetting mobile rendering">
+    Over 60% of emails are opened on mobile devices. If your email is fixed-width with no responsive considerations, it will require horizontal scrolling on phones. Use fluid layouts (`width: 100%; max-width: 600px;`) and test on both iOS and Android devices.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Templates" icon="paintbrush" href="/learn/templates/introduction">
+    Build and manage email templates with the Topol editor
+  </Card>
+  <Card title="Content Types" icon="file-lines" href="/knowledge-base/fundamentals/content-types">
+    When to use HTML, plain text, and AMP email content types.
+  </Card>
+  <Card title="Topol Editor" icon="paintbrush" href="/learn/templates/topol-editor">
+    Build responsive, cross-client email templates visually in Lettr.
+  </Card>
+  <Card title="Email Storage" icon="cloud" href="/learn/email-storage/introduction">
+    Host images and assets for your emails with Lettr's CDN-backed storage.
+  </Card>
+</CardGroup>

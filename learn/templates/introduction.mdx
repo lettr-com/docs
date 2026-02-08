@@ -1,0 +1,265 @@
+---
+title: Templates Introduction
+description: "Create, manage, and organize email templates in Lettr"
+---
+
+# Email Templates
+
+Templates are reusable email designs that separate your content from your code. Instead of building HTML in your application, design your emails in Lettr and send them by referencing a template slug.
+
+## Why Use Templates?
+
+| Benefit | Description |
+|---------|-------------|
+| **Separation of concerns** | Designers update emails without code changes |
+| **Consistency** | Maintain brand standards across all emails |
+| **Version control** | Track changes and rollback when needed |
+| **Visual editing** | Design emails with drag-and-drop tools |
+| **Reusability** | Use the same template for multiple sends |
+
+## Quick Start
+
+<Steps>
+  <Step title="Create a Template">
+    Go to **Templates** in your dashboard and click **New Template**.
+  </Step>
+  <Step title="Design Your Email">
+    Use the visual editor to design your email, or paste custom HTML.
+  </Step>
+  <Step title="Add Variables">
+    Insert dynamic content using `{{variable_name}}` syntax.
+  </Step>
+  <Step title="Save and Send">
+    Save your template and send emails using its slug.
+  </Step>
+</Steps>
+
+## Sending with Templates
+
+Reference templates by their slug when sending:
+
+```javascript
+await lettr.emails.send({
+  from: 'you@example.com',
+  to: ['recipient@example.com'],
+  subject: 'Welcome to Acme',
+  template_slug: 'welcome-email',
+  substitution_data: {
+    name: 'John',
+    company: 'Acme Inc'
+  }
+});
+```
+
+### Specifying a Template Version
+
+By default, Lettr uses the **active version** of the template. To use a specific version:
+
+```javascript
+await lettr.emails.send({
+  from: 'you@example.com',
+  to: ['recipient@example.com'],
+  subject: 'Newsletter',
+  template_slug: 'monthly-newsletter',
+  template_version: 3
+});
+```
+
+### Project-Scoped Templates
+
+If your template is in a specific project, include the `project_id`:
+
+```javascript
+await lettr.emails.send({
+  from: 'you@example.com',
+  to: ['recipient@example.com'],
+  subject: 'Welcome',
+  template_slug: 'welcome',
+  project_id: 123
+});
+```
+
+<Note>
+  If no `project_id` is specified, Lettr uses your team's default project.
+</Note>
+
+## Template vs Inline Content
+
+Choose the approach that fits your use case:
+
+| Feature | Template | Inline HTML |
+|---------|----------|-------------|
+| Reusability | High—use across multiple sends | Low—embedded in each request |
+| Maintenance | Update once, affects all sends | Update in each integration point |
+| Version control | Built-in versioning | Manual management required |
+| Design tools | Visual editor support | Code only |
+| Best for | Recurring emails, campaigns | One-off or highly dynamic content |
+
+## Content Priority
+
+When both a template and inline content are provided in the same request:
+
+1. **Template content takes precedence**—the template's HTML replaces any `html` parameter
+2. The `subject` parameter in your request **overrides** the template's subject
+3. Inline `html` or `text` is only used when no `template_slug` is provided
+
+```javascript
+await lettr.emails.send({
+  from: 'you@example.com',
+  to: ['recipient@example.com'],
+  subject: 'Custom Subject', // Overrides template subject
+  template_slug: 'welcome-email',
+  html: '<p>This HTML is ignored when template_slug is provided</p>'
+});
+```
+
+<Warning>
+  If you provide both `template_slug` and `html`, the template HTML will be used. The inline HTML is not a fallback—it is ignored entirely.
+</Warning>
+
+## Template Organization
+
+Lettr provides a hierarchical system to organize templates:
+
+```
+Team
+└── Project
+    └── Folder
+        └── Template
+            └── Versions
+```
+
+- **Projects**: Separate templates by brand, product, or team
+- **Folders**: Group related templates within projects
+- **Versions**: Track changes and control which version is active
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Visual Editor" icon="paintbrush" href="/learn/templates/topol-editor">
+    Design emails with Topol's drag-and-drop editor
+  </Card>
+  <Card title="Projects & Folders" icon="folder" href="/learn/templates/projects">
+    Organize templates with projects and folders
+  </Card>
+  <Card title="Template Versions" icon="code-branch" href="/learn/templates/versions">
+    Manage versions and schedule publishing
+  </Card>
+  <Card title="Saved Blocks" icon="layer-group" href="/learn/templates/saved-blocks">
+    Create reusable sections and synced content
+  </Card>
+  <Card title="Loop Blocks" icon="repeat" href="/learn/templates/loop-blocks">
+    Display repeating content like product lists and order items
+  </Card>
+  <Card title="Template Language" icon="brackets-curly" href="/learn/templates/template-language">
+    Personalize emails with merge tags and dynamic content
+  </Card>
+</CardGroup>
+
+## Template Slugs
+
+Each template has a unique slug used to reference it in API calls:
+
+| Slug | Use Case |
+|------|----------|
+| `welcome-email` | New user onboarding |
+| `password-reset` | Security notifications |
+| `order-confirmation` | E-commerce receipts |
+| `weekly-digest` | Recurring newsletters |
+
+Slugs are auto-generated from template names but can be customized. They must be unique within your team.
+
+## Visual vs Code Editing
+
+Lettr supports two editing modes:
+
+### Visual Editor (Topol)
+
+- Drag-and-drop interface
+- Pre-built content blocks
+- Responsive design tools
+- No HTML knowledge required
+
+### Custom HTML
+
+- Full control over markup
+- Import existing templates
+- Advanced customization
+- Direct code editing
+
+You can switch between modes or use both—design visually and fine-tune with code.
+
+## Template Parameters Reference
+
+When sending with templates, these parameters control template behavior:
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `template_slug` | string | No* | Template identifier (slug name) |
+| `template_version` | integer | No | Specific version number (uses active version if omitted) |
+| `project_id` | integer | No | Project containing the template (uses default project if omitted) |
+| `substitution_data` | object | No | Key-value data for template variable substitution |
+| `metadata` | object | No | Key-value data passed to webhooks (not used in templates) |
+
+*Required if not providing `html` or `text` content directly.
+
+<Note>
+  `substitution_data` is used to populate merge tags in your template (like `{{name}}`). `metadata` is passed through to webhooks for tracking but is not rendered in the email content.
+</Note>
+
+## Template API
+
+List and retrieve templates programmatically:
+
+```bash
+# List all templates
+curl https://app.lettr.com/api/templates \
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxx"
+```
+
+Response:
+
+```json
+{
+  "data": [
+    {
+      "slug": "welcome-email",
+      "name": "Welcome Email",
+      "version": 2,
+      "project_id": 123
+    },
+    {
+      "slug": "order-confirmation",
+      "name": "Order Confirmation",
+      "version": 5,
+      "project_id": 123
+    }
+  ]
+}
+```
+
+Get a specific template:
+
+```bash
+curl https://app.lettr.com/api/templates/welcome-email \
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxx"
+```
+
+## Best Practices
+
+1. **Use meaningful slugs**: `order-confirmation` is better than `template-1`
+2. **Organize early**: Set up projects and folders before creating many templates
+3. **Version before changes**: Create a version before major redesigns
+4. **Use synced blocks**: Share headers and footers across templates
+5. **Test thoroughly**: Send test emails before activating new versions
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Template Language" icon="brackets-curly" href="/learn/templates/template-language">
+    Merge tags, conditionals, and loops
+  </Card>
+  <Card title="Storage Domains" icon="hard-drive" href="/learn/domains/storage-domains">
+    Host template images on your domain
+  </Card>
+</CardGroup>

@@ -1,0 +1,404 @@
+---
+title: Spam Filtering
+description: "Filter and manage spam in incoming emails"
+---
+
+# Spam Filtering
+
+Lettr automatically analyzes incoming emails for spam characteristics and provides a spam score with each inbound email. You can use this score to filter, quarantine, or reject suspicious messages.
+
+## Spam Score
+
+Every inbound email includes a `spamScore` field:
+
+```json
+{
+  "type": "email.received",
+  "data": {
+    "id": "inbound_123",
+    "from": "sender@example.com",
+    "subject": "Important message",
+    "spamScore": 0.8,
+    // ... other fields
+  }
+}
+```
+
+| Score Range | Interpretation |
+|-------------|----------------|
+| 0.0 - 2.0 | Very unlikely to be spam |
+| 2.0 - 4.0 | Probably legitimate |
+| 4.0 - 6.0 | Suspicious, review recommended |
+| 6.0 - 8.0 | Likely spam |
+| 8.0 - 10.0 | Almost certainly spam |
+
+## Basic Spam Filtering
+
+Implement basic spam filtering based on the score:
+
+```javascript
+app.post('/webhooks/inbound', async (req, res) => {
+  const { from, subject, text, spamScore } = req.body.data;
+
+  // Reject obvious spam
+  if (spamScore >= 8) {
+    console.log(`Rejected spam from ${from}: score ${spamScore}`);
+    await logRejectedSpam(req.body.data);
+    return res.sendStatus(200);
+  }
+
+  // Quarantine suspicious emails
+  if (spamScore >= 5) {
+    console.log(`Quarantined suspicious email from ${from}: score ${spamScore}`);
+    await quarantineEmail(req.body.data);
+    return res.sendStatus(200);
+  }
+
+  // Process legitimate emails
+  await processEmail(req.body.data);
+  res.sendStatus(200);
+});
+```
+
+## Configuring Spam Sensitivity
+
+Configure spam filtering sensitivity for your inbound domain:
+
+```javascript
+// Update domain spam filter settings
+const response = await fetch(
+  'https://app.lettr.com/api/domains/inbound/mail.example.com',
+  {
+    method: 'PATCH',
+    headers: {
+      'Authorization': 'Bearer lttr_xxxxxxxxxxxx',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      spamFilter: 'aggressive' // 'off', 'moderate', 'aggressive'
+    })
+  }
+);
+```
+
+| Setting | Behavior |
+|---------|----------|
+| `off` | No server-side filtering, receive all emails |
+| `moderate` | Block obvious spam (score > 8) |
+| `aggressive` | Block likely spam (score > 5) |
+
+<Note>
+  Even with filtering set to `off`, you still receive the spam score and can implement your own filtering logic.
+</Note>
+
+## Advanced Spam Detection
+
+Combine spam score with additional checks:
+
+```javascript
+function analyzeForSpam(email) {
+  const signals = [];
+  let score = email.spamScore;
+
+  // Check for common spam patterns
+  const subject = email.subject.toLowerCase();
+  const body = (email.text || email.html || '').toLowerCase();
+
+  // Suspicious subject patterns
+  const spamSubjectPatterns = [
+    /\bfree\b.*\bmoney\b/,
+    /\burgent\b.*\baction\b/,
+    /\bwinner\b/,
+    /\bcongratulations\b.*\bwon\b/,
+    /\blottery\b/,
+    /\bnigerian\b.*\bprince\b/i
+  ];
+
+  for (const pattern of spamSubjectPatterns) {
+    if (pattern.test(subject)) {
+      score += 2;
+      signals.push(`Suspicious subject pattern: ${pattern}`);
+    }
+  }
+
+  // Check for excessive links
+  const linkCount = (body.match(/https?:\/\//g) || []).length;
+  if (linkCount > 10) {
+    score += 1;
+    signals.push(`Excessive links: ${linkCount}`);
+  }
+
+  // Check for URL shorteners
+  const shorteners = ['bit.ly', 'tinyurl.com', 'goo.gl', 't.co'];
+  for (const shortener of shorteners) {
+    if (body.includes(shortener)) {
+      score += 1.5;
+      signals.push(`URL shortener detected: ${shortener}`);
+    }
+  }
+
+  // Check sender domain
+  const senderDomain = email.from.split('@')[1];
+  if (isSuspiciousDomain(senderDomain)) {
+    score += 2;
+    signals.push(`Suspicious sender domain: ${senderDomain}`);
+  }
+
+  return {
+    originalScore: email.spamScore,
+    adjustedScore: Math.min(score, 10),
+    signals,
+    isSpam: score >= 6
+  };
+}
+```
+
+## Allowlisting and Blocklisting
+
+Maintain lists of trusted and blocked senders:
+
+```javascript
+const allowlist = new Set(['trusted@partner.com', 'noreply@bank.com']);
+const blocklist = new Set(['spammer@spam.com']);
+const allowedDomains = new Set(['trustedcompany.com']);
+const blockedDomains = new Set(['spamdomain.com']);
+
+function checkLists(email) {
+  const from = email.from.toLowerCase();
+  const domain = from.split('@')[1];
+
+  // Check exact email allowlist
+  if (allowlist.has(from)) {
+    return { action: 'allow', reason: 'Email allowlisted' };
+  }
+
+  // Check domain allowlist
+  if (allowedDomains.has(domain)) {
+    return { action: 'allow', reason: 'Domain allowlisted' };
+  }
+
+  // Check exact email blocklist
+  if (blocklist.has(from)) {
+    return { action: 'block', reason: 'Email blocklisted' };
+  }
+
+  // Check domain blocklist
+  if (blockedDomains.has(domain)) {
+    return { action: 'block', reason: 'Domain blocklisted' };
+  }
+
+  return { action: 'check', reason: 'Not in lists' };
+}
+
+app.post('/webhooks/inbound', async (req, res) => {
+  const email = req.body.data;
+
+  // Check allowlist/blocklist first
+  const listResult = checkLists(email);
+
+  if (listResult.action === 'block') {
+    await logBlockedEmail(email, listResult.reason);
+    return res.sendStatus(200);
+  }
+
+  if (listResult.action === 'allow') {
+    await processEmail(email);
+    return res.sendStatus(200);
+  }
+
+  // Apply spam filtering for unlisted senders
+  if (email.spamScore >= 6) {
+    await quarantineEmail(email);
+    return res.sendStatus(200);
+  }
+
+  await processEmail(email);
+  res.sendStatus(200);
+});
+```
+
+## Rate Limiting by Sender
+
+Protect against email flooding:
+
+```javascript
+import { RateLimiterMemory } from 'rate-limiter-flexible';
+
+const senderLimiter = new RateLimiterMemory({
+  points: 10, // 10 emails
+  duration: 60 // per minute
+});
+
+const domainLimiter = new RateLimiterMemory({
+  points: 50, // 50 emails
+  duration: 60 // per minute
+});
+
+async function checkRateLimits(email) {
+  const from = email.from.toLowerCase();
+  const domain = from.split('@')[1];
+
+  try {
+    await senderLimiter.consume(from);
+    await domainLimiter.consume(domain);
+    return { allowed: true };
+  } catch (rateLimitError) {
+    return {
+      allowed: false,
+      reason: 'Rate limit exceeded',
+      retryAfter: Math.ceil(rateLimitError.msBeforeNext / 1000)
+    };
+  }
+}
+
+app.post('/webhooks/inbound', async (req, res) => {
+  const email = req.body.data;
+
+  const rateCheck = await checkRateLimits(email);
+  if (!rateCheck.allowed) {
+    console.warn(`Rate limited: ${email.from}`);
+    await logRateLimited(email);
+    return res.sendStatus(200);
+  }
+
+  // Continue with spam checking and processing
+  await processEmail(email);
+  res.sendStatus(200);
+});
+```
+
+## Quarantine Management
+
+Implement a quarantine system for suspicious emails:
+
+```javascript
+class EmailQuarantine {
+  constructor(storage) {
+    this.storage = storage;
+  }
+
+  async quarantine(email, reason) {
+    await this.storage.save({
+      id: email.id,
+      email: email,
+      reason: reason,
+      quarantinedAt: new Date().toISOString(),
+      status: 'pending',
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+    });
+  }
+
+  async release(emailId) {
+    const record = await this.storage.get(emailId);
+    if (!record) throw new Error('Email not found');
+
+    await this.storage.update(emailId, { status: 'released' });
+    return record.email;
+  }
+
+  async delete(emailId) {
+    await this.storage.update(emailId, { status: 'deleted' });
+  }
+
+  async listPending() {
+    return this.storage.query({ status: 'pending' });
+  }
+}
+
+const quarantine = new EmailQuarantine(quarantineStorage);
+
+app.post('/webhooks/inbound', async (req, res) => {
+  const email = req.body.data;
+
+  if (email.spamScore >= 5) {
+    await quarantine.quarantine(email, `Spam score: ${email.spamScore}`);
+    return res.sendStatus(200);
+  }
+
+  await processEmail(email);
+  res.sendStatus(200);
+});
+
+// Admin endpoint to review quarantine
+app.get('/admin/quarantine', async (req, res) => {
+  const pending = await quarantine.listPending();
+  res.json(pending);
+});
+
+app.post('/admin/quarantine/:id/release', async (req, res) => {
+  const email = await quarantine.release(req.params.id);
+  await processEmail(email);
+  res.json({ success: true });
+});
+```
+
+## Reporting Spam
+
+Report false negatives (spam that wasn't caught) to improve filtering:
+
+```javascript
+// User reports an email as spam
+app.post('/api/report-spam', async (req, res) => {
+  const { emailId } = req.body;
+
+  await fetch('https://app.lettr.com/api/inbound/report-spam', {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer lttr_xxxxxxxxxxxx',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ emailId })
+  });
+
+  // Also add sender to local blocklist
+  const email = await getEmailById(emailId);
+  await addToBlocklist(email.from);
+
+  res.json({ success: true });
+});
+```
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Start with moderate filtering">
+    Begin with moderate spam filtering and adjust based on your false positive/negative rates. It's better to quarantine than outright reject initially.
+  </Accordion>
+
+  <Accordion title="Log all filtering decisions">
+    Keep detailed logs of why emails were filtered, quarantined, or blocked. This helps debug issues and tune your filters.
+  </Accordion>
+
+  <Accordion title="Provide user feedback mechanisms">
+    Allow users to report spam that got through and legitimate emails that were blocked. Use this feedback to improve your filtering.
+  </Accordion>
+
+  <Accordion title="Review quarantine regularly">
+    Set up processes to review quarantined emails and release false positives promptly.
+  </Accordion>
+
+  <Accordion title="Combine multiple signals">
+    Don't rely solely on the spam score. Combine it with allowlists, blocklists, rate limiting, and content analysis.
+  </Accordion>
+</AccordionGroup>
+
+<Warning>
+  Be careful with aggressive spam filtering. False positives can cause you to miss important emails from customers or partners.
+</Warning>
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Webhooks" icon="webhook" href="/learn/webhooks/event-types">
+    Webhook payload structure
+  </Card>
+  <Card title="Routing" icon="route" href="/learn/receiving/routing">
+    Route emails based on rules
+  </Card>
+  <Card title="Security" icon="lock" href="/learn/receiving/security">
+    Security best practices
+  </Card>
+  <Card title="Best Practices" icon="star" href="/learn/receiving/best-practices">
+    Overall receiving best practices
+  </Card>
+</CardGroup>

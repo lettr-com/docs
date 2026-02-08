@@ -3,7 +3,6 @@
   "name": "Lettr",
   "theme": "mint",
   "buildCommand": "curl -s https://app.lettr.com/openapi.json -o openapi.json",
-  "openapi": "/openapi.json",
   "api": {
     "baseUrl": "https://app.lettr.com/api",
     "auth": {
@@ -58,21 +57,38 @@
               {
                 "group": "PHP",
                 "pages": [
+                  
                   "quickstart/php/introduction",
+                  "quickstart/php/symfony"
+                ,
+                  "quickstart/php/laravel",
                   "quickstart/php/symfony"
                 ]
               },
               {
+                "group": "Node.js",
+                "pages": [
+                  "quickstart/nodejs/introduction",
+                  "quickstart/nodejs/nextjs",
+                  "quickstart/nodejs/nuxt"
+                ]
+              },
+              {
                 "group": "SMTP",
-                "pages": ["quickstart/smtp/introduction"]
+                "pages": [
+                  "quickstart/smtp/introduction",
+                  "quickstart/smtp/laravel",
+                  "quickstart/smtp/phpmailer"
+                ]
               },
               {
                 "group": "Serverless",
-                "pages": ["quickstart/serverless/introduction"]
-              },
-              {
-                "group": "Node.js",
-                "pages": ["quickstart/nodejs/introduction"]
+                "pages": [
+                  "quickstart/serverless/introduction",
+                  "quickstart/serverless/aws-lambda",
+                  "quickstart/serverless/vercel-functions",
+                  "quickstart/serverless/cloudflare-workers"
+                ]
               },
               {
                 "group": "Go",
@@ -95,75 +111,147 @@
                 ]
               }
             ]
-          }
-        ]
-      },
-      {
-        "tab": "Learn",
-        "groups": [
-          {
-            "group": "Domains",
-            "pages": [
-              "learn/domains/introduction",
-              "learn/domains/sending-domains",
-              "learn/domains/tracking-domains",
-              "learn/domains/inbound-domains",
-              "learn/domains/storage-domains",
-              "learn/domains/spf",
-              "learn/domains/dkim",
-              "learn/domains/dmarc",
-              "learn/domains/bimi"
-            ]
           },
           {
-            "group": "Domain Verification Guides",
+            "group": "Learn",
             "pages": [
-              "knowledge-base/domain-verification/introduction",
-              "knowledge-base/domain-verification/azure",
-              "knowledge-base/domain-verification/cloudflare",
-              "knowledge-base/domain-verification/digitalocean",
-              "knowledge-base/domain-verification/godaddy",
-              "knowledge-base/domain-verification/google-cloud",
-              "knowledge-base/domain-verification/hetzner",
-              "knowledge-base/domain-verification/hostinger",
-              "knowledge-base/domain-verification/ionos",
-              "knowledge-base/domain-verification/linode",
-              "knowledge-base/domain-verification/namecheap",
-              "knowledge-base/domain-verification/netlify",
-              "knowledge-base/domain-verification/route53",
-              "knowledge-base/domain-verification/squarespace",
-              "knowledge-base/domain-verification/strato",
-              "knowledge-base/domain-verification/vercel"
-            ]
-          },
-          {
-            "group": "API Keys",
-            "pages": [
-              "learn/api-keys/introduction"
-            ]
-          },
-          {
-            "group": "Logs",
-            "pages": [
-              "learn/logs/introduction",
-              "learn/logs/status-codes"
-            ]
-          }
-        ]
-      },
-      {
-        "tab": "MCP",
-        "groups": [
-          {
-            "group": "MCP",
-            "pages": [
-              "mcp/introduction"
+              {
+                "group": "API Keys",
+                "pages": [
+                  "learn/api-keys/introduction",
+                  "learn/api-keys/permissions"
+                ]
+              },
+              {
+                "group": "Domains",
+                "pages": [
+                  "learn/domains/introduction",
+                  "learn/domains/sending-domains",
+                  "learn/domains/tracking-domains",
+                  "learn/domains/inbound-domains",
+                  "learn/domains/storage-domains",
+                  "learn/domains/spf",
+                  "learn/domains/dkim",
+                  "learn/domains/dmarc",
+                  "learn/domains/bimi"
+                ]
+              },
+              {
+                "group": "Sending",
+                "pages": [
+                  "learn/sending/introduction",
+                  "learn/sending/recipients",
+                  "learn/sending/content-types",
+                  "learn/sending/attachments",
+                  "learn/sending/tracking",
+                  "learn/sending/metadata",
+                  "learn/sending/custom-headers",
+                  "learn/sending/scheduling",
+                  "learn/sending/batch-sending",
+                  "learn/sending/test-emails",
+                  "learn/sending/idempotency",
+                  "learn/sending/rate-limits",
+                  "learn/sending/errors-retries",
+                  "learn/sending/email-history",
+                  "learn/sending/best-practices"
+                ]
+              },
+              {
+                "group": "Receiving",
+                "pages": [
+                  "learn/receiving/introduction",
+                  "learn/receiving/setup",
+                  "learn/receiving/routing",
+                  "learn/receiving/attachments",
+                  "learn/receiving/spam-filtering",
+                  "learn/receiving/reply-tracking",
+                  "learn/receiving/parsing",
+                  "learn/receiving/security",
+                  "learn/receiving/best-practices"
+                ]
+              },
+              {
+                "group": "Suppressions",
+                "pages": [
+                  "learn/suppressions/introduction",
+                  "learn/suppressions/bounces",
+                  "learn/suppressions/complaints-unsubscribes"
+                ]
+              },
+              {
+                "group": "Templates",
+                "pages": [
+                  "learn/templates/introduction",
+                  "learn/templates/topol-editor",
+                  "learn/templates/editor-settings",
+                  "learn/templates/premade-templates",
+                  "learn/templates/template-language",
+                  "learn/templates/projects",
+                  "learn/templates/versions",
+                  "learn/templates/saved-blocks",
+                  "learn/templates/loop-blocks"
+                ]
+              },
+              {
+                "group": "Webhooks",
+                "pages": [
+                  "learn/webhooks/introduction",
+                  "learn/webhooks/event-types",
+                  "learn/webhooks/handling",
+                  "learn/webhooks/authorization",
+                  "learn/webhooks/retries",
+                  "learn/webhooks/testing"
+                ]
+              },
+              {
+                "group": "Events",
+                "pages": [
+                  "learn/events/introduction",
+                  "learn/events/event-types",
+                  "learn/events/message-details"
+                ]
+              },
+              {
+                "group": "Logs",
+                "pages": [
+                  "learn/logs/introduction",
+                  "learn/logs/filtering-and-searching",
+                  "learn/logs/status-codes"
+                ]
+              },
+              {
+                "group": "Analytics",
+                "pages": [
+                  "learn/analytics/introduction",
+                  "learn/analytics/reading-the-dashboard",
+                  "learn/analytics/filtering-and-breakdowns"
+                ]
+              },
+              {
+                "group": "MCP",
+                "pages": [
+                  "learn/mcp/introduction",
+                  "learn/mcp/setup",
+                  "learn/mcp/tools-reference"
+                ]
+              },
+              {
+                "group": "Settings",
+                "pages": [
+                  "learn/settings/onboarding",
+                  "learn/settings/profile",
+                  "learn/settings/teams",
+                  "learn/settings/security",
+                  "learn/settings/billing"
+                ]
+              }
             ]
           }
         ]
       },
       {
         "tab": "API Reference",
+        "openapi": "/openapi.json",
         "groups": [
           {
             "group": "API Reference",
@@ -195,7 +283,13 @@
               "api-reference/templates/get-template",
               "api-reference/templates/update-template",
               "api-reference/templates/delete-template",
-              "api-reference/templates/get-template-merge-tags"
+              "api-reference/templates/get-merge-tags"
+            ]
+          },
+          {
+            "group": "Projects",
+            "pages": [
+              "api-reference/projects/list-projects"
             ]
           },
           {
@@ -203,6 +297,137 @@
             "pages": [
               "api-reference/webhooks/list-webhooks",
               "api-reference/webhooks/get-webhook"
+            ]
+          },
+          {
+            "group": "System",
+            "pages": [
+              "api-reference/system/health-check",
+              "api-reference/system/auth-check"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Knowledge Base",
+        "groups": [
+          {
+            "group": "Knowledge Base",
+            "pages": ["knowledge-base/introduction"]
+          },
+          {
+            "group": "DNS Guides",
+            "pages": [
+              "knowledge-base/dns-guides/aws-route53",
+              "knowledge-base/dns-guides/azure-dns",
+              "knowledge-base/dns-guides/cloudflare",
+              "knowledge-base/dns-guides/digitalocean",
+              "knowledge-base/dns-guides/dreamhost",
+              "knowledge-base/dns-guides/dynadot",
+              "knowledge-base/dns-guides/gandi",
+              "knowledge-base/dns-guides/godaddy",
+              "knowledge-base/dns-guides/google-cloud-dns",
+              "knowledge-base/dns-guides/hetzner",
+              "knowledge-base/dns-guides/hostinger",
+              "knowledge-base/dns-guides/ionos",
+              "knowledge-base/dns-guides/linode",
+              "knowledge-base/dns-guides/namecheap",
+              "knowledge-base/dns-guides/netlify",
+              "knowledge-base/dns-guides/porkbun",
+              "knowledge-base/dns-guides/squarespace",
+              "knowledge-base/dns-guides/strato",
+              "knowledge-base/dns-guides/vercel"
+            ]
+          },
+          {
+            "group": "Concepts",
+            "pages": [
+              "knowledge-base/concepts/email-deliverability",
+              "knowledge-base/concepts/transactional-email",
+              "knowledge-base/concepts/feedback-loops",
+              "knowledge-base/concepts/email-service-provider",
+              "knowledge-base/concepts/dedicated-vs-shared-ips"
+            ]
+          },
+          {
+            "group": "Email Fundamentals",
+            "pages": [
+              "knowledge-base/fundamentals/how-email-delivery-works",
+              "knowledge-base/fundamentals/spf-dkim-dmarc",
+              "knowledge-base/fundamentals/email-headers",
+              "knowledge-base/fundamentals/bounce-codes-reference",
+              "knowledge-base/fundamentals/suppression-lists",
+              "knowledge-base/fundamentals/content-types",
+              "knowledge-base/fundamentals/subdomain-vs-root",
+              "knowledge-base/fundamentals/smtp-protocol-basics",
+              "knowledge-base/fundamentals/email-address-anatomy",
+              "knowledge-base/fundamentals/bimi",
+              "knowledge-base/fundamentals/custom-return-path",
+              "knowledge-base/fundamentals/email-rendering-clients"
+            ]
+          },
+          {
+            "group": "Best Practices",
+            "pages": [
+              "knowledge-base/best-practices/email-editor-best-practices",
+              "knowledge-base/best-practices/deliverability",
+              "knowledge-base/best-practices/sending-reputation",
+              "knowledge-base/best-practices/list-hygiene",
+              "knowledge-base/best-practices/security",
+              "knowledge-base/best-practices/transactional-vs-marketing",
+              "knowledge-base/best-practices/ip-domain-warmup",
+              "knowledge-base/best-practices/smtp-vs-api",
+              "knowledge-base/best-practices/batch-bulk-sending",
+              "knowledge-base/best-practices/email-accessibility",
+              "knowledge-base/best-practices/dark-mode-design",
+              "knowledge-base/best-practices/personalization-dynamic-content"
+            ]
+          },
+          {
+            "group": "Compliance & Regulations",
+            "pages": [
+              "knowledge-base/compliance/google-yahoo-requirements",
+              "knowledge-base/compliance/can-spam",
+              "knowledge-base/compliance/gdpr-email",
+              "knowledge-base/compliance/unsubscribe-best-practices",
+              "knowledge-base/compliance/data-privacy-metadata",
+              "knowledge-base/compliance/casl",
+              "knowledge-base/compliance/email-consent",
+              "knowledge-base/compliance/acceptable-use-policy",
+              "knowledge-base/compliance/data-retention"
+            ]
+          },
+          {
+            "group": "Troubleshooting",
+            "pages": [
+              "knowledge-base/troubleshooting/delivery-issues",
+              "knowledge-base/troubleshooting/spam-placement",
+              "knowledge-base/troubleshooting/bounce-diagnosis",
+              "knowledge-base/troubleshooting/authentication",
+              "knowledge-base/troubleshooting/rate-limits",
+              "knowledge-base/troubleshooting/domain-verification",
+              "knowledge-base/troubleshooting/tracking-accuracy",
+              "knowledge-base/troubleshooting/gmail-delivery",
+              "knowledge-base/troubleshooting/outlook-delivery",
+              "knowledge-base/troubleshooting/webhook-failures",
+              "knowledge-base/troubleshooting/rendering-issues",
+              "knowledge-base/troubleshooting/sandbox-testing"
+            ]
+          },
+          {
+            "group": "Use Cases",
+            "pages": [
+              "knowledge-base/use-cases/password-reset-emails",
+              "knowledge-base/use-cases/order-confirmation-emails",
+              "knowledge-base/use-cases/welcome-onboarding-emails",
+              "knowledge-base/use-cases/two-factor-authentication-emails",
+              "knowledge-base/use-cases/invoice-billing-emails"
+            ]
+          },
+          {
+            "group": "Glossary",
+            "pages": [
+              "knowledge-base/glossary/email-glossary"
             ]
           }
         ]

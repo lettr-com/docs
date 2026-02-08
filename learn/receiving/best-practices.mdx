@@ -1,0 +1,514 @@
+---
+title: Best Practices
+description: "Best practices for receiving and processing inbound emails"
+---
+
+# Receiving Best Practices
+
+Follow these best practices to build reliable, secure, and maintainable inbound email processing systems.
+
+## Architecture
+
+### Process Asynchronously
+
+Don't block webhook responses with long-running processing:
+
+```javascript
+// Good: Respond immediately, process asynchronously
+app.post('/webhooks/inbound', async (req, res) => {
+  // Acknowledge receipt immediately
+  res.sendStatus(200);
+
+  // Queue for async processing
+  await emailQueue.add('process-inbound', req.body.data);
+});
+
+// Process in background
+emailQueue.process('process-inbound', async (job) => {
+  const email = job.data;
+  await processEmail(email);
+});
+```
+
+```javascript
+// Bad: Blocking the webhook response
+app.post('/webhooks/inbound', async (req, res) => {
+  // This might timeout
+  await downloadAllAttachments(req.body.data);
+  await processEmail(req.body.data);
+  await sendNotifications(req.body.data);
+  await updateDatabase(req.body.data);
+
+  res.sendStatus(200);
+});
+```
+
+### Implement Idempotency
+
+Handle duplicate webhooks gracefully:
+
+```javascript
+import Redis from 'ioredis';
+const redis = new Redis();
+
+async function processEmailOnce(email) {
+  const key = `processed:${email.id}`;
+
+  // Try to set the key (only succeeds if it doesn't exist)
+  const isNew = await redis.set(key, '1', 'EX', 86400, 'NX');
+
+  if (!isNew) {
+    console.log(`Already processed: ${email.id}`);
+    return { skipped: true };
+  }
+
+  // Process the email
+  await processEmail(email);
+  return { processed: true };
+}
+```
+
+### Use Separate Queues by Priority
+
+```javascript
+import Queue from 'bull';
+
+const highPriorityQueue = new Queue('email-high', redisUrl);
+const normalQueue = new Queue('email-normal', redisUrl);
+const lowPriorityQueue = new Queue('email-low', redisUrl);
+
+function routeToQueue(email) {
+  if (isVipCustomer(email.from)) {
+    return highPriorityQueue;
+  }
+  if (email.spamScore > 3) {
+    return lowPriorityQueue;
+  }
+  return normalQueue;
+}
+
+// Process with different concurrency
+highPriorityQueue.process(10, processEmail);
+normalQueue.process(5, processEmail);
+lowPriorityQueue.process(2, processEmail);
+```
+
+## Reliability
+
+### Store Before Processing
+
+Save the raw email before any processing:
+
+```javascript
+app.post('/webhooks/inbound', async (req, res) => {
+  const email = req.body.data;
+
+  // Store raw email first
+  await storeRawEmail({
+    id: email.id,
+    payload: req.body,
+    receivedAt: new Date()
+  });
+
+  res.sendStatus(200);
+
+  // Then process (can be retried from stored data if it fails)
+  try {
+    await processEmail(email);
+    await markAsProcessed(email.id);
+  } catch (error) {
+    await markAsFailed(email.id, error);
+    await scheduleRetry(email.id);
+  }
+});
+```
+
+### Implement Retry Logic
+
+```javascript
+class EmailProcessor {
+  constructor() {
+    this.maxRetries = 3;
+    this.retryDelays = [1000, 5000, 30000]; // 1s, 5s, 30s
+  }
+
+  async processWithRetry(email, attempt = 0) {
+    try {
+      await this.process(email);
+      return { success: true };
+    } catch (error) {
+      if (attempt < this.maxRetries && this.isRetryable(error)) {
+        await sleep(this.retryDelays[attempt]);
+        return this.processWithRetry(email, attempt + 1);
+      }
+
+      await this.handleFailure(email, error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  isRetryable(error) {
+    // Retry network errors and 5xx responses
+    return error.code === 'ECONNREFUSED' ||
+           error.code === 'ETIMEDOUT' ||
+           (error.status >= 500 && error.status < 600);
+  }
+
+  async handleFailure(email, error) {
+    await storeFailedEmail(email, error);
+    await alertOpsTeam(email, error);
+  }
+}
+```
+
+### Handle Attachment Expiration
+
+Download attachments promptly before URLs expire:
+
+```javascript
+app.post('/webhooks/inbound', async (req, res) => {
+  const email = req.body.data;
+  res.sendStatus(200);
+
+  // Download attachments immediately (URLs expire in 24 hours)
+  const savedAttachments = await Promise.all(
+    email.attachments.map(async (attachment) => {
+      try {
+        const response = await fetch(attachment.url);
+        const buffer = await response.arrayBuffer();
+
+        const savedPath = await saveToStorage(
+          attachment.filename,
+          Buffer.from(buffer)
+        );
+
+        return { ...attachment, savedPath };
+      } catch (error) {
+        console.error(`Failed to download ${attachment.filename}:`, error);
+        return { ...attachment, error: error.message };
+      }
+    })
+  );
+
+  // Process with saved attachments
+  await processEmail({ ...email, attachments: savedAttachments });
+});
+```
+
+## Error Handling
+
+### Graceful Degradation
+
+Handle partial failures gracefully:
+
+```javascript
+async function processEmail(email) {
+  const results = {
+    stored: false,
+    attachmentsProcessed: false,
+    notificationsSent: false,
+    errors: []
+  };
+
+  // Store email (critical)
+  try {
+    await storeEmail(email);
+    results.stored = true;
+  } catch (error) {
+    results.errors.push({ stage: 'store', error: error.message });
+    // Fail fast for critical operations
+    throw error;
+  }
+
+  // Process attachments (non-critical)
+  try {
+    await processAttachments(email.attachments);
+    results.attachmentsProcessed = true;
+  } catch (error) {
+    results.errors.push({ stage: 'attachments', error: error.message });
+    // Continue despite failure
+  }
+
+  // Send notifications (non-critical)
+  try {
+    await sendNotifications(email);
+    results.notificationsSent = true;
+  } catch (error) {
+    results.errors.push({ stage: 'notifications', error: error.message });
+    // Continue despite failure
+  }
+
+  return results;
+}
+```
+
+### Structured Error Logging
+
+```javascript
+function logError(context, error) {
+  console.error(JSON.stringify({
+    level: 'error',
+    timestamp: new Date().toISOString(),
+    context: {
+      emailId: context.emailId,
+      sender: context.from,
+      stage: context.stage
+    },
+    error: {
+      message: error.message,
+      stack: error.stack,
+      code: error.code
+    }
+  }));
+}
+```
+
+## Performance
+
+### Batch Database Operations
+
+```javascript
+// Bad: Individual inserts
+for (const email of emails) {
+  await db.insert('emails', email);
+}
+
+// Good: Batch insert
+await db.batchInsert('emails', emails);
+```
+
+### Limit Concurrent Processing
+
+```javascript
+import pLimit from 'p-limit';
+
+const limit = pLimit(10); // Max 10 concurrent operations
+
+async function processEmails(emails) {
+  const promises = emails.map(email =>
+    limit(() => processEmail(email))
+  );
+
+  return Promise.allSettled(promises);
+}
+```
+
+### Cache Common Lookups
+
+```javascript
+import NodeCache from 'node-cache';
+
+const customerCache = new NodeCache({ stdTTL: 300 }); // 5 minute TTL
+
+async function getCustomer(email) {
+  const domain = email.split('@')[1];
+
+  let customer = customerCache.get(domain);
+  if (!customer) {
+    customer = await db.findCustomerByDomain(domain);
+    if (customer) {
+      customerCache.set(domain, customer);
+    }
+  }
+
+  return customer;
+}
+```
+
+## Monitoring
+
+### Track Key Metrics
+
+```javascript
+import { Counter, Histogram, Gauge } from 'prom-client';
+
+const emailsReceived = new Counter({
+  name: 'inbound_emails_total',
+  help: 'Total inbound emails received',
+  labelNames: ['domain', 'status']
+});
+
+const processingTime = new Histogram({
+  name: 'inbound_email_processing_seconds',
+  help: 'Email processing time',
+  labelNames: ['type'],
+  buckets: [0.1, 0.5, 1, 2, 5, 10]
+});
+
+const queueSize = new Gauge({
+  name: 'inbound_email_queue_size',
+  help: 'Current email queue size'
+});
+
+async function processEmail(email) {
+  const timer = processingTime.startTimer({ type: 'full' });
+
+  try {
+    await doProcessing(email);
+    emailsReceived.inc({ domain: email.domain, status: 'success' });
+  } catch (error) {
+    emailsReceived.inc({ domain: email.domain, status: 'error' });
+    throw error;
+  } finally {
+    timer();
+  }
+}
+```
+
+### Set Up Alerts
+
+```javascript
+// Alert on high spam rate
+async function checkSpamRate() {
+  const recent = await getRecentEmails(100);
+  const spamCount = recent.filter(e => e.spamScore > 5).length;
+  const spamRate = spamCount / recent.length;
+
+  if (spamRate > 0.3) { // 30% spam
+    await alertOps({
+      type: 'high_spam_rate',
+      rate: spamRate,
+      message: `Spam rate is ${(spamRate * 100).toFixed(1)}%`
+    });
+  }
+}
+
+// Alert on processing failures
+async function checkFailureRate() {
+  const stats = await getProcessingStats('1h');
+
+  if (stats.failureRate > 0.05) { // 5% failure
+    await alertOps({
+      type: 'high_failure_rate',
+      rate: stats.failureRate,
+      message: `Processing failure rate is ${(stats.failureRate * 100).toFixed(1)}%`
+    });
+  }
+}
+```
+
+## Testing
+
+### Test Webhook Handling
+
+```javascript
+import { describe, it, expect } from 'vitest';
+import request from 'supertest';
+import app from './app';
+
+describe('Inbound Webhook', () => {
+  it('should process valid email', async () => {
+    const payload = {
+      type: 'email.received',
+      data: {
+        id: 'test_123',
+        from: 'sender@example.com',
+        to: ['support@mail.example.com'],
+        subject: 'Test email',
+        text: 'Test content'
+      }
+    };
+
+    const signature = generateTestSignature(payload);
+
+    const response = await request(app)
+      .post('/webhooks/inbound')
+      .set('Lettr-Signature', signature)
+      .send(payload);
+
+    expect(response.status).toBe(200);
+  });
+
+  it('should reject invalid signature', async () => {
+    const response = await request(app)
+      .post('/webhooks/inbound')
+      .set('Lettr-Signature', 'invalid')
+      .send({ type: 'email.received' });
+
+    expect(response.status).toBe(400);
+  });
+});
+```
+
+### Test Edge Cases
+
+```javascript
+describe('Email Processing', () => {
+  it('should handle missing fields', async () => {
+    const email = {
+      id: 'test_456',
+      from: 'sender@example.com',
+      to: ['support@example.com']
+      // Missing subject, text, html
+    };
+
+    const result = await processEmail(email);
+    expect(result.success).toBe(true);
+  });
+
+  it('should handle expired attachment URLs', async () => {
+    const email = {
+      id: 'test_789',
+      attachments: [{
+        filename: 'file.pdf',
+        url: 'https://expired-url.com/file.pdf'
+      }]
+    };
+
+    const result = await processEmail(email);
+    expect(result.attachmentErrors).toHaveLength(1);
+  });
+});
+```
+
+## Checklist
+
+<AccordionGroup>
+  <Accordion title="Setup">
+    - [ ] Configure inbound domain with MX records
+    - [ ] Set up webhook endpoint with signature verification
+    - [ ] Configure spam filtering sensitivity
+    - [ ] Set up monitoring and alerting
+  </Accordion>
+
+  <Accordion title="Processing">
+    - [ ] Implement async processing (don't block webhooks)
+    - [ ] Store raw emails before processing
+    - [ ] Implement idempotency (handle duplicates)
+    - [ ] Download attachments promptly
+    - [ ] Implement retry logic for failures
+  </Accordion>
+
+  <Accordion title="Security">
+    - [ ] Verify webhook signatures
+    - [ ] Validate and sanitize all inputs
+    - [ ] Validate attachment types from content
+    - [ ] Implement rate limiting
+    - [ ] Scan attachments for malware
+  </Accordion>
+
+  <Accordion title="Operations">
+    - [ ] Monitor processing metrics
+    - [ ] Set up alerts for anomalies
+    - [ ] Log all processing for debugging
+    - [ ] Plan for handling failures
+    - [ ] Document your email routing rules
+  </Accordion>
+</AccordionGroup>
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Setup" icon="gear" href="/learn/receiving/setup">
+    Configure email receiving
+  </Card>
+  <Card title="Security" icon="shield" href="/learn/receiving/security">
+    Security best practices
+  </Card>
+  <Card title="Webhooks" icon="webhook" href="/learn/webhooks/introduction">
+    Webhook configuration
+  </Card>
+  <Card title="Sending Best Practices" icon="paper-plane" href="/learn/sending/best-practices">
+    Best practices for sending
+  </Card>
+</CardGroup>

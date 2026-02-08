@@ -1,0 +1,260 @@
+---
+title: "SMTP Protocol Basics"
+description: "How the Simple Mail Transfer Protocol works, common ports, encryption, and the SMTP conversation"
+---
+
+# SMTP Protocol Basics
+
+SMTP (Simple Mail Transfer Protocol) is the standard protocol used to transmit email between servers across the internet. Every email you send through Lettr — whether via the REST API or SMTP relay — ultimately travels between servers using SMTP. Understanding how SMTP works helps you diagnose delivery failures, choose the right sending method, and interpret bounce codes.
+
+This guide covers the protocol itself: how an SMTP conversation works, which ports are used, how encryption is negotiated, and where things can go wrong.
+
+---
+
+## What SMTP Does
+
+SMTP handles one specific job: **moving an email message from one server to another**. It does not handle reading email (that's IMAP or POP3), rendering email (that's the email client), or storing email long-term (that's the mailbox server). SMTP is purely a transmission protocol.
+
+When you send an email through Lettr's API, Lettr constructs the message and then uses SMTP to deliver it to the recipient's mail server. When you send via Lettr's SMTP relay, your application speaks SMTP directly to Lettr, and Lettr then relays the message onward via SMTP to the destination.
+
+---
+
+## The SMTP Conversation
+
+An SMTP transaction is a structured back-and-forth between two servers: the **client** (the sender) and the **server** (the receiver). The conversation follows a strict sequence of commands and responses.
+
+<Steps>
+  <Step title="Connection">
+    The client opens a TCP connection to the server on the appropriate port. The server responds with a `220` greeting, indicating it is ready to communicate.
+
+    ```
+    S: 220 mx.example.com ESMTP ready
+    ```
+  </Step>
+
+  <Step title="EHLO / HELO">
+    The client identifies itself using the `EHLO` command (Extended HELO) or the older `HELO` command. `EHLO` is preferred because it enables SMTP extensions like authentication and TLS. The server responds with a list of supported extensions.
+
+    ```
+    C: EHLO mail.lettr.com
+    S: 250-mx.example.com Hello mail.lettr.com
+    S: 250-SIZE 52428800
+    S: 250-STARTTLS
+    S: 250-AUTH LOGIN PLAIN
+    S: 250 8BITMIME
+    ```
+  </Step>
+
+  <Step title="STARTTLS (Encryption)">
+    If both sides support TLS, the client issues the `STARTTLS` command to upgrade the connection from plaintext to encrypted. After the TLS handshake completes, the client sends a new `EHLO` to restart the session over the encrypted channel.
+
+    ```
+    C: STARTTLS
+    S: 220 Ready to start TLS
+    [TLS handshake occurs]
+    C: EHLO mail.lettr.com
+    S: 250-mx.example.com Hello mail.lettr.com
+    ...
+    ```
+  </Step>
+
+  <Step title="MAIL FROM">
+    The client specifies the envelope sender (also called the Return-Path or bounce address). This is where bounce notifications are sent if delivery fails. It may differ from the `From` header the recipient sees.
+
+    ```
+    C: MAIL FROM:<bounces+abc123@bounce.lettr.com>
+    S: 250 OK
+    ```
+  </Step>
+
+  <Step title="RCPT TO">
+    The client specifies one or more recipient addresses. Each recipient requires a separate `RCPT TO` command. The server validates each address and responds individually.
+
+    ```
+    C: RCPT TO:<user@example.com>
+    S: 250 OK
+    C: RCPT TO:<other@example.com>
+    S: 550 5.1.1 User unknown
+    ```
+  </Step>
+
+  <Step title="DATA">
+    The client signals that it is ready to transmit the message content. The server responds with `354`, and the client sends the full message (headers and body). The message ends with a single line containing only a period (`.`).
+
+    ```
+    C: DATA
+    S: 354 Start mail input; end with <CRLF>.<CRLF>
+    C: From: hello@yourapp.com
+    C: To: user@example.com
+    C: Subject: Your invoice is ready
+    C: Date: Wed, 29 Jan 2026 10:00:00 +0000
+    C: Content-Type: text/plain; charset="UTF-8"
+    C:
+    C: Your invoice #1042 is attached.
+    C: .
+    S: 250 OK id=abc123
+    ```
+  </Step>
+
+  <Step title="QUIT">
+    The client closes the session. The server confirms and terminates the connection.
+
+    ```
+    C: QUIT
+    S: 221 mx.example.com closing connection
+    ```
+  </Step>
+</Steps>
+
+---
+
+## SMTP Ports
+
+SMTP uses different ports depending on the type of connection and its purpose.
+
+| Port | Name | Purpose | Encryption |
+|------|------|---------|------------|
+| **25** | SMTP | Server-to-server mail relay. Used by mail servers (MTAs) to deliver messages to each other. | Optional via STARTTLS |
+| **465** | SMTPS | Submission with implicit TLS. The connection is encrypted from the start — no STARTTLS negotiation needed. | Implicit TLS |
+| **587** | Submission | The standard port for email clients and applications to submit outgoing mail to a relay server. | STARTTLS (required by most servers) |
+
+<Note>
+  When connecting to Lettr's SMTP relay, use **port 587** with STARTTLS or **port 465** with implicit TLS. Port 25 is not available for submission to Lettr — it is reserved for server-to-server relay and is commonly blocked by ISPs and cloud providers.
+</Note>
+
+### Which Port Should You Use?
+
+- **Port 587** — The default choice for most applications. Connect in plaintext, then upgrade to TLS via STARTTLS. This is the most widely supported option.
+- **Port 465** — Use if your application or library supports implicit TLS and you want encryption from the first byte. Some modern libraries prefer this.
+- **Port 25** — You will rarely use this directly. It is the port receiving mail servers listen on for inbound delivery. Lettr uses port 25 when delivering your messages to recipient mail servers, but your application does not need to interact with port 25.
+
+---
+
+## Encryption: TLS and STARTTLS
+
+Email transmitted over unencrypted SMTP can be read by anyone who intercepts the traffic between servers. TLS (Transport Layer Security) encrypts the connection to prevent this.
+
+### STARTTLS
+
+STARTTLS is an SMTP extension that upgrades an existing plaintext connection to an encrypted one. The conversation starts unencrypted on port 587 (or 25), and after the `STARTTLS` command, both sides negotiate a TLS session before continuing.
+
+### Implicit TLS
+
+On port 465, the connection is encrypted from the moment it is established. There is no plaintext phase and no STARTTLS negotiation. This is sometimes called "SMTPS" and behaves similarly to how HTTPS works for web traffic.
+
+### Opportunistic vs Enforced TLS
+
+| Mode | Behavior |
+|------|----------|
+| **Opportunistic TLS** | The sender attempts STARTTLS. If the receiver doesn't support it, the message is sent unencrypted. This is the default behavior for most server-to-server SMTP. |
+| **Enforced TLS** | The sender requires TLS. If the receiver doesn't support it, delivery fails rather than falling back to plaintext. |
+
+<Tip>
+  Lettr uses **opportunistic TLS** by default when delivering messages to recipient mail servers, ensuring the widest possible delivery coverage. The vast majority of major mailbox providers support TLS, so most messages are encrypted in transit.
+</Tip>
+
+---
+
+## SMTP Authentication
+
+When submitting email to a relay server (like Lettr's SMTP endpoint), the server requires the client to authenticate before accepting messages. This prevents unauthorized users from sending through the relay.
+
+Common SMTP authentication mechanisms:
+
+| Mechanism | Description |
+|-----------|-------------|
+| **PLAIN** | Username and password sent in Base64 encoding. Secure when used over TLS. |
+| **LOGIN** | Similar to PLAIN but sends username and password in separate steps. Legacy but widely supported. |
+| **CRAM-MD5** | Challenge-response mechanism that avoids sending the password directly. Less common today. |
+
+### Authenticating with Lettr's SMTP Relay
+
+To send via Lettr's SMTP relay, use your **API key** as the authentication credential:
+
+- **Host**: `smtp.lettr.com`
+- **Port**: `587` (STARTTLS) or `465` (implicit TLS)
+- **Username**: Your Lettr API key ID
+- **Password**: Your Lettr API key secret
+
+```javascript
+// Node.js example using Nodemailer
+const nodemailer = require('nodemailer');
+
+const transporter = nodemailer.createTransport({
+  host: 'smtp.lettr.com',
+  port: 587,
+  secure: false, // STARTTLS
+  auth: {
+    user: 'your-api-key-id',
+    pass: 'your-api-key-secret'
+  }
+});
+
+await transporter.sendMail({
+  from: 'hello@yourapp.com',
+  to: 'user@example.com',
+  subject: 'Your invoice is ready',
+  text: 'Invoice #1042 — Amount due: $250.00',
+  html: '<h1>Invoice #1042</h1><p>Amount due: $250.00</p>'
+});
+```
+
+---
+
+## SMTP vs REST API
+
+Lettr supports both SMTP relay and a REST API for sending email. Each approach has trade-offs.
+
+| Factor | SMTP Relay | REST API |
+|--------|-----------|----------|
+| **Integration effort** | Drop-in replacement for existing SMTP setups | Requires HTTP client and JSON payloads |
+| **Message construction** | Your application builds the full MIME message | Lettr constructs the MIME message from your parameters |
+| **Error handling** | SMTP response codes during the session | HTTP status codes and JSON error bodies |
+| **Throughput** | Connection-based — limited by concurrent connections | Request-based — designed for high concurrency |
+| **Features** | Basic sending, headers, attachments | Full access to templates, substitution data, tags, metadata |
+| **TLS** | STARTTLS or implicit TLS | HTTPS |
+
+<Info>
+  If you are starting a new integration with Lettr, the **REST API** is the recommended approach. It provides access to all Lettr features including templates, merge tags, and event metadata. SMTP relay is ideal when migrating from another provider or when your application already uses SMTP (e.g., WordPress, legacy systems).
+</Info>
+
+---
+
+## Common Mistakes
+
+<AccordionGroup>
+  <Accordion title="Using port 25 for submission">
+    Port 25 is intended for server-to-server relay, not for application-to-relay submission. Many ISPs and cloud providers (AWS, Google Cloud, Azure) block outbound port 25 entirely to prevent spam. Use port 587 (STARTTLS) or 465 (implicit TLS) when connecting to Lettr's SMTP relay.
+  </Accordion>
+
+  <Accordion title="Sending credentials before establishing TLS">
+    If your application sends the `AUTH` command before issuing `STARTTLS`, credentials are transmitted in plaintext and can be intercepted. Always establish TLS first — either via STARTTLS on port 587 or by using implicit TLS on port 465.
+  </Accordion>
+
+  <Accordion title="Confusing the envelope sender with the From header">
+    The `MAIL FROM` command sets the **envelope sender** (Return-Path), which is used for bounce handling. The `From` header is what the recipient sees. These can be different — and in most ESP setups, they are. Lettr sets the envelope sender to a bounce-processing address while your `From` header shows your brand's address. This is normal and expected.
+  </Accordion>
+
+  <Accordion title="Not handling SMTP timeouts">
+    SMTP connections can stall due to network issues, DNS resolution delays, or overloaded receiving servers. If your application sends via SMTP, configure reasonable timeouts (30–60 seconds for connection, 300 seconds for data transfer) and implement retry logic. When using Lettr's REST API, timeout handling is managed for you.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="How Email Delivery Works" icon="paper-plane" href="/knowledge-base/fundamentals/how-email-delivery-works">
+    End-to-end overview of the email delivery pipeline from API call to inbox.
+  </Card>
+  <Card title="Bounce Codes Reference" icon="circle-exclamation" href="/knowledge-base/fundamentals/bounce-codes-reference">
+    Complete reference of SMTP response codes and what they mean.
+  </Card>
+  <Card title="SPF, DKIM & DMARC" icon="shield-check" href="/knowledge-base/fundamentals/spf-dkim-dmarc">
+    How email authentication protocols verify your messages.
+  </Card>
+  <Card title="Email Headers Explained" icon="code" href="/knowledge-base/fundamentals/email-headers">
+    What common email headers mean and how they affect delivery.
+  </Card>
+</CardGroup>

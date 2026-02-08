@@ -1,172 +1,572 @@
 ---
 title: Authorization
-description: "Secure your webhook endpoints"
+description: "Secure your webhook endpoints with signature verification"
 ---
 
 # Webhook Authorization
 
-Verify that webhook requests come from Lettr, not malicious actors.
+Securing your webhook endpoints is critical. Without proper verification, malicious actors could send fake events to your server, potentially triggering unintended actions in your application. Lettr signs every webhook request, allowing you to verify its authenticity.
 
-## Signature Verification
+## How Signature Verification Works
 
-Every webhook request includes a signature header:
+Every webhook request from Lettr includes a `Lettr-Signature` header containing a timestamp and an HMAC-SHA256 signature:
 
 ```
-Lettr-Signature: t=1673789400,v1=5257a869e7ecebeda32affa62cdca3fa51cad7e77a0e56ff536d0ce8e108d8bd
+Lettr-Signature: t=1705312200,v1=5257a869e7ecebeda32affa62cdca3fa51cad7e77a0e56ff536d0ce8e108d8bd
 ```
 
-The signature contains:
-- `t`: Unix timestamp when the signature was created
-- `v1`: HMAC-SHA256 signature
+The signature is computed over the timestamp and the raw request body, using your webhook's secret as the key. This provides two security guarantees:
 
-## Verify in Node.js
+1. **Authenticity**: Only Lettr knows your webhook secret, so only Lettr can generate valid signatures
+2. **Integrity**: Any modification to the request body invalidates the signature
+
+## Signature Format
+
+The `Lettr-Signature` header contains comma-separated key-value pairs:
+
+| Component | Description |
+|-----------|-------------|
+| `t` | Unix timestamp (seconds) when the signature was generated |
+| `v1` | The HMAC-SHA256 signature in hexadecimal format |
+
+The signature is computed as:
+
+```
+HMAC-SHA256(secret, timestamp + "." + raw_body)
+```
+
+## Verification Steps
+
+To verify a webhook signature:
+
+1. Extract the timestamp (`t`) and signature (`v1`) from the header
+2. Check that the timestamp is recent (within 5 minutes)
+3. Compute the expected signature using: `HMAC-SHA256(secret, t + "." + body)`
+4. Compare your computed signature with the received signature using constant-time comparison
+
+## Using the SDK
+
+The Lettr SDK handles signature verification for you:
+
+```javascript
+import express from 'express';
+import { verifyWebhook } from 'lettr';
+
+const app = express();
+
+// Important: Use express.raw() to get the raw body for signature verification
+app.post('/webhooks/lettr', express.raw({ type: 'application/json' }), (req, res) => {
+  const signature = req.headers['lettr-signature'];
+
+  try {
+    const event = verifyWebhook(
+      req.body,                          // Raw body as Buffer
+      signature,                          // Lettr-Signature header
+      process.env.LETTR_WEBHOOK_SECRET   // Your webhook secret
+    );
+
+    // Signature is valid - event is safe to process
+    console.log('Verified event:', event.type);
+    res.sendStatus(200);
+  } catch (err) {
+    console.error('Verification failed:', err.message);
+    res.sendStatus(400);
+  }
+});
+```
+
+<Warning>
+  Always use `express.raw()` or equivalent to get the raw request body. Using `express.json()` will parse the body, and re-stringifying it may produce different bytes than the original, causing signature verification to fail.
+</Warning>
+
+## Manual Verification
+
+If you're not using the SDK, implement verification manually:
+
+### Node.js
 
 ```javascript
 import crypto from 'crypto';
 
 function verifyWebhookSignature(payload, signature, secret) {
+  // Parse the signature header
   const elements = signature.split(',');
-  const timestamp = elements.find(e => e.startsWith('t=')).slice(2);
-  const expectedSignature = elements.find(e => e.startsWith('v1=')).slice(3);
-  
+  const timestamp = elements.find(e => e.startsWith('t='))?.slice(2);
+  const receivedSignature = elements.find(e => e.startsWith('v1='))?.slice(3);
+
+  if (!timestamp || !receivedSignature) {
+    throw new Error('Invalid signature format');
+  }
+
   // Verify timestamp is recent (within 5 minutes)
   const now = Math.floor(Date.now() / 1000);
-  if (Math.abs(now - parseInt(timestamp)) > 300) {
-    throw new Error('Timestamp too old');
+  const timestampAge = Math.abs(now - parseInt(timestamp, 10));
+  if (timestampAge > 300) {
+    throw new Error('Timestamp too old - possible replay attack');
   }
-  
+
   // Compute expected signature
   const signedPayload = `${timestamp}.${payload}`;
-  const computedSignature = crypto
+  const expectedSignature = crypto
     .createHmac('sha256', secret)
-    .update(signedPayload)
+    .update(signedPayload, 'utf8')
     .digest('hex');
-  
-  // Compare signatures
+
+  // Use constant-time comparison to prevent timing attacks
   if (!crypto.timingSafeEqual(
-    Buffer.from(expectedSignature),
-    Buffer.from(computedSignature)
+    Buffer.from(receivedSignature, 'hex'),
+    Buffer.from(expectedSignature, 'hex')
   )) {
     throw new Error('Invalid signature');
   }
-  
+
+  // Signature valid - parse and return the event
   return JSON.parse(payload);
 }
 
-// Usage
+// Usage with Express
 app.post('/webhooks/lettr', express.raw({ type: 'application/json' }), (req, res) => {
   try {
     const event = verifyWebhookSignature(
-      req.body.toString(),
+      req.body.toString('utf8'),
       req.headers['lettr-signature'],
       process.env.LETTR_WEBHOOK_SECRET
     );
-    
-    // Process event
+
+    // Process the verified event
+    handleEvent(event);
     res.sendStatus(200);
   } catch (err) {
+    console.error('Webhook verification failed:', err.message);
     res.sendStatus(400);
   }
 });
 ```
 
-## Using the SDK
-
-The SDK handles verification for you:
-
-```javascript
-import { verifyWebhook } from 'lettr';
-
-app.post('/webhooks/lettr', express.raw({ type: 'application/json' }), (req, res) => {
-  try {
-    const event = verifyWebhook(
-      req.body,
-      req.headers['lettr-signature'],
-      process.env.LETTR_WEBHOOK_SECRET
-    );
-    
-    // Event is verified
-    console.log(event.type, event.data);
-    res.sendStatus(200);
-  } catch (err) {
-    console.error('Webhook verification failed');
-    res.sendStatus(400);
-  }
-});
-```
-
-## PHP Verification
+### PHP
 
 ```php
-function verifyWebhook($payload, $signature, $secret) {
+<?php
+
+function verifyWebhookSignature(string $payload, string $signature, string $secret): array
+{
+    // Parse the signature header
     $elements = explode(',', $signature);
     $timestamp = null;
-    $expectedSignature = null;
-    
+    $receivedSignature = null;
+
     foreach ($elements as $element) {
         if (str_starts_with($element, 't=')) {
             $timestamp = substr($element, 2);
         } elseif (str_starts_with($element, 'v1=')) {
-            $expectedSignature = substr($element, 3);
+            $receivedSignature = substr($element, 3);
         }
     }
-    
-    // Verify timestamp
-    if (abs(time() - (int)$timestamp) > 300) {
-        throw new Exception('Timestamp too old');
+
+    if ($timestamp === null || $receivedSignature === null) {
+        throw new Exception('Invalid signature format');
     }
-    
-    // Compute signature
+
+    // Verify timestamp is recent (within 5 minutes)
+    $now = time();
+    if (abs($now - (int)$timestamp) > 300) {
+        throw new Exception('Timestamp too old - possible replay attack');
+    }
+
+    // Compute expected signature
     $signedPayload = "{$timestamp}.{$payload}";
-    $computedSignature = hash_hmac('sha256', $signedPayload, $secret);
-    
-    if (!hash_equals($expectedSignature, $computedSignature)) {
+    $expectedSignature = hash_hmac('sha256', $signedPayload, $secret);
+
+    // Use constant-time comparison
+    if (!hash_equals($expectedSignature, $receivedSignature)) {
         throw new Exception('Invalid signature');
     }
-    
+
     return json_decode($payload, true);
+}
+
+// Usage in Laravel
+Route::post('/webhooks/lettr', function (Request $request) {
+    $payload = $request->getContent();
+    $signature = $request->header('Lettr-Signature');
+    $secret = config('services.lettr.webhook_secret');
+
+    try {
+        $event = verifyWebhookSignature($payload, $signature, $secret);
+
+        // Process the verified event
+        handleEvent($event);
+
+        return response('OK', 200);
+    } catch (Exception $e) {
+        Log::error('Webhook verification failed: ' . $e->getMessage());
+        return response('Invalid signature', 400);
+    }
+});
+```
+
+### Python
+
+```python
+import hmac
+import hashlib
+import time
+import json
+from flask import Flask, request, abort
+
+app = Flask(__name__)
+
+def verify_webhook_signature(payload: bytes, signature: str, secret: str) -> dict:
+    # Parse the signature header
+    elements = dict(item.split('=', 1) for item in signature.split(','))
+    timestamp = elements.get('t')
+    received_signature = elements.get('v1')
+
+    if not timestamp or not received_signature:
+        raise ValueError('Invalid signature format')
+
+    # Verify timestamp is recent (within 5 minutes)
+    now = int(time.time())
+    if abs(now - int(timestamp)) > 300:
+        raise ValueError('Timestamp too old - possible replay attack')
+
+    # Compute expected signature
+    signed_payload = f"{timestamp}.{payload.decode('utf-8')}"
+    expected_signature = hmac.new(
+        secret.encode('utf-8'),
+        signed_payload.encode('utf-8'),
+        hashlib.sha256
+    ).hexdigest()
+
+    # Use constant-time comparison
+    if not hmac.compare_digest(expected_signature, received_signature):
+        raise ValueError('Invalid signature')
+
+    return json.loads(payload)
+
+@app.route('/webhooks/lettr', methods=['POST'])
+def webhook():
+    payload = request.get_data()
+    signature = request.headers.get('Lettr-Signature')
+    secret = os.environ['LETTR_WEBHOOK_SECRET']
+
+    try:
+        event = verify_webhook_signature(payload, signature, secret)
+        handle_event(event)
+        return 'OK', 200
+    except ValueError as e:
+        app.logger.error(f'Webhook verification failed: {e}')
+        abort(400)
+```
+
+### Go
+
+```go
+package main
+
+import (
+    "crypto/hmac"
+    "crypto/sha256"
+    "encoding/hex"
+    "encoding/json"
+    "fmt"
+    "io"
+    "math"
+    "net/http"
+    "os"
+    "strconv"
+    "strings"
+    "time"
+)
+
+func verifyWebhookSignature(payload []byte, signature, secret string) (map[string]interface{}, error) {
+    // Parse the signature header
+    var timestamp, receivedSignature string
+    for _, element := range strings.Split(signature, ",") {
+        if strings.HasPrefix(element, "t=") {
+            timestamp = element[2:]
+        } else if strings.HasPrefix(element, "v1=") {
+            receivedSignature = element[3:]
+        }
+    }
+
+    if timestamp == "" || receivedSignature == "" {
+        return nil, fmt.Errorf("invalid signature format")
+    }
+
+    // Verify timestamp is recent (within 5 minutes)
+    ts, err := strconv.ParseInt(timestamp, 10, 64)
+    if err != nil {
+        return nil, fmt.Errorf("invalid timestamp")
+    }
+    now := time.Now().Unix()
+    if math.Abs(float64(now-ts)) > 300 {
+        return nil, fmt.Errorf("timestamp too old")
+    }
+
+    // Compute expected signature
+    signedPayload := fmt.Sprintf("%s.%s", timestamp, string(payload))
+    mac := hmac.New(sha256.New, []byte(secret))
+    mac.Write([]byte(signedPayload))
+    expectedSignature := hex.EncodeToString(mac.Sum(nil))
+
+    // Use constant-time comparison
+    if !hmac.Equal([]byte(expectedSignature), []byte(receivedSignature)) {
+        return nil, fmt.Errorf("invalid signature")
+    }
+
+    var event map[string]interface{}
+    if err := json.Unmarshal(payload, &event); err != nil {
+        return nil, err
+    }
+    return event, nil
+}
+
+func webhookHandler(w http.ResponseWriter, r *http.Request) {
+    payload, _ := io.ReadAll(r.Body)
+    signature := r.Header.Get("Lettr-Signature")
+    secret := os.Getenv("LETTR_WEBHOOK_SECRET")
+
+    event, err := verifyWebhookSignature(payload, signature, secret)
+    if err != nil {
+        http.Error(w, "Invalid signature", http.StatusBadRequest)
+        return
+    }
+
+    // Process the verified event
+    handleEvent(event)
+    w.WriteHeader(http.StatusOK)
 }
 ```
 
-## Webhook Secret
+## Timestamp Validation
 
-Get your webhook secret from the dashboard or when creating a webhook:
+The timestamp in the signature serves two purposes:
+
+1. **Replay Attack Prevention**: By rejecting old timestamps, you prevent attackers from capturing a valid webhook and replaying it later
+2. **Signature Uniqueness**: Including the timestamp in the signed payload means the same event body produces different signatures at different times
+
+The standard tolerance is 5 minutes (300 seconds). This accommodates:
+- Clock drift between servers
+- Network latency
+- Retry delays
+
+```javascript
+const TIMESTAMP_TOLERANCE = 300; // 5 minutes in seconds
+
+function isTimestampValid(timestamp) {
+  const now = Math.floor(Date.now() / 1000);
+  return Math.abs(now - timestamp) <= TIMESTAMP_TOLERANCE;
+}
+```
+
+<Note>
+  If you're seeing legitimate webhooks fail timestamp validation, check that your server's clock is synchronized (e.g., using NTP).
+</Note>
+
+## Webhook Secret Management
+
+### Getting Your Secret
+
+When you create a webhook, Lettr generates a unique signing secret:
 
 ```javascript
 const webhook = await lettr.webhooks.create({
   url: 'https://example.com/webhooks',
-  events: ['email.delivered']
+  events: ['email.delivered', 'email.bounced']
 });
 
-console.log(webhook.secret); // whsec_xxxxx
-// Store this securely!
+// Store this secret securely!
+console.log(webhook.secret); // whsec_xxxxxxxxxxxxxxxx
 ```
 
-## Rotate Webhook Secret
+You can also find your webhook secret in the dashboard under **Settings** → **Webhooks** → select your webhook → **Signing Secret**.
 
-Rotate the secret if compromised:
+### Storing Secrets Securely
+
+Never hardcode webhook secrets in your source code. Use environment variables or a secrets manager:
+
+```bash
+# .env file (never commit this!)
+LETTR_WEBHOOK_SECRET=whsec_xxxxxxxxxxxxxxxx
+```
+
+```javascript
+// Access via environment variable
+const secret = process.env.LETTR_WEBHOOK_SECRET;
+```
+
+For production, consider using:
+- AWS Secrets Manager
+- HashiCorp Vault
+- Google Cloud Secret Manager
+- Azure Key Vault
+
+### Rotating Secrets
+
+If you suspect your webhook secret has been compromised, rotate it immediately:
 
 ```javascript
 const webhook = await lettr.webhooks.rotateSecret('wh_123');
 
+// webhook.secret now contains the new secret
 console.log(webhook.secret); // New secret
 ```
 
 <Warning>
-  After rotating the secret, update your webhook handler immediately to use the new secret.
+  After rotating, update your webhook handler to use the new secret immediately. Webhooks signed with the old secret will fail verification.
 </Warning>
 
-## IP Allowlisting
+For zero-downtime rotation:
 
-For additional security, allowlist Lettr's IP addresses:
+1. Update your code to accept both old and new secrets temporarily
+2. Rotate the secret via API or dashboard
+3. Once rotation is complete, remove the old secret from your code
 
+```javascript
+function verifyWithMultipleSecrets(payload, signature, secrets) {
+  for (const secret of secrets) {
+    try {
+      return verifyWebhookSignature(payload, signature, secret);
+    } catch (err) {
+      continue; // Try next secret
+    }
+  }
+  throw new Error('No valid signature found');
+}
+
+// During rotation period
+const secrets = [
+  process.env.LETTR_WEBHOOK_SECRET_NEW,
+  process.env.LETTR_WEBHOOK_SECRET_OLD
+].filter(Boolean);
+
+const event = verifyWithMultipleSecrets(payload, signature, secrets);
 ```
-203.0.113.10
-203.0.113.11
-203.0.113.12
+
+## Additional Security Measures
+
+### IP Allowlisting
+
+For additional security, you can allowlist Lettr's webhook source IP addresses. Contact support for the current list.
+
+```javascript
+const ALLOWED_IPS = ['203.0.113.10', '203.0.113.11', '203.0.113.12'];
+
+app.post('/webhooks/lettr', (req, res, next) => {
+  const clientIp = req.ip || req.connection.remoteAddress;
+
+  if (!ALLOWED_IPS.includes(clientIp)) {
+    console.warn(`Webhook request from unauthorized IP: ${clientIp}`);
+    return res.sendStatus(403);
+  }
+
+  next();
+});
 ```
 
 <Note>
-  Contact support for the current list of webhook source IPs.
+  If you're behind a proxy or load balancer, make sure to configure your application to trust the proxy and extract the real client IP from the `X-Forwarded-For` header.
 </Note>
 
+### Webhook Authentication
+
+In addition to signature verification, you can configure webhooks to include authentication credentials in requests:
+
+```javascript
+// Create webhook with basic auth
+const webhook = await lettr.webhooks.create({
+  url: 'https://example.com/webhooks',
+  events: ['email.delivered'],
+  auth_type: 'basic',
+  auth_username: 'webhook',
+  auth_password: 'secure-password-here'
+});
+
+// Create webhook with OAuth2
+const webhook = await lettr.webhooks.create({
+  url: 'https://example.com/webhooks',
+  events: ['email.delivered'],
+  auth_type: 'oauth2',
+  oauth_client_id: 'your-client-id',
+  oauth_client_secret: 'your-client-secret',
+  oauth_token_url: 'https://auth.example.com/oauth/token'
+});
+```
+
+When using basic auth, verify credentials in your handler:
+
+```javascript
+app.post('/webhooks/lettr', (req, res, next) => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith('Basic ')) {
+    return res.sendStatus(401);
+  }
+
+  const credentials = Buffer.from(authHeader.slice(6), 'base64').toString();
+  const [username, password] = credentials.split(':');
+
+  if (username !== 'webhook' || password !== process.env.WEBHOOK_PASSWORD) {
+    return res.sendStatus(401);
+  }
+
+  next();
+});
+```
+
+## Troubleshooting
+
+### Signature Verification Failures
+
+Common causes and solutions:
+
+| Issue | Solution |
+|-------|----------|
+| Body parsing before verification | Use `express.raw()` instead of `express.json()` |
+| Character encoding issues | Ensure UTF-8 encoding throughout |
+| Timestamp expired | Check server clock synchronization |
+| Wrong secret | Verify you're using the correct webhook's secret |
+| Modified request | Check for proxies that modify request bodies |
+
+### Debugging Verification
+
+Log intermediate values to debug issues:
+
+```javascript
+function debugVerification(payload, signature, secret) {
+  const elements = signature.split(',');
+  const timestamp = elements.find(e => e.startsWith('t='))?.slice(2);
+  const receivedSig = elements.find(e => e.startsWith('v1='))?.slice(3);
+
+  console.log('Timestamp:', timestamp);
+  console.log('Received signature:', receivedSig);
+
+  const signedPayload = `${timestamp}.${payload}`;
+  console.log('Signed payload (first 100 chars):', signedPayload.slice(0, 100));
+
+  const expectedSig = crypto
+    .createHmac('sha256', secret)
+    .update(signedPayload)
+    .digest('hex');
+  console.log('Expected signature:', expectedSig);
+  console.log('Match:', expectedSig === receivedSig);
+}
+```
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Handling Webhooks" icon="code" href="/learn/webhooks/handling">
+    Best practices for processing webhooks reliably
+  </Card>
+  <Card title="Retries" icon="rotate" href="/learn/webhooks/retries">
+    Understand retry behavior and failure handling
+  </Card>
+  <Card title="Testing" icon="flask" href="/learn/webhooks/testing">
+    Test webhooks in development and production
+  </Card>
+  <Card title="Event Types" icon="list" href="/learn/webhooks/event-types">
+    Complete reference of all webhook events
+  </Card>
+</CardGroup>

@@ -1,23 +1,25 @@
 ---
 title: Authentication Issues
-description: "Troubleshoot API key and authentication problems"
+description: "Troubleshoot API key and authentication problems with the Lettr API"
 ---
 
 # Troubleshooting Authentication
 
-Fix issues with API keys and authentication.
+Fix issues with API keys, permissions, and webhook signature verification.
+
+---
 
 ## Common Errors
 
 ### 401 Unauthorized
 
+This error means the API could not authenticate your request. You will receive an HTTP 401 response.
+
 **Error:**
 ```json
 {
-  "error": {
-    "code": "unauthorized",
-    "message": "Invalid API key"
-  }
+  "message": "Invalid or missing API key",
+  "error_code": "unauthorized"
 }
 ```
 
@@ -25,166 +27,231 @@ Fix issues with API keys and authentication.
 
 <AccordionGroup>
   <Accordion title="Missing API Key">
-    Ensure you're including the Authorization header:
+    Every request must include the `Authorization` header with a valid Bearer token:
     ```bash
-    curl -H "Authorization: Bearer le_xxxxxxxxxxxx" ...
+    curl https://app.lettr.com/api/domains \
+      -H "Authorization: Bearer lttr_xxxxxxxxxxxx"
     ```
+    If the header is missing entirely, the API will reject the request with a 401 status.
   </Accordion>
   <Accordion title="Invalid Key Format">
-    API keys must start with `le_` or `le_test_`. Check for typos or extra spaces.
+    All Lettr API keys start with the `le_` prefix. Double-check for:
+    - Typos or extra whitespace in the key
+    - A missing or incorrect `Bearer ` prefix in the header value
+    - Quotes or escape characters accidentally included in the key string
   </Accordion>
-  <Accordion title="Revoked Key">
-    The key may have been deleted. Create a new one in the dashboard.
-  </Accordion>
-  <Accordion title="Environment Mismatch">
-    Test keys (`le_test_`) only work in test mode. Use production keys for live sending.
+  <Accordion title="Revoked or Deleted Key">
+    If an API key has been deleted from the dashboard, it immediately stops working. Go to **Settings > API Keys** in the Lettr dashboard to confirm your key still exists and create a new one if needed.
   </Accordion>
 </AccordionGroup>
 
+---
+
 ### 403 Forbidden
 
-**Error:**
-```json
-{
-  "error": {
-    "code": "forbidden",
-    "message": "API key lacks required permission: emails:send"
-  }
-}
-```
+A 403 response means your key was recognized but is not allowed to perform the requested action. There are two main causes.
 
-**Solution:**
-
-Create a new key with the required permissions or update your existing key:
-
-```javascript
-const key = await lettr.apiKeys.create({
-  name: 'Full Access Key',
-  permissions: ['*']  // Or specific permissions
-});
-```
-
-### IP Restriction Errors
+#### Insufficient Permissions
 
 **Error:**
 ```json
 {
-  "error": {
-    "code": "forbidden",
-    "message": "Request from unauthorized IP address"
-  }
+  "message": "API key lacks required permission for this operation",
+  "error_code": "forbidden"
 }
 ```
 
+Your API key has the **Sending Only** permission level but you are trying to access an endpoint that requires **Full Access** (for example, managing domains or reading analytics).
+
+**Solution:** Create a new API key with **Full Access** permissions in **Settings > API Keys**, or use an existing key that already has the required permission level.
+
+#### IP Address Restriction
+
+**Error:**
+```json
+{
+  "message": "IP address not allowed for this API key",
+  "error_code": "forbidden"
+}
+```
+
+The API key has IP restrictions configured and your request is coming from an IP address that is not on the allow list.
+
 **Solution:**
 
-1. Check your API key's IP restrictions in the dashboard
-2. Add your current IP or remove restrictions:
+1. Go to **Settings > API Keys** in the dashboard
+2. Find the key and check its IP restriction settings
+3. Add your server's IP address to the allow list, or remove the restriction if it is no longer needed
 
-```javascript
-await lettr.apiKeys.update('key_123', {
-  ipRestrictions: ['203.0.113.0/24']  // Your IP range
-});
-```
+<Tip>
+If you are unsure which IP your server uses, you can run `curl ifconfig.me` on the machine making the API requests.
+</Tip>
+
+---
 
 ## Verifying Your API Key
 
-Test your key with a simple request:
+Run a simple test request to confirm your key is valid and working:
 
 ```bash
-curl https://app.lettr.com/api/domains \
-  -H "Authorization: Bearer le_xxxxxxxxxxxx"
+curl -i https://app.lettr.com/api/domains \
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxx"
 ```
 
-Expected response for valid key:
+**If the key is valid**, you will receive an HTTP 200 response with your domain data.
+
+**If the key is invalid or missing**, you will receive an HTTP 401 response:
+
 ```json
 {
-  "object": "list",
-  "data": [...]
+  "message": "Invalid or missing API key",
+  "error_code": "unauthorized"
 }
 ```
 
-## SDK Authentication
+<Note>
+The `-i` flag includes response headers in the output, which is helpful for debugging.
+</Note>
 
-### Node.js
+---
 
-```javascript
-import { Lettr } from 'lettr';
+## Correct Authentication Usage
 
-// From environment variable (recommended)
-const lettr = new Lettr(process.env.LETTR_API_KEY);
+All requests to the Lettr API must include the `Authorization` header with a Bearer token.
 
-// Or direct (not recommended for production)
-const lettr = new Lettr('le_xxxxxxxxxxxx');
+**GET request:**
+```bash
+curl https://app.lettr.com/api/domains \
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxx"
 ```
 
-### PHP
-
-```php
-use Lettr\Lettr;
-
-// From environment variable
-$lettr = new Lettr(getenv('LETTR_API_KEY'));
-
-// Or direct
-$lettr = new Lettr('le_xxxxxxxxxxxx');
+**POST request:**
+```bash
+curl -X POST https://app.lettr.com/api/emails \
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "from": "you@yourdomain.com",
+    "to": ["recipient@example.com"],
+    "subject": "Hello from Lettr",
+    "html": "<p>This is a test email.</p>"
+  }'
 ```
+
+<Warning>
+Do not pass your API key as a query parameter or in the request body. Always use the `Authorization: Bearer` header.
+</Warning>
+
+---
 
 ## Environment Variables
 
-Store keys in environment variables:
+Never hard-code API keys in your source code. Store them in environment variables instead.
 
+**Using a `.env` file:**
 ```bash
-# .env file
-LETTR_API_KEY=le_xxxxxxxxxxxx
-
-# Shell
-export LETTR_API_KEY=le_xxxxxxxxxxxx
+# .env
+LETTR_API_KEY=lttr_xxxxxxxxxxxx
 ```
+
+**Exporting in your shell:**
+```bash
+export LETTR_API_KEY=lttr_xxxxxxxxxxxx
+```
+
+**Using the variable in a curl request:**
+```bash
+curl https://app.lettr.com/api/domains \
+  -H "Authorization: Bearer $LETTR_API_KEY"
+```
+
+---
+
+## Webhook Signature Verification Issues
+
+When receiving webhooks from Lettr, you should verify the `lettr-signature` header to confirm the request is authentic. Below are common issues and how to solve them.
+
+### Use the Raw Request Body
+
+Signature verification must be performed against the raw, unparsed request body. If your framework parses the body as JSON before you verify the signature, the comparison will fail.
+
+**Express.js -- correct setup:**
+```javascript
+const express = require("express");
+const crypto = require("crypto");
+const app = express();
+
+// Use express.raw() so the body is a Buffer, not parsed JSON
+app.post(
+  "/webhooks/lettr",
+  express.raw({ type: "application/json" }),
+  (req, res) => {
+    const signature = req.headers["lettr-signature"];
+    const webhookSecret = process.env.LETTR_WEBHOOK_SECRET;
+
+    const expectedSignature = crypto
+      .createHmac("sha256", webhookSecret)
+      .update(req.body)
+      .digest("hex");
+
+    if (signature !== expectedSignature) {
+      console.error("Webhook signature verification failed");
+      return res.status(401).send("Invalid signature");
+    }
+
+    const event = JSON.parse(req.body);
+    console.log("Verified webhook event:", event);
+
+    res.status(200).send("OK");
+  }
+);
+```
+
+### Common Pitfalls
+
+<AccordionGroup>
+  <Accordion title="Wrong header name">
+    The signature header is `lettr-signature`. Make sure you are not looking for a different header name such as `x-signature` or `x-lettr-signature`.
+  </Accordion>
+  <Accordion title="Body already parsed as JSON">
+    If you apply `express.json()` globally before your webhook route, the body will be a parsed object and signature verification will fail. Use `express.raw()` specifically on the webhook route as shown above.
+  </Accordion>
+  <Accordion title="Wrong webhook secret">
+    Each webhook endpoint in the dashboard has its own secret. Make sure the `LETTR_WEBHOOK_SECRET` environment variable matches the secret shown for the specific endpoint you configured.
+  </Accordion>
+</AccordionGroup>
+
+---
 
 ## Key Security Best Practices
 
 <AccordionGroup>
   <Accordion title="Never commit keys to git">
-    Add `.env` to your `.gitignore` file.
+    Add `.env` to your `.gitignore` file. If a key is accidentally committed, revoke it immediately in the dashboard and create a new one.
   </Accordion>
   <Accordion title="Use environment-specific keys">
-    Separate keys for development, staging, and production.
+    Create separate API keys for development, staging, and production environments. This limits the impact if any single key is compromised.
   </Accordion>
   <Accordion title="Rotate keys regularly">
-    Create new keys and retire old ones every 90 days.
+    Create a new key, update your environment to use it, then delete the old key. Aim to rotate keys at least every 90 days.
   </Accordion>
   <Accordion title="Use minimum permissions">
-    Only grant permissions that are actually needed.
+    If your application only sends emails, use a key with **Sending Only** permissions. Only use **Full Access** keys when you need to manage domains, templates, or other account resources.
   </Accordion>
 </AccordionGroup>
 
-## Webhook Authentication
+---
 
-For webhook signature verification issues:
+## Related Topics
 
-```javascript
-import { verifyWebhook } from 'lettr';
-
-try {
-  const event = verifyWebhook(
-    req.body,
-    req.headers['lettr-signature'],
-    process.env.LETTR_WEBHOOK_SECRET
-  );
-} catch (err) {
-  // Common issues:
-  // - Wrong webhook secret
-  // - Body already parsed (use raw body)
-  // - Timestamp too old (>5 minutes)
-  console.error('Verification failed:', err.message);
-}
-```
-
-Ensure you're using the raw request body, not a parsed JSON object:
-
-```javascript
-// Express.js - use raw body
-app.post('/webhooks', express.raw({ type: 'application/json' }), handler);
-```
-
+<CardGroup cols={3}>
+  <Card title="API Keys" icon="key" href="/learn/api-keys/introduction">
+    Learn how to create and manage your API keys.
+  </Card>
+  <Card title="Permissions" icon="shield-halved" href="/learn/api-keys/permissions">
+    Understand the difference between Full Access and Sending Only keys.
+  </Card>
+  <Card title="Webhook Authorization" icon="lock" href="/learn/webhooks/authorization">
+    Set up and verify webhook signatures.
+  </Card>
+</CardGroup>

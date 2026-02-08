@@ -1,151 +1,54 @@
 ---
-title: API Keys
-description: "Manage API keys for programmatic access to your Lettr account"
+title: API Keys Introduction
+description: "Create and manage API keys to authenticate your requests to the Lettr API"
 ---
 
 # API Keys
 
-API keys are secret tokens used to authenticate your requests to the Lettr API. They are unique to your account and should be kept confidential.
+API keys authenticate your requests to the Lettr API. Each key is associated with a specific team and can be configured with different permission levels and IP restrictions for enhanced security.
 
-## Overview
+## Creating API Keys
 
-Access your API keys from the [API Keys page](https://app.lettr.com/api-keys) in the dashboard. The page displays all your API keys with the following information:
+You can create API keys through the Lettr dashboard:
 
-| Column | Description |
-|--------|-------------|
-| **Name** | The descriptive name you gave the key |
-| **API Key** | The key value (masked for security, click to copy) |
-| **Permissions** | Full access or Sending only |
-| **Status** | Active or Inactive |
-| **Actions** | Edit or delete the key |
-
-## Create an API Key
-
-<Steps>
-  <Step title="Open API Keys Page">
-    Go to **API Keys** in the dashboard sidebar.
-  </Step>
-  <Step title="Click New API Key">
-    Click the **+ New API Key** button in the top right.
-  </Step>
-  <Step title="Configure the Key">
-    - Enter a descriptive **Name** for the key (e.g., "Production Server", "Marketing App")
-    - Select the **Permission** level
-    - Optionally, add **Allowed IPs** to restrict access
-  </Step>
-  <Step title="Copy Your Key">
-    Copy the API key immediately and store it securely. You won't be able to see the full key again.
-  </Step>
-</Steps>
+1. Navigate to **Settings** > **API Keys** in your dashboard
+2. Click **Create API Key**
+3. Enter a descriptive name for the key (e.g., "Production Server", "Staging Environment")
+4. Select the appropriate permission level
+5. Optionally, configure IP restrictions
+6. Click **Create**
 
 <Warning>
-  For security reasons, you can only view the full API key once when it's created. Store it securely immediately. If you lose the key, you'll need to create a new one.
+  The full API key is only displayed once upon creation. Copy and store it securely immediately. You will not be able to view the complete key again.
 </Warning>
 
-## Permissions
+## Key Format
 
-Lettr offers two permission levels:
-
-| Permission | Description | Use Case |
-|------------|-------------|----------|
-| **Full access** | Grants access to all API endpoints: send emails, manage domains, create API keys, configure webhooks, and more | Backend servers, admin tools |
-| **Sending only** | Only allows sending emails via the API | Application servers that only need to send emails |
-
-### Full Access Capabilities
-
-| Category | Capabilities |
-|----------|--------------|
-| **Emails** | Send emails, view email details, list emails, cancel scheduled emails |
-| **Domains** | Add, verify, configure, and delete domains |
-| **Templates** | Create, edit, and delete email templates |
-| **Webhooks** | Create, configure, and delete webhooks |
-| **API Keys** | Create and delete API keys |
-| **Analytics** | View all analytics and reports |
-
-### Sending Only Capabilities
-
-| Allowed | Not Allowed |
-|---------|-------------|
-| Send emails | Manage domains |
-| | Manage templates |
-| | Manage webhooks |
-| | Create/delete API keys |
-| | View analytics |
-
-<Tip>
-  Use the principle of least privilege. If an application only needs to send emails, use a **Sending only** key. This limits potential damage if the key is compromised.
-</Tip>
-
-## IP Restrictions
-
-For enhanced security, you can restrict API key usage to specific IP addresses. This ensures the key only works from your servers.
-
-In the **Allowed IPs** field, enter one or more IP addresses or CIDR ranges:
+Lettr API keys follow this format:
 
 ```
-10.20.30.40, 10.20.30.0/24
+lttr_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
-| Format | Example | Description |
-|--------|---------|-------------|
-| Single IP | `10.20.30.40` | Allow one specific IP |
-| CIDR range | `10.20.30.0/24` | Allow a range of 256 IPs |
-| Multiple | `10.20.30.40, 10.20.30.0/24` | Combine with commas |
-
-<Info>
-  Leave the **Allowed IPs** field blank to allow access from any IP address.
-</Info>
-
-### Common CIDR Examples
-
-| CIDR | IPs Included | Use Case |
-|------|--------------|----------|
-| `/32` | 1 IP | Single server |
-| `/24` | 256 IPs | Small network |
-| `/16` | 65,536 IPs | Large network |
-
-## Edit an API Key
-
-You can update an API key's settings after creation:
-
-1. Find the key in the API Keys list
-2. Click the **...** (more options) button in the Actions column
-3. Select **Edit API Key**
-4. Update the **Name**, **Permissions**, or **Allowed IPs**
-5. Click **Save changes**
-
-<Note>
-  You cannot view or change the API key value itself after creation. If you need a new key value, create a new API key.
-</Note>
-
-## Delete an API Key
-
-To delete an API key:
-
-1. Click the **...** (more options) button for the key
-2. Select **Delete API Key**
-3. Confirm the deletion
-
-<Warning>
-  Deleting an API key is immediate and permanent. Any applications using the key will immediately stop working.
-</Warning>
+- `lttr_` prefix identifies it as a Lettr API key
+- Followed by a 64-character cryptographically secure random string
 
 ## Using API Keys
 
-### In HTTP Headers
+### Authorization Header (Recommended)
 
-Include the API key in the `Authorization` header using Bearer authentication:
+Include your API key in the `Authorization` header using the Bearer scheme:
 
 ```bash
 curl https://app.lettr.com/api/emails \
-  -H "Authorization: Bearer le_xxxxxxxxxxxx" \
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxx" \
   -H "Content-Type: application/json" \
-  -d '{"from": "hello@example.com", "to": ["user@example.com"], "subject": "Hello"}'
+  -d '{"to": "recipient@example.com", "subject": "Hello"}'
 ```
 
 ### In SDKs
 
-All Lettr SDKs accept the API key during initialization:
+When using official Lettr SDKs, pass your API key during client initialization:
 
 <CodeGroup>
 
@@ -156,95 +59,178 @@ const lettr = new Lettr(process.env.LETTR_API_KEY);
 ```
 
 ```php PHP
-use Lettr\Lettr;
+use Lettr\Client;
 
-$lettr = new Lettr(getenv('LETTR_API_KEY'));
-```
-
-```python Python
-import os
-from lettr import Lettr
-
-lettr = Lettr(os.environ['LETTR_API_KEY'])
+$lettr = new Client(getenv('LETTR_API_KEY'));
 ```
 
 </CodeGroup>
 
-## API Key Format
+## Permission Levels
 
-Lettr API keys follow this format:
+Lettr API keys support two permission levels to help you follow the principle of least privilege:
 
-```
-le_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-```
+| Permission Level | Description | Use Case |
+|-----------------|-------------|----------|
+| **Full Access** | Complete access to all API endpoints including email sending, domain management, webhooks, and templates | Server-side applications requiring full platform control |
+| **Sending Only** | Limited to email sending operations only | Applications that only need to send transactional emails |
 
-- `le_` prefix identifies it as a Lettr key
-- Followed by a 36-character random string
+<Tip>
+  Use **Sending Only** keys whenever your application only needs to send emails. This reduces the potential impact if a key is compromised.
+</Tip>
+
+## IP Restrictions
+
+For additional security, you can restrict API keys to specific IP addresses or ranges:
+
+- **Single IP**: `203.0.113.50`
+- **CIDR notation**: `198.51.100.0/24`
+- **Multiple entries**: Combine IPs and ranges separated by commas
+
+When IP restrictions are configured, requests from non-whitelisted IPs will receive a `403 Forbidden` response.
+
+## Managing API Keys
+
+### Viewing Your Keys
+
+Access your API keys in the dashboard at **Settings** > **API Keys**. The list displays:
+
+- Key name
+- First 12 characters of the key (masked for security)
+- Permission level
+- IP restriction status
+- Active status
+
+### Updating a Key
+
+You can modify the following properties of an existing API key:
+
+- Name
+- Permission level
+- IP restrictions
+
+<Note>
+  The API key value itself cannot be changed. If you need a new key value, create a new key and delete the old one.
+</Note>
+
+### Revoking a Key
+
+To revoke an API key:
+
+1. Navigate to **Settings** > **API Keys**
+2. Click the actions menu (three dots) next to the key
+3. Select **Delete**
+4. Type the key name to confirm deletion
+5. Click **Delete** to confirm
+
+<Warning>
+  Revoking a key is immediate and permanent. Any applications using the key will immediately stop working. Ensure you have updated all applications using the key before revoking it.
+</Warning>
 
 ## Best Practices
 
-### Never Expose Keys Client-Side
+<AccordionGroup>
+  <Accordion title="Never expose keys in client-side code">
+    API keys should only be used server-side. Never include them in frontend JavaScript, mobile apps, or any code that runs on user devices. Exposed keys can be extracted and abused.
+  </Accordion>
+  <Accordion title="Use environment variables">
+    Store API keys in environment variables rather than hardcoding them in your source code. This prevents accidental exposure through version control systems.
 
-API keys should **only** be used in server-side code. Never include them in frontend JavaScript, mobile app code, or public repositories.
+    ```bash
+    # .env file (never commit this)
+    LETTR_API_KEY=lttr_xxxxxxxxxxxx
+    ```
+  </Accordion>
+  <Accordion title="Apply the principle of least privilege">
+    Create keys with only the permissions required for their specific purpose. Use **Sending Only** keys for applications that don't need full access.
+  </Accordion>
+  <Accordion title="Configure IP restrictions for production">
+    Restrict production API keys to your server's IP addresses or IP ranges. This adds a layer of security even if a key is compromised.
+  </Accordion>
+  <Accordion title="Use descriptive names">
+    Give each API key a clear, descriptive name that identifies its purpose and the application or environment using it (e.g., "Production Web Server", "Staging Environment", "CI/CD Pipeline").
+  </Accordion>
+  <Accordion title="Rotate keys periodically">
+    Establish a key rotation schedule. Create a new key, update your applications to use it, then revoke the old key. This limits the window of exposure if a key is compromised.
+  </Accordion>
+  <Accordion title="Monitor API key usage">
+    Review your API request logs regularly to detect unusual patterns that might indicate a compromised key.
+  </Accordion>
+</AccordionGroup>
 
-### Use Environment Variables
+## Authentication Errors
 
-Store API keys in environment variables, not in your code:
+### Missing API Key
 
-```bash
-# .env file (never commit this!)
-LETTR_API_KEY=le_xxxxxxxxxxxx
+If no API key is provided, you'll receive:
+
+```json
+{
+  "error": {
+    "code": "unauthorized",
+    "message": "API key is required"
+  }
+}
 ```
 
-### Use Descriptive Names
+**HTTP Status**: `401 Unauthorized`
 
-Name your API keys descriptively to easily identify their purpose:
+### Invalid API Key
 
-| Good Names | Bad Names |
-|------------|-----------|
-| Production Server | Key 1 |
-| Marketing App | Test |
-| Staging Environment | API Key |
+If the provided API key doesn't exist or has been revoked:
 
-### Separate Keys for Separate Services
+```json
+{
+  "error": {
+    "code": "unauthorized",
+    "message": "Invalid API key"
+  }
+}
+```
 
-Create distinct API keys for different services. This makes it easy to:
-- Identify which service uses which key
-- Revoke one key without affecting others
-- Filter logs by specific key
+**HTTP Status**: `401 Unauthorized`
 
-### Audit and Rotate Keys
+### IP Not Allowed
 
-- Regularly review your API keys in the dashboard
-- Delete keys that are no longer in use
-- Rotate keys periodically, especially after team member departures
+If the request comes from an IP address not in the key's whitelist:
 
-## Troubleshooting
+```json
+{
+  "error": {
+    "code": "forbidden",
+    "message": "IP address not allowed for this API key"
+  }
+}
+```
 
-### 401 Unauthorized
+**HTTP Status**: `403 Forbidden`
 
-The API key is missing, invalid, or malformed.
+## API Endpoints
 
-**Check:**
-- The key is included in the `Authorization` header
-- The format is `Bearer le_xxxxxxxxxxxx` (with space after Bearer)
-- The key hasn't been deleted
+The following endpoints are available when authenticated with an API key:
 
-### 403 Forbidden
-
-The API key is valid but lacks permission for this action.
-
-**Check:**
-- The key has the required permission level (Full access vs Sending only)
-- If using IP restrictions, your request is coming from an allowed IP
+| Endpoint | Method | Description | Required Permission |
+|----------|--------|-------------|---------------------|
+| `/api/emails` | POST | Send an email | Sending Only or Full Access |
+| `/api/emails` | GET | List sent emails | Full Access |
+| `/api/emails/{id}` | GET | Get email details | Full Access |
+| `/api/templates` | GET | List templates | Full Access |
+| `/api/templates/{slug}` | GET | Get template details | Full Access |
+| `/api/domains` | GET | List domains | Full Access |
+| `/api/domains` | POST | Create a domain | Full Access |
+| `/api/domains/{domain}` | GET | Get domain details | Full Access |
+| `/api/domains/{domain}/verify` | POST | Verify a domain | Full Access |
+| `/api/domains/{domain}` | DELETE | Delete a domain | Full Access |
+| `/api/webhooks` | GET | List webhooks | Full Access |
+| `/api/webhooks/{id}` | GET | Get webhook details | Full Access |
 
 ## Next Steps
 
 <CardGroup cols={2}>
-  <Card title="Send Your First Email" icon="paper-plane" href="/quickstart/php/introduction">
-    Use your API key to send emails
+  <Card title="Permissions" icon="shield-check" href="/learn/api-keys/permissions">
+    Learn more about API key permission levels and how to configure them
   </Card>
-  <Card title="API Logs" icon="list" href="/learn/logs/introduction">
-    Monitor API requests made with your keys
+  <Card title="Send Your First Email" icon="paper-plane" href="/quickstart/php/introduction">
+    Get started with sending emails using your API key
   </Card>
 </CardGroup>

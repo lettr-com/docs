@@ -1,150 +1,143 @@
 ---
 title: DMARC
-description: "Configure DMARC for email authentication and protect your domain from spoofing"
+description: "Configure DMARC policies to protect your domain from email spoofing"
 ---
 
-# DMARC (Domain-based Message Authentication, Reporting, and Conformance)
+# DMARC Configuration
 
-DMARC is an email authentication protocol that builds on SPF and DKIM to protect your domain from email spoofing. It tells receiving email servers what to do when emails claiming to be from your domain fail authentication checks.
+After configuring SPF and DKIM for your [sending domain](/learn/domains/sending-domains) in Lettr, DMARC is the final authentication layer that tells receiving servers what to do when emails fail those checks. Without DMARC, a failed SPF or DKIM check is informational only — the receiving server decides on its own whether to deliver, quarantine, or reject the message. With DMARC, you explicitly instruct receivers to quarantine or reject unauthenticated emails claiming to come from your domain.
 
-<Info>
-  Need help managing your DMARC policy? Check out [DMARCeye.com](https://dmarceye.com) - our dedicated DMARC monitoring and reporting service that helps you analyze reports, identify issues, and safely enforce your DMARC policy.
-</Info>
+## Why DMARC Matters
+
+Without DMARC, attackers can send emails that appear to come from your domain. DMARC:
+
+- **Prevents Spoofing** - Blocks unauthorized senders from using your domain
+- **Improves Deliverability** - Authenticated emails are more likely to reach the inbox
+- **Provides Visibility** - Reports show who is sending email as your domain
+- **Enables BIMI** - Required for displaying your logo in email clients
+- **Builds Trust** - Recipients know emails from your domain are legitimate
 
 ## How DMARC Works
 
-1. You publish a DMARC policy in your domain's DNS
-2. Receiving servers check if emails pass SPF and/or DKIM
-3. They also verify that the domains in SPF/DKIM align with the `From:` domain
-4. Based on your policy, failing emails are accepted, quarantined, or rejected
-5. Receiving servers send aggregate reports about authentication results
+DMARC works with SPF and DKIM to authenticate emails:
+
+1. Sender sends an email claiming to be from `@yourcompany.com`
+2. Receiving server checks SPF (authorized sending servers)
+3. Receiving server checks DKIM (cryptographic signature)
+4. Receiving server checks DMARC policy for instructions
+5. Based on the policy, the email is delivered, quarantined, or rejected
 
 ```
-                                        ┌─────────────┐
-┌──────────┐      ┌──────────────┐      │ DMARC Check │
-│  Email   │ ───▶ │  Recipient   │ ───▶ │ SPF Pass?   │
-│  Sent    │      │   Server     │      │ DKIM Pass?  │
-└──────────┘      └──────────────┘      │ Aligned?    │
-                                        └──────┬──────┘
-                                               │
-                         ┌─────────────────────┼─────────────────────┐
-                         ▼                     ▼                     ▼
-                   ┌──────────┐          ┌──────────┐          ┌──────────┐
-                   │  Accept  │          │Quarantine│          │  Reject  │
-                   │  (p=none)│          │(p=quaran │          │(p=reject)│
-                   └──────────┘          │   tine)  │          └──────────┘
-                                         └──────────┘
+                    ┌─────────────┐
+Sender ────────────►│ Email Sent  │
+                    └──────┬──────┘
+                           │
+                    ┌──────▼──────┐
+                    │  SPF Check  │
+                    └──────┬──────┘
+                           │
+                    ┌──────▼──────┐
+                    │ DKIM Check  │
+                    └──────┬──────┘
+                           │
+                    ┌──────▼──────┐
+                    │DMARC Policy │
+                    └──────┬──────┘
+                           │
+              ┌────────────┼────────────┐
+              │            │            │
+        ┌─────▼─────┐ ┌────▼────┐ ┌─────▼─────┐
+        │  Deliver  │ │Quarantine│ │  Reject  │
+        └───────────┘ └──────────┘ └───────────┘
 ```
 
 ## DMARC Policies
 
-Your DMARC policy determines how receiving servers handle emails that fail authentication:
+DMARC has three policy levels:
 
 | Policy | Action | Use Case |
 |--------|--------|----------|
-| `p=none` | Monitor only, no action | Initial setup, gathering data |
-| `p=quarantine` | Send to spam folder | Transitioning to enforcement |
-| `p=reject` | Block the email entirely | Full protection |
-
-<Warning>
-  Don't start with `p=reject`. Begin with `p=none` to monitor your email flows, identify issues, and ensure all legitimate sending sources are authenticated.
-</Warning>
+| `p=none` | Monitor only, deliver all emails | Initial setup, gathering data |
+| `p=quarantine` | Send failing emails to spam | Transitioning to enforcement |
+| `p=reject` | Block failing emails entirely | Full protection |
 
 ## Setting Up DMARC
 
-Add a TXT record to your domain's DNS:
+### Basic DMARC Record
+
+Add a TXT record to your domain:
+
+| Field | Value |
+|-------|-------|
+| Type | TXT |
+| Name | `_dmarc` |
+| Value | `v=DMARC1; p=none; rua=mailto:dmarc@example.com` |
+
+### Record Parameters Explained
 
 ```
-Type:  TXT
-Host:  _dmarc
-Value: v=DMARC1;p=none;
+v=DMARC1;                           # DMARC version (required)
+p=none;                             # Policy: none, quarantine, or reject
+rua=mailto:dmarc@example.com;       # Aggregate report email address
+ruf=mailto:dmarc-forensic@example.com;  # Forensic report email (optional)
+pct=100;                            # Percentage of messages to apply policy
+adkim=r;                            # DKIM alignment: r (relaxed) or s (strict)
+aspf=r;                             # SPF alignment: r (relaxed) or s (strict)
+sp=none;                            # Subdomain policy (optional)
 ```
 
-You can optionally add `rua=mailto:dmarc@example.com` to receive aggregate reports (see [DMARC Reports](#dmarc-reports)).
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `v=DMARC1` | Yes | DMARC version identifier |
+| `p=` | Yes | Policy for the domain |
+| `rua=` | No | Email address for aggregate reports |
+| `ruf=` | No | Email address for forensic reports |
+| `pct=` | No | Percentage of messages to apply policy (1-100) |
+| `adkim=` | No | DKIM alignment mode (r=relaxed, s=strict) |
+| `aspf=` | No | SPF alignment mode (r=relaxed, s=strict) |
+| `sp=` | No | Policy for subdomains |
 
-## DMARC Record Components
+## Recommended DMARC Rollout
 
-```
-v=DMARC1;                              # Version (required)
-p=none;                                # Policy (required)
-rua=mailto:dmarc@example.com;          # Aggregate report address
-ruf=mailto:forensic@example.com;       # Forensic report address
-pct=100;                               # Percentage of messages to apply policy
-adkim=r;                               # DKIM alignment mode
-aspf=r;                                # SPF alignment mode
-sp=none;                               # Subdomain policy
-```
-
-### Parameter Reference
-
-| Parameter | Description | Values |
-|-----------|-------------|--------|
-| `v` | DMARC version (required) | `DMARC1` |
-| `p` | Policy for domain (required) | `none`, `quarantine`, `reject` |
-| `rua` | Aggregate report email | `mailto:address@example.com` |
-| `ruf` | Forensic report email | `mailto:address@example.com` |
-| `pct` | Percentage to apply policy | `1` - `100` (default: 100) |
-| `adkim` | DKIM alignment mode | `r` (relaxed), `s` (strict) |
-| `aspf` | SPF alignment mode | `r` (relaxed), `s` (strict) |
-| `sp` | Subdomain policy | `none`, `quarantine`, `reject` |
-
-## DMARC Alignment
-
-For DMARC to pass, either SPF or DKIM must both pass **and** align with the `From:` domain.
-
-### Relaxed vs Strict Alignment
-
-| Mode | SPF Alignment | DKIM Alignment |
-|------|---------------|----------------|
-| Relaxed (`r`) | Return-Path domain can be a subdomain of From domain | DKIM `d=` can be a subdomain of From domain |
-| Strict (`s`) | Return-Path domain must exactly match From domain | DKIM `d=` must exactly match From domain |
-
-**Example with relaxed alignment:**
-
-```
-From: hello@example.com
-Return-Path: bounce.example.com    ✓ Aligned (subdomain of example.com)
-DKIM d=mail.example.com            ✓ Aligned (subdomain of example.com)
-```
-
-<Tip>
-  Lettr automatically configures SPF and DKIM to align with your sending domain, ensuring DMARC compliance.
-</Tip>
-
-## Recommended Rollout
-
-A safe DMARC rollout typically takes 4-8 weeks:
+A gradual rollout minimizes the risk of blocking legitimate emails:
 
 <Steps>
   <Step title="Monitor (2-4 weeks)">
-    Start with `p=none` to collect reports without affecting delivery.
+    Start with `p=none` to receive reports without affecting email delivery.
 
     ```
     v=DMARC1; p=none; rua=mailto:dmarc@example.com
     ```
 
-    Analyze reports to identify all legitimate sending sources and fix authentication issues.
+    Review reports to identify all legitimate email sources.
   </Step>
-  <Step title="Quarantine with Low Percentage (1-2 weeks)">
-    Move to `p=quarantine` with a low percentage to start filtering.
+
+  <Step title="Quarantine at Low Percentage (2-4 weeks)">
+    Move to `p=quarantine` with a low percentage to test enforcement.
 
     ```
     v=DMARC1; p=quarantine; pct=10; rua=mailto:dmarc@example.com
     ```
 
-    Gradually increase `pct` as you confirm no legitimate emails are affected.
+    This applies quarantine to only 10% of failing messages.
   </Step>
-  <Step title="Full Quarantine (1-2 weeks)">
-    Increase to 100% quarantine.
+
+  <Step title="Increase Quarantine Percentage">
+    Gradually increase the percentage as you confirm legitimate emails pass.
+
+    ```
+    v=DMARC1; p=quarantine; pct=50; rua=mailto:dmarc@example.com
+    ```
+
+    Then:
 
     ```
     v=DMARC1; p=quarantine; pct=100; rua=mailto:dmarc@example.com
     ```
-
-    Monitor for any issues before moving to reject.
   </Step>
-  <Step title="Reject">
-    Finally, move to `p=reject` for full protection.
+
+  <Step title="Move to Reject">
+    Once confident, switch to `p=reject` for full protection.
 
     ```
     v=DMARC1; p=reject; rua=mailto:dmarc@example.com
@@ -152,78 +145,251 @@ A safe DMARC rollout typically takes 4-8 weeks:
   </Step>
 </Steps>
 
+<Warning>
+  Don't jump straight to `p=reject`. Start with `p=none` and monitor reports first. Moving too quickly can block legitimate emails.
+</Warning>
+
+## DMARC Alignment with Lettr
+
+When you verify a sending domain in Lettr, the SPF and DKIM records are configured to pass DMARC alignment automatically. Here's how Lettr's infrastructure interacts with each check:
+
+### DKIM Alignment
+
+- Lettr signs every email with a DKIM key specific to your domain
+- The `d=` parameter in the DKIM signature matches your sending domain (e.g., `d=yourcompany.com`)
+- Supports both relaxed and strict alignment — relaxed allows subdomains to match (e.g., `mail.yourcompany.com` aligns with `yourcompany.com`)
+
+### SPF Alignment
+
+- Lettr uses a return-path domain (configured via the bounce CNAME record) that aligns with your sending domain
+- This means the envelope sender domain matches your From domain for SPF alignment
+- Supports both relaxed and strict alignment
+
+### What This Means for Your DMARC Policy
+
+Because Lettr handles DKIM signing and SPF return-path alignment for you, emails sent through Lettr will pass DMARC as long as:
+
+1. Your sending domain is **verified** in Lettr (SPF and DKIM DNS records are in place)
+2. Your DMARC record exists at `_dmarc.yourdomain.com`
+
+If you also send email from other services (marketing platforms, CRM tools, help desks), make sure those services are also configured for DMARC alignment. A `p=reject` policy will block emails from any source that fails authentication — not just Lettr.
+
+<Tip>
+  Use `p=none` with aggregate reporting first to verify that all your email sources pass DMARC before moving to enforcement. The DMARC reports will show you exactly which services are passing and failing.
+</Tip>
+
+## Check DMARC Status
+
+### Via Dashboard
+
+1. Go to **Domains** → **Sending**
+2. Select your domain
+3. View the DMARC status indicator
+
+### Via API
+
+```bash
+curl https://app.lettr.com/api/domains/example.com \
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxx"
+```
+
+```json
+{
+  "success": true,
+  "data": {
+    "domain": "example.com",
+    "dmarc_status": "verified",
+    "dmarc_policy": "quarantine"
+  }
+}
+```
+
+### DMARC Status Values
+
+| Status | Description |
+|--------|-------------|
+| `valid` | DMARC record found and valid |
+| `missing` | No DMARC record found |
+| `invalid` | DMARC record has syntax errors |
+| `unverified` | DNS lookup error |
+
 ## DMARC Reports
 
-DMARC reports help you understand who's sending email using your domain and whether they're passing authentication.
+DMARC reports provide visibility into email authentication:
 
 ### Aggregate Reports (RUA)
 
-XML reports sent daily containing:
+Daily XML reports containing:
 
-- Source IPs sending email for your domain
-- Authentication results (SPF/DKIM pass/fail)
-- Number of messages from each source
-- Policy applied to messages
+- Source IPs sending email as your domain
+- Authentication results (SPF, DKIM pass/fail)
+- Policy applied (none, quarantine, reject)
+- Volume of emails from each source
+
+Example aggregate report summary:
+
+| Source IP | Messages | SPF | DKIM | Policy Applied |
+|-----------|----------|-----|------|----------------|
+| 192.0.2.1 | 1,500 | Pass | Pass | None |
+| 192.0.2.2 | 50 | Fail | Fail | Quarantine |
+| 192.0.2.3 | 10 | Fail | Fail | Reject |
 
 ### Forensic Reports (RUF)
 
 Individual failure reports containing:
 
-- Full headers of failed emails
-- Body samples (if configured)
-- Detailed authentication results
+- Original email headers
+- Authentication failure details
+- Timestamp and recipient information
 
 <Note>
-  Many mailbox providers have stopped sending forensic reports due to privacy concerns. Aggregate reports are more reliable.
+  Forensic reports may contain sensitive information. Many receivers don't send them due to privacy concerns.
 </Note>
 
-## Monitoring DMARC with DMARCeye
+### Report Analysis Tools
 
-Parsing raw DMARC XML reports is complex. [DMARCeye.com](https://dmarceye.com) simplifies this by:
+Raw DMARC reports are XML files that can be difficult to read. Consider using:
 
-- **Visualizing Reports** - See authentication results in easy-to-understand dashboards
-- **Identifying Sources** - Discover all services sending email as your domain
-- **Alerting Issues** - Get notified when authentication failures spike
-- **Recommending Actions** - Receive guidance on moving from `p=none` to `p=reject`
-- **Historical Analysis** - Track your domain's authentication trends over time
+- **DMARC Analyzer** - Parses and visualizes reports
+- **Postmark DMARC** - Free weekly DMARC digests
+- **Valimail** - Enterprise DMARC management
+- **dmarcian** - DMARC monitoring and analysis
 
-To use DMARCeye, update your DMARC record with their reporting address:
+## Subdomain Policies
+
+Control how DMARC applies to subdomains:
+
+### Inherit Parent Policy (Default)
+
+Subdomains inherit the parent domain's policy:
 
 ```
-v=DMARC1; p=none; rua=mailto:your-id@rua.dmarceye.com
+v=DMARC1; p=reject; rua=mailto:dmarc@example.com
 ```
 
-## Lettr DMARC Compliance
+This applies `p=reject` to `example.com` and all subdomains.
 
-Lettr automatically ensures DMARC compliance for your sending domains:
+### Explicit Subdomain Policy
 
-- **SPF Alignment** - Return-Path domain aligns with your sending domain
-- **DKIM Alignment** - Emails are signed with your domain's DKIM key
-- **Consistent Authentication** - Both SPF and DKIM pass for all emails
+Set a different policy for subdomains using `sp=`:
+
+```
+v=DMARC1; p=reject; sp=quarantine; rua=mailto:dmarc@example.com
+```
+
+This applies `p=reject` to `example.com` but only `p=quarantine` to subdomains.
+
+### Subdomain-Specific Records
+
+Create a separate DMARC record for a subdomain:
+
+```
+# At _dmarc.example.com
+v=DMARC1; p=reject; rua=mailto:dmarc@example.com
+
+# At _dmarc.mail.example.com
+v=DMARC1; p=none; rua=mailto:dmarc@example.com
+```
+
+## Common DMARC Configurations
+
+### Monitoring Only
+
+Best for initial setup:
+
+```
+v=DMARC1; p=none; rua=mailto:dmarc@example.com
+```
+
+### Standard Protection
+
+Good balance of security and flexibility:
+
+```
+v=DMARC1; p=quarantine; pct=100; rua=mailto:dmarc@example.com
+```
+
+### Maximum Protection
+
+For domains with full authentication:
+
+```
+v=DMARC1; p=reject; adkim=s; aspf=s; rua=mailto:dmarc@example.com
+```
+
+### BIMI-Ready
+
+Required for BIMI logo display:
+
+```
+v=DMARC1; p=reject; pct=100; rua=mailto:dmarc@example.com
+```
 
 ## Troubleshooting
 
-| Issue | Solution |
-|-------|----------|
-| DMARC not verifying | Ensure TXT record is at `_dmarc.yourdomain.com` |
-| DMARC failing despite SPF/DKIM pass | Check alignment - domains must match |
-| Not receiving reports | Verify email in `rua` is correct and can receive email |
-| Legitimate emails rejected | Lower `pct` or move back to `quarantine`/`none` |
+<AccordionGroup>
+  <Accordion title="DMARC failing despite SPF/DKIM passing">
+    DMARC requires **alignment** between the From address and SPF/DKIM domains:
 
-## Common Mistakes
+    - Ensure DKIM signature domain (`d=`) matches the From domain
+    - Ensure return-path domain matches the From domain (or subdomain with relaxed alignment)
+    - Check alignment mode (`adkim` and `aspf` parameters)
+  </Accordion>
 
-1. **Starting with `p=reject`** - Always start with `p=none` to avoid blocking legitimate emails
-2. **Ignoring reports** - Regularly analyze DMARC reports to catch issues early
-3. **Forgetting subdomains** - Use `sp=` to set policy for subdomains, or they inherit from parent
-4. **Multiple DMARC records** - Only one DMARC record is allowed per domain
+  <Accordion title="Not receiving DMARC reports">
+    - Verify the `rua` email address is correct
+    - Check spam folder for reports
+    - Allow time for reports to arrive (they are sent daily)
+    - Ensure the receiving mailbox can accept XML attachments
+    - Some receivers don't send reports for low-volume domains
+  </Accordion>
 
-## Next Steps
+  <Accordion title="Legitimate emails being rejected">
+    - Review DMARC reports to identify the failing source
+    - Ensure all sending services are configured with proper SPF/DKIM
+    - Consider lowering `pct` temporarily
+    - Use `p=quarantine` instead of `p=reject` while investigating
+  </Accordion>
+
+  <Accordion title="DMARC record not found">
+    - Verify the TXT record is at `_dmarc.example.com`
+    - Check for typos in the record name
+    - Allow time for DNS propagation
+    - Use a DNS lookup tool to verify the record exists
+  </Accordion>
+
+  <Accordion title="Third-party services failing DMARC">
+    For services that send email on your behalf:
+
+    - Add them to your SPF record
+    - Configure DKIM signing with your domain
+    - Or use a subdomain with a separate DMARC policy
+  </Accordion>
+</AccordionGroup>
+
+## Best Practices
+
+1. **Start with `p=none`** - Always monitor before enforcing
+2. **Review reports regularly** - Identify legitimate senders before they're blocked
+3. **Use aggregate reports** - They're more useful and widely sent than forensic reports
+4. **Increase enforcement gradually** - Use the `pct` parameter to phase in policies
+5. **Configure all senders first** - Ensure SPF and DKIM are set up for all email sources
+6. **Don't forget subdomains** - Set explicit subdomain policies if needed
+7. **Consider strict alignment** - Use `adkim=s; aspf=s` for maximum security
+
+## Related Topics
 
 <CardGroup cols={2}>
-  <Card title="BIMI" icon="image" href="/learn/domains/bimi">
-    Display your brand logo in email clients (requires DMARC enforcement)
+  <Card title="Sending Domains" icon="paper-plane" href="/learn/domains/sending-domains">
+    Configure SPF and DKIM
   </Card>
-  <Card title="DMARCeye" icon="eye" href="https://dmarceye.com">
-    Monitor and analyze your DMARC reports
+  <Card title="BIMI" icon="image" href="/learn/domains/bimi">
+    Display your logo (requires DMARC)
+  </Card>
+  <Card title="Deliverability" icon="inbox" href="/knowledge-base/best-practices/deliverability">
+    Email deliverability best practices
+  </Card>
+  <Card title="Security" icon="shield" href="/knowledge-base/best-practices/security">
+    Email security best practices
   </Card>
 </CardGroup>

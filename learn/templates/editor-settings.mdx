@@ -1,0 +1,107 @@
+---
+title: Editor Settings
+description: "Configure the visual editor's defaults — custom fonts, colors, merge tags, and testing emails"
+---
+
+# Editor Settings
+
+Editor Settings let you configure the default behavior and appearance of the visual email editor across your team. These settings apply to all templates and control available fonts, color palettes, merge tag groups, font sizes, and test email addresses.
+
+To access Editor Settings, go to **Templates** → **Editor Settings** in the sidebar.
+
+## Color Palettes
+
+Define a custom color palette that appears in the editor's color pickers. When team members design templates, they'll see your brand colors as quick-select options, ensuring consistency across all emails.
+
+To configure colors:
+
+1. Open **Editor Settings**
+2. In the **Appearance** tab, find the **Colors** section
+3. Add hex color values for your brand palette
+4. Click **Save**
+
+<Tip>
+  Add your primary brand colors, secondary accent colors, and common text colors. This saves time and prevents team members from guessing hex values.
+</Tip>
+
+## Custom Fonts
+
+The editor comes with a set of email-safe system fonts enabled by default. You can enable or disable individual system fonts and add custom web fonts.
+
+### System Fonts
+
+System fonts are pre-loaded and widely supported across email clients. Toggle individual fonts on or off to control which ones appear in the editor's font picker.
+
+### Adding Custom Fonts
+
+Add custom web fonts by providing the font URL, label, and style:
+
+1. Open **Editor Settings** → **Fonts** tab
+2. Click **Add Custom Font**
+3. Enter the font URL (Google Fonts or other web font provider)
+4. Set a display label and style
+5. Click **Save**
+
+<Warning>
+  Custom web fonts may not render in all email clients. Most email clients fall back to system fonts. Use custom fonts for decorative text where fallback behavior is acceptable, not for critical content.
+</Warning>
+
+## Font Sizes
+
+Configure the available font sizes in the editor's size picker. This lets you define a consistent type scale for your team.
+
+1. Open **Editor Settings** → **Fonts** tab
+2. In the **Font Sizes** section, add or remove size values
+3. Click **Save**
+
+## Merge Tags
+
+Merge tags are dynamic placeholders that get replaced with real data at send time. Editor Settings lets you define merge tag groups that appear in the editor's merge tag dropdown, making it easy for template designers to insert the right variables.
+
+### Organizing Merge Tags
+
+Merge tags are organized into **groups** for easy navigation:
+
+1. Open **Editor Settings** → **Merge Tags** tab
+2. Create groups (e.g., "Customer", "Order", "Company")
+3. Add merge tags to each group with their tag names
+4. Click **Save**
+
+Once configured, merge tags appear in the editor's text formatting toolbar as a dropdown organized by group.
+
+<Tip>
+  Create merge tag groups that match your data model. For example, a "Customer" group might contain `first_name`, `last_name`, and `email`, while an "Order" group contains `order_id`, `total`, and `tracking_url`.
+</Tip>
+
+## Test Email Addresses
+
+Configure a list of email addresses used for sending test emails from the editor. When a team member clicks "Send Test" in the editor, these addresses are pre-populated.
+
+1. Open **Editor Settings**
+2. In the **Testing Emails** section, add email addresses
+3. Click **Save**
+
+<Tip>
+  Add email addresses for different email clients (Gmail, Outlook, Apple Mail) to verify rendering across platforms when sending test emails.
+</Tip>
+
+## Language
+
+Configure the default language for the editor interface. This controls the language of the editor's UI elements, not the language of your email content.
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Visual Editor" icon="paintbrush" href="/learn/templates/topol-editor">
+    Learn how to use the drag-and-drop editor
+  </Card>
+  <Card title="Template Language" icon="brackets-curly" href="/learn/templates/template-language">
+    Merge tag syntax and dynamic content
+  </Card>
+  <Card title="Premade Templates" icon="images" href="/learn/templates/premade-templates">
+    Start from pre-built template designs
+  </Card>
+  <Card title="Email Editor Best Practices" icon="lightbulb" href="/knowledge-base/best-practices/email-editor-best-practices">
+    Tips for effective template design
+  </Card>
+</CardGroup>

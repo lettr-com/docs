@@ -1,0 +1,241 @@
+---
+title: "Sandbox and Testing Mode"
+description: "How to test email sending without delivering to real recipients, use test API keys, and verify your integration before going to production."
+---
+
+Testing your email integration before sending to real recipients is essential. Lettr provides several ways to send test emails, validate your setup, and debug issues without affecting your sending reputation or reaching real inboxes.
+
+---
+
+## Test Emails in the Dashboard
+
+The simplest way to test is from the Lettr dashboard:
+
+1. Go to **Emails** and open any template
+2. Click **Send Test Email**
+3. Enter your own email address (or any address you control)
+4. The email is sent through the full delivery pipeline, so you can verify rendering, headers, tracking, and deliverability
+
+<Tip>
+  Use test emails to verify your email renders correctly before sending to your full audience. Test in multiple email clients by sending to your Gmail, Outlook, and Apple Mail accounts.
+</Tip>
+
+---
+
+## Test Emails via the API
+
+When integrating with the API, send test emails to addresses you control to verify your code works before going live.
+
+### Basic Test Send
+
+```bash
+curl -X POST https://app.lettr.com/api/emails \
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "from": "you@yourdomain.com",
+    "to": ["your-test-address@gmail.com"],
+    "subject": "Integration Test",
+    "html": "<h1>Test Email</h1><p>If you see this, the integration works.</p>"
+  }'
+```
+
+### Validating the Response
+
+A successful send returns a `202 Accepted` response with the email ID:
+
+```json
+{
+  "id": "em_xxxxxxxxxxxxxx",
+  "status": "queued"
+}
+```
+
+Use this ID to check the email's delivery status:
+
+```bash
+curl https://app.lettr.com/api/emails/em_xxxxxxxxxxxxxx \
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxx"
+```
+
+The response includes the current status and event history:
+
+```json
+{
+  "id": "em_xxxxxxxxxxxxxx",
+  "status": "delivered",
+  "from": "you@yourdomain.com",
+  "to": ["your-test-address@gmail.com"],
+  "subject": "Integration Test",
+  "events": [
+    { "type": "queued", "timestamp": "2026-01-30T10:00:00Z" },
+    { "type": "sent", "timestamp": "2026-01-30T10:00:01Z" },
+    { "type": "delivered", "timestamp": "2026-01-30T10:00:02Z" }
+  ]
+}
+```
+
+---
+
+## Using Test Email Addresses
+
+When you need to test your sending logic but don't want to deliver emails to real inboxes, use these approaches:
+
+### Plus Addressing
+
+Most email providers support plus addressing, which lets you create unlimited test aliases:
+
+```
+yourname+test1@gmail.com
+yourname+bounce-test@gmail.com
+yourname+campaign-A@gmail.com
+```
+
+All of these deliver to `yourname@gmail.com`, but they appear as distinct recipients in Lettr, making it easy to track and filter test sends.
+
+### Dedicated Test Domain
+
+For team testing, set up a subdomain specifically for test recipients:
+
+1. Register a subdomain like `test.yourdomain.com`
+2. Configure email receiving for that subdomain
+3. Use addresses like `qa@test.yourdomain.com`, `staging@test.yourdomain.com`
+
+This keeps test email completely separate from production sending.
+
+---
+
+## Testing Webhooks
+
+Verify your webhook endpoint processes events correctly before relying on it in production.
+
+### Send Test Webhook Events
+
+From the Lettr dashboard:
+
+1. Go to **Webhooks** and select your endpoint
+2. Click **Send Test Event**
+3. Choose the event type (delivered, bounced, opened, clicked, etc.)
+4. Check your server logs to confirm the event was received and processed
+
+### Local Development with Tunnels
+
+Test webhooks against your local development server using a tunnel:
+
+```bash
+# Start your local server
+npm run dev  # or php artisan serve, etc.
+
+# In another terminal, create a tunnel
+ngrok http 3000
+```
+
+Copy the generated URL (e.g., `https://abc123.ngrok.io`) and set it as your webhook endpoint in the Lettr dashboard.
+
+<Note>
+  Remember to update your webhook URL back to your production endpoint before deploying. Tunnel URLs are temporary and will stop working when the tunnel session ends.
+</Note>
+
+See [Webhook Delivery Failures](/knowledge-base/troubleshooting/webhook-failures) for debugging webhook issues and [Webhook Testing](/learn/webhooks/testing) for a detailed testing guide.
+
+---
+
+## Verifying Domain and Authentication Setup
+
+Before sending to real recipients, verify that your authentication is correctly configured.
+
+### DNS Verification Checklist
+
+<Steps>
+  <Step title="Check domain status in the dashboard">
+    Go to the [Domains page](https://app.lettr.com/domains) and verify all records show a green checkmark. If any record is pending or failed, follow the setup instructions for your DNS provider.
+  </Step>
+  <Step title="Send a test and inspect headers">
+    Send a test email to your Gmail account. In Gmail, click the three-dot menu and select **Show original**. Verify:
+
+    ```
+    Authentication-Results: mx.google.com;
+      dkim=pass header.d=yourdomain.com;
+      spf=pass;
+      dmarc=pass header.from=yourdomain.com;
+    ```
+
+    All three should show `pass`.
+  </Step>
+  <Step title="Verify DNS records with dig">
+    Confirm your records are published correctly:
+
+    ```bash
+    # DKIM record
+    dig TXT selector._domainkey.yourdomain.com +short
+
+    # DMARC record
+    dig TXT _dmarc.yourdomain.com +short
+
+    # SPF record (if applicable)
+    dig TXT yourdomain.com +short | grep spf
+    ```
+  </Step>
+</Steps>
+
+---
+
+## Pre-Production Checklist
+
+Before switching from testing to production sending, work through this checklist:
+
+<AccordionGroup>
+  <Accordion title="Authentication passes for all three protocols">
+    Send a test email and verify `dkim=pass`, `spf=pass`, and `dmarc=pass` in the email headers. Do not proceed until all three pass. See [Authentication Issues](/knowledge-base/troubleshooting/authentication) if any are failing.
+  </Accordion>
+  <Accordion title="Webhook endpoint is receiving and processing events">
+    Send test webhook events from the dashboard and confirm your endpoint handles them correctly. Verify signature verification is working. See [Webhook Delivery Failures](/knowledge-base/troubleshooting/webhook-failures).
+  </Accordion>
+  <Accordion title="Email renders correctly in major clients">
+    Test your email templates in Gmail, Outlook, and Apple Mail. Check both desktop and mobile rendering. See [Email Content Rendering Issues](/knowledge-base/troubleshooting/rendering-issues).
+  </Accordion>
+  <Accordion title="Unsubscribe and compliance elements are in place">
+    Verify marketing emails include a visible unsubscribe link, a physical address, and that the `List-Unsubscribe` header is present. See [Unsubscribe Best Practices](/knowledge-base/compliance/unsubscribe-best-practices).
+  </Accordion>
+  <Accordion title="Error handling is implemented">
+    Your integration should handle API errors (rate limits, validation errors, server errors) gracefully with appropriate retries. See [Rate Limits](/knowledge-base/troubleshooting/rate-limits) and [Errors and Retries](/learn/sending/errors-retries).
+  </Accordion>
+  <Accordion title="Environment variables are set correctly">
+    Confirm your production environment has the correct API key, webhook secret, and any other configuration values. Do not use test or development keys in production.
+  </Accordion>
+  <Accordion title="Warm-up plan is ready (for new domains)">
+    If this is a new sending domain, prepare a warm-up schedule before sending at full volume. See [IP and Domain Warm-Up](/knowledge-base/best-practices/ip-domain-warmup).
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Debugging Common Test Issues
+
+| Issue | Cause | Fix |
+|-------|-------|-----|
+| Test email not arriving | Email went to spam folder | Check spam/junk folder; verify authentication passes |
+| `401 Unauthorized` response | Invalid API key | Verify the key is correct and active in **Settings > API Keys** |
+| `422 Validation Error` | Invalid request body | Check the response body for specific field errors; verify `from`, `to`, `subject`, and `html` fields |
+| Template variables not rendering | Missing or incorrect variable syntax | Verify you're passing the correct `data` object with matching variable names |
+| Tracking links not working | Custom tracking domain not configured | Set up a tracking domain at [Tracking Domains](/learn/domains/tracking-domains) or use the default |
+| Webhook test event not received | Endpoint URL incorrect or server not running | Verify the URL in webhook settings and confirm your server is accessible from the internet |
+
+---
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Sending Test Emails" icon="flask-vial" href="/learn/sending/test-emails">
+    Detailed guide to the test email feature.
+  </Card>
+  <Card title="Webhook Testing" icon="webhook" href="/learn/webhooks/testing">
+    Test your webhook integration end to end.
+  </Card>
+  <Card title="Authentication Issues" icon="key" href="/knowledge-base/troubleshooting/authentication">
+    Fix API key and authentication problems.
+  </Card>
+  <Card title="Domain Verification" icon="globe" href="/knowledge-base/troubleshooting/domain-verification">
+    Resolve domain verification failures.
+  </Card>
+</CardGroup>

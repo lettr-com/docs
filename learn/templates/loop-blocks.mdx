@@ -1,0 +1,314 @@
+---
+title: Loop Blocks
+description: "Display repeating content in email templates using the visual Loop Block editor element"
+---
+
+# Loop Blocks
+
+When your emails include repeating content—product listings in an order confirmation, team member profiles in a newsletter, or featured articles in a digest—you need a way to render the same layout for each item without duplicating HTML by hand. Loop Blocks solve this at the visual editor level: you design a repeating section once in the Topol editor, connect it to an array in your `substitution_data`, and the block automatically generates one copy per item at send time.
+
+This is different from the `{{each}}` syntax in the [Template Language](/learn/templates/template-language), which operates at the code level inside raw HTML. Loop Blocks give you the same looping capability through a drag-and-drop interface, so you can build dynamic, data-driven layouts without writing template code.
+
+---
+
+## What Are Loop Blocks?
+
+A Loop Block is a special content block in the Topol email editor that repeats its content for each item in an array. You design the layout of a single item—an image, text, price, button, or any combination of content blocks—and the Loop Block renders that layout once per entry in the connected data array.
+
+At send time, Lettr reads the array from your `substitution_data` and expands the Loop Block into the appropriate number of copies, each populated with the corresponding item's values.
+
+### How It Works
+
+1. You insert a Loop Block in the visual editor
+2. You link it to a **Loop Merge Tag** that defines the available fields (name, image, price, etc.)
+3. You design the layout using those fields as placeholders
+4. At send time, Lettr iterates over the array and renders one copy of the block per item
+
+---
+
+## Loop Blocks vs Template Language Loops
+
+Lettr provides two ways to render repeating content. Choose based on your workflow and the complexity of the layout.
+
+| Aspect | Loop Blocks | `{{each}}` Syntax |
+|--------|-------------|-------------------|
+| **Editing interface** | Visual drag-and-drop editor | Raw HTML / template code |
+| **Design control** | Structure and block settings panels | Full HTML and CSS control |
+| **Requires code knowledge** | No | Yes |
+| **Best for** | Designers building visual templates | Developers writing HTML templates |
+| **Nesting support** | Single level | Multiple levels via `loop_vars` |
+| **Where it lives** | Topol editor canvas | Template HTML source |
+| **Responsive behavior** | Handled automatically by the editor | Manual responsive implementation |
+
+### When to Use Loop Blocks
+
+- You're building templates in the visual editor and want repeating sections without writing code
+- The repeating layout follows a standard pattern (image + text + button cards, product grids, lists)
+- Non-technical team members need to create and maintain templates with dynamic lists
+
+### When to Use `{{each}}` Syntax
+
+- You need nested loops (e.g., categories containing products)
+- You're working in custom HTML blocks or raw HTML templates
+- You need fine-grained control over the generated markup
+- You want to use `loop_index` for conditional formatting (e.g., alternating row colors)
+
+<Note>
+  Loop Blocks and `{{each}}` syntax can coexist in the same template. Use Loop Blocks for the visual sections and `{{each}}` for any custom HTML blocks that need more control.
+</Note>
+
+---
+
+## Creating a Loop Block
+
+<Steps>
+  <Step title="Open the Content Blocks Panel">
+    In the Topol editor, open the content blocks panel on the left side of the editor.
+  </Step>
+  <Step title="Insert a Loop Block">
+    Drag the **Loop Block** element onto your template canvas. It appears as a repeatable section with a loop indicator.
+  </Step>
+  <Step title="Link to a Loop Merge Tag">
+    In the block's properties panel, select a **Loop Merge Tag** from the dropdown. This determines which array in your `substitution_data` provides the data and which fields are available inside the block.
+  </Step>
+  <Step title="Design the Item Layout">
+    Add content blocks inside the Loop Block—text, images, buttons, or any standard block. Use the merge tag fields from your Loop Merge Tag to insert dynamic values.
+  </Step>
+  <Step title="Preview and Test">
+    Use the editor's preview mode to verify the layout. Send a test email with sample data to confirm the loop renders correctly.
+  </Step>
+</Steps>
+
+---
+
+## Configuring Loop Block Data Sources
+
+Loop Blocks are powered by **Loop Merge Tags**, which define the data structure the block expects. Each Loop Merge Tag maps to an array in your `substitution_data` and declares the fields available for each item.
+
+### Merge Tag Configuration
+
+Loop Merge Tags are configured in your team's **Editor Settings** page (under the merge tags section). Each Loop Merge Tag is a standard merge tag item that includes a `childrenProperties` array listing the fields available inside the loop:
+
+```json
+{
+  "value": "{{PRODUCTS}}",
+  "text": "Products",
+  "label": "Product listing loop",
+  "childrenProperties": [
+    { "value": "{{PRODUCT_NAME}}", "text": "Product Name", "label": "Name of product", "type": "text" },
+    { "value": "{{PRODUCT_IMAGE}}", "text": "Product Image", "label": "Product image URL", "type": "image" },
+    { "value": "{{PRODUCT_PRICE}}", "text": "Product Price", "label": "Price of product", "type": "text" },
+    { "value": "{{PRODUCT_URL}}", "text": "Product URL", "label": "Product link URL", "type": "button" }
+  ]
+}
+```
+
+Each child property has four fields: `value` (the merge tag placeholder), `text` (display name), `label` (description), and `type` (controls how the editor renders the field). Child merge tag keys are independent identifiers—they do not need to include the parent key name.
+
+<Note>
+  Lettr creates new teams with a default **Loop Blocks** merge tag group containing an "Invoice Items" loop (`{{INVOICE_ITEMS}}`) with children for item name, description, quantity, unit price, and total. You can customize these defaults or add your own loop merge tags in **Editor Settings**.
+</Note>
+
+<Warning>
+  If you rename or remove fields from a Loop Merge Tag configuration after templates already use it, those templates will render empty values for the affected fields. Update your templates whenever you change the merge tag structure.
+</Warning>
+
+### Supported Field Types
+
+| Type | Description | Usage |
+|------|-------------|-------|
+| `text` | Plain text value | Product names, descriptions, prices |
+| `image` | Image URL | Product photos, avatars, icons |
+| `button` | Link URL | Call-to-action buttons, product links |
+| `number` | Numeric value | Quantities, ratings, counts |
+
+### Providing Data at Send Time
+
+The `substitution_data` structure must include an array whose key matches the Loop Merge Tag value (without the braces). Each array element is an object whose keys match the child merge tag values (also without braces):
+
+```javascript
+await lettr.emails.send({
+  from: 'orders@yourstore.com',
+  to: ['customer@example.com'],
+  subject: 'Your Order Confirmation',
+  template_slug: 'order-confirmation',
+  substitution_data: {
+    CUSTOMER_NAME: 'Jane Smith',
+    ORDER_ID: 'ORD-98765',
+    PRODUCTS: [
+      {
+        PRODUCT_NAME: 'Wireless Headphones',
+        PRODUCT_IMAGE: 'https://cdn.yourstore.com/headphones.jpg',
+        PRODUCT_PRICE: '$79.99',
+        PRODUCT_URL: 'https://yourstore.com/products/headphones'
+      },
+      {
+        PRODUCT_NAME: 'Phone Case',
+        PRODUCT_IMAGE: 'https://cdn.yourstore.com/case.jpg',
+        PRODUCT_PRICE: '$19.99',
+        PRODUCT_URL: 'https://yourstore.com/products/case'
+      },
+      {
+        PRODUCT_NAME: 'USB-C Cable',
+        PRODUCT_IMAGE: 'https://cdn.yourstore.com/cable.jpg',
+        PRODUCT_PRICE: '$9.99',
+        PRODUCT_URL: 'https://yourstore.com/products/cable'
+      }
+    ]
+  }
+});
+```
+
+At send time, the Loop Block renders three product cards—one for each item in the `PRODUCTS` array.
+
+---
+
+## Designing Loop Block Content
+
+Inside a Loop Block, you can use any standard content block from the editor. The merge tag fields from your Loop Merge Tag are available as placeholders in each block's settings.
+
+### What You Can Place Inside a Loop Block
+
+- **Text blocks**: Display product names, descriptions, prices, or any text field
+- **Image blocks**: Show product photos, avatars, or icons using image-type fields
+- **Button blocks**: Create call-to-action buttons using button-type fields for the URL
+- **Divider and spacer blocks**: Separate items visually
+- **Structures with columns**: Create multi-column layouts within each loop iteration (e.g., image on the left, details on the right)
+
+<Tip>
+  Design your Loop Block layout with 2-3 items worth of data in mind. This helps you verify spacing and alignment without excessive scrolling during preview.
+</Tip>
+
+---
+
+## Combining Loop Blocks with Standard Merge Tags
+
+Loop Blocks and standard merge tags work together in the same template. Standard merge tags handle single values (recipient name, order number), while Loop Blocks handle arrays (product lists, line items).
+
+```javascript
+await lettr.emails.send({
+  from: 'orders@yourstore.com',
+  to: ['customer@example.com'],
+  subject: 'Order #{{ORDER_ID}} Confirmed',
+  template_slug: 'order-confirmation',
+  substitution_data: {
+    // Standard merge tags (single values)
+    CUSTOMER_NAME: 'Jane Smith',
+    ORDER_ID: 'ORD-98765',
+    ORDER_TOTAL: '$109.97',
+    SHIPPING_ADDRESS: '123 Main St, Springfield',
+
+    // Loop Block data (array)
+    PRODUCTS: [
+      { PRODUCT_NAME: 'Wireless Headphones', PRODUCT_PRICE: '$79.99', PRODUCT_IMAGE: '...' },
+      { PRODUCT_NAME: 'Phone Case', PRODUCT_PRICE: '$19.99', PRODUCT_IMAGE: '...' },
+      { PRODUCT_NAME: 'USB-C Cable', PRODUCT_PRICE: '$9.99', PRODUCT_IMAGE: '...' }
+    ]
+  }
+});
+```
+
+In this template:
+- `{{CUSTOMER_NAME}}`, `{{ORDER_ID}}`, and `{{ORDER_TOTAL}}` render as standard merge tags in text blocks
+- The `PRODUCTS` array drives the Loop Block, rendering three product cards
+
+---
+
+## Comparison: Same Output, Two Approaches
+
+Here's how you would render an order items list using each method.
+
+### Using a Loop Block (Visual Editor)
+
+In the Topol editor, you would:
+1. Insert a Loop Block
+2. Link it to a `PRODUCTS` Loop Merge Tag
+3. Design a two-column structure: image on the left, name and price on the right
+4. Add a button block with the product URL
+
+No template code required—the editor handles the iteration.
+
+### Using `{{each}}` Syntax (Template Code)
+
+```html
+{{if not empty(PRODUCTS)}}
+<table width="100%" cellpadding="0" cellspacing="0">
+  {{each PRODUCTS}}
+  <tr>
+    <td width="120" style="padding: 16px;">
+      <img src="{{loop_var.PRODUCT_IMAGE}}" alt="{{loop_var.PRODUCT_NAME}}" width="100" />
+    </td>
+    <td style="padding: 16px;">
+      <p style="font-weight: bold; margin: 0;">{{loop_var.PRODUCT_NAME}}</p>
+      <p style="color: #666; margin: 4px 0 12px;">{{loop_var.PRODUCT_PRICE}}</p>
+      <a href="{{loop_var.PRODUCT_URL}}" style="background: #6366F1; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px;">View Product</a>
+    </td>
+  </tr>
+  {{end}}
+</table>
+{{end}}
+```
+
+Both approaches produce the same visual result. The Loop Block is faster to set up and easier to maintain in the visual editor. The `{{each}}` approach gives you full HTML control and supports nested loops.
+
+---
+
+## Best Practices
+
+### Data Structure
+
+1. **Keep array items consistent**: Every object in the array should have the same fields. Missing fields render as empty values.
+2. **Use descriptive field names**: `PRODUCT_NAME` is clearer than `N` when configuring merge tags and debugging.
+3. **Provide fallback content**: If an array might be empty, use a conditional block around the Loop Block area to show a fallback message.
+
+### Design
+
+4. **Design for variable length**: Your layout should look good with 1 item and with 10 items. Test with different array sizes.
+5. **Keep item layouts compact**: Each loop iteration adds height to the email. Avoid overly tall item cards that make the email scroll excessively.
+6. **Test on mobile**: Multi-column layouts inside Loop Blocks stack on mobile. Verify the stacking order looks correct with real data.
+
+### Performance
+
+7. **Limit array size**: Very large arrays (50+ items) increase email size and rendering time. For long lists, consider linking to a web page instead.
+8. **Optimize images**: Use appropriately sized images in Loop Blocks. High-resolution images repeated many times significantly increase email weight.
+
+---
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Loop Block renders nothing">
+    Confirm that the `substitution_data` includes the array key matching the Loop Merge Tag value. Check that the array is not empty and that each object contains the expected fields.
+  </Accordion>
+
+  <Accordion title="Fields show as blank inside the loop">
+    Verify that the field names in your `substitution_data` objects match the `childrenProperties` defined in the Loop Merge Tag. Field names are case-sensitive.
+  </Accordion>
+
+  <Accordion title="Loop Block not available in the editor">
+    Loop Blocks require Loop Merge Tags to be configured in the editor settings. Ensure your editor configuration includes at least one merge tag with a `childrenProperties` array.
+  </Accordion>
+
+  <Accordion title="Layout breaks with many items">
+    Large arrays can produce very long emails. Consider paginating your data or limiting the array to a reasonable number of items (typically under 20) and linking to a full list on the web.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Template Language" icon="brackets-curly" href="/learn/templates/template-language">
+    Merge tags, conditionals, and `{{each}}` loops
+  </Card>
+  <Card title="Topol Email Editor" icon="paintbrush" href="/learn/templates/topol-editor">
+    Visual editor concepts and workflow
+  </Card>
+  <Card title="Saved Blocks" icon="layer-group" href="/learn/templates/saved-blocks">
+    Create reusable sections and synced content
+  </Card>
+  <Card title="Templates Introduction" icon="file-lines" href="/learn/templates/introduction">
+    Get started with email templates
+  </Card>
+</CardGroup>

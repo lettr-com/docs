@@ -1,12 +1,67 @@
 ---
-title: Introduction
+title: PHP Quickstart
 description: "Get started with Lettr using PHP"
 ---
 
 # PHP Quickstart
 
-<Info>
-  This section is a work in progress. Check back soon for detailed PHP integration guides.
-</Info>
+Integrate Lettr into your PHP application to send transactional emails. Choose the guide that matches your framework.
 
-In the meantime, check out the [API Reference](/api-reference/introduction) to get started with the Lettr API.
+## Prerequisites
+
+Before you begin, make sure you have:
+
+1. A Lettr account — [sign up at app.lettr.com](https://app.lettr.com)
+2. An [API key](/learn/api-keys/introduction) created in your dashboard
+3. A [verified sending domain](/learn/domains/introduction)
+4. PHP 8.1 or higher
+
+## Choose Your Framework
+
+<CardGroup cols={2}>
+  <Card title="Laravel" icon="laravel" href="/quickstart/php/laravel">
+    Send emails through Lettr in a Laravel application using the HTTP API
+  </Card>
+  <Card title="Symfony" icon="symfony" href="/quickstart/php/symfony">
+    Integrate Lettr with Symfony's mailer component
+  </Card>
+</CardGroup>
+
+## Using SMTP Instead?
+
+If you prefer SMTP over the HTTP API, see the [SMTP quickstart guides](/quickstart/smtp/introduction) — including a dedicated [Laravel SMTP guide](/quickstart/smtp/laravel).
+
+## Direct API Usage
+
+For plain PHP without a framework, you can send emails directly via the REST API:
+
+```php
+$apiKey = 'lttr_xxxxxxxxxxxx';
+
+$data = [
+    'from' => 'you@yourdomain.com',
+    'to' => ['recipient@example.com'],
+    'subject' => 'Hello from Lettr',
+    'html' => '<p>Your email content here.</p>'
+];
+
+$ch = curl_init('https://app.lettr.com/api/emails');
+curl_setopt_array($ch, [
+    CURLOPT_POST => true,
+    CURLOPT_POSTFIELDS => json_encode($data),
+    CURLOPT_HTTPHEADER => [
+        'Authorization: Bearer ' . $apiKey,
+        'Content-Type: application/json',
+        'Accept: application/json',
+    ],
+    CURLOPT_RETURNTRANSFER => true,
+]);
+
+$response = curl_exec($ch);
+$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+curl_close($ch);
+
+echo $response;
+```
+
+For the full API reference, see the [Send Email endpoint](/api-reference/emails/send-email).

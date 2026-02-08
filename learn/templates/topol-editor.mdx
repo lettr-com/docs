@@ -1,145 +1,310 @@
 ---
-title: Topol.io Email Editor
-description: "Create beautiful emails with the Topol.io drag-and-drop editor"
+title: Topol Email Editor
+description: "Create professional email templates with the drag-and-drop visual editor"
 ---
 
-# Topol.io Email Editor
+# Topol Email Editor
 
-Create professional email templates with our integrated Topol.io drag-and-drop editor.
+The Topol Email editor is a visual drag-and-drop editor for building responsive HTML email templates. It uses a structured layout system where templates are assembled from layout sections and reusable content elements, with styling and behavior controlled through configuration panels. The editor produces cross-client-compatible HTML without requiring manual code.
 
-## Overview
+This article covers the editor's architecture, its layout model, available content block types, configuration surfaces, and integration with the Lettr platform. It is a technical reference for understanding how the editor works and what it can do.
 
-Topol.io is a powerful email editor that allows you to:
+<Note>
+For practical workflow guidance, tips on common pitfalls, and troubleshooting, see [Email Editor Best Practices](/knowledge-base/best-practices/email-editor-best-practices).
+</Note>
 
-- Design emails visually without coding
-- Create responsive templates
-- Use pre-built blocks and layouts
-- Export production-ready HTML
+---
 
-## Access the Editor
+## Template layout model
 
-<Steps>
-  <Step title="Navigate to Templates">
-    Go to Templates in your Lettr dashboard.
-  </Step>
-  <Step title="Create New Template">
-    Click "New Template" and select "Visual Editor".
-  </Step>
-  <Step title="Design Your Email">
-    Use the drag-and-drop interface to build your template.
-  </Step>
-</Steps>
+Templates are built from a hierarchy of three elements: **structures**, **columns**, and **content blocks**.
 
-## Editor Features
+### Structures
 
-### Content Blocks
+A structure is the top-level layout element. It represents a horizontal section of the email, analogous to a row in a table-based layout. Structures are stacked vertically to form the full template.
 
-| Block | Description |
-|-------|-------------|
-| Text | Rich text with formatting options |
-| Image | Single images with alt text |
-| Button | Call-to-action buttons |
-| Divider | Visual separators |
-| Spacer | Vertical spacing |
-| Social | Social media icons |
-| Video | Video thumbnails with play buttons |
-| Menu | Navigation menus |
+Each structure contains one or more columns and provides section-level configuration:
 
-### Layout Blocks
+- **Column count** — 1 to 8 columns per structure
+- **Background** — solid color or background image
+- **Width** — narrow (centered) or full-width (stretched) layout
+- **Borders** — style, color, and thickness
+- **Spacing** — top and bottom margins, internal padding
+- **Mobile stacking** — whether columns stack vertically on small screens (enabled by default)
 
-| Block | Description |
-|-------|-------------|
-| 1 Column | Full-width content |
-| 2 Columns | Side-by-side content |
-| 3 Columns | Three-column layout |
-| 4 Columns | Four-column layout |
+Structures can be moved, duplicated, deleted, or saved as reusable [Saved Blocks](/learn/templates/saved-blocks).
 
-## Using Variables
+### Columns
 
-Insert dynamic content using variables:
+Columns subdivide a structure horizontally. Each column acts as an independent container for content blocks and has its own configurable properties:
+
+- **Background color**
+- **Border** — style, color, thickness
+- **Padding and margins** — independent per column
+- **Width distribution** — columns within a structure share the available width
+
+On mobile devices, columns stack vertically by default to maintain readability. This behavior can be disabled per structure when side-by-side rendering is required at all viewport sizes.
+
+### Content blocks
+
+Content blocks are the smallest unit in the template hierarchy. They are placed inside columns and represent the actual email content. Each block type has a dedicated configuration panel with type-specific settings.
+
+The editor supports 10 content block types, described in the section below.
+
+---
+
+## Content block types
+
+Each block type is designed for a specific kind of content. All blocks share common actions (move, duplicate, save, delete) and support per-block padding and margin configuration.
+
+### Text
+
+Inline text editing with a formatting toolbar. Supports font family, size, weight, color, alignment, lists, links, and line height. Text blocks inherit global typography defaults from the Settings panel and can override them individually.
+
+Text blocks also support **merge tag insertion** through a toolbar dropdown. Merge tags are inserted at the cursor position and inherit the surrounding formatting. For merge tag syntax and data binding, see [Template Language](/learn/templates/template-language).
+
+### Image
+
+Displays a single image sourced from the File Manager or an external URL. Configuration includes alignment, width, margins, alt text, and an optional click-through link.
+
+Images are uploaded through the integrated **File Manager**, which provides folder organization, search, and access to the Pexels stock image library. Uploaded images are stored in your team's [Storage Domain](/knowledge-base/dns-guides/storage-domains) and are available across all templates.
+
+The editor includes a built-in **image editor** for cropping, resizing, masking, and adjusting images without leaving the editor.
+
+### GIF
+
+Displays an animated GIF from an external URL. Configuration is similar to the Image block (alignment, width, margins, alt text, link) but sources the image from an external URL rather than the File Manager. The editor provides built-in Giphy search for finding GIFs.
+
+### Button
+
+A styled call-to-action element combining a text label with a click-through URL. Configuration includes label text, URL, background color, text color, font, corner rounding, padding, alignment, and width (auto or full-width).
+
+Button styling defaults can be set globally in the Settings panel. Individual buttons can override these defaults.
+
+### Spacer
+
+Adds configurable vertical space between other elements. Height is adjustable by dragging directly on the canvas or through the configuration panel.
+
+### Divider
+
+A horizontal line for visual separation. Configuration includes line style (solid, dashed, dotted), color, thickness, width percentage, and vertical margins.
+
+### Social
+
+A row of social media icons, each linking to a profile URL. Supports standard networks (Facebook, Instagram, X/Twitter, LinkedIn, YouTube, Pinterest, and others) and custom URLs. Configuration includes icon style, size, spacing, alignment, and ordering.
+
+### Video
+
+Displays a clickable thumbnail that links to an externally hosted video. The editor auto-generates a preview image from YouTube and Vimeo URLs. Since most email clients do not support inline video playback, this block renders as a linked image.
+
+### HTML
+
+An inline code editor for inserting raw HTML. Includes syntax validation to help produce valid markup.
+
+<Warning>
+Custom HTML bypasses the editor's cross-client rendering guarantees. JavaScript, CSS animations, and interactive elements are unsupported in most email clients. HTML blocks should be tested across target email clients before use in production.
+</Warning>
+
+### Product
+
+A composite block designed for e-commerce emails. Connects to a **Product Feed** (XML) and automatically populates product image, name, description, price, and a call-to-action button from the feed data.
+
+Product blocks render as a single unit. Internal elements can be reordered or hidden but cannot be mixed with other content block types.
+
+---
+
+## Selection-based editing
+
+The editor's configuration panel is context-sensitive. It changes based on what is currently selected on the canvas:
+
+| Selection | Panel shows |
+|---|---|
+| Nothing selected | Settings tab (global defaults) |
+| Structure selected | Structure-level layout controls (columns, background, borders, spacing, mobile stacking) |
+| Content block selected | Block-specific controls (varies by block type) |
+| Column selected | Column-level properties (background, border, padding, margins) |
+
+This model means there is no single "properties" panel—the available options depend entirely on the current selection. Selecting a structure provides access to layout controls; selecting a content block provides access to content and styling controls.
+
+---
+
+## Global template settings
+
+The **Settings** panel configures template-wide defaults that apply automatically as new content is added. These values establish the baseline design for the template.
+
+Available settings include:
+
+| Setting | Description |
+|---|---|
+| **Template width** | Maximum width of the email on desktop (typically 600px) |
+| **Background color** | Color behind the entire template |
+| **Content area color** | Background color of the content area within the template |
+| **Font defaults** | Family, size, color, and line height for heading and body text |
+| **Link color** | Default color for hyperlinks |
+| **Button defaults** | Background color, text color, font, corner rounding, and padding |
+| **Preview text** | Preheader text shown in inbox previews alongside the subject line |
+
+Per-block and per-structure overrides take precedence over global defaults. This allows exceptions without changing the template-wide baseline.
+
+---
+
+## Responsive behavior
+
+Templates are responsive by default. The editor uses a mobile-first approach where the generated HTML adapts to the recipient's viewport.
+
+### Column stacking
+
+Multi-column structures stack their columns vertically on mobile viewports. This is the default behavior and ensures content remains readable on narrow screens. Stacking can be disabled per structure for cases where side-by-side rendering is required at all sizes.
+
+### Viewport-conditional visibility
+
+Individual structures and content blocks can be configured to appear only on specific viewport sizes using "Hide on desktop" and "Hide on mobile" toggles. This enables different content presentations for desktop and mobile without maintaining separate templates.
+
+Hidden content is rendered in the HTML output and hidden via CSS. It contributes to the total email size even when not visible.
+
+### Desktop and mobile preview
+
+The editor provides desktop and mobile preview modes for checking layout behavior during editing. These previews approximate how the template will render on each device class but are not a substitute for testing in actual email clients.
+
+---
+
+## Editor toolbar
+
+The top toolbar provides access to editing controls and workflow tools:
+
+| Tool | Function |
+|---|---|
+| **Undo / Redo** | Step backward or forward through changes within the current session. History is cleared when the editor is closed. |
+| **Multilingual** | Switch between language versions of the template. All versions share the same structure; text content is independent per language. See [Multilingual Templates](https://support.topol.io/en/articles/12665820-multilingual-templates). |
+| **Desktop / Mobile** | Toggle between desktop and mobile preview modes |
+| **Show hidden** | Reveal content hidden on the current viewport (desktop or mobile) for editing |
+| **Autosave history** | View and restore automatically saved versions. See [Autosave with version history](https://support.topol.io/en/articles/10760052-autosave-with-version-history). |
+| **Save** | Persist the current template state. Also provides "Save and Close" via the dropdown menu. |
+| **Fullscreen** | Expand the editor to fill the browser window |
+
+### Multilingual templates
+
+The multilingual system allows a single template to contain multiple language versions. All versions share the same structural layout (structures, columns, block positions) while maintaining independent text content per language.
+
+Structural changes (adding, removing, or rearranging structures) made in any language version are applied to all versions. Only text content within blocks is language-specific.
+
+### Autosave and version history
+
+The editor automatically saves template state at regular intervals. Autosave history provides access to previous versions for comparison or restoration.
+
+Autosaves are separate from manual saves. Manual saves create the canonical version of the template that is used when the template is referenced for sending.
+
+---
+
+## File Manager
+
+The File Manager is the central image asset library for the editor. It provides:
+
+- **Upload** — drag-and-drop or file browser upload
+- **Organization** — folder structure with create, rename, move, and delete operations
+- **Search** — find images by filename
+- **Stock images** — built-in Pexels library search
+- **Team-wide access** — uploaded images are available to all team members across all templates
+
+Images are hosted on your team's configured [Storage Domain](/knowledge-base/dns-guides/storage-domains) and served from your custom domain.
+
+---
+
+## Reusable components
+
+### Saved Blocks
+
+Structures and their content can be saved as reusable components and inserted into other templates. Saved Blocks support two modes:
+
+- **Saved Sections** — create independent copies when inserted (changes do not propagate)
+- **Synced Sections** — maintain a live link to the source (changes propagate to all instances)
+
+For details on creating and managing Saved Blocks, see [Saved Blocks](/learn/templates/saved-blocks).
+
+### Loop Blocks
+
+Loop Blocks render a section repeatedly for each item in a data array. They are configured visually in the editor and connected to array data provided at send time. This is useful for product listings, order summaries, team directories, and similar repeating content.
+
+For details, see [Loop Blocks](/learn/templates/loop-blocks).
+
+---
+
+## Personalization with merge tags
+
+Templates support merge tags—placeholder expressions that are replaced with values at send time. Merge tags use double curly brace syntax and can be inserted in text blocks, link URLs, image alt text, and button labels.
 
 ```
-Hello {{name}},
-
-Your order #{{order_id}} has shipped!
+Hello {{first_name}}, welcome to {{company}}!
 ```
 
-In the editor, click "Merge Tags" to insert variables.
-
-## Saving Templates
-
-```javascript
-// Templates are saved to your account
-const templates = await lettr.templates.list();
-
-// Get template HTML
-const template = await lettr.templates.get('tpl_123');
-console.log(template.html);
-```
-
-## Using Templates
-
-Send emails using saved templates:
+Merge tag values are provided via `substitution_data` in the send API request:
 
 ```javascript
 await lettr.emails.send({
   from: 'you@example.com',
   to: ['recipient@example.com'],
-  subject: 'Your Order Update',
-  templateId: 'tpl_123',
-  variables: {
-    name: 'John',
-    order_id: '12345'
+  subject: 'Welcome!',
+  template_slug: 'welcome-email',
+  substitution_data: {
+    first_name: 'Jane',
+    company: 'Acme Inc'
   }
 });
 ```
 
-## Exporting Templates
+The merge tag system supports conditionals, loops, default values, and nested data paths. For the complete syntax reference, see [Template Language](/learn/templates/template-language).
 
-Export templates as HTML for use elsewhere:
+---
 
-```javascript
-const template = await lettr.templates.get('tpl_123');
+## Converting between visual and custom HTML
 
-// Get raw HTML
-const html = template.html;
+Templates can be converted between the visual editor format and custom HTML mode. This is useful when you want to start with a visual design and then fine-tune the HTML directly, or when you have existing HTML that you want to bring into the visual editor.
 
-// Download as file
-await lettr.templates.export('tpl_123', {
-  format: 'html'
-});
-```
+### Convert to custom HTML
 
-## Template Library
+To convert a visual editor template to custom HTML:
 
-Access pre-built templates:
+1. Open the template
+2. Click the **More** menu (three dots)
+3. Select **Convert to Custom HTML**
 
-<CardGroup cols={3}>
-  <Card title="Welcome Emails" icon="hand-wave">
-    Onboarding and welcome templates
+This exports the visual editor's generated HTML into a custom HTML template that you can edit directly. The original visual editor structure is no longer maintained — you'll work with the raw HTML going forward.
+
+### Convert to visual editor
+
+To convert a custom HTML template to the visual editor format:
+
+1. Open the template
+2. Click the **More** menu (three dots)
+3. Select **Convert to Visual Editor**
+
+The editor will attempt to parse your HTML into its structure/column/block model. Simple, well-structured HTML converts cleanly. Complex or non-standard HTML may not convert perfectly and might require manual adjustment after conversion.
+
+<Warning>
+  Converting between formats is a one-way operation on the current version. The conversion creates a new active version, so you can always roll back to a previous version if needed.
+</Warning>
+
+---
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Email Editor Best Practices" icon="lightbulb" href="/knowledge-base/best-practices/email-editor-best-practices">
+    Practical guidance, workflow tips, and troubleshooting
   </Card>
-  <Card title="Transactional" icon="receipt">
-    Order confirmations, receipts
+  <Card title="Saved Blocks" icon="layer-group" href="/learn/templates/saved-blocks">
+    Create reusable sections and synced content
   </Card>
-  <Card title="Marketing" icon="bullhorn">
-    Newsletters and promotions
+  <Card title="Template Versions" icon="code-branch" href="/learn/templates/versions">
+    Manage versions and track changes
+  </Card>
+  <Card title="Projects & Folders" icon="folder" href="/learn/templates/projects">
+    Organize templates in projects
+  </Card>
+  <Card title="Loop Blocks" icon="repeat" href="/learn/templates/loop-blocks">
+    Repeating content for product lists and dynamic data
+  </Card>
+  <Card title="Template Language" icon="brackets-curly" href="/learn/templates/template-language">
+    Merge tags, conditionals, and loops
   </Card>
 </CardGroup>
-
-## Best Practices
-
-<AccordionGroup>
-  <Accordion title="Keep It Simple">
-    Don't overcomplicate designs. Simple layouts render better across clients.
-  </Accordion>
-  <Accordion title="Test Across Clients">
-    Preview your template in different email clients before sending.
-  </Accordion>
-  <Accordion title="Use Web-Safe Fonts">
-    Stick to fonts that render well in email clients.
-  </Accordion>
-  <Accordion title="Optimize Images">
-    Compress images for faster loading.
-  </Accordion>
-</AccordionGroup>
-

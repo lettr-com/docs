@@ -1,236 +1,284 @@
 ---
 title: Security Best Practices
-description: "Secure your Lettr integration"
+description: "Protect your Lettr account, API keys, and email data from unauthorized access"
 ---
 
 # Security Best Practices
 
-Protect your account, API keys, and data.
+Email infrastructure handles sensitive data and has direct access to your recipients' inboxes. A compromised API key or insecure webhook endpoint can lead to unauthorized emails sent on your behalf, leaked recipient data, or abuse of your sending reputation. This guide covers the practical steps to lock down your Lettr integration.
+
+---
 
 ## API Key Security
 
-### Environment Variables
+Your API key is the single credential that authorizes requests to the Lettr API. Treat it like a database password.
 
-Never hardcode API keys:
+### Store Keys in Environment Variables
 
-```javascript
-// ❌ Bad
-const lettr = new Lettr('le_xxxxxxxxxxxx');
+Never hardcode API keys in your source code. Use environment variables instead:
 
-// ✅ Good
-const lettr = new Lettr(process.env.LETTR_API_KEY);
+```bash
+# .env file (never committed to version control)
+LETTR_API_KEY=lttr_xxxxxxxxxxxx
 ```
 
-### .gitignore
+```javascript
+// Access via environment variable
+const apiKey = process.env.LETTR_API_KEY;
+```
 
-Ensure secrets aren't committed:
+```bash
+# Use in curl requests
+curl -X POST https://app.lettr.com/api/emails \
+  -H "Authorization: Bearer $LETTR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"to": "user@example.com", "subject": "Hello"}'
+```
 
-```gitignore
+### Keep Keys Out of Version Control
+
+Add your environment files to `.gitignore` before your first commit:
+
+```bash
 # .gitignore
 .env
 .env.local
-.env.*.local
+.env.production
 ```
 
-### Key Rotation
+<Warning>
+  If you've already committed a file containing an API key, adding it to `.gitignore` won't remove it from your git history. Rotate the key immediately in the Lettr dashboard and consider using a tool like `git filter-branch` or BFG Repo-Cleaner to purge the key from your history.
+</Warning>
 
-Rotate keys regularly:
+### Use the Right Permission Level
 
-```javascript
-// 1. Create new key
-const newKey = await lettr.apiKeys.create({
-  name: 'Production - Q2 2024',
-  permissions: ['emails:send']
-});
+Lettr API keys have two permission levels:
 
-// 2. Update your application with new key
+| Permission Level | Use Case |
+|-----------------|----------|
+| **Sending Only** | Application code that only needs to send emails — use this for production services |
+| **Full Access** | Admin tasks like managing domains, templates, and account settings |
 
-// 3. Delete old key
-await lettr.apiKeys.delete('old_key_id');
-```
+<Tip>
+  Default to **Sending Only** keys for any service that just sends email. This limits the damage if a key is ever exposed — an attacker could send emails, but couldn't access your templates, domains, or account settings.
+</Tip>
 
-### Minimum Permissions
+See [API Key Permissions](/learn/api-keys/permissions) for details on what each level can access.
 
-Only grant necessary permissions:
+### Use Separate Keys Per Environment
 
-```javascript
-// ❌ Bad - Full access when only sending needed
-const key = await lettr.apiKeys.create({
-  permissions: ['*']
-});
+Create distinct API keys for each environment:
 
-// ✅ Good - Only required permissions
-const key = await lettr.apiKeys.create({
-  permissions: ['emails:send']
-});
-```
+- **Development** — a Sending Only key pointing to test recipients
+- **Staging** — a Sending Only key for pre-production testing
+- **Production** — a Sending Only key for live email sending
+- **Admin** — a Full Access key used only for dashboard-level operations
+
+If one environment is compromised, you only need to rotate that key without affecting other environments.
+
+### Rotate Keys Regularly
+
+Rotate your API keys periodically and immediately if you suspect exposure. You can create new keys and revoke old ones from the Lettr dashboard without downtime — create the new key first, update your environment variables, then revoke the old key.
+
+---
 
 ## Webhook Security
 
-### Always Verify Signatures
+Webhooks push event data to your server. Without verification, anyone who discovers your webhook URL could send fake events to your application.
+
+### Verify Webhook Signatures
+
+Every webhook request from Lettr includes a `lettr-signature` header. Verify this signature before processing any event:
 
 ```javascript
-import { verifyWebhook } from 'lettr';
+const crypto = require('crypto');
+const express = require('express');
+const app = express();
 
-app.post('/webhooks', express.raw({ type: 'application/json' }), (req, res) => {
-  try {
-    const event = verifyWebhook(
-      req.body,
-      req.headers['lettr-signature'],
-      process.env.LETTR_WEBHOOK_SECRET
-    );
-    // Process verified event
-  } catch (err) {
-    // Reject unverified requests
-    return res.status(400).send('Invalid signature');
+// IMPORTANT: Use the raw body for signature verification
+app.post('/webhooks/lettr', express.raw({ type: 'application/json' }), (req, res) => {
+  const signature = req.headers['lettr-signature'];
+  const webhookSecret = process.env.LETTR_WEBHOOK_SECRET;
+
+  const expectedSignature = crypto
+    .createHmac('sha256', webhookSecret)
+    .update(req.body)
+    .digest('hex');
+
+  if (signature !== expectedSignature) {
+    console.error('Invalid webhook signature');
+    return res.sendStatus(401);
   }
+
+  // Signature is valid — safe to process
+  const event = JSON.parse(req.body);
+  handleEvent(event);
+
+  res.sendStatus(200);
 });
 ```
 
-### IP Allowlisting
+<Warning>
+  You must use the **raw request body** for signature verification, not a parsed JSON object. If your framework parses the body before your handler runs, the re-serialized JSON may differ from the original payload and the signature will not match.
+</Warning>
 
-Restrict webhook origins:
+### Use HTTPS for Webhook Endpoints
 
-```javascript
-const allowedIPs = ['203.0.113.10', '203.0.113.11'];
+Always use an `https://` URL for your webhook endpoint. HTTP endpoints transmit event data — including recipient email addresses — in plain text across the network.
 
-app.post('/webhooks', (req, res, next) => {
-  const clientIP = req.ip;
-  if (!allowedIPs.includes(clientIP)) {
-    return res.status(403).send('Forbidden');
-  }
-  next();
-});
-```
+See [Webhook Authorization](/learn/webhooks/authorization) for the full signature verification reference.
+
+---
 
 ## Account Security
 
 ### Enable Two-Factor Authentication
 
-Require 2FA for all team members:
+Enable 2FA for every team member in the Lettr dashboard under your account security settings. This protects against password compromise — even if an attacker obtains a password, they can't access the dashboard without the second factor.
 
-```javascript
-await lettr.team.updateSettings({
-  require2FA: true
-});
-```
+<Note>
+  2FA is configured per user in the dashboard. If you manage a team, require all members to enable it as part of your onboarding process.
+</Note>
 
 ### Review Team Access
 
-Regularly audit team members:
+Periodically review who has access to your Lettr account through the dashboard:
 
-```javascript
-const members = await lettr.team.list();
+- Remove team members who no longer need access
+- Verify that each member's role matches their current responsibilities
+- Audit when new members were added and by whom
 
-members.forEach(member => {
-  console.log({
-    email: member.email,
-    role: member.role,
-    lastLogin: member.lastLoginAt
-  });
-});
-```
+### Configure IP Restrictions
 
-### Use SSO (Enterprise)
+If your API requests originate from known IP addresses (such as production servers), configure IP restrictions in the Lettr dashboard to reject requests from unrecognized sources. This adds a layer of defense even if an API key is leaked.
 
-Enterprise customers should use SSO for centralized access management.
+---
 
 ## Data Protection
 
-### Sensitive Data in Emails
+### Minimize Sensitive Data in Emails
 
-Don't include sensitive data in email content that's logged:
+Email is not a secure transport channel. Avoid including sensitive information directly in email content or metadata:
 
-```javascript
-// ❌ Bad - Password in email
-await lettr.emails.send({
-  html: `Your password is: ${password}`
-});
+| Don't Include | Do Instead |
+|--------------|------------|
+| Full credit card numbers | Last four digits only |
+| Passwords or secrets | A link to securely reset or retrieve |
+| Social security numbers | Reference an account number |
+| Full API keys or tokens | A masked version with a link to the dashboard |
+| Medical or financial details | A notification to log in and view securely |
 
-// ✅ Good - Secure reset link
-await lettr.emails.send({
-  html: `Click to reset: ${resetUrl}`
-});
-```
+### Be Careful with Metadata and Custom Headers
 
-### Metadata Security
+Any data you attach to an email — custom headers, metadata fields, tags — is stored by Lettr and may appear in logs, webhooks, and dashboard views. Don't use metadata fields to store passwords, tokens, or personally identifiable information that isn't necessary for email delivery.
 
-Don't store sensitive data in metadata:
+<Tip>
+  If you need to correlate emails with internal records, use an opaque identifier (like a UUID) rather than embedding sensitive data directly.
+</Tip>
 
-```javascript
-// ❌ Bad
-await lettr.emails.send({
-  metadata: { ssn: '123-45-6789' }
-});
+---
 
-// ✅ Good - Use opaque references
-await lettr.emails.send({
-  metadata: { userId: 'user_123' }
-});
-```
+## Monitoring and Incident Response
 
-## Monitoring
+### Use Webhooks to Detect Unusual Activity
 
-### Set Up Alerts
-
-Monitor for suspicious activity:
+Set up webhook handlers to flag abnormal patterns:
 
 ```javascript
-// Alert on unusual sending patterns
-const stats = await lettr.stats.get({ period: 'today' });
+const crypto = require('crypto');
+const express = require('express');
+const app = express();
 
-if (stats.sent > normalDailyAverage * 2) {
-  alertSecurityTeam('Unusual sending volume detected');
-}
-```
+app.post('/webhooks/lettr', express.raw({ type: 'application/json' }), (req, res) => {
+  const signature = req.headers['lettr-signature'];
+  const webhookSecret = process.env.LETTR_WEBHOOK_SECRET;
 
-### Audit Logs
+  const expectedSignature = crypto
+    .createHmac('sha256', webhookSecret)
+    .update(req.body)
+    .digest('hex');
 
-Review account activity:
-
-```javascript
-const logs = await lettr.auditLogs.list({
-  startDate: '2024-01-01'
-});
-
-// Look for suspicious activity
-logs.forEach(log => {
-  if (log.action === 'api_key.created' || log.action === 'team.invited') {
-    console.log(log);
+  if (signature !== expectedSignature) {
+    return res.sendStatus(401);
   }
+
+  const event = JSON.parse(req.body);
+
+  if (event.type === 'email.bounced' && event.data.bounceType === 'hard') {
+    trackBounce(event.data.to);
+
+    // Alert if hard bounces spike — could indicate a compromised key
+    // sending to purchased or invalid lists
+    if (getRecentBounceCount() > BOUNCE_THRESHOLD) {
+      alertSecurityTeam('Unusual hard bounce spike detected');
+    }
+  }
+
+  res.sendStatus(200);
 });
 ```
+
+### Review Dashboard Logs Regularly
+
+Check the Lettr dashboard periodically for:
+
+- **Unexpected sending volume** — a spike could mean a compromised key
+- **Emails to unfamiliar recipients** — could indicate unauthorized use
+- **Failed authentication attempts** — someone may be trying stolen credentials
+- **New API keys you didn't create** — another team member may need to verify, or an account may be compromised
+
+<Note>
+  If you discover any sign of unauthorized access, rotate all API keys immediately and contact [support@lettr.com](mailto:support@lettr.com).
+</Note>
+
+---
 
 ## Security Checklist
 
+Use this checklist when setting up a new Lettr integration or auditing an existing one:
+
 <Steps>
-  <Step title="API Keys in Environment Variables">
-    Never hardcode keys in source code.
+  <Step title="Store API keys in environment variables">
+    Move all API keys out of source code and into environment variables. Verify your `.env` files are in `.gitignore`.
   </Step>
-  <Step title="Minimum Permissions">
-    Only grant permissions actually needed.
+  <Step title="Use Sending Only keys for application code">
+    Check that production services use Sending Only keys, not Full Access keys. Reserve Full Access for admin operations only.
   </Step>
-  <Step title="Webhook Signature Verification">
-    Always verify webhook signatures.
+  <Step title="Use separate keys per environment">
+    Create distinct keys for development, staging, and production so a compromise in one doesn't affect the others.
   </Step>
-  <Step title="Two-Factor Authentication">
-    Enable 2FA for all team members.
+  <Step title="Verify webhook signatures">
+    Confirm your webhook handler checks the `lettr-signature` header using the raw request body before processing any event.
   </Step>
-  <Step title="Regular Key Rotation">
-    Rotate API keys every 90 days.
+  <Step title="Use HTTPS for all endpoints">
+    Ensure your webhook URLs and any client-side requests use HTTPS, not HTTP.
   </Step>
-  <Step title="Access Reviews">
-    Audit team access quarterly.
+  <Step title="Enable 2FA for all team members">
+    Verify every user on your Lettr account has two-factor authentication enabled in the dashboard.
+  </Step>
+  <Step title="Audit team access">
+    Review the team members list in the dashboard and remove anyone who no longer needs access.
+  </Step>
+  <Step title="Remove sensitive data from email content">
+    Audit your email templates to ensure they don't contain passwords, full card numbers, or other sensitive data.
+  </Step>
+  <Step title="Set up monitoring alerts">
+    Configure webhook handlers to detect unusual bounce rates, sending volume, or other anomalies.
   </Step>
 </Steps>
 
-## Reporting Security Issues
+---
 
-Found a vulnerability? Report responsibly:
+## Related Topics
 
-<Card title="Security Contact" icon="shield" href="mailto:security@lettr.dev">
-  security@lettr.dev
-</Card>
-
-We respond within 24 hours and offer a bug bounty program.
-
+<CardGroup cols={2}>
+  <Card title="API Key Permissions" icon="key" href="/learn/api-keys/permissions">
+    Understand Full Access vs Sending Only permission levels
+  </Card>
+  <Card title="Webhook Authorization" icon="shield-check" href="/learn/webhooks/authorization">
+    Full reference for webhook signature verification
+  </Card>
+  <Card title="Authentication Troubleshooting" icon="circle-exclamation" href="/knowledge-base/troubleshooting/authentication">
+    Diagnose and fix API authentication errors
+  </Card>
+</CardGroup>

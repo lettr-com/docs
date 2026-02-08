@@ -1,0 +1,224 @@
+---
+title: "Outlook / Microsoft 365 Delivery Issues"
+description: "Diagnose and fix deliverability problems specific to Outlook.com, Hotmail, and Microsoft 365, including SNDS, SmartScreen filtering, and common Outlook blocks."
+---
+
+Microsoft operates Outlook.com, Hotmail, Live.com, and Microsoft 365 (Exchange Online). Together these handle a significant share of business and consumer email. Microsoft's filtering differs from Gmail in important ways — this guide covers the specifics.
+
+---
+
+## How Microsoft Filters Email
+
+Microsoft uses several layers of filtering that work together:
+
+| Layer | What It Does |
+|-------|-------------|
+| **Exchange Online Protection (EOP)** | Connection filtering, sender reputation checks, SPF/DKIM/DMARC validation |
+| **SmartScreen** | Content-based filtering using machine learning (similar to Gmail's spam classifier) |
+| **User signals** | Junk/Not Junk actions, Safe Senders list, block list |
+| **Organizational policies** | Microsoft 365 admins can set custom transport rules that override default filtering |
+
+### Key Differences from Gmail
+
+- **No tab system** — Outlook uses Focused Inbox (Focused vs Other), but filtering is less aggressive than Gmail's tab placement.
+- **Heavier IP reputation weighting** — Microsoft weights sending IP reputation more heavily than Gmail, which focuses more on domain reputation.
+- **Slower reputation recovery** — once your reputation drops with Microsoft, recovery takes longer than with Gmail.
+- **Safe Senders list** — recipients who add you to their Safe Senders list bypass junk filtering entirely.
+
+---
+
+## Microsoft SNDS (Smart Network Data Services)
+
+SNDS provides reputation data about your sending IP addresses with Microsoft. This is the Microsoft equivalent of Google Postmaster Tools.
+
+<Steps>
+  <Step title="Sign up for SNDS">
+    Go to [sendersupport.olc.protection.outlook.com/snds](https://sendersupport.olc.protection.outlook.com/snds/) and sign in with a Microsoft account.
+  </Step>
+  <Step title="Request access to your IP range">
+    Enter the IP addresses or CIDR range that Lettr uses to send your email. You can find your sending IPs in the email headers of messages sent through Lettr — look for the `Received` headers.
+
+    <Note>
+      If you are on Lettr's shared IP pool, contact Lettr support to get the current sending IP ranges.
+    </Note>
+  </Step>
+  <Step title="Review the data">
+    SNDS shows:
+
+    - **Traffic volume** per IP per day
+    - **Spam complaint rate** (trap hits and user complaints)
+    - **Filter result** — Green (good), Yellow (mixed), Red (poor)
+
+    A Red status means Microsoft is actively filtering your email to junk or rejecting it.
+  </Step>
+</Steps>
+
+---
+
+## Junk Mail Reporting Program (JMRP)
+
+Microsoft's JMRP sends you notifications when Outlook users mark your email as junk. This is Microsoft's feedback loop — the equivalent of Gmail complaint data in Postmaster Tools.
+
+<Steps>
+  <Step title="Enroll in JMRP">
+    Go to [postmaster.live.com](https://postmaster.live.com/) and sign in with a Microsoft account.
+  </Step>
+  <Step title="Register your sending IPs">
+    Add the IP addresses Lettr uses to send your email. Microsoft will begin forwarding complaint notifications to the abuse address published in your IP's WHOIS record or to an address you specify.
+  </Step>
+  <Step title="Process complaints">
+    When a recipient marks your email as junk, Microsoft sends an ARF (Abuse Reporting Format) report. Use these to:
+
+    - Remove complaining recipients from your list
+    - Identify content or campaigns that generate high complaint rates
+    - Track complaint trends over time
+
+    <Tip>
+      Lettr processes complaint webhooks automatically and adds complainants to your suppression list. Check your [Suppressions page](https://app.lettr.com/suppressions) to verify complaints are being recorded.
+    </Tip>
+  </Step>
+</Steps>
+
+---
+
+## Common Outlook Blocks and Errors
+
+### 550 5.7.1 — Message Rejected Due to Content
+
+```
+550 5.7.1 Unfortunately, messages from [IP] weren't sent. Please contact
+your Internet service provider since part of their network is on our
+block list (S3150).
+```
+
+This means Microsoft has blocked the sending IP. Possible causes:
+
+- The IP is on Microsoft's internal blocklist
+- High complaint rates from Outlook recipients
+- Spam trap hits
+
+**Fix:** Submit a delisting request at [sender.office.com](https://sender.office.com/). Include details about your sending practices and what steps you've taken to resolve the issue.
+
+### 421 4.7.0 — Temporary Rate Limit
+
+```
+421 4.7.0 [contoso.com] Our system has detected an unusual rate of
+unsolicited mail originating from your IP address. As a result,
+all messages from your IP are being temporarily deferred.
+```
+
+Microsoft is throttling your sends. Lettr retries these automatically. If the issue persists:
+
+- Reduce sending volume to Microsoft domains
+- Check SNDS for IP reputation issues
+- Review and clean your Outlook/Hotmail recipient lists
+
+### 550 5.7.708 — Tenant-Level Block (Microsoft 365)
+
+```
+550 5.7.708 Service unavailable. Access denied, traffic not accepted
+from this IP.
+```
+
+A Microsoft 365 organization has blocked your sending IP at the tenant level. This is set by the recipient organization's IT admin, not by Microsoft globally.
+
+**Fix:** Contact the recipient organization's IT department and ask them to allowlist your sending IP or domain.
+
+---
+
+## SmartScreen and Content Filtering
+
+Microsoft's SmartScreen filter analyzes email content using signals that differ from Gmail's classifier.
+
+### Content Patterns That Trigger SmartScreen
+
+| Pattern | Risk Level | Recommendation |
+|---------|-----------|----------------|
+| Large images with minimal text | High | Maintain at least 60/40 text-to-image ratio |
+| Excessive use of red or large fonts | Medium | Use standard font sizes and colors |
+| Multiple URL redirects | High | Link directly to your destination URLs |
+| Shortened URLs (bit.ly, etc.) | High | Use full URLs or your custom tracking domain |
+| Hidden text (white text on white background) | Very High | Never hide text — this is a classic spam technique |
+| Attachments from unknown senders | Medium | Use hosted links instead of attachments when possible |
+
+### Outlook-Specific HTML Rendering
+
+Outlook desktop uses Microsoft Word's rendering engine, which has limited CSS support. Broken rendering can indirectly affect deliverability because recipients who see a broken email are more likely to mark it as junk.
+
+<Warning>
+  Test your emails in Outlook desktop specifically. Layouts that work in Gmail and Apple Mail often break in Outlook due to Word rendering. See [Email Content Rendering Issues](/knowledge-base/troubleshooting/rendering-issues) for details.
+</Warning>
+
+---
+
+## Requesting Delisting from Microsoft
+
+If your emails are being blocked or consistently junked by Microsoft, submit a delisting request:
+
+<Steps>
+  <Step title="Go to the delisting portal">
+    Visit [sender.office.com](https://sender.office.com/).
+  </Step>
+  <Step title="Enter your sending IP or domain">
+    Provide the IP address or domain that is being blocked.
+  </Step>
+  <Step title="Fill out the form">
+    Include:
+
+    - A description of your sending practices
+    - Steps you have taken to fix the underlying issue
+    - Your complaint handling process
+    - Your list management practices
+  </Step>
+  <Step title="Wait for a response">
+    Microsoft typically responds within 24–48 hours. If approved, it may take another 24 hours for the unblock to propagate.
+  </Step>
+</Steps>
+
+<Note>
+  Delisting is temporary if you haven't fixed the root cause. If complaint rates remain high or you continue hitting spam traps, you will be re-listed.
+</Note>
+
+---
+
+## Improving Outlook Deliverability
+
+<AccordionGroup>
+  <Accordion title="Authenticate with SPF, DKIM, and DMARC">
+    Microsoft enforces authentication strictly. All three protocols must pass. Verify your records on the [Domains page](https://app.lettr.com/domains) and check headers for `pass` results. See [SPF, DKIM, and DMARC](/knowledge-base/fundamentals/spf-dkim-dmarc).
+  </Accordion>
+  <Accordion title="Warm up gradually for Microsoft domains">
+    If you are on a new domain or IP, start with low volumes to Microsoft recipients and increase gradually over 2–4 weeks. Microsoft is particularly sensitive to sudden volume increases. See [IP and Domain Warm-Up](/knowledge-base/best-practices/ip-domain-warmup).
+  </Accordion>
+  <Accordion title="Monitor SNDS weekly">
+    Check SNDS data at least weekly. A shift from Green to Yellow is an early warning — act before it reaches Red.
+  </Accordion>
+  <Accordion title="Ask recipients to add you to Safe Senders">
+    Recipients who add your sending address to their Safe Senders list bypass junk filtering entirely. Include a brief note in onboarding emails: "To make sure you receive our emails, add `noreply@yourdomain.com` to your contacts."
+  </Accordion>
+  <Accordion title="Keep complaint rate below 0.3%">
+    Microsoft's threshold for complaint-based filtering is similar to Gmail's. Monitor complaints through JMRP and Lettr's webhook events.
+  </Accordion>
+  <Accordion title="Avoid sending to long-inactive addresses">
+    Outlook recycles abandoned email addresses as spam traps. Regularly remove recipients who haven't engaged in 6+ months. See [List Hygiene](/knowledge-base/best-practices/list-hygiene).
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Emails Landing in Spam" icon="shield-exclamation" href="/knowledge-base/troubleshooting/spam-placement">
+    General spam placement diagnosis across all providers.
+  </Card>
+  <Card title="Gmail Delivery Issues" icon="envelope" href="/knowledge-base/troubleshooting/gmail-delivery">
+    Troubleshoot Gmail-specific delivery problems.
+  </Card>
+  <Card title="Deliverability Best Practices" icon="inbox" href="/knowledge-base/best-practices/deliverability">
+    Foundational practices for maximizing inbox placement.
+  </Card>
+  <Card title="SPF, DKIM, and DMARC" icon="shield-halved" href="/knowledge-base/fundamentals/spf-dkim-dmarc">
+    How authentication protocols protect your domain.
+  </Card>
+</CardGroup>

@@ -1,0 +1,147 @@
+---
+title: Rate Limits
+description: "Understand API rate limits and email quotas"
+---
+
+# Rate Limits
+
+Lettr enforces rate limits to ensure fair usage and maintain service reliability for all users.
+
+## API Rate Limits
+
+| Limit Type | Value | Window |
+|------------|-------|--------|
+| API requests | 300 requests | 5 minutes |
+| High-volume API | 2,000 requests | 5 minutes |
+| Authentication failures | 5 failures | 5 minutes (15 min block) |
+
+## Email Sending Limits
+
+| Limit | Value |
+|-------|-------|
+| Recipients per request | 50 (combined to, cc, bcc) |
+| Monthly email quota | Based on your plan |
+
+## Rate Limit Response
+
+When you exceed rate limits, you'll receive a `429 Too Many Requests` response:
+
+```json
+{
+  "status": "error",
+  "error_code": "rate_limit_exceeded",
+  "message": "Too many requests. Please retry after 60 seconds.",
+  "retry_after": 60
+}
+```
+
+## Handling Rate Limits
+
+Implement exponential backoff for rate limit errors:
+
+```javascript
+async function sendWithBackoff(emailData, maxRetries = 5) {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await lettr.emails.send(emailData);
+    } catch (error) {
+      if (error.status === 429) {
+        const retryAfter = error.retryAfter || Math.pow(2, attempt);
+        console.log(`Rate limited. Retrying in ${retryAfter} seconds...`);
+        await sleep(retryAfter * 1000);
+      } else {
+        throw error;
+      }
+    }
+  }
+  throw new Error('Max retries exceeded');
+}
+```
+
+## Batch Sending with Rate Limiting
+
+When sending large volumes, implement pacing:
+
+```javascript
+const recipients = [...]; // Large list
+const batchSize = 50;
+const delayBetweenBatches = 200; // milliseconds
+
+for (let i = 0; i < recipients.length; i += batchSize) {
+  const batch = recipients.slice(i, i + batchSize);
+
+  await lettr.emails.send({
+    from: 'you@example.com',
+    to: batch,
+    subject: 'Newsletter',
+    html: content
+  });
+
+  // Pace your requests
+  if (i + batchSize < recipients.length) {
+    await sleep(delayBetweenBatches);
+  }
+}
+```
+
+## Monthly Email Quotas
+
+Your monthly email quota depends on your plan:
+
+| Plan | Monthly Emails |
+|------|----------------|
+| Starter | 10,000 |
+| Growth | 100,000 |
+| Business | 500,000 |
+| Enterprise | Custom |
+
+<Note>
+  Overage charges may apply when exceeding your monthly quota. Check your billing settings for overage rates.
+</Note>
+
+## Checking Your Usage
+
+Monitor your email usage via the dashboard or API:
+
+```javascript
+const usage = await lettr.usage.get();
+
+console.log({
+  sent: usage.emailsSent,
+  quota: usage.monthlyQuota,
+  remaining: usage.monthlyQuota - usage.emailsSent,
+  percentUsed: (usage.emailsSent / usage.monthlyQuota) * 100
+});
+```
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Implement Backoff">
+    Always implement exponential backoff for rate limit errors.
+  </Accordion>
+  <Accordion title="Batch Efficiently">
+    Use the full 50 recipients per request to minimize API calls.
+  </Accordion>
+  <Accordion title="Monitor Usage">
+    Set up alerts when approaching your monthly quota.
+  </Accordion>
+  <Accordion title="Queue Large Sends">
+    For large campaigns, use a queue system to pace sending.
+  </Accordion>
+  <Accordion title="Use Webhooks">
+    Instead of polling for status, use webhooks to receive delivery notifications.
+  </Accordion>
+</AccordionGroup>
+
+## Increasing Your Limits
+
+If you need higher limits:
+
+1. **Upgrade your plan** for higher monthly quotas
+2. **Contact support** for custom rate limits on Enterprise plans
+3. **Optimize your integration** to use fewer API calls
+
+<Card title="Contact Sales" icon="envelope" href="mailto:sales@lettr.com">
+  Need higher limits? Contact our sales team for Enterprise options.
+</Card>

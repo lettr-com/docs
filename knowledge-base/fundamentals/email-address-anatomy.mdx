@@ -1,0 +1,271 @@
+---
+title: "Email Address Anatomy"
+description: "Understanding the parts of an email address — local part, domain, display name, plus addressing, and case sensitivity"
+---
+
+# Email Address Anatomy
+
+An email address looks simple, but its structure follows precise rules defined in internet standards (RFC 5321 and RFC 5322). Understanding the parts of an email address helps you validate recipient input correctly, avoid delivery failures caused by formatting errors, and make informed decisions about how you collect and store addresses in your application.
+
+---
+
+## Structure of an Email Address
+
+A standard email address has two parts separated by the `@` symbol:
+
+```
+local-part@domain
+```
+
+For example, in `jane.doe@example.com`:
+
+| Part | Value | Purpose |
+|------|-------|---------|
+| **Local part** | `jane.doe` | Identifies a specific mailbox on the mail server |
+| **@ separator** | `@` | Divides the local part from the domain |
+| **Domain** | `example.com` | Identifies the mail server responsible for the mailbox |
+
+When a display name is included (common in the `From` header), the full format becomes:
+
+```
+Jane Doe <jane.doe@example.com>
+```
+
+---
+
+## The Local Part
+
+The local part is everything before the `@` symbol. It identifies a specific mailbox on the receiving mail server.
+
+### Allowed Characters
+
+The local part can contain:
+
+- Letters: `a-z`, `A-Z`
+- Digits: `0-9`
+- Special characters: `.` `!` `#` `$` `%` `&` `'` `*` `+` `/` `=` `?` `^` `_` `` ` `` `{` `|` `}` `~` `-`
+
+### Restrictions
+
+- The local part **cannot start or end with a period** (`.`)
+- **Consecutive periods** (`..`) are not allowed
+- Maximum length is **64 characters**
+- If the local part is enclosed in double quotes (`""`), nearly any character is allowed — but quoted local parts are rare in practice
+
+<Note>
+  While the RFC allows a wide range of special characters, most real-world email addresses use only letters, digits, periods, hyphens, and underscores. Lettr validates recipient addresses against practical formatting rules to catch obvious errors before sending.
+</Note>
+
+---
+
+## The Domain Part
+
+The domain part is everything after the `@` symbol. It tells the sending mail server where to deliver the message by pointing to the recipient's mail server.
+
+### How the Domain Is Used
+
+1. The sending server performs a **DNS MX lookup** on the domain to find the mail servers responsible for receiving email.
+2. If MX records exist, the message is delivered to the highest-priority mail server.
+3. If no MX records exist, the sending server falls back to an A record lookup. If neither exists, delivery fails.
+
+### Domain Rules
+
+- Must be a valid hostname (letters, digits, hyphens, periods)
+- Labels (sections between periods) can be up to **63 characters** each
+- Total domain length cannot exceed **253 characters**
+- Must contain at least one period (e.g., `example.com`, not just `example`)
+- Internationalized domain names (IDN) using non-ASCII characters are supported via Punycode encoding
+
+### Examples
+
+| Address | Domain | Valid? |
+|---------|--------|--------|
+| `user@example.com` | `example.com` | Yes |
+| `user@mail.example.co.uk` | `mail.example.co.uk` | Yes |
+| `user@example` | `example` | Technically valid but will fail delivery — no MX records |
+| `user@192.168.1.1` | IP address literal | Valid per RFC but rejected by most providers |
+
+---
+
+## Display Name
+
+The display name is a human-readable label that appears alongside the email address in the recipient's inbox. It is not part of the address itself — it is metadata included in the `From` header.
+
+### Format
+
+```
+Display Name <address@example.com>
+```
+
+When sending through Lettr, you set the display name using the `from_name` API parameter:
+
+```javascript
+await lettr.emails.send({
+  from: 'hello@yourapp.com',
+  from_name: 'Your App',
+  to: ['user@example.com'],
+  subject: 'Welcome aboard',
+  text: 'Thanks for signing up!'
+});
+```
+
+This produces a `From` header that looks like:
+
+```
+From: Your App <hello@yourapp.com>
+```
+
+### Display Name Best Practices
+
+- Use a **recognizable name** — your brand, product, or a person's name. Recipients decide whether to open an email based largely on who it appears to be from.
+- Keep it **concise** — long display names get truncated on mobile devices.
+- If the display name contains special characters (commas, quotes, parentheses), it must be enclosed in double quotes: `"Your App, Inc." <hello@yourapp.com>`.
+- Avoid using an email address as the display name — this is redundant and looks spammy.
+
+---
+
+## Plus Addressing (Subaddressing)
+
+Plus addressing allows users to create variations of their email address by appending `+tag` to the local part. The tag is ignored for delivery purposes — all variations are delivered to the same mailbox.
+
+### How It Works
+
+```
+jane@example.com        → delivered to jane's mailbox
+jane+newsletters@example.com  → delivered to jane's mailbox
+jane+orders@example.com       → delivered to jane's mailbox
+```
+
+The receiving mail server strips the `+tag` portion and delivers to the base address. Users commonly use plus addressing to:
+
+- **Filter incoming email** — create inbox rules based on the `+tag`
+- **Track which services share their address** — sign up with a unique tag per service
+- **Test with multiple addresses** — useful during development
+
+### Provider Support
+
+| Provider | Plus Addressing Support |
+|----------|------------------------|
+| Gmail | Full support |
+| Outlook / Microsoft 365 | Full support |
+| Yahoo Mail | Uses `-` instead of `+` (e.g., `jane-tag@yahoo.com`) |
+| Apple Mail (iCloud) | Full support |
+| Fastmail | Full support |
+| ProtonMail | Full support |
+
+<Warning>
+  Some users rely on plus addressing to track where their email address is shared. If your application strips the `+tag` from addresses during validation or storage, you risk alienating privacy-conscious users. Preserve the full address including any `+tag` when storing recipient data.
+</Warning>
+
+### Implications for Senders
+
+- **Treat plus-addressed variants as the same recipient** for suppression and deduplication purposes. `jane@example.com` and `jane+shop@example.com` are the same person.
+- **Do not strip the plus tag** before sending — deliver to the exact address the user provided.
+- Lettr's suppression system matches on the base address, so a bounce or complaint on `jane@example.com` also suppresses `jane+anything@example.com`.
+
+---
+
+## Case Sensitivity
+
+### The Short Answer
+
+Treat email addresses as **case-insensitive** in practice, but preserve the original casing.
+
+### The Technical Answer
+
+According to RFC 5321, the **local part** of an email address is technically case-sensitive — the mail server for `example.com` is allowed to treat `Jane`, `jane`, and `JANE` as three different mailboxes. The **domain part** is always case-insensitive per DNS rules.
+
+In practice, virtually no major mail provider enforces case sensitivity on the local part. Gmail, Outlook, Yahoo, and all major providers treat `Jane@example.com` and `jane@example.com` as the same address.
+
+### Recommendations
+
+| Action | Recommendation |
+|--------|---------------|
+| **Storage** | Store the original casing the user provided |
+| **Comparison / deduplication** | Compare addresses case-insensitively (lowercase both sides) |
+| **Sending** | Send to the original casing — it works everywhere and respects the user's input |
+| **Validation** | Accept any casing — do not reject addresses based on capitalization |
+
+```javascript
+// Deduplication example
+function normalizeEmail(email) {
+  return email.trim().toLowerCase();
+}
+
+// Check for duplicates using normalized form
+const normalized = normalizeEmail(inputEmail);
+const exists = await db.recipients.findOne({ normalized_email: normalized });
+```
+
+<Tip>
+  Lettr normalizes addresses to lowercase internally for suppression list matching and deduplication, but preserves the original casing in the `To` header of sent messages.
+</Tip>
+
+---
+
+## Validation
+
+Validating email addresses correctly is harder than it looks. Overly strict validation rejects legitimate addresses, while overly lenient validation lets garbage through.
+
+### What to Validate
+
+| Check | Why |
+|-------|-----|
+| Contains exactly one `@` | Basic structural requirement |
+| Local part is not empty | Required |
+| Domain part is not empty | Required |
+| Domain contains at least one `.` | Prevents `user@localhost` style addresses |
+| No spaces in the address | Spaces are never valid in an unquoted email address |
+| Total length ≤ 254 characters | RFC 5321 maximum |
+
+### What Not to Validate
+
+- **Don't reject `+` in the local part** — plus addressing is legitimate
+- **Don't reject uncommon TLDs** — `.dev`, `.app`, `.io`, `.company` are all valid
+- **Don't reject long local parts** — up to 64 characters is valid
+- **Don't use a regex that tries to cover the full RFC** — it will be thousands of characters long, impossible to maintain, and will still have edge cases
+
+<Info>
+  The only way to truly verify an email address is to **send an email to it** and confirm delivery. Syntactic validation catches formatting errors, but it cannot tell you whether a mailbox actually exists. For critical workflows like account registration, use a confirmation email.
+</Info>
+
+---
+
+## Common Mistakes
+
+<AccordionGroup>
+  <Accordion title="Rejecting valid addresses with strict regex">
+    Many regex patterns used for email validation are too restrictive. They reject addresses with `+` signs, long TLDs, or subdomains. Use a simple structural check (one `@`, non-empty parts, valid domain format) rather than trying to match every RFC edge case.
+  </Accordion>
+
+  <Accordion title="Stripping the plus tag before storing">
+    Removing the `+tag` from an email address before storage means you lose the user's intentional variation. This can break their inbox filtering rules and erode trust. Store the full address as provided.
+  </Accordion>
+
+  <Accordion title="Treating addresses as case-sensitive">
+    If your deduplication logic treats `Jane@example.com` and `jane@example.com` as different recipients, the same person may receive duplicate emails. Normalize to lowercase for comparison, but preserve original casing for sending.
+  </Accordion>
+
+  <Accordion title="Using the display name as the address">
+    The display name (`Jane Doe`) is not part of the email address. Parsing `Jane Doe <jane@example.com>` and using `Jane Doe` as the recipient will fail. Always extract the address portion between `<` and `>` when processing formatted addresses.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Email Headers Explained" icon="code" href="/knowledge-base/fundamentals/email-headers">
+    How From, Reply-To, and other headers use email addresses.
+  </Card>
+  <Card title="Suppression Lists" icon="ban" href="/knowledge-base/fundamentals/suppression-lists">
+    How Lettr manages bounced and unsubscribed addresses.
+  </Card>
+  <Card title="List Hygiene" icon="broom" href="/knowledge-base/best-practices/list-hygiene">
+    Best practices for maintaining a clean, valid recipient list.
+  </Card>
+  <Card title="Bounce Codes Reference" icon="circle-exclamation" href="/knowledge-base/fundamentals/bounce-codes-reference">
+    What happens when an email address doesn't exist or is malformed.
+  </Card>
+</CardGroup>

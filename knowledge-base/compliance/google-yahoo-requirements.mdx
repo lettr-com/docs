@@ -1,0 +1,213 @@
+---
+title: "Google & Yahoo Sender Requirements"
+description: "Summary of bulk sender requirements from Google and Yahoo enforced since 2024"
+---
+
+# Google & Yahoo Sender Requirements
+
+In February 2024, Google and Yahoo began enforcing stricter requirements for bulk email senders. If you send 5,000 or more messages per day to Gmail or Yahoo addresses, you must comply with these rules or face delivery failures, spam filtering, and eventual blocking.
+
+These requirements apply to all senders — not just marketers. Transactional email senders with high volume are equally affected.
+
+---
+
+## Who Is Affected
+
+The bulk sender threshold is **5,000 messages per day** to Gmail or Yahoo recipients. This is measured per sending domain, not per account or IP address.
+
+Even if you don't currently send at that volume, following these requirements is good practice. Google and Yahoo have stated they may lower the threshold over time, and the requirements align with industry best practices that benefit all senders.
+
+<Note>
+  Some requirements (like email authentication) apply to **all senders**, not just those above the 5,000/day threshold. Only the one-click unsubscribe requirement is specific to bulk senders.
+</Note>
+
+---
+
+## The Three Pillars
+
+<Steps>
+  <Step title="Authenticate your email">
+    SPF, DKIM, and DMARC must all pass for your sending domain. This is no longer optional — it is a hard requirement.
+  </Step>
+  <Step title="Enable easy unsubscribe">
+    Marketing and promotional emails must support one-click unsubscribe via the `List-Unsubscribe` header. Unsubscribe requests must be processed within 2 days.
+  </Step>
+  <Step title="Keep spam complaints below threshold">
+    Your spam complaint rate must stay below 0.3%. The target is below 0.1%. Consistently exceeding 0.3% will result in blocking.
+  </Step>
+</Steps>
+
+---
+
+## Authentication Requirements
+
+All three authentication protocols must pass for your sending domain:
+
+| Protocol | Requirement | Lettr Implementation |
+|----------|-------------|---------------------|
+| SPF | Must pass for your sending domain | Lettr handles SPF via the CNAME verification record |
+| DKIM | Must pass with proper domain alignment | Lettr signs all emails with your domain's DKIM key |
+| DMARC | Must have at least a `p=none` policy | You must add a DMARC TXT record to your DNS |
+
+<Warning>
+  All three are required — passing just one or two is not sufficient. DMARC alignment means the domain in the `From` header must match (or be a subdomain of) the SPF or DKIM domain.
+</Warning>
+
+### Verifying Your Authentication
+
+Check your DKIM record:
+
+```bash
+dig TXT selector._domainkey.yourdomain.com +short
+```
+
+Check your DMARC record:
+
+```bash
+dig TXT _dmarc.yourdomain.com +short
+```
+
+You should see output similar to:
+
+```
+"v=DMARC1; p=none; rua=mailto:dmarc@yourdomain.com"
+```
+
+If either command returns no results, the record is missing and needs to be added.
+
+---
+
+## Unsubscribe Requirements
+
+For bulk senders, Google and Yahoo require:
+
+| Requirement | Details |
+|-------------|---------|
+| `List-Unsubscribe` header | Must include an HTTPS URL for unsubscribing |
+| `List-Unsubscribe-Post` header | Must support one-click unsubscribe per RFC 8058 |
+| Visible body link | An unsubscribe link must be visible in the email body |
+| Processing time | Unsubscribes must be honored within **2 days** (not 10 like CAN-SPAM) |
+
+### Implementation in Lettr
+
+Add the `data-msys-unsubscribe="1"` attribute to your unsubscribe link to enable unsubscribe event tracking and proper header generation:
+
+```html
+<a href="https://yourdomain.com/unsubscribe?id=12345"
+   data-msys-unsubscribe="1">
+  Unsubscribe
+</a>
+```
+
+<Note>
+  Click tracking must be enabled for the `data-msys-unsubscribe` attribute to generate unsubscribe events. Lettr will automatically add the appropriate `List-Unsubscribe` and `List-Unsubscribe-Post` headers when this attribute is present.
+</Note>
+
+### Transactional Email Exception
+
+One-click unsubscribe is only required for marketing and promotional emails. Purely transactional emails (order confirmations, password resets, account alerts) are exempt. However, if your transactional email contains promotional content, it may be classified as commercial and the requirement applies.
+
+---
+
+## Spam Rate Requirements
+
+Google measures your spam complaint rate through Gmail's feedback mechanisms. You can monitor this through Google Postmaster Tools.
+
+| Metric | Target | Hard Limit |
+|--------|--------|------------|
+| Spam complaint rate | Below 0.1% | Must stay under 0.3% |
+
+### Monitoring with Google Postmaster Tools
+
+1. Go to [Google Postmaster Tools](https://postmaster.google.com/)
+2. Add and verify your sending domain
+3. Monitor the **Spam Rate** dashboard regularly
+4. Set up alerts if your rate approaches 0.1%
+
+### Reducing Spam Complaints
+
+- **Make unsubscribe easy** — A visible, one-click unsubscribe is the most effective way to reduce complaints. Recipients who can't find the unsubscribe link will use the spam button instead.
+- **Send relevant content** — Segment your audience and send content they expect to receive.
+- **Honor frequency expectations** — Don't email more often than subscribers signed up for.
+- **Clean your lists** — Remove unengaged subscribers who haven't opened or clicked in 6+ months. See [List Hygiene](/knowledge-base/best-practices/list-hygiene).
+- **Use double opt-in** — Confirm subscriptions to ensure recipients genuinely want your emails.
+
+---
+
+## Additional Requirements
+
+Google and Yahoo also require:
+
+| Requirement | Details | Lettr Handling |
+|-------------|---------|----------------|
+| Valid forward and reverse DNS | Sending IPs must have proper PTR records | Lettr manages this automatically |
+| TLS encryption | Emails must be transmitted over TLS | Lettr uses TLS for all SMTP connections |
+| RFC 5322 compliance | Messages must follow email format standards | Lettr constructs compliant messages |
+| No Gmail impersonation | Don't use `@gmail.com` in your `From` header | Use your own verified domain |
+
+<Tip>
+  Most of these infrastructure requirements are handled by Lettr automatically. Your primary responsibilities are domain authentication (DKIM + DMARC), unsubscribe implementation, and maintaining a low spam complaint rate.
+</Tip>
+
+---
+
+## Compliance Checklist for Lettr Users
+
+<Steps>
+  <Step title="Verify your domain in Lettr">
+    Add your sending domain and configure the CNAME and DKIM DNS records. Confirm both show as **valid** in the dashboard.
+  </Step>
+  <Step title="Add a DMARC record">
+    Add a TXT record for `_dmarc.yourdomain.com` with at least `v=DMARC1; p=none; rua=mailto:dmarc@yourdomain.com`. See [DMARC](/learn/domains/dmarc) for details.
+  </Step>
+  <Step title="Set up a tracking domain">
+    Configure a custom tracking domain (e.g., `track.yourdomain.com`) to improve link reputation. See [Tracking Domains](/learn/domains/tracking-domains).
+  </Step>
+  <Step title="Implement unsubscribe links">
+    Add `data-msys-unsubscribe="1"` to the unsubscribe link in your email templates. Ensure the link is visible and functional.
+  </Step>
+  <Step title="Register with Google Postmaster Tools">
+    Add your domain at [postmaster.google.com](https://postmaster.google.com/) and verify ownership to start monitoring spam rates and reputation.
+  </Step>
+  <Step title="Monitor your spam complaint rate">
+    Check Postmaster Tools regularly. If your rate approaches 0.1%, take immediate action to reduce complaints.
+  </Step>
+</Steps>
+
+---
+
+## What Happens If You Don't Comply
+
+<AccordionGroup>
+  <Accordion title="Emails rejected with 550 errors">
+    Gmail and Yahoo will outright reject emails from senders who fail authentication checks. You'll see `550 5.7.26` or similar errors indicating DMARC or DKIM failure. These rejections appear as hard bounces in Lettr.
+  </Accordion>
+  <Accordion title="Emails routed to spam">
+    Even if emails are accepted, they may be automatically placed in the spam folder if your spam complaint rate is too high or your authentication is incomplete.
+  </Accordion>
+  <Accordion title="Temporary rate limiting">
+    Gmail may temporarily throttle your sending if you're borderline on compliance. You'll see increased `email.deferred` events as Gmail slows acceptance of your messages.
+  </Accordion>
+  <Accordion title="Permanent blocking">
+    Persistent non-compliance — especially a consistently high spam complaint rate above 0.3% — can result in your domain being permanently blocked by Gmail or Yahoo. Recovery requires fixing the root cause, reducing volume, and gradually rebuilding reputation.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Unsubscribe Best Practices" icon="hand" href="/knowledge-base/compliance/unsubscribe-best-practices">
+    Implement effective unsubscribe mechanisms
+  </Card>
+  <Card title="SPF, DKIM, and DMARC" icon="shield-halved" href="/knowledge-base/fundamentals/spf-dkim-dmarc">
+    Understand email authentication protocols
+  </Card>
+  <Card title="DMARC Setup" icon="lock" href="/learn/domains/dmarc">
+    Configure DMARC for your domain
+  </Card>
+  <Card title="Emails Landing in Spam" icon="shield-exclamation" href="/knowledge-base/troubleshooting/spam-placement">
+    Troubleshoot spam folder placement
+  </Card>
+</CardGroup>

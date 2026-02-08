@@ -1,0 +1,95 @@
+---
+title: Reading the Dashboard
+description: "How to interpret the Analytics chart, summary footer, and breakdown table"
+---
+
+# Reading the Analytics Dashboard
+
+This guide walks through each part of the Analytics dashboard and explains what you're looking at.
+
+## The Date Range and Precision
+
+At the top of the page, a date range picker sets the time window for all the data on the page. It defaults to the last 24 hours. Next to it is a precision selector that controls how finely the chart data is divided.
+
+Precision determines the spacing between data points on the x-axis. A precision of **1 Min** gives you a data point every minute — useful for monitoring a batch send in real time. A precision of **Day** gives you one data point per day — better suited to understanding weekly or monthly trends.
+
+Lettr adjusts the available precision options based on your date range to prevent the chart from becoming unusable. If your date range spans more than 12 hours, the 1 Min and 5 Min options are removed. If it spans more than 24 hours, 15 Min is also removed. You can always select a coarser precision manually regardless of the date range.
+
+## The Line Chart
+
+The main chart plots each of your selected metrics as a separate colored line over the time range. Hovering over any point on the chart shows a tooltip with the exact values for every metric at that timestamp.
+
+The chart uses a clean axis layout: the x-axis shows time labels, and the y-axis shows counts. Large numbers are abbreviated (e.g., 1.5K, 2.3M) to keep the axis readable.
+
+If you've selected metrics that operate on very different scales — for example, Targeted (which could be in the thousands) alongside Spam Complaints (which might be in single digits) — the smaller metric's line may appear flat against the bottom of the chart. In that case, consider viewing them separately by deselecting one group at a time in the Configure modal.
+
+## The Summary Footer
+
+Directly below the chart is a dark bar showing the date range and the total count for each selected metric across the entire period. This gives you the headline numbers at a glance without needing to calculate from the chart.
+
+## Understanding the Metrics
+
+The metrics available in the Analytics dashboard fall into three groups, reflecting different stages of the email lifecycle.
+
+**Injection Metrics** capture what happens when your application submits an email to Lettr:
+
+| Metric | What It Measures |
+|--------|-----------------|
+| Targeted | Total number of emails queued for delivery. This is your starting point — everything else is measured relative to this number. |
+| Injected | Emails that were successfully accepted into the sending pipeline. |
+| Rejected | Emails that were rejected before entering the pipeline. |
+| Policy Rejections | Emails rejected due to a policy rule (e.g., content or rate policy). |
+| Generation Rejections | Emails rejected during the message generation phase. |
+| Generation Failures | Emails that failed during generation due to a processing error. |
+| Admin Bounces | Bounces triggered by administrative action rather than by the recipient's mail server. |
+
+**Delivery Metrics** track what happens once an email enters the sending pipeline:
+
+| Metric | What It Measures |
+|--------|-----------------|
+| Accepted | Emails successfully delivered to the recipient's mail server. This is the primary success metric. |
+| Delivered | Same as Accepted in most cases. A delivered email was handed off to the recipient's server. |
+| Bounces | Emails that failed to deliver (hard or soft bounces combined). |
+| Block Bounces | Bounces caused specifically by the recipient's server blocking your sending IP or domain. |
+| Delayed | Emails that experienced a temporary delivery delay. These are retried automatically and may eventually deliver. |
+
+**Engagement Metrics** track recipient interaction after delivery:
+
+| Metric | What It Measures |
+|--------|-----------------|
+| Unique Opens | The number of unique recipients who opened the email at least once. |
+| Clicked | Total number of link clicks across all emails in the period. |
+| Unique Clicked | The number of unique recipients who clicked at least one link. |
+| Unsubscribes | Recipients who opted out via List-Unsubscribe or an unsubscribe link. |
+| Spam Complaints | Recipients who reported the email as spam. |
+
+<Warning>
+  Engagement metrics (opens and clicks) depend on tracking being enabled. If you've disabled open or click tracking on specific emails, those emails won't contribute to the corresponding metrics. See [Email Tracking](/learn/sending/tracking) for how tracking is configured.
+</Warning>
+
+## The Bounce Reason Tab
+
+The Analytics page has two tabs: **Report** and **Bounce Reason**. The Report tab contains the chart and breakdown table described above. The Bounce Reason tab is currently under development and will provide a detailed breakdown of bounce causes when it becomes available.
+
+## The Breakdown Table
+
+Below the chart and summary, a card contains the breakdown table. To populate it, select a dimension from the **Break Down By** dropdown. The table then shows your selected metrics broken down by that dimension.
+
+For example, if you select **Recipient Domain**, you'll see a row for each recipient domain (gmail.com, outlook.com, etc.) with the metric counts for each. You can click on any column header to sort the table by that metric, which makes it easy to find the domains with the most bounces or the highest open rates.
+
+The breakdown table uses the same date range and filters as the chart, so it always reflects the same data you're seeing in the visualization above.
+
+<CardGroup cols={2}>
+  <Card title="Filtering and Breakdowns" icon="filter" href="/learn/analytics/filtering-and-breakdowns">
+    How to configure which metrics appear and add filters
+  </Card>
+  <Card title="Email Tracking" icon="crosshair" href="/learn/sending/tracking">
+    How tracking settings affect your analytics data
+  </Card>
+  <Card title="Events" icon="calendar-days" href="/learn/events/introduction">
+    Drill into individual emails when a metric looks off
+  </Card>
+  <Card title="Suppressions" icon="ban" href="/learn/suppressions/introduction">
+    How bounces and complaints feed into suppression lists
+  </Card>
+</CardGroup>

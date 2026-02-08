@@ -1,19 +1,19 @@
 ---
 title: Retries
-description: "Understand webhook retry behavior"
+description: "Understand webhook retry behavior and delivery guarantees"
 ---
 
 # Webhook Retries
 
-Lettr automatically retries failed webhook deliveries to ensure you receive all events.
+Lettr automatically retries failed webhook deliveries to ensure you receive all events. Understanding the retry behavior helps you build resilient integrations that handle temporary failures gracefully.
 
 ## Retry Schedule
 
-When a webhook delivery fails, Lettr retries with exponential backoff:
+When a webhook delivery fails, Lettr retries with exponential backoff. This approach balances timely delivery with giving your system time to recover from outages.
 
-| Attempt | Delay | Time After Failure |
-|---------|-------|-------------------|
-| 1 | Immediate | 0 minutes |
+| Attempt | Delay | Cumulative Time |
+|---------|-------|-----------------|
+| 1 | Immediate | 0 |
 | 2 | 1 minute | 1 minute |
 | 3 | 5 minutes | 6 minutes |
 | 4 | 30 minutes | 36 minutes |
@@ -21,111 +21,449 @@ When a webhook delivery fails, Lettr retries with exponential backoff:
 | 6 | 8 hours | 10.6 hours |
 | 7 | 24 hours | 34.6 hours |
 
-After 7 failed attempts, the webhook is marked as failed and no further retries occur.
+After 7 failed attempts spanning approximately 35 hours, the webhook delivery is marked as permanently failed. At this point, no further automatic retries occur.
 
-## Success Response
+<Note>
+  The retry schedule provides a balance between timely delivery and avoiding overwhelming a struggling endpoint. Most transient issues resolve within the first few retry attempts.
+</Note>
 
-Your endpoint must return a `2xx` status code within 30 seconds:
+## Success Criteria
+
+For a webhook delivery to be considered successful, your endpoint must:
+
+1. **Return a 2xx status code** (200, 201, 202, 204, etc.)
+2. **Respond within 30 seconds**
 
 ```javascript
+// Good - Returns 200 immediately
 app.post('/webhooks/lettr', (req, res) => {
-  // Process the event
-  
-  // Return success
+  res.sendStatus(200);
+  // Process asynchronously after responding
+  setImmediate(() => processEvent(req.body));
+});
+
+// Bad - Processes before responding (may timeout)
+app.post('/webhooks/lettr', async (req, res) => {
+  await processEvent(req.body); // This might take > 30 seconds
   res.sendStatus(200);
 });
 ```
 
 ## Failure Conditions
 
-Webhooks are retried when:
+Webhooks are retried when any of these conditions occur:
 
-- Response status is `4xx` or `5xx` (except 410)
-- Connection timeout (30 seconds)
-- DNS resolution failure
-- SSL/TLS errors
+| Condition | Description | Retry? |
+|-----------|-------------|--------|
+| HTTP 4xx (except 410) | Client errors (400, 401, 403, 404, etc.) | Yes |
+| HTTP 5xx | Server errors (500, 502, 503, etc.) | Yes |
+| HTTP 410 Gone | Indicates endpoint is permanently gone | **No** - webhook disabled |
+| Connection timeout | No response within 30 seconds | Yes |
+| Connection refused | Server not accepting connections | Yes |
+| DNS failure | Domain cannot be resolved | Yes |
+| SSL/TLS error | Certificate or handshake issues | Yes |
+| HTTP 2xx | Success responses | **No** - delivery complete |
 
-Webhooks are **not** retried when:
+### The 410 Gone Response
 
-- Response status is `2xx` (success)
-- Response status is `410` (Gone) - webhook is disabled
+Returning a `410 Gone` status code is a signal to permanently disable the webhook. Use this when:
 
-## Idempotency
+- You're decommissioning an endpoint
+- The webhook should no longer receive events
+- You want to stop retries without deleting the webhook via API
 
-Your webhook handler should be idempotent. Use the event ID to prevent duplicate processing:
+```javascript
+// Permanently disable this webhook
+app.post('/webhooks/lettr', (req, res) => {
+  if (shouldDisableWebhook()) {
+    return res.sendStatus(410); // Webhook will be disabled
+  }
+  // Normal processing
+  res.sendStatus(200);
+});
+```
+
+## Idempotency and Duplicate Handling
+
+Because webhooks can be retried, your endpoint may receive the same event multiple times. Always implement idempotent handling.
+
+### Why Duplicates Occur
+
+1. **Network issues**: Your server responds 200, but the response doesn't reach Lettr
+2. **Timeout at boundary**: Processing completes at exactly 30 seconds
+3. **Infrastructure retries**: Load balancers or proxies may retry requests
+
+### Handling Duplicates
+
+Use the event `id` to detect and skip duplicate deliveries:
+
+```javascript
+import { Redis } from 'ioredis';
+
+const redis = new Redis(process.env.REDIS_URL);
+const PROCESSED_EVENT_TTL = 86400; // 24 hours
+
+app.post('/webhooks/lettr', async (req, res) => {
+  const event = req.body;
+
+  // Check if already processed
+  const key = `webhook:${event.id}`;
+  const alreadyProcessed = await redis.get(key);
+
+  if (alreadyProcessed) {
+    console.log(`Duplicate event ${event.id}, skipping`);
+    return res.sendStatus(200); // Still return 200!
+  }
+
+  // Mark as processed (with TTL)
+  await redis.set(key, '1', 'EX', PROCESSED_EVENT_TTL);
+
+  // Process the event
+  await handleEvent(event);
+
+  res.sendStatus(200);
+});
+```
+
+<Warning>
+  Always return a 200 status code for duplicate events. Returning an error will trigger unnecessary retries.
+</Warning>
+
+### Database-Based Deduplication
+
+If you don't have Redis, use your database:
 
 ```javascript
 app.post('/webhooks/lettr', async (req, res) => {
   const event = req.body;
-  
-  // Check if already processed
-  const processed = await db.webhookEvents.findOne({ eventId: event.id });
-  if (processed) {
-    return res.sendStatus(200);
+
+  try {
+    // Insert with unique constraint on event_id
+    await db.processedWebhooks.insert({
+      event_id: event.id,
+      event_type: event.type,
+      received_at: new Date()
+    });
+  } catch (err) {
+    if (err.code === '23505') { // PostgreSQL unique violation
+      console.log(`Duplicate event ${event.id}, skipping`);
+      return res.sendStatus(200);
+    }
+    throw err;
   }
-  
+
   // Process the event
   await handleEvent(event);
-  
-  // Mark as processed
-  await db.webhookEvents.create({ eventId: event.id });
-  
   res.sendStatus(200);
 });
 ```
 
 ## Monitoring Webhook Health
 
-View webhook delivery status in the dashboard or via API:
+### Webhook Status
+
+Each webhook has a status that reflects its health:
+
+| Status | Description |
+|--------|-------------|
+| `active` | Webhook is enabled and deliveries are succeeding |
+| `failing` | Recent deliveries have failed; retries in progress |
+| `disabled` | Webhook is disabled (manually or due to 410 response) |
+
+### Check Webhook Status via API
 
 ```javascript
 const webhook = await lettr.webhooks.get('wh_123');
 
 console.log({
-  status: webhook.status,           // 'active', 'failing', 'disabled'
-  lastDeliveryAt: webhook.lastDeliveryAt,
-  lastDeliveryStatus: webhook.lastDeliveryStatus,
-  failureCount: webhook.failureCount
+  id: webhook.id,
+  status: webhook.status,
+  url: webhook.url,
+  enabled: webhook.enabled,
+  lastSuccessfulAt: webhook.last_successful_at,
+  lastFailureAt: webhook.last_failure_at,
+  lastStatus: webhook.last_status
 });
 ```
 
-## View Delivery History
+### Dashboard Monitoring
+
+The Lettr dashboard provides detailed visibility into webhook delivery:
+
+1. Navigate to **Settings** → **Webhooks**
+2. Select a webhook to view its delivery history
+3. See recent attempts, response codes, and failure reasons
+
+## Viewing Delivery History
+
+Track individual webhook deliveries to debug issues:
 
 ```javascript
+// List recent deliveries for a webhook
 const deliveries = await lettr.webhooks.listDeliveries('wh_123', {
-  limit: 10
+  limit: 20
 });
 
 deliveries.forEach(delivery => {
   console.log({
-    eventId: delivery.eventId,
-    eventType: delivery.eventType,
+    eventId: delivery.event_id,
+    eventType: delivery.event_type,
     status: delivery.status,
     attempts: delivery.attempts,
-    responseCode: delivery.responseCode
+    responseCode: delivery.response_code,
+    responseTime: delivery.response_time_ms,
+    lastAttemptAt: delivery.last_attempt_at,
+    nextRetryAt: delivery.next_retry_at
   });
 });
 ```
 
+### Delivery Status Values
+
+| Status | Description |
+|--------|-------------|
+| `pending` | Delivery queued, not yet attempted |
+| `succeeded` | Delivered successfully |
+| `failed` | All retry attempts exhausted |
+| `retrying` | Failed, retry scheduled |
+
 ## Manual Retry
 
-Retry a specific failed delivery:
+If a delivery failed and you've fixed the underlying issue, you can manually retry:
 
 ```javascript
-await lettr.webhooks.retryDelivery('wh_123', 'delivery_abc');
+// Retry a specific failed delivery
+await lettr.webhooks.retryDelivery('wh_123', 'delivery_abc123');
 ```
 
-## Disabling Webhooks
+This queues an immediate retry attempt, bypassing the normal backoff schedule.
 
-Webhooks are automatically disabled after repeated failures. Re-enable in the dashboard or via API:
+### Bulk Retry
+
+To retry all failed deliveries for a webhook:
 
 ```javascript
+// Get all failed deliveries
+const failedDeliveries = await lettr.webhooks.listDeliveries('wh_123', {
+  status: 'failed',
+  limit: 100
+});
+
+// Retry each one
+for (const delivery of failedDeliveries) {
+  try {
+    await lettr.webhooks.retryDelivery('wh_123', delivery.id);
+    console.log(`Retried delivery ${delivery.id}`);
+  } catch (err) {
+    console.error(`Failed to retry ${delivery.id}:`, err.message);
+  }
+}
+```
+
+## Automatic Disabling
+
+Webhooks are automatically disabled after sustained failures to protect both systems:
+
+- Prevents queue buildup of undeliverable events
+- Reduces load on your failing endpoint
+- Alerts you to investigate the issue
+
+When a webhook is auto-disabled, you'll see it in the dashboard and can re-enable it after fixing the issue:
+
+```javascript
+// Re-enable a disabled webhook
 await lettr.webhooks.update('wh_123', {
-  status: 'active'
+  enabled: true
 });
 ```
 
 <Warning>
-  If your endpoint consistently fails, fix the underlying issue before re-enabling the webhook to avoid missing events.
+  Before re-enabling, ensure the underlying issue is resolved. Re-enabling without fixing the problem will lead to immediate failures and potentially another auto-disable.
 </Warning>
 
+## Best Practices for Reliable Delivery
+
+### 1. Respond Quickly
+
+Return a 200 response as fast as possible. Process events asynchronously:
+
+```javascript
+app.post('/webhooks/lettr', (req, res) => {
+  // Acknowledge immediately
+  res.sendStatus(200);
+
+  // Process in background
+  setImmediate(async () => {
+    try {
+      await processEvent(req.body);
+    } catch (err) {
+      console.error('Processing failed:', err);
+      // Store for manual retry or alerting
+      await storeFailedEvent(req.body, err);
+    }
+  });
+});
+```
+
+### 2. Use a Queue
+
+For high-volume or complex processing, use a message queue:
+
+```javascript
+import { Queue } from 'bullmq';
+
+const webhookQueue = new Queue('webhooks');
+
+app.post('/webhooks/lettr', async (req, res) => {
+  // Add to queue with deduplication
+  await webhookQueue.add(req.body.type, req.body, {
+    jobId: req.body.id // Prevents duplicate jobs
+  });
+
+  res.sendStatus(200);
+});
+```
+
+### 3. Handle Partial Failures
+
+If processing involves multiple steps, handle partial failures gracefully:
+
+```javascript
+async function processEvent(event) {
+  // Critical operation - must succeed
+  await updateDatabase(event);
+
+  // Non-critical operations - fail gracefully
+  const nonCriticalTasks = [
+    sendNotification(event).catch(err => {
+      console.warn('Notification failed:', err);
+    }),
+    updateAnalytics(event).catch(err => {
+      console.warn('Analytics failed:', err);
+    })
+  ];
+
+  await Promise.all(nonCriticalTasks);
+}
+```
+
+### 4. Monitor and Alert
+
+Set up monitoring for webhook health:
+
+```javascript
+// Track webhook processing metrics
+const metrics = {
+  received: 0,
+  processed: 0,
+  failed: 0,
+  duplicates: 0
+};
+
+app.post('/webhooks/lettr', async (req, res) => {
+  metrics.received++;
+
+  const isDuplicate = await checkDuplicate(req.body.id);
+  if (isDuplicate) {
+    metrics.duplicates++;
+    return res.sendStatus(200);
+  }
+
+  try {
+    await processEvent(req.body);
+    metrics.processed++;
+  } catch (err) {
+    metrics.failed++;
+    console.error('Webhook processing failed:', err);
+    // Alert if failure rate is high
+    if (metrics.failed / metrics.received > 0.1) {
+      await alertOps('High webhook failure rate');
+    }
+  }
+
+  res.sendStatus(200);
+});
+```
+
+### 5. Implement Health Checks
+
+Ensure your webhook endpoint is monitored:
+
+```javascript
+// Health check endpoint
+app.get('/webhooks/health', (req, res) => {
+  const healthy = checkDatabaseConnection() && checkQueueConnection();
+  res.status(healthy ? 200 : 503).json({ healthy });
+});
+```
+
+## Troubleshooting
+
+### Common Issues
+
+| Problem | Possible Cause | Solution |
+|---------|---------------|----------|
+| All webhooks timing out | Slow processing before response | Return 200 immediately, process async |
+| Intermittent failures | Resource exhaustion | Add queue, increase capacity |
+| SSL errors | Certificate issues | Verify certificate chain, check expiry |
+| 4xx errors | Authentication/authorization | Check auth config, verify endpoint path |
+| No webhooks received | Webhook disabled | Check status in dashboard, re-enable |
+
+### Debugging Failed Deliveries
+
+1. **Check delivery history** in dashboard or via API
+2. **Review response codes** and error messages
+3. **Check your server logs** for the corresponding requests
+4. **Verify endpoint URL** is correct and accessible
+5. **Test with manual retry** after fixing issues
+
+## Event Ordering
+
+Webhooks are delivered in approximate order, but strict ordering is not guaranteed. Events may arrive out of order due to:
+
+- Retry delays
+- Network latency variations
+- Parallel processing
+
+Design your handlers to be order-independent when possible:
+
+```javascript
+async function handleEmailStatus(event) {
+  const { emailId, status, timestamp } = event.data;
+
+  // Use timestamp to handle out-of-order updates
+  await db.emails.update(
+    { id: emailId },
+    {
+      status,
+      status_updated_at: timestamp
+    },
+    {
+      // Only update if this event is newer
+      where: {
+        OR: [
+          { status_updated_at: null },
+          { status_updated_at: { lt: timestamp } }
+        ]
+      }
+    }
+  );
+}
+```
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Handling Webhooks" icon="code" href="/learn/webhooks/handling">
+    Best practices for processing webhooks reliably
+  </Card>
+  <Card title="Authorization" icon="lock" href="/learn/webhooks/authorization">
+    Secure your endpoints with signature verification
+  </Card>
+  <Card title="Event Types" icon="list" href="/learn/webhooks/event-types">
+    Complete reference of all webhook events
+  </Card>
+  <Card title="Testing" icon="flask" href="/learn/webhooks/testing">
+    Test webhooks in development and production
+  </Card>
+</CardGroup>

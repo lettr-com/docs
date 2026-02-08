@@ -1,0 +1,783 @@
+---
+title: Email Glossary
+description: "A–Z reference of email industry terms, protocols, and concepts"
+---
+
+# Email Glossary
+
+A comprehensive reference of terms used across email infrastructure, deliverability, authentication, and compliance. Use this glossary alongside the [Knowledge Base](/knowledge-base/introduction) to build a complete understanding of how email works.
+
+---
+
+## A
+
+### Acceptable Use Policy (AUP)
+
+A set of rules defined by an email service provider that specifies what types of email are permitted and prohibited on the platform. AUPs protect shared sending infrastructure by preventing abuse that could damage deliverability for all users. Violations can result in account suspension.
+
+See [Acceptable Use Policy for Email](/knowledge-base/compliance/acceptable-use-policy).
+
+### Aggregate Report (RUA)
+
+A daily XML report sent by receiving mail servers to the address specified in your DMARC record. Aggregate reports summarize authentication results (SPF, DKIM, DMARC pass/fail) for all emails received from your domain, helping you identify unauthorized senders and misconfigured services.
+
+See [Understanding SPF, DKIM, and DMARC](/knowledge-base/fundamentals/spf-dkim-dmarc).
+
+### Alignment
+
+In DMARC, alignment means the domain in the visible "From" header matches the domain that passed SPF or DKIM authentication. Without alignment, an email can pass SPF or DKIM but still fail DMARC. There are two modes: **strict** (exact domain match) and **relaxed** (organizational domain match, allowing subdomains).
+
+See [Understanding SPF, DKIM, and DMARC](/knowledge-base/fundamentals/spf-dkim-dmarc#alignment).
+
+### AMP for Email
+
+An email content type (`text/x-amp-html`) that allows interactive elements like carousels, forms, and live content within the email itself. Support is limited to Gmail, Yahoo Mail, and Mail.ru. AMP emails require sender registration with each supporting provider.
+
+See [Email Content Types](/knowledge-base/fundamentals/content-types).
+
+### API Key
+
+A secret token used to authenticate requests to the Lettr API. API keys should be stored in environment variables and never committed to source code or shared publicly. Each key can be scoped to specific permissions.
+
+See [API Keys](/learn/api-keys/introduction) and [Security Best Practices](/knowledge-base/best-practices/security).
+
+### ARF (Abuse Reporting Format)
+
+A standardized email format (defined in RFC 5965) used by mailbox providers to report spam complaints back to senders through [feedback loops](#feedback-loop-fbl). ARF reports include the original message headers and identify the complaint type, enabling ESPs to process complaints and suppress complaining recipients automatically.
+
+See [What Are Feedback Loops?](/knowledge-base/concepts/feedback-loops).
+
+### Authentication-Results Header
+
+An email header added by the receiving mail server that shows the pass/fail status of SPF, DKIM, and DMARC checks. This header is the primary tool for diagnosing authentication issues.
+
+See [Email Headers Explained](/knowledge-base/fundamentals/email-headers).
+
+---
+
+## B
+
+### Backscatter
+
+Bounce messages sent to an innocent third party whose email address was forged as the sender of spam. Proper SPF, DKIM, and DMARC configuration prevents your domain from being used in backscatter attacks.
+
+### Batch Sending
+
+Sending a single API request with multiple recipients rather than making individual requests per recipient. Lettr supports up to 50 recipients per batch request. Batch sending reduces API calls and improves throughput for high-volume senders.
+
+See [Batch Sending](/learn/sending/batch-sending).
+
+### BIMI (Brand Indicators for Message Identification)
+
+An email standard that allows senders to display their brand logo next to messages in recipient inboxes. BIMI requires a fully enforced [DMARC](#dmarc-domain-based-message-authentication-reporting--conformance) policy (`p=quarantine` or `p=reject`) and, for most mailbox providers, a [Verified Mark Certificate (VMC)](#verified-mark-certificate-vmc). The BIMI record is published as a DNS TXT record at `default._bimi.yourdomain.com`.
+
+See [BIMI: Brand Indicators for Message Identification](/knowledge-base/fundamentals/bimi).
+
+### Blocklist (Blacklist)
+
+A database of IP addresses or domains identified as sources of spam. Mailbox providers and spam filters check incoming email against blocklists. Being listed on a major blocklist (Spamhaus, Barracuda, SORBS) can severely impact deliverability. Monitor your status and request delisting if listed.
+
+See [Sending Reputation](/knowledge-base/best-practices/sending-reputation).
+
+### Bounce
+
+An email that cannot be delivered to the recipient. Bounces are classified as **hard** (permanent failure, e.g., address doesn't exist) or **soft** (temporary failure, e.g., mailbox full). Hard bounces should result in immediate suppression. Soft bounces are retried automatically.
+
+See [Bounce Codes Reference](/knowledge-base/fundamentals/bounce-codes-reference) and [Bounce Diagnosis](/knowledge-base/troubleshooting/bounce-diagnosis).
+
+### Bounce Rate
+
+The percentage of sent emails that bounce. A healthy bounce rate is below 2%. Rates above 5% indicate a list quality problem and can damage sender reputation. Calculate as: `(bounced emails / sent emails) x 100`.
+
+See [Bounce Diagnosis](/knowledge-base/troubleshooting/bounce-diagnosis).
+
+### Bulk Sender
+
+In the context of Google and Yahoo's 2024 requirements, any sender who sends 5,000 or more emails per day to Gmail or Yahoo recipients. Bulk senders must implement SPF, DKIM, DMARC, one-click unsubscribe, and maintain a spam complaint rate below 0.3%.
+
+See [Google & Yahoo Sender Requirements](/knowledge-base/compliance/google-yahoo-requirements).
+
+---
+
+## C
+
+### CAN-SPAM Act
+
+A US federal law (2003) governing commercial email. Requires accurate header information, non-deceptive subject lines, identification as an advertisement, a physical mailing address, a working unsubscribe mechanism (honored within 10 business days), and responsible monitoring of third-party senders. Penalties reach $50,120 per non-compliant email.
+
+See [CAN-SPAM Requirements](/knowledge-base/compliance/can-spam).
+
+### CASL (Canadian Anti-Spam Legislation)
+
+A Canadian federal law (2014) regulating commercial electronic messages sent to or from Canadian computer systems. CASL is stricter than CAN-SPAM — it requires **prior consent** (either [express](#express-consent) or [implied](#implied-consent)) before sending, rather than allowing an opt-out model. CASL applies regardless of the sender's location if the recipient is in Canada. Penalties can reach CAD $10 million per violation for organizations.
+
+See [CASL (Canadian Anti-Spam Law)](/knowledge-base/compliance/casl).
+
+### Click Tracking
+
+A technique that detects when a recipient clicks a link in an email by routing links through a tracking server that records the click before redirecting to the destination URL. Click tracking provides more reliable engagement data than [open tracking](#open-tracking) because it requires deliberate user action and is not affected by image-blocking or privacy proxies.
+
+See [Tracking Accuracy](/knowledge-base/troubleshooting/tracking-accuracy).
+
+### CNAME Record
+
+A DNS record type that creates an alias from one domain name to another. Lettr uses CNAME records for sending domain verification and tracking domain configuration. A CNAME points your subdomain to Lettr's infrastructure, delegating email authentication.
+
+### Complaint
+
+When a recipient marks an email as spam or junk in their email client. Complaints are reported back to senders through [feedback loops](#feedback-loop-fbl). A complaint rate above 0.1% is a warning sign; above 0.3% risks deliverability penalties from major providers.
+
+See [List Hygiene](/knowledge-base/best-practices/list-hygiene).
+
+### Content Filtering
+
+The process by which receiving mail servers analyze email content (subject lines, body text, HTML structure, links, images) to determine whether a message is spam. Filters use machine learning, keyword analysis, URL reputation, and sender history.
+
+See [Emails Landing in Spam](/knowledge-base/troubleshooting/spam-placement).
+
+### Custom Return-Path
+
+A configuration that replaces the ESP's default bounce domain with a subdomain of your own domain as the [envelope from](#envelope-from-return-path) address. This achieves SPF alignment alongside DKIM alignment, providing dual-factor [DMARC](#dmarc-domain-based-message-authentication-reporting--conformance) compliance and removing the "via" label in Gmail.
+
+See [Custom Return-Path and MAIL FROM](/knowledge-base/fundamentals/custom-return-path).
+
+---
+
+## D
+
+### Dark Mode (Email)
+
+A display setting in email clients that inverts or adjusts colors to show light text on dark backgrounds. Email clients handle dark mode differently — some apply full color inversion, some partial inversion, and some leave emails unchanged. Defensive CSS techniques (explicit colors, avoiding pure black/white, transparent image backgrounds) ensure readability across all dark mode behaviors.
+
+See [Dark Mode Email Design](/knowledge-base/best-practices/dark-mode-design).
+
+### Data Minimization
+
+A principle under [GDPR](#gdpr-general-data-protection-regulation) that requires collecting and retaining only the personal data necessary for the stated purpose. For email senders, this means avoiding storing unnecessary recipient data in email metadata and defining clear retention periods for email logs and events.
+
+See [Data Retention and Deletion](/knowledge-base/compliance/data-retention).
+
+### Data Processing Agreement (DPA)
+
+A legally required contract between a data controller (your organization) and a data processor (such as an ESP) under [GDPR](#gdpr-general-data-protection-regulation). A DPA specifies how personal data will be processed, what security measures are in place, and the obligations of each party regarding data protection.
+
+See [GDPR and Email Sending](/knowledge-base/compliance/gdpr-email).
+
+### Dedicated IP
+
+An IP address assigned exclusively to a single sender. Dedicated IPs give you full control over your sending reputation, since no other sender's behavior affects your IP. They require a [warm-up](#warm-up) period and consistent sending volume to maintain reputation. Best suited for senders with 100,000+ emails per month.
+
+See [Dedicated vs Shared IPs](/knowledge-base/concepts/dedicated-vs-shared-ips).
+
+### Deferral
+
+A temporary delay in email delivery caused by the receiving server responding with a 4xx status code, indicating it is not ready to accept the message right now. Deferrals are common during [warm-up](#warm-up) and when sending to providers with strict rate limits. The sending server retries automatically.
+
+See [How Email Delivery Works](/knowledge-base/fundamentals/how-email-delivery-works) and [Bounce Codes Reference](/knowledge-base/fundamentals/bounce-codes-reference).
+
+### Deliverability
+
+The ability of an email to reach the recipient's inbox (as opposed to the spam folder, or being rejected entirely). Deliverability is influenced by sender reputation, authentication, content quality, list hygiene, and engagement metrics. Distinct from **delivery**, which simply means the receiving server accepted the message.
+
+See [What Is Email Deliverability?](/knowledge-base/concepts/email-deliverability) and [Deliverability Best Practices](/knowledge-base/best-practices/deliverability).
+
+### Delivery
+
+The act of a receiving mail server accepting an email. A "delivered" email has been accepted by the recipient's server, but may still be placed in spam, a promotions tab, or another folder. Delivery does not guarantee inbox placement.
+
+See [How Email Delivery Works](/knowledge-base/fundamentals/how-email-delivery-works).
+
+### DKIM (DomainKeys Identified Mail)
+
+An email authentication protocol that adds a cryptographic signature to outgoing messages. The receiving server uses a public key published in DNS to verify that the email was authorized by the domain owner and wasn't modified in transit. Unlike SPF, DKIM survives email forwarding.
+
+See [Understanding SPF, DKIM, and DMARC](/knowledge-base/fundamentals/spf-dkim-dmarc#dkim-domainkeys-identified-mail).
+
+### DKIM Selector
+
+A unique identifier that specifies which DKIM public key to use for signature verification. The selector is included in the DKIM signature header (`s=` tag) and is used to look up the public key at `selector._domainkey.yourdomain.com`. Multiple selectors allow key rotation and multiple signing configurations per domain.
+
+See [Understanding SPF, DKIM, and DMARC](/knowledge-base/fundamentals/spf-dkim-dmarc).
+
+### DMARC (Domain-based Message Authentication, Reporting & Conformance)
+
+A policy framework built on SPF and DKIM that tells receiving servers what to do when authentication fails. DMARC adds alignment checks and provides a reporting mechanism. Policies range from `p=none` (monitor only) to `p=reject` (block unauthenticated email).
+
+See [Understanding SPF, DKIM, and DMARC](/knowledge-base/fundamentals/spf-dkim-dmarc#dmarc-domain-based-message-authentication-reporting--conformance).
+
+### DNS (Domain Name System)
+
+The system that translates domain names into IP addresses and stores records used for email routing and authentication. Email relies on DNS for MX records (mail routing), TXT records (SPF, DKIM, DMARC), and CNAME records (domain delegation).
+
+### DNS Propagation
+
+The time it takes for DNS record changes to spread across DNS servers worldwide. Propagation typically completes within 1–2 hours but can take up to 48 hours. During propagation, some servers may see the old records while others see the new ones.
+
+See [Domain Verification](/knowledge-base/troubleshooting/domain-verification).
+
+### Domain Reputation
+
+A score or classification that mailbox providers assign to your sending domain based on the quality and history of email sent from it. Domain reputation is independent of [IP reputation](#ip-reputation) and is increasingly the primary factor in filtering decisions at providers like Gmail. Factors include bounce rates, complaint rates, spam trap hits, and engagement.
+
+See [Sending Reputation](/knowledge-base/best-practices/sending-reputation) and [IP and Domain Warm-Up Guide](/knowledge-base/best-practices/ip-domain-warmup).
+
+### Double Opt-In
+
+A signup process where a new subscriber must confirm their email address by clicking a link in a confirmation email before being added to a mailing list. Double opt-in ensures valid addresses, reduces bounces, and provides documented proof of consent for GDPR compliance.
+
+See [Email Consent Best Practices](/knowledge-base/compliance/email-consent) and [GDPR and Email Sending](/knowledge-base/compliance/gdpr-email).
+
+---
+
+## E
+
+### Email Clipping
+
+When an email client truncates a message that exceeds a size threshold, hiding the remaining content behind a "View entire message" link. Gmail clips emails larger than 102 KB. Clipped content is not rendered, which can hide tracking pixels, unsubscribe links, and important information.
+
+See [Email Content Rendering Issues](/knowledge-base/troubleshooting/rendering-issues) and [Email Rendering Across Clients](/knowledge-base/fundamentals/email-rendering-clients).
+
+### Engagement
+
+How recipients interact with your emails — opens, clicks, replies, forwards, and time spent reading. Mailbox providers use engagement signals to determine inbox placement. High engagement improves deliverability; low engagement signals that recipients don't want your email.
+
+### Enhanced Status Code
+
+A three-part code (e.g., `5.1.1`) included in SMTP bounce responses that provides more detail than the basic three-digit reply code. The format is `class.subject.detail`, where the class indicates success (2), temporary failure (4), or permanent failure (5).
+
+See [Bounce Codes Reference](/knowledge-base/fundamentals/bounce-codes-reference).
+
+### Envelope From (Return-Path)
+
+The email address used during the SMTP conversation to indicate where bounce messages should be sent. This is different from the "From" header that recipients see. SPF checks are performed against the envelope from domain. Also called the **bounce address** or **MAIL FROM**.
+
+See [Email Headers Explained](/knowledge-base/fundamentals/email-headers) and [Custom Return-Path and MAIL FROM](/knowledge-base/fundamentals/custom-return-path).
+
+### ESMTP (Extended SMTP)
+
+An extension of the [SMTP](#smtp-simple-mail-transfer-protocol) protocol that adds support for features like authentication, TLS encryption, and 8-bit content. ESMTP is negotiated when the sending server uses the `EHLO` command instead of the older `HELO`. Virtually all modern mail servers use ESMTP.
+
+See [SMTP Protocol Basics](/knowledge-base/fundamentals/smtp-protocol-basics).
+
+### ESP (Email Service Provider)
+
+A company that provides infrastructure and tools for sending email at scale. ESPs handle server management, IP reputation, authentication, deliverability optimization, and compliance. Lettr is an ESP focused on transactional email.
+
+See [What Is an Email Service Provider?](/knowledge-base/concepts/email-service-provider).
+
+### Exchange Online Protection (EOP)
+
+Microsoft's email filtering service for Outlook.com, Hotmail, and Microsoft 365. EOP performs connection filtering, sender reputation checks, and SPF/DKIM/DMARC validation as the first layer of Microsoft's spam defense, before content-level filtering by [SmartScreen](#smartscreen).
+
+See [Outlook / Microsoft 365 Delivery Issues](/knowledge-base/troubleshooting/outlook-delivery).
+
+### Exponential Backoff
+
+A retry strategy where the wait time between retry attempts increases exponentially (e.g., 1 minute, 5 minutes, 30 minutes, 2 hours). Used in webhook delivery and SMTP retry logic to avoid overwhelming a server that is temporarily unable to accept requests.
+
+See [Webhook Delivery Failures](/knowledge-base/troubleshooting/webhook-failures).
+
+### Express Consent
+
+Under [CASL](#casl-canadian-anti-spam-legislation) and [GDPR](#gdpr-general-data-protection-regulation), an affirmative opt-in where the recipient explicitly agrees to receive messages. Express consent does not expire under CASL (valid until withdrawn). Obtaining it requires clearly disclosing who is requesting consent, why, and how to withdraw it.
+
+See [CASL (Canadian Anti-Spam Law)](/knowledge-base/compliance/casl) and [Email Consent Best Practices](/knowledge-base/compliance/email-consent).
+
+---
+
+## F
+
+### Feedback Loop (FBL)
+
+A service provided by mailbox providers (Gmail, Outlook, Yahoo) that notifies senders when recipients mark their email as spam. Senders register for FBLs to receive complaint notifications and are expected to suppress complaining recipients immediately. Lettr processes FBL reports automatically and adds complainers to your suppression list.
+
+See [What Are Feedback Loops?](/knowledge-base/concepts/feedback-loops).
+
+### Focused Inbox
+
+Outlook's email sorting feature that separates incoming messages into **Focused** (important) and **Other** (lower priority) tabs. Unlike Gmail's multi-tab system, Focused Inbox uses a two-tab model. Messages in the Other tab are still delivered but receive less visibility.
+
+See [Outlook / Microsoft 365 Delivery Issues](/knowledge-base/troubleshooting/outlook-delivery).
+
+### Forensic Report (RUF)
+
+A DMARC report that provides detailed information about individual emails that failed authentication. Unlike aggregate reports (which are summaries), forensic reports include message headers or full message content. Many mailbox providers do not send forensic reports due to privacy concerns.
+
+### From Header
+
+The email address displayed to the recipient as the sender. This is the address that DMARC alignment checks against. It can differ from the [envelope from](#envelope-from-return-path), which is used for SMTP delivery and bounce handling.
+
+---
+
+## G
+
+### GDPR (General Data Protection Regulation)
+
+An EU regulation governing the processing of personal data, including email addresses. For email senders, GDPR requires a lawful basis for processing (consent, legitimate interest, or contractual necessity), grants data subjects rights (access, erasure, portability), and mandates privacy notices and data protection measures.
+
+See [GDPR and Email Sending](/knowledge-base/compliance/gdpr-email).
+
+### Google Postmaster Tools
+
+A free service from Google that provides Gmail-specific data about your sending domain, including domain reputation, spam rate, authentication pass rates, and delivery errors. Google Postmaster Tools is the most important diagnostic tool for troubleshooting Gmail deliverability, as this data is not available from any other source.
+
+See [Gmail-Specific Delivery Issues](/knowledge-base/troubleshooting/gmail-delivery).
+
+### Graymail
+
+Email that isn't spam but isn't wanted either — newsletters the recipient signed up for but no longer reads, promotional emails from legitimate companies, etc. Graymail hurts engagement metrics and can affect deliverability over time.
+
+### Graylisting
+
+A spam-fighting technique where a receiving server temporarily rejects an email from an unknown sender, expecting the legitimate sending server to retry later. Spammers often don't retry. Graylisting causes a brief delivery delay (typically 5–30 minutes) for first-time senders. Lettr handles retries automatically.
+
+---
+
+## H
+
+### Hard Bounce
+
+A permanent delivery failure indicating the email can never be delivered to that address. Common causes: the address doesn't exist (SMTP 550), the domain doesn't exist, or the mailbox has been disabled. Hard bounces should be immediately suppressed to protect sender reputation.
+
+See [Bounce Diagnosis](/knowledge-base/troubleshooting/bounce-diagnosis).
+
+### Header
+
+Metadata at the top of an email message containing routing information, authentication results, and display information (From, To, Subject, Date, Message-ID, etc.). Headers are normally hidden from the recipient but can be viewed in most email clients via "Show Original" or "View Source."
+
+See [Email Headers Explained](/knowledge-base/fundamentals/email-headers).
+
+---
+
+## I
+
+### Idempotency
+
+The property of an API operation where making the same request multiple times produces the same result as making it once. Lettr supports idempotent email sending via an `Idempotency-Key` header, preventing duplicate emails if a request is retried due to a network error.
+
+See [Idempotency](/learn/sending/idempotency).
+
+### IMAP (Internet Message Access Protocol)
+
+A protocol used by email clients to retrieve and manage email stored on a mail server. Unlike [SMTP](#smtp-simple-mail-transfer-protocol), which handles sending, IMAP handles reading. IMAP keeps messages on the server and syncs across multiple devices. POP3 is an older alternative that downloads messages and typically removes them from the server.
+
+### Implied Consent
+
+Under [CASL](#casl-canadian-anti-spam-legislation), consent inferred from an existing business relationship (such as a purchase or inquiry) without an explicit opt-in. Implied consent is time-limited — it expires 2 years after the last purchase or transaction, or 6 months after an inquiry. After expiration, [express consent](#express-consent) is required to continue sending.
+
+See [CASL (Canadian Anti-Spam Law)](/knowledge-base/compliance/casl) and [Email Consent Best Practices](/knowledge-base/compliance/email-consent).
+
+### Inbox Placement
+
+Whether an email appears in the recipient's primary inbox, as opposed to the spam folder, promotions tab, or other filtered location. Inbox placement is determined by sender reputation, authentication, content quality, and recipient engagement.
+
+### Inline CSS
+
+CSS styling applied directly to HTML elements using the `style` attribute rather than in a `<style>` block or external stylesheet. Inline CSS is the most reliable styling method for HTML email because some clients (notably Gmail on the web) strip `<style>` tags from the `<head>`. Many email tools automatically inline CSS during the build process.
+
+See [Email Content Rendering Issues](/knowledge-base/troubleshooting/rendering-issues) and [Email Rendering Across Clients](/knowledge-base/fundamentals/email-rendering-clients).
+
+### IP Pool
+
+A group of IP addresses managed by an ESP and shared across multiple senders. The ESP distributes outbound email across the pool and monitors reputation for each IP. IP pools allow ESPs to isolate senders by quality — high-quality senders share IPs with other high-quality senders.
+
+See [Dedicated vs Shared IPs](/knowledge-base/concepts/dedicated-vs-shared-ips).
+
+### IP Reputation
+
+A score assigned to an IP address based on the quality and history of email sent from it. Mailbox providers track bounce rates, complaint rates, spam trap hits, and engagement from each IP. A poor IP reputation leads to spam filtering or rejection.
+
+See [Sending Reputation](/knowledge-base/best-practices/sending-reputation).
+
+---
+
+## J
+
+### JMRP (Junk Mail Reporting Program)
+
+Microsoft's [feedback loop](#feedback-loop-fbl) program that sends notifications when Outlook.com and Hotmail users mark email as junk. JMRP is the Microsoft equivalent of a traditional FBL and provides complaint data that ESPs use to suppress complaining recipients.
+
+See [Outlook / Microsoft 365 Delivery Issues](/knowledge-base/troubleshooting/outlook-delivery) and [What Are Feedback Loops?](/knowledge-base/concepts/feedback-loops).
+
+---
+
+## L
+
+### List Hygiene
+
+The practice of maintaining a clean, valid email list by removing invalid addresses, handling bounces, processing complaints, re-engaging or sunsetting inactive subscribers, and validating addresses at collection. Poor list hygiene is the most common cause of deliverability problems.
+
+See [List Hygiene](/knowledge-base/best-practices/list-hygiene).
+
+### List-Unsubscribe Header
+
+An email header that provides a machine-readable unsubscribe mechanism. Google and Yahoo require the `List-Unsubscribe-Post` header (RFC 8058) for one-click unsubscribe in bulk email. Lettr adds this header automatically when unsubscribe tracking is enabled.
+
+See [Unsubscribe Best Practices](/knowledge-base/compliance/unsubscribe-best-practices).
+
+---
+
+## M
+
+### MAIL FROM
+
+The command in an SMTP conversation that specifies the envelope sender address (also called the [return-path](#envelope-from-return-path) or bounce address). This is the address that receives bounce notifications and is checked by SPF. It can differ from the "From" header the recipient sees.
+
+### Mailbox Provider
+
+A service that operates recipient email inboxes — Gmail, Outlook.com, Yahoo Mail, Apple Mail (iCloud), and similar. Mailbox providers receive inbound email, apply spam filtering, and determine [inbox placement](#inbox-placement). Also loosely referred to as "ISPs" (internet service providers) in the email industry, though this is technically imprecise.
+
+See [What Is an Email Service Provider?](/knowledge-base/concepts/email-service-provider).
+
+### Mail Privacy Protection (MPP)
+
+An Apple privacy feature (iOS 15+, macOS Monterey+) that pre-fetches email content — including tracking pixels — through Apple's proxy servers at the time of delivery rather than when the recipient opens the email. This causes all emails to appear as "opened," making [open tracking](#open-tracking) unreliable for Apple Mail users.
+
+See [Tracking Accuracy](/knowledge-base/troubleshooting/tracking-accuracy) and [Email Rendering Across Clients](/knowledge-base/fundamentals/email-rendering-clients).
+
+### Marketing Email
+
+Email sent to promote a product, service, or offer. Marketing email requires explicit recipient consent (opt-in), must include an unsubscribe mechanism and physical address, and is subject to CAN-SPAM, GDPR, and other regulations. Should be sent separately from transactional email to protect transactional reputation.
+
+See [Transactional vs Marketing](/knowledge-base/best-practices/transactional-vs-marketing).
+
+### Merge Tag
+
+A placeholder variable in an email template (e.g., `{{ name }}`, `{{ order_id }}`) that is replaced with recipient-specific data at send time. Merge tags enable personalization without creating individual templates for each recipient. Also called [substitution data](#substitution-data) or template variables.
+
+See [Personalization and Dynamic Content](/knowledge-base/best-practices/personalization-dynamic-content).
+
+### Message-ID
+
+A unique identifier assigned to every email, formatted as `<unique-string@domain>`. Used for threading, deduplication, and troubleshooting. Each email should have exactly one Message-ID, generated by the sending system.
+
+See [Email Headers Explained](/knowledge-base/fundamentals/email-headers).
+
+### MIME (Multipurpose Internet Mail Extensions)
+
+A standard that extends email to support content beyond plain ASCII text — HTML, images, attachments, and multiple content types in a single message. MIME defines content types (`text/plain`, `text/html`, `multipart/alternative`) and encoding methods.
+
+See [Email Content Types](/knowledge-base/fundamentals/content-types).
+
+### MTA (Mail Transfer Agent)
+
+Software responsible for sending, receiving, and routing email between servers using the SMTP protocol. Examples include Postfix, Sendmail, and Microsoft Exchange. When you send email through Lettr, Lettr's MTA handles delivery to the recipient's MTA.
+
+### Multipart Message
+
+An email that contains multiple content versions (typically `text/plain` and `text/html`) wrapped in a `multipart/alternative` MIME container. The recipient's email client chooses which version to display based on its capabilities and user preferences. Sending multipart messages is a best practice for accessibility and deliverability.
+
+See [Email Content Types](/knowledge-base/fundamentals/content-types).
+
+### MX Record (Mail Exchanger)
+
+A DNS record that specifies which mail server should receive email for a domain. MX records include a priority value — lower numbers indicate higher priority. When sending email, the sending server queries the recipient domain's MX records to find the correct destination.
+
+---
+
+## O
+
+### One-Click Unsubscribe
+
+An unsubscribe mechanism defined by RFC 8058 that allows mailbox providers to show an unsubscribe button in their UI. It requires the `List-Unsubscribe` and `List-Unsubscribe-Post` headers. Since February 2024, Google and Yahoo require one-click unsubscribe for bulk senders.
+
+See [Unsubscribe Best Practices](/knowledge-base/compliance/unsubscribe-best-practices) and [Google & Yahoo Sender Requirements](/knowledge-base/compliance/google-yahoo-requirements).
+
+### Open Tracking
+
+A technique that detects when a recipient opens an email by embedding an invisible tracking pixel (a 1x1 image). When the email client loads the image, the open is recorded. Open tracking is unreliable because images may be blocked, pre-fetched by privacy features (Apple Mail Privacy Protection), or loaded by security scanners.
+
+See [Tracking Accuracy](/knowledge-base/troubleshooting/tracking-accuracy).
+
+### Opt-In
+
+The act of a recipient giving permission to receive email. Opt-in can be **single** (immediate subscription after form submission) or **double** (requires clicking a confirmation link in a verification email). GDPR and CASL require opt-in before sending commercial email, while CAN-SPAM uses an opt-out model.
+
+See [Email Consent Best Practices](/knowledge-base/compliance/email-consent).
+
+### Opt-Out
+
+The act of a recipient withdrawing permission to receive email, typically by clicking an unsubscribe link. Under CAN-SPAM, opt-out requests must be honored within 10 business days. Under GDPR and CASL, opt-out must be processed promptly. The opt-out mechanism must be clear, functional, and free.
+
+See [Unsubscribe Best Practices](/knowledge-base/compliance/unsubscribe-best-practices).
+
+---
+
+## P
+
+### Phishing
+
+A social engineering attack where a fraudulent email impersonates a trusted sender to trick recipients into revealing sensitive information or clicking malicious links. SPF, DKIM, and DMARC help prevent attackers from spoofing your domain in phishing emails.
+
+### Plus Addressing
+
+A feature supported by most mailbox providers where a `+` sign and additional text can be appended to the local part of an email address (e.g., `user+newsletter@gmail.com`). The email is delivered to the same mailbox as `user@gmail.com`. Plus addressing is commonly used for filtering and identifying how an address was shared.
+
+See [Email Address Anatomy](/knowledge-base/fundamentals/email-address-anatomy).
+
+### Preheader Text
+
+The short text snippet displayed next to or below the subject line in the inbox preview. Preheader text is typically the first text content in the HTML body. You can set it explicitly using a hidden HTML element to provide additional context that encourages recipients to open the email, rather than showing template boilerplate.
+
+### Preference Center
+
+A web page where recipients can manage their email subscription settings — choosing which types of email they want to receive rather than unsubscribing entirely. Preference centers reduce unsubscribes and complaints by giving recipients control.
+
+See [Unsubscribe Best Practices](/knowledge-base/compliance/unsubscribe-best-practices).
+
+### Promotions Tab
+
+Gmail's tab for categorizing promotional and marketing emails separately from the Primary inbox. Emails placed in the Promotions tab are delivered successfully but receive less visibility. Tab placement is determined by Gmail's machine learning classifier based on content style, sender relationship, engagement history, and the presence of an unsubscribe header.
+
+See [Gmail-Specific Delivery Issues](/knowledge-base/troubleshooting/gmail-delivery).
+
+### PTR Record (Pointer Record)
+
+A DNS record used for reverse DNS lookups — mapping an IP address back to a domain name. Mailbox providers check PTR records to verify that a sending IP address has a valid reverse DNS entry. Missing or misconfigured PTR records can cause email to be rejected or flagged as spam.
+
+See [Google & Yahoo Sender Requirements](/knowledge-base/compliance/google-yahoo-requirements).
+
+---
+
+## R
+
+### Rate Limiting
+
+A server's restriction on how many requests or emails a sender can submit within a given time period. Lettr enforces rate limits to protect infrastructure and deliverability (standard: 300 requests per 5 minutes). Exceeding limits returns a 429 HTTP status code with a `retry_after` value.
+
+See [Rate Limits](/knowledge-base/troubleshooting/rate-limits) and [Rate Limits](/learn/sending/rate-limits).
+
+### Rendering Engine
+
+The software component within an email client that interprets and displays HTML and CSS. Different clients use different rendering engines — Apple Mail uses WebKit, Outlook desktop uses Microsoft Word's HTML engine, and Gmail uses a custom engine that strips `<style>` blocks. These differences are the primary cause of inconsistent email rendering across clients.
+
+See [Email Rendering Across Clients](/knowledge-base/fundamentals/email-rendering-clients) and [Email Content Rendering Issues](/knowledge-base/troubleshooting/rendering-issues).
+
+### Reply-To Header
+
+An email header that specifies where replies should be sent, which can differ from the "From" address. Useful when the sending address is a no-reply address but you want replies to go to a support or sales inbox.
+
+### Reputation Isolation
+
+The practice of using separate [subdomains](#subdomain) or IP addresses for different types of email (transactional, marketing, notifications) so that deliverability problems in one stream do not affect others. Reputation isolation protects high-priority email (like password resets) from being impacted by marketing campaign issues.
+
+See [Subdomain vs Root Domain](/knowledge-base/fundamentals/subdomain-vs-root) and [Transactional vs Marketing](/knowledge-base/best-practices/transactional-vs-marketing).
+
+### Return-Path
+
+See [Envelope From (Return-Path)](#envelope-from-return-path).
+
+### Reverse DNS
+
+A DNS lookup that resolves an IP address to a domain name (the opposite of a standard DNS lookup). Receiving mail servers perform reverse DNS lookups to verify that the sending server's IP address has a valid hostname. A missing or mismatched reverse DNS entry is a common cause of delivery failures.
+
+See [Google & Yahoo Sender Requirements](/knowledge-base/compliance/google-yahoo-requirements).
+
+### Role-Based Address
+
+A generic email address associated with a function rather than an individual person (e.g., `admin@`, `support@`, `info@`, `sales@`, `postmaster@`). Role-based addresses often route to shared inboxes and have higher complaint rates. Many ESPs recommend suppressing role-based addresses from marketing sends.
+
+See [List Hygiene](/knowledge-base/best-practices/list-hygiene).
+
+---
+
+## S
+
+### Sandbox Mode
+
+A testing environment that allows you to verify your email integration without sending to real recipients or affecting your sending reputation. Sandbox mode is used during development to validate API requests, check response formats, and test webhook handling before going to production.
+
+See [Sandbox and Testing Mode](/knowledge-base/troubleshooting/sandbox-testing).
+
+### Seed List
+
+A list of test email addresses across multiple mailbox providers used to verify inbox placement. Sending to seed lists helps diagnose deliverability issues by checking whether emails land in the inbox or spam folder at Gmail, Outlook, Yahoo, and other providers.
+
+### Sender Reputation
+
+A score or classification assigned to your sending domain and/or IP address by mailbox providers, based on historical sending behavior. Factors include bounce rate, complaint rate, spam trap hits, engagement, and sending consistency. Reputation is the single biggest factor in deliverability.
+
+See [Sending Reputation](/knowledge-base/best-practices/sending-reputation).
+
+### Shared IP
+
+An IP address used by multiple senders on the same email platform. Your deliverability is partially influenced by the behavior of other senders sharing the IP. Shared IPs are the default for most email platforms (including Lettr) and work well for most sending volumes.
+
+See [Dedicated vs Shared IPs](/knowledge-base/concepts/dedicated-vs-shared-ips).
+
+### Single Opt-In
+
+A subscription method where a recipient is immediately added to a mailing list after submitting a signup form, without a confirmation step. Single opt-in has lower friction and higher list growth rates but results in lower list quality (typos, bots, invalid addresses) and weaker consent evidence compared to [double opt-in](#double-opt-in).
+
+See [Email Consent Best Practices](/knowledge-base/compliance/email-consent).
+
+### SmartScreen
+
+Microsoft's content-based email filtering system that uses machine learning to classify messages as legitimate or spam. SmartScreen operates as a layer within Microsoft's filtering stack alongside [Exchange Online Protection](#exchange-online-protection-eop) and user-level signals (Safe Senders, block lists).
+
+See [Outlook / Microsoft 365 Delivery Issues](/knowledge-base/troubleshooting/outlook-delivery).
+
+### SMTP (Simple Mail Transfer Protocol)
+
+The standard protocol for transmitting email between servers. SMTP operates on port 25 (server-to-server), port 587 (submission with STARTTLS), and port 465 (submission with implicit TLS). SMTP defines the conversation between sending and receiving servers, including commands like EHLO, MAIL FROM, RCPT TO, and DATA.
+
+See [SMTP Protocol Basics](/knowledge-base/fundamentals/smtp-protocol-basics).
+
+### SMTP Relay
+
+A method of sending email where your application connects to an ESP's SMTP server and transmits messages using the SMTP protocol. The ESP then relays the message to the recipient's mail server. SMTP relay works with any language or tool that supports SMTP, making it compatible with legacy systems. Compare with sending via a REST [API](#api-key).
+
+See [Sending via SMTP vs API](/knowledge-base/best-practices/smtp-vs-api).
+
+### SNDS (Smart Network Data Services)
+
+Microsoft's service for monitoring the reputation of your sending IP addresses with Outlook.com and Microsoft 365. SNDS provides traffic volume, spam complaint rate, and a color-coded filter result (Green/Yellow/Red) per IP. It is the Microsoft equivalent of [Google Postmaster Tools](#google-postmaster-tools).
+
+See [Outlook / Microsoft 365 Delivery Issues](/knowledge-base/troubleshooting/outlook-delivery).
+
+### Soft Bounce
+
+A temporary delivery failure indicating the email could not be delivered right now but may succeed later. Common causes: mailbox full (SMTP 452), server temporarily unavailable (421), or message too large (552). Soft bounces are retried automatically. Persistent soft bounces may be reclassified as hard bounces.
+
+See [Bounce Diagnosis](/knowledge-base/troubleshooting/bounce-diagnosis).
+
+### Spam Trap
+
+An email address used by mailbox providers and blocklist operators to identify senders with poor list practices. **Pristine traps** are addresses that never opted in — hitting one means you're using a purchased or scraped list. **Recycled traps** are abandoned addresses repurposed as traps — hitting one means you're not cleaning inactive subscribers.
+
+See [List Hygiene](/knowledge-base/best-practices/list-hygiene).
+
+### SPF (Sender Policy Framework)
+
+An email authentication protocol that allows domain owners to declare which mail servers are authorized to send email on their behalf. SPF is published as a DNS TXT record. Receiving servers check the sending server's IP against the SPF record. SPF does not survive email forwarding.
+
+See [Understanding SPF, DKIM, and DMARC](/knowledge-base/fundamentals/spf-dkim-dmarc#spf-sender-policy-framework).
+
+### Spoofing
+
+The act of sending email that falsely claims to be from a domain or address that the sender does not control. Spoofing is the foundation of [phishing](#phishing) attacks. [SPF](#spf-sender-policy-framework), [DKIM](#dkim-domainkeys-identified-mail), and [DMARC](#dmarc-domain-based-message-authentication-reporting--conformance) work together to detect and prevent domain spoofing.
+
+See [Understanding SPF, DKIM, and DMARC](/knowledge-base/fundamentals/spf-dkim-dmarc).
+
+### STARTTLS
+
+An SMTP command that upgrades an existing plaintext connection to an encrypted [TLS](#tls-transport-layer-security) connection. After the TLS handshake completes, the SMTP session restarts over the encrypted channel. STARTTLS is used on port 587 and is the most common method for encrypting email in transit.
+
+See [SMTP Protocol Basics](/knowledge-base/fundamentals/smtp-protocol-basics).
+
+### Subdomain
+
+A prefix added to a root domain (e.g., `mail.yourdomain.com` is a subdomain of `yourdomain.com`). Using subdomains for email sending provides reputation isolation — deliverability issues on one subdomain don't affect others or your root domain.
+
+See [Subdomain vs Root Domain](/knowledge-base/fundamentals/subdomain-vs-root).
+
+### Substitution Data
+
+Variables passed in an API request that are merged into an email template at send time (e.g., `{{first_name}}`, `{{order_id}}`). Substitution data is processed per-recipient and should never contain sensitive information like passwords or credit card numbers.
+
+See [Data Privacy in Email Metadata](/knowledge-base/compliance/data-privacy-metadata) and [Personalization and Dynamic Content](/knowledge-base/best-practices/personalization-dynamic-content).
+
+### Sunset Policy
+
+A rule that automatically removes or suppresses recipients who haven't engaged with your email over a defined period (e.g., no opens or clicks in 90 days). Sunset policies prevent list decay, reduce complaints from disengaged recipients, and protect sender reputation.
+
+See [List Hygiene](/knowledge-base/best-practices/list-hygiene) and [Sending Reputation](/knowledge-base/best-practices/sending-reputation).
+
+### Suppression List
+
+A list of email addresses that Lettr will not send to, regardless of whether they appear in a send request. Addresses are added automatically (hard bounces, complaints, unsubscribes) or manually. Suppression lists protect sender reputation by preventing email to known-bad addresses.
+
+See [Understanding Suppression Lists](/knowledge-base/fundamentals/suppression-lists).
+
+---
+
+## T
+
+### Throttling
+
+When a mailbox provider intentionally slows down the rate at which it accepts email from a sender, typically in response to volume spikes, poor reputation, or warm-up concerns. Throttling results in [deferrals](#deferral) (4xx responses) rather than outright rejections. The sending server is expected to retry later at a reduced rate.
+
+See [Bounce Codes Reference](/knowledge-base/fundamentals/bounce-codes-reference) and [Batch and Bulk Sending](/knowledge-base/best-practices/batch-bulk-sending).
+
+### TLS (Transport Layer Security)
+
+An encryption protocol that secures the connection between mail servers during SMTP transmission. TLS prevents eavesdropping on email content in transit. Most modern mail servers support opportunistic TLS (encrypt if both sides support it, fall back to unencrypted if not).
+
+### Tracking Domain
+
+A custom domain used for open and click tracking instead of Lettr's default tracking domain. Using a tracking domain that matches your sending domain improves deliverability and brand consistency. Tracking domains require CNAME records pointing to Lettr's tracking infrastructure.
+
+See [Tracking Domains](/learn/domains/tracking-domains).
+
+### Tracking Pixel
+
+A tiny (1x1 pixel) invisible image embedded in an HTML email to detect opens. When the recipient's email client loads the image, the open event is recorded. Tracking pixels are the standard open-tracking method but are blocked by some email clients and privacy features.
+
+See [Tracking Accuracy](/knowledge-base/troubleshooting/tracking-accuracy).
+
+### Transactional Email
+
+Email triggered by a user action or system event — password resets, order confirmations, shipping notifications, account alerts, and similar. Transactional email is expected by the recipient and typically has high open rates. It is generally exempt from CAN-SPAM's unsubscribe requirements but must still include accurate sender information.
+
+See [What Is Transactional Email?](/knowledge-base/concepts/transactional-email) and [Transactional vs Marketing](/knowledge-base/best-practices/transactional-vs-marketing).
+
+### TXT Record
+
+A DNS record type used to store text data. Email authentication relies heavily on TXT records: SPF policies, DKIM public keys, and DMARC policies are all published as TXT records.
+
+---
+
+## V
+
+### Verified Mark Certificate (VMC)
+
+A digital certificate issued by an authorized Certificate Authority (such as DigiCert or Entrust) that proves ownership of a trademarked logo. VMCs are required by Gmail and Apple Mail for displaying [BIMI](#bimi-brand-indicators-for-message-identification) logos in recipient inboxes. Obtaining a VMC requires a registered trademark in an eligible jurisdiction.
+
+See [BIMI: Brand Indicators for Message Identification](/knowledge-base/fundamentals/bimi).
+
+---
+
+## W
+
+### Warm-Up
+
+The process of gradually increasing email volume from a new IP address or domain to build sender reputation with mailbox providers. Warm-up typically takes 2–4 weeks. Sending too much too fast from a new IP or domain triggers spam filters and can permanently damage reputation.
+
+See [IP and Domain Warm-Up Guide](/knowledge-base/best-practices/ip-domain-warmup) and [Sending Reputation](/knowledge-base/best-practices/sending-reputation).
+
+### WCAG (Web Content Accessibility Guidelines)
+
+An international standard for making web content (including HTML email) accessible to people with disabilities. WCAG defines requirements for color contrast ratios (minimum 4.5:1 for text), keyboard navigability, screen reader compatibility, and semantic HTML structure. Following WCAG guidelines improves email accessibility and readability for all recipients.
+
+See [Email Accessibility](/knowledge-base/best-practices/email-accessibility).
+
+### Webhook
+
+An HTTP callback triggered by an event. Lettr sends webhooks to your configured endpoint when email events occur (delivered, bounced, opened, clicked, complained, etc.). Webhooks enable real-time event processing in your application.
+
+See [Webhooks](/learn/webhooks/introduction).
+
+### Webhook Signature
+
+A cryptographic hash (typically HMAC-SHA256) included in webhook request headers that allows the receiver to verify the webhook was sent by the expected source and has not been tampered with. Verifying webhook signatures prevents malicious third parties from sending fake events to your endpoint.
+
+See [Webhook Delivery Failures](/knowledge-base/troubleshooting/webhook-failures) and [Security Best Practices](/knowledge-base/best-practices/security).
+
+---
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="How Email Delivery Works" icon="diagram-project" href="/knowledge-base/fundamentals/how-email-delivery-works">
+    Understand the full email delivery pipeline from send to inbox.
+  </Card>
+  <Card title="SPF, DKIM, and DMARC" icon="shield-check" href="/knowledge-base/fundamentals/spf-dkim-dmarc">
+    Deep dive into email authentication protocols.
+  </Card>
+  <Card title="Bounce Codes Reference" icon="rectangle-list" href="/knowledge-base/fundamentals/bounce-codes-reference">
+    Comprehensive SMTP response code reference.
+  </Card>
+  <Card title="Email Headers Explained" icon="code" href="/knowledge-base/fundamentals/email-headers">
+    What common headers mean and how they affect delivery.
+  </Card>
+</CardGroup>

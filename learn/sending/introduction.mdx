@@ -5,7 +5,19 @@ description: "Learn how to send emails with Lettr"
 
 # Sending Emails
 
-Lettr provides a powerful and flexible API for sending transactional and marketing emails.
+Lettr provides a powerful and flexible API for sending transactional and marketing emails. Whether you're sending password resets, order confirmations, or newsletters, the sending API handles delivery, tracking, and analytics so you can focus on building your application.
+
+## Prerequisites
+
+Before sending your first email, make sure you have:
+
+1. A [verified sending domain](/learn/domains/sending-domains) with DKIM and SPF records configured
+2. An [API key](/learn/api-keys/introduction) with sending permissions
+3. At least one of `html` or `text` content prepared for your email
+
+<Tip>
+  New to Lettr? Start with a [quickstart guide](/quickstart/nodejs/introduction) to get set up in minutes.
+</Tip>
 
 ## Basic Email
 
@@ -13,7 +25,7 @@ Send a simple email with minimal configuration:
 
 ```bash
 curl -X POST https://app.lettr.com/api/emails \
-  -H "Authorization: Bearer le_xxxxxxxxxxxx" \
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxx" \
   -H "Content-Type: application/json" \
   -d '{
     "from": "you@yourdomain.com",
@@ -60,19 +72,190 @@ curl -X POST https://app.lettr.com/api/emails \
 }
 ```
 
+The `request_id` uniquely identifies this send request. Store it to track delivery status, correlate with [webhook events](/learn/webhooks/introduction), and debug issues. See [Idempotency](/learn/sending/idempotency) for patterns to prevent duplicate sends.
+
+## Transactional vs. Marketing Emails
+
+Lettr handles both transactional and marketing emails through the same API, but the two have different characteristics and best practices.
+
+**Transactional emails** are triggered by a user action — password resets, order confirmations, shipping notifications, account alerts. They are expected by the recipient and typically have high open rates.
+
+**Marketing emails** are sent proactively — newsletters, promotions, product announcements. They require clear unsubscribe mechanisms and careful list management.
+
+Use the `transactional` option to signal the email type:
+
+```javascript
+// Transactional: password reset (transactional is true by default)
+await lettr.emails.send({
+  from: 'security@example.com',
+  to: ['user@example.com'],
+  subject: 'Reset your password',
+  html: '<p>Click the link below to reset your password.</p>',
+  options: {
+    transactional: true
+  }
+});
+
+// Marketing: newsletter
+await lettr.emails.send({
+  from: 'updates@example.com',
+  from_name: 'Acme Newsletter',
+  to: ['subscriber@example.com'],
+  subject: 'This month at Acme',
+  html: newsletterHtml,
+  options: {
+    transactional: false,
+    open_tracking: true,
+    click_tracking: true
+  }
+});
+```
+
+<Note>
+  Transactional emails typically have higher deliverability. Separating transactional and marketing email on different sending domains or subdomains is a common practice to protect your transactional sender reputation. See [Best Practices](/learn/sending/best-practices) for domain warm-up and reputation guidance.
+</Note>
+
+## Common Sending Patterns
+
+### Personalized Emails with Merge Tags
+
+Use `substitution_data` to personalize content for each recipient. Lettr's [template language](/learn/templates/template-language) supports variables, conditionals, and loops:
+
+```javascript
+await lettr.emails.send({
+  from: 'orders@example.com',
+  from_name: 'Acme Store',
+  to: ['customer@example.com'],
+  subject: 'Your order #{{order_id}} has shipped',
+  html: `
+    <p>Hi {{name}},</p>
+    <p>Your order <strong>#{{order_id}}</strong> has shipped via {{carrier}}.</p>
+    <p>Track your package: <a href="{{tracking_url}}">{{tracking_number}}</a></p>
+  `,
+  substitution_data: {
+    name: 'Alex',
+    order_id: '12345',
+    carrier: 'FedEx',
+    tracking_number: '9400111899223456789012',
+    tracking_url: 'https://example.com/track/9400111899223456789012'
+  }
+});
+```
+
+### Sending with Templates
+
+Instead of inline HTML, reference a template created in the Lettr dashboard or via the API:
+
+```javascript
+await lettr.emails.send({
+  from: 'welcome@example.com',
+  from_name: 'Acme',
+  to: ['newuser@example.com'],
+  subject: 'Welcome to Acme, {{first_name}}!',
+  template_slug: 'welcome-email',
+  substitution_data: {
+    first_name: 'Jordan',
+    login_url: 'https://app.example.com/login'
+  }
+});
+```
+
+See [Templates](/learn/templates/introduction) for creating and managing email templates with the visual editor.
+
+### Tracking and Metadata
+
+Attach [metadata](/learn/sending/metadata) for analytics and debugging, and control [tracking](/learn/sending/tracking) per email:
+
+```javascript
+await lettr.emails.send({
+  from: 'notifications@example.com',
+  to: ['user@example.com'],
+  subject: 'Your invoice is ready',
+  html: '<p>Your invoice for January is ready. <a href="https://example.com/invoices/123">View invoice</a></p>',
+  metadata: {
+    invoice_id: 'inv_123',
+    customer_id: 'cust_456',
+    source: 'billing-service'
+  },
+  options: {
+    open_tracking: true,
+    click_tracking: true
+  }
+});
+```
+
+Metadata is included in [webhook payloads](/learn/webhooks/introduction), allowing you to correlate delivery events with your application data.
+
+### Scheduling for Later
+
+Send emails at a future date and time using the `scheduledAt` parameter:
+
+```javascript
+await lettr.emails.send({
+  from: 'reminders@example.com',
+  to: ['user@example.com'],
+  subject: 'Your appointment is tomorrow',
+  html: '<p>This is a reminder that your appointment is scheduled for tomorrow at 10:00 AM.</p>',
+  scheduledAt: '2025-03-15T09:00:00Z'
+});
+```
+
+Scheduled emails can be cancelled or rescheduled before delivery. See [Scheduling](/learn/sending/scheduling) for details, including timezone handling and scheduling limits.
+
+### Sending to Multiple Recipients
+
+Send to up to 50 recipients per API call with optional per-recipient personalization:
+
+```javascript
+await lettr.emails.send({
+  from: 'team@example.com',
+  to: ['alice@example.com', 'bob@example.com', 'carol@example.com'],
+  subject: 'Your monthly report, {{name}}',
+  html: '<p>Hi {{name}}, here is your report for {{month}}.</p>',
+  recipientVariables: {
+    'alice@example.com': { name: 'Alice', month: 'January' },
+    'bob@example.com': { name: 'Bob', month: 'January' },
+    'carol@example.com': { name: 'Carol', month: 'January' }
+  }
+});
+```
+
+For larger lists, see [Batch Sending](/learn/sending/batch-sending) for patterns to send to hundreds or thousands of recipients efficiently.
+
+## Error Handling
+
+The API returns structured errors to help you diagnose issues:
+
+```json
+{
+  "status": "error",
+  "error_code": "invalid_sending_domain",
+  "message": "The sending domain is not verified."
+}
+```
+
+Common errors include unverified domains (`invalid_sending_domain`), validation failures (`validation_error`), and rate limits (`rate_limit_exceeded`). Rate limit responses include a `retryAfter` value. Server errors (5xx) are safe to retry with exponential backoff, while client errors (4xx other than 429) should not be retried.
+
+See [Errors & Retries](/learn/sending/errors-retries) for a complete error code reference and retry patterns.
+
+## Next Steps
+
+Once you're sending emails, consider setting up:
+
+- **[Webhooks](/learn/webhooks/introduction)** to receive delivery, bounce, open, and click notifications in real time
+- **[Analytics](/learn/analytics/introduction)** to monitor delivery rates and engagement metrics
+- **[Suppressions](/learn/suppressions/introduction)** to manage bounces and unsubscribes automatically
+
 ## Learn More
 
 <CardGroup cols={2}>
-  <Card title="HTML / CSS / AMP" icon="code" href="/learn/sending/html-css-amp">
-    Design beautiful emails
+  <Card title="Content Types" icon="code" href="/learn/sending/content-types">
+    HTML, plain text, and AMP email content
   </Card>
-  <Card title="Variables" icon="brackets-curly" href="/learn/sending/variables">
-    Personalize your emails
+  <Card title="Template Language" icon="brackets-curly" href="/learn/templates/template-language">
+    Personalize your emails with merge tags
   </Card>
   <Card title="Attachments" icon="paperclip" href="/learn/sending/attachments">
     Add files to your emails
-  </Card>
-  <Card title="Campaigns" icon="chart-line" href="/learn/sending/campaigns">
-    Track email campaigns
   </Card>
 </CardGroup>

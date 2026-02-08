@@ -1,0 +1,232 @@
+---
+title: "What Is Email Deliverability?"
+description: "Understand what email deliverability means, how it differs from delivery, and the factors that determine whether your emails reach the inbox"
+---
+
+Email deliverability is the measure of how successfully your emails reach recipients' inboxes — not just whether they were accepted by a mail server, but whether they actually appeared in the inbox rather than the spam folder, promotions tab, or quarantine.
+
+Deliverability is the single most important metric for any email program. An email that lands in spam is functionally the same as an email that was never sent.
+
+---
+
+## Delivery vs Deliverability
+
+These two terms are frequently confused, but they describe fundamentally different outcomes.
+
+| Term | What It Measures | Example |
+| ---- | ---------------- | ------- |
+| **Delivery** | Whether the receiving mail server accepted the message (it did not bounce) | Server returns a `250 OK` response — the message was delivered |
+| **Deliverability** | Whether the message reached the recipient's **inbox** specifically | The message appears in the inbox, not the spam folder |
+
+<Note>
+  A 100% delivery rate does not mean a 100% inbox rate. You can have perfect delivery — every message accepted by the server — while half your emails sit in spam folders where no one reads them.
+</Note>
+
+Think of it like postal mail. Delivery means the post office accepted the letter. Deliverability means it arrived in the recipient's mailbox rather than being redirected to a junk pile in the basement.
+
+---
+
+## Why Deliverability Matters
+
+Poor deliverability has direct business consequences:
+
+- **Password resets and 2FA codes don't arrive** — Users can't log in, contact support, and lose trust in your product.
+- **Order confirmations go missing** — Customers assume their purchase failed and either repurchase or abandon your store.
+- **Onboarding emails land in spam** — New users never activate, and your conversion funnel breaks at the first step.
+- **Marketing campaigns underperform** — Open rates collapse, click rates vanish, and revenue from email drops.
+
+Deliverability is not an email operations problem. It is a product reliability and revenue problem.
+
+---
+
+## The Five Factors That Determine Deliverability
+
+Inbox placement is the result of five interconnected factors. Weakness in any one of them can send your emails to spam.
+
+### 1. Authentication
+
+Email authentication proves to receiving servers that you are who you claim to be and that your message has not been tampered with. Three protocols work together:
+
+- **SPF** — Declares which IP addresses are authorized to send email for your domain.
+- **DKIM** — Adds a cryptographic signature to each email, proving it was not modified in transit.
+- **DMARC** — Ties SPF and DKIM together and tells receivers what to do when authentication fails.
+
+Without proper authentication, mailbox providers have no reason to trust your messages. Since February 2024, Google and Yahoo require SPF, DKIM, and DMARC for all bulk senders.
+
+<Tip>
+  Lettr configures DKIM signing automatically when you verify your domain. You need to add the DNS records Lettr provides — see [Sending Domains](/learn/domains/sending-domains) for the setup guide.
+</Tip>
+
+### 2. Sender Reputation
+
+Mailbox providers assign a reputation score to your sending domain and IP address based on your historical sending behavior. This reputation acts as a trust signal that influences every filtering decision.
+
+Reputation is built over time through:
+
+- **Low bounce rates** — Sending to valid, active addresses
+- **Low complaint rates** — Recipients not marking your emails as spam
+- **Consistent volume** — Predictable sending patterns rather than sudden spikes
+- **Positive engagement** — Recipients opening, reading, and clicking your emails
+
+Reputation damage is easier to cause than to repair. A single bad campaign can take weeks to recover from.
+
+### 3. List Quality
+
+The health of your recipient list directly affects deliverability. Sending to invalid addresses, spam traps, or unengaged recipients generates the negative signals that destroy reputation.
+
+Key list quality practices:
+
+- **Remove hard bounces immediately** — Never retry a permanently invalid address
+- **Use double opt-in** — Confirm that addresses are valid and that the owner wants your emails
+- **Prune unengaged recipients** — Remove subscribers who haven't opened in 6–12 months
+- **Never purchase email lists** — Purchased lists contain spam traps and uninterested recipients
+
+### 4. Content Quality
+
+The content of your email — subject line, body, HTML structure, links, and attachments — is analyzed by spam filters at the receiving server.
+
+Content factors that affect deliverability:
+
+| Helps Deliverability | Hurts Deliverability |
+| -------------------- | -------------------- |
+| Clear, relevant subject lines | ALL CAPS, excessive punctuation |
+| Balanced text-to-image ratio | Image-only emails with no text |
+| Links to your own domain | URL shorteners or suspicious domains |
+| Visible unsubscribe link | Hidden or missing unsubscribe option |
+| Plain text alternative included | HTML-only with no plain text fallback |
+
+### 5. Recipient Engagement
+
+Modern mailbox providers — Gmail in particular — heavily weigh recipient engagement when making filtering decisions. If recipients consistently open, read, and interact with your emails, providers learn to trust your messages. If recipients ignore or delete them, providers learn to deprioritize them.
+
+Engagement signals include:
+
+- **Opens and reads** — Time spent viewing the message
+- **Clicks** — Interacting with links in the email
+- **Replies** — Responding to the sender
+- **Moving to inbox** — Rescuing a message from spam
+- **Marking as spam** — The strongest negative signal
+
+<Warning>
+  Engagement is measured per sender, per recipient. A recipient who ignores your emails will increasingly see them filtered, even if other recipients engage well. This is why list hygiene matters — keeping unengaged recipients on your list drags down your aggregate metrics.
+</Warning>
+
+---
+
+## How Mailbox Providers Make Filtering Decisions
+
+Each mailbox provider (Gmail, Outlook, Yahoo, Apple Mail) uses its own proprietary filtering system. While the exact algorithms are not public, they all evaluate the same general categories:
+
+<Steps>
+  <Step title="Authentication Check">
+    Does the message pass SPF, DKIM, and DMARC? If authentication fails, the message is likely rejected or sent to spam immediately.
+  </Step>
+
+  <Step title="Reputation Lookup">
+    What is the sender's domain and IP reputation? Providers maintain internal reputation databases built from billions of messages. A poor reputation triggers stricter filtering.
+  </Step>
+
+  <Step title="Content Analysis">
+    Does the message content match known spam patterns? Filters scan for suspicious URLs, phishing indicators, spam trigger phrases, and structural anomalies.
+  </Step>
+
+  <Step title="Engagement History">
+    How has this recipient interacted with this sender's previous emails? Positive engagement history biases toward inbox placement. Negative history biases toward spam.
+  </Step>
+
+  <Step title="Placement Decision">
+    Based on the combined signals, the provider places the message in the inbox, spam folder, promotions tab, or quarantine. This decision is per-recipient — the same message can land in the inbox for one recipient and spam for another.
+  </Step>
+</Steps>
+
+---
+
+## Measuring Deliverability
+
+Deliverability is harder to measure than delivery because mailbox providers do not report inbox placement directly. You need to infer it from available signals.
+
+| Metric | What It Tells You | Where to Find It |
+| ------ | ------------------ | ---------------- |
+| **Delivery rate** | Percentage of emails accepted (not bounced) | Lettr dashboard |
+| **Bounce rate** | Percentage of emails rejected | Lettr dashboard and webhooks |
+| **Open rate** | Approximate inbox placement indicator | Lettr dashboard (with caveats) |
+| **Spam complaint rate** | Percentage of recipients marking you as spam | Lettr dashboard via feedback loops |
+| **Click rate** | Engagement level — higher is better for reputation | Lettr dashboard |
+
+<Note>
+  Open rates are increasingly unreliable due to Apple Mail Privacy Protection (which pre-fetches tracking pixels) and corporate email proxies. Use open rates as a directional indicator, not an exact measurement. Click rates are a more reliable engagement signal.
+</Note>
+
+### Healthy Benchmarks
+
+| Metric | Healthy | Warning | Critical |
+| ------ | ------- | ------- | -------- |
+| Delivery rate | > 98% | < 95% | < 90% |
+| Bounce rate | < 2% | > 5% | > 10% |
+| Spam complaint rate | < 0.1% | > 0.3% | > 0.5% |
+| Open rate (transactional) | > 50% | < 30% | < 15% |
+| Open rate (marketing) | > 15% | < 10% | < 5% |
+
+---
+
+## Improving Deliverability
+
+If your emails are not reaching the inbox, work through these areas in order:
+
+1. **Verify authentication** — Confirm SPF, DKIM, and DMARC are all passing. Use Lettr's domain verification to check.
+2. **Check your reputation** — Review bounce and complaint rates. If either is elevated, address the root cause before sending more.
+3. **Clean your list** — Remove hard bounces, spam complainers, and long-term unengaged recipients.
+4. **Review your content** — Check for spam trigger patterns, ensure you have a plain text version, and verify all links point to reputable domains.
+5. **Warm up gradually** — If you are on a new domain or IP, increase volume slowly over several weeks.
+
+<Tip>
+  Fix authentication and list quality first. Content optimization only matters if your emails are reaching the server and passing reputation checks.
+</Tip>
+
+---
+
+## Common Deliverability Mistakes
+
+<AccordionGroup>
+  <Accordion title="Focusing on delivery rate instead of inbox placement">
+    A 99% delivery rate means almost nothing if 40% of those delivered emails land in spam. Delivery rate tells you that servers accepted your messages. It does not tell you where those messages ended up. Monitor open rates, click rates, and complaint rates alongside delivery rate.
+  </Accordion>
+
+  <Accordion title="Sending to purchased or scraped lists">
+    Purchased lists contain spam traps — addresses specifically designed to catch senders with poor list practices. Hitting a spam trap can instantly blacklist your sending domain or IP. Only send to recipients who have explicitly opted in to receive your emails.
+  </Accordion>
+
+  <Accordion title="Ignoring unsubscribes and complaints">
+    Every spam complaint damages your reputation. Make unsubscribing easy and immediate. Process complaints via webhook and suppress those addresses permanently. Fighting to retain uninterested subscribers hurts your deliverability far more than losing them.
+  </Accordion>
+
+  <Accordion title="Sending inconsistent volumes">
+    Mailbox providers watch for sudden spikes in sending volume. If you normally send 1,000 emails per day and suddenly send 50,000, spam filters will intervene. Maintain consistent sending patterns and ramp up gradually when increasing volume.
+  </Accordion>
+
+  <Accordion title="Not separating transactional and marketing streams">
+    Marketing email naturally has lower engagement and higher complaint rates than transactional email. If both share the same sending domain, marketing reputation problems will affect your transactional delivery — meaning password resets and order confirmations may land in spam.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Deliverability Best Practices" icon="inbox" href="/knowledge-base/best-practices/deliverability">
+    Actionable strategies for maximizing inbox placement rates.
+  </Card>
+
+  <Card title="Sending Reputation" icon="chart-line" href="/knowledge-base/best-practices/sending-reputation">
+    How to build and protect your sender reputation.
+  </Card>
+
+  <Card title="SPF, DKIM & DMARC" icon="shield-check" href="/knowledge-base/fundamentals/spf-dkim-dmarc">
+    Deep dive into email authentication protocols.
+  </Card>
+
+  <Card title="Emails Landing in Spam" icon="shield-exclamation" href="/knowledge-base/troubleshooting/spam-placement">
+    Step-by-step diagnosis when emails go to spam.
+  </Card>
+</CardGroup>

@@ -1,0 +1,335 @@
+---
+title: "Email Content Types: HTML, Plain Text, and AMP"
+description: "When to use each content type and how email clients render them"
+---
+
+# Email Content Types: HTML, Plain Text, and AMP
+
+Every email you send through Lettr contains content in one or more formats. The three supported content types are **HTML** for rich formatting, **plain text** for universal compatibility, and **AMP HTML** for interactive experiences. Understanding when and how to use each format directly affects how your emails render, how accessible they are, and how mailbox providers evaluate them.
+
+Lettr's API accepts three corresponding parameters: `html`, `text`, and `amp_html`. At least one of `html` or `text` is required for every send.
+
+---
+
+## HTML Email
+
+HTML is the most common email content format. It allows you to include styling, images, links, buttons, and structured layouts that make emails visually engaging.
+
+### What HTML Email Supports
+
+- Custom fonts, colors, and spacing
+- Inline images and background images
+- Clickable buttons and hyperlinks
+- Multi-column layouts using tables
+- Open and click tracking via tracking pixels and link wrapping
+
+### Limitations Compared to Web HTML
+
+HTML email is not the same as HTML on the web. Email clients strip or ignore many features that browsers handle without issue:
+
+| Feature | Web HTML | Email HTML |
+|---------|----------|------------|
+| JavaScript | Fully supported | Completely stripped |
+| External CSS (`<link>`) | Supported | Ignored by most clients |
+| CSS Flexbox / Grid | Supported | Unreliable — use tables |
+| `<video>` / `<audio>` | Supported | Ignored by most clients |
+| `<form>` elements | Supported | Stripped by most clients |
+| Media queries | Supported | Partial support |
+
+<Warning>
+  Always use **table-based layouts** and **inline CSS** for email HTML. Most email clients do not support modern CSS layout methods like Flexbox or Grid.
+</Warning>
+
+### Sending HTML with Lettr
+
+You can send HTML content in two ways: directly via the `html` parameter, or by using a stored template.
+
+```javascript
+// Sending raw HTML
+await lettr.emails.send({
+  from: 'you@example.com',
+  to: ['recipient@example.com'],
+  subject: 'Your Invoice',
+  html: '<html><body><h1>Invoice #1042</h1><p>Amount due: $250.00</p></body></html>',
+  text: 'Invoice #1042 — Amount due: $250.00'
+});
+
+// Sending via a template
+await lettr.emails.send({
+  from: 'you@example.com',
+  to: ['recipient@example.com'],
+  subject: 'Your Invoice',
+  template_slug: 'invoice',
+  substitution_data: {
+    invoice_number: '1042',
+    amount: '$250.00'
+  }
+});
+```
+
+### Well-Structured HTML Email Snippet
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Confirmation</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f4f4f4;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+    <tr>
+      <td align="center" style="padding: 40px 0;">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0"
+               style="background-color: #ffffff; border-radius: 8px;">
+          <tr>
+            <td style="padding: 32px; font-family: Arial, sans-serif;">
+              <h1 style="margin: 0 0 16px; color: #333333;">
+                Hi {{customer_name or "there"}}!
+              </h1>
+              <p style="margin: 0 0 24px; color: #555555; line-height: 1.5;">
+                Your order <strong>#{{order_id}}</strong> has been confirmed.
+              </p>
+              {{if show_cta}}
+              <a href="{{tracking_url}}"
+                 style="display: inline-block; padding: 12px 24px;
+                        background-color: #0066cc; color: #ffffff;
+                        text-decoration: none; border-radius: 4px;">
+                View Order
+              </a>
+              {{end}}
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+```
+
+<Note>
+  Lettr's [Topol visual editor](/learn/templates/topol-editor) generates table-based, inline-styled HTML automatically — you don't need to write this by hand.
+</Note>
+
+---
+
+## Plain Text Email
+
+Plain text emails contain no formatting, no images, and no HTML markup. They are raw text delivered exactly as written.
+
+### Why Plain Text Matters
+
+- **Universal compatibility** — every email client in existence renders plain text correctly, from modern apps to legacy terminal clients.
+- **Accessibility** — screen readers handle plain text without any ambiguity. There are no layout quirks or hidden elements to misinterpret.
+- **Deliverability** — spam filters view emails that include a plain text part more favorably. Sending only HTML without a text alternative is a negative signal.
+- **Lightweight** — no images to load, no rendering engine needed. Plain text displays instantly.
+
+### What Plain Text Cannot Do
+
+- No images or embedded media
+- No formatting (bold, italic, colors, fonts)
+- No clickable buttons — links appear as raw URLs
+- **No open tracking** — open tracking relies on a tracking pixel (`<img>` tag), which plain text does not support
+- No link click tracking unless the link URL itself is a tracking redirect
+
+### Sending Plain Text with Lettr
+
+```javascript
+await lettr.emails.send({
+  from: 'you@example.com',
+  to: ['recipient@example.com'],
+  subject: 'Your Invoice',
+  text: 'Invoice #1042\n\nAmount due: $250.00\n\nView your invoice: https://app.example.com/invoices/1042'
+});
+```
+
+---
+
+## AMP HTML Email
+
+AMP (Accelerated Mobile Pages) for Email brings interactive, app-like experiences directly inside the inbox. Recipients can fill out forms, browse carousels, expand accordions, and take actions without leaving their email client.
+
+### What AMP Email Enables
+
+- **Forms** — collect responses, RSVPs, or feedback inline
+- **Carousels** — swipeable image or product galleries
+- **Accordions** — expandable content sections
+- **Live data** — fetch updated content when the email is opened (e.g., real-time order status)
+- **Interactive lists** — sortable, filterable content
+
+### Important Limitations
+
+| Consideration | Detail |
+|---------------|--------|
+| Client support | Gmail and Yahoo Mail only. **Outlook, Apple Mail, Thunderbird, and most other clients do not render AMP.** |
+| Sender registration | You must register with Google as an approved AMP sender before Gmail will render your AMP content. |
+| Expiration | AMP content expires after 30 days. After that, the HTML fallback is shown. |
+| Caching | AMP emails may be cached and served from Google's servers. |
+
+<Warning>
+  Because AMP support is limited, **never send AMP as your only content type**. Always include an `html` fallback so recipients on unsupported clients see a complete email.
+</Warning>
+
+### Sending AMP HTML with Lettr
+
+```javascript
+await lettr.emails.send({
+  from: 'you@example.com',
+  to: ['recipient@example.com'],
+  subject: 'RSVP to Our Event',
+  amp_html: `<!doctype html>
+<html ⚡4email>
+<head>
+  <meta charset="utf-8">
+  <script async src="https://cdn.ampproject.org/v0.js"></script>
+  <script async custom-element="amp-form"
+          src="https://cdn.ampproject.org/v0/amp-form-0.1.js"></script>
+  <style amp4email-boilerplate>body{visibility:hidden}</style>
+</head>
+<body>
+  <h1>You're Invited!</h1>
+  <form method="post" action-xhr="https://api.example.com/rsvp">
+    <label>Will you attend?</label>
+    <select name="response">
+      <option value="yes">Yes</option>
+      <option value="no">No</option>
+    </select>
+    <input type="submit" value="Submit RSVP">
+  </form>
+</body>
+</html>`,
+  html: '<html><body><h1>You\'re Invited!</h1><p>RSVP at https://example.com/rsvp</p></body></html>',
+  text: 'You\'re Invited! RSVP at https://example.com/rsvp'
+});
+```
+
+---
+
+## Multipart Messages — Why Send Both HTML and Text
+
+When you include both `html` and `text` in a single API call, Lettr constructs a **multipart message**. The recipient's email client decides which version to display based on its capabilities and the user's preferences.
+
+### Benefits of Multipart Sending
+
+- **Client compatibility** — if a client cannot render HTML (or the user has disabled it), the text version is displayed automatically.
+- **Deliverability** — spam filters evaluate multipart messages more favorably. An HTML-only email without a text alternative is a common spam indicator.
+- **Accessibility** — screen readers and assistive technologies often work better with the plain text part.
+- **User preference** — some recipients configure their email client to display plain text by default.
+
+### Example: Sending a Multipart Email
+
+```bash
+curl -X POST https://api.lettr.com/v1/emails \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "from": "you@example.com",
+    "to": ["recipient@example.com"],
+    "subject": "Your Monthly Statement",
+    "html": "<html><body><h1>Monthly Statement</h1><p>Hi {{customer_name or \"Customer\"}}, your balance is <strong>{{balance}}</strong>.</p><a href=\"{{statement_url}}\">View Full Statement</a></body></html>",
+    "text": "Monthly Statement\n\nHi {{customer_name or \"Customer\"}}, your balance is {{balance}}.\n\nView your full statement: {{statement_url}}",
+    "substitution_data": {
+      "customer_name": "Jane",
+      "balance": "$1,240.00",
+      "statement_url": "https://app.example.com/statements/2026-01"
+    }
+  }'
+```
+
+<Tip>
+  When using Lettr templates built in the Topol editor, you can configure a plain text version alongside the HTML version directly in the template settings.
+</Tip>
+
+---
+
+## MIME Structure
+
+Under the hood, email messages follow the MIME (Multipurpose Internet Mail Extensions) standard. When you send both HTML and plain text, Lettr wraps them in a `multipart/alternative` MIME structure:
+
+```
+Content-Type: multipart/alternative; boundary="boundary123"
+
+--boundary123
+Content-Type: text/plain; charset="UTF-8"
+
+Your plain text content here.
+
+--boundary123
+Content-Type: text/html; charset="UTF-8"
+
+<html><body>Your HTML content here.</body></html>
+
+--boundary123--
+```
+
+The email client reads all parts and picks the one it prefers — typically HTML if supported, falling back to plain text. When AMP is included, the structure becomes `multipart/alternative` with three parts, and clients that support AMP render that version first.
+
+---
+
+## Content Type Comparison
+
+| Feature | HTML | Plain Text | AMP HTML |
+|---------|------|------------|----------|
+| **Formatting** | Full styling (inline CSS, colors, fonts) | None | Full styling + AMP components |
+| **Images** | Supported | Not supported | Supported |
+| **Link tracking** | Yes (link wrapping) | Limited (redirect URLs only) | Yes |
+| **Open tracking** | Yes (tracking pixel) | Not possible | Yes |
+| **Client support** | Universal | Universal | Gmail, Yahoo Mail only |
+| **Deliverability impact** | Positive when paired with text | Positive | Neutral (requires HTML fallback) |
+| **Interactivity** | Static only | Static only | Forms, carousels, live data |
+| **JavaScript** | Not supported | Not applicable | Not supported (AMP components only) |
+| **File size** | Moderate | Small | Moderate to large |
+
+---
+
+## Choosing the Right Approach
+
+<AccordionGroup>
+  <Accordion title="Transactional Emails (receipts, password resets, notifications)">
+    **Send both HTML and plain text.** Transactional emails must reach every recipient reliably. Including a text fallback ensures the message is readable even in the most restrictive environments. The deliverability benefit of multipart messages is especially important for transactional sends that must not land in spam.
+
+    ```javascript
+    await lettr.emails.send({
+      from: 'no-reply@example.com',
+      to: ['recipient@example.com'],
+      subject: 'Password Reset',
+      html: '<html><body><p>Click <a href="{{reset_url}}">here</a> to reset your password.</p></body></html>',
+      text: 'Reset your password by visiting: {{reset_url}}',
+      substitution_data: { reset_url: 'https://app.example.com/reset/abc123' }
+    });
+    ```
+  </Accordion>
+
+  <Accordion title="Marketing Emails (newsletters, promotions, announcements)">
+    **Send HTML as the primary format with a plain text fallback.** Marketing emails rely on visual design to drive engagement, so HTML is essential. Always include a text version for deliverability and for recipients who disable HTML rendering.
+
+    Use Lettr's [Topol editor](/learn/templates/topol-editor) to design your HTML visually, and provide a corresponding text version in the template settings.
+  </Accordion>
+
+  <Accordion title="AMP Interactive Emails">
+    **Only invest in AMP if your audience is primarily on Gmail.** AMP email is powerful but niche. Since only Gmail and Yahoo Mail render AMP content, it makes sense only when your recipient base is heavily concentrated on those providers.
+
+    Always include an HTML fallback (and ideally a text fallback too) so recipients on other clients still see a complete message. Think of AMP as a **progressive enhancement**, not a replacement.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Sending Content Types" icon="code" href="/learn/sending/content-types">
+    API reference for the html, text, and amp_html parameters.
+  </Card>
+  <Card title="Templates" icon="paintbrush" href="/learn/templates/introduction">
+    Build reusable email templates with the Topol editor and merge tags.
+  </Card>
+  <Card title="Templates" icon="paintbrush" href="/learn/templates/introduction">
+    Build and manage email templates with the Topol editor
+  </Card>
+  <Card title="How Email Delivery Works" icon="paper-plane" href="/knowledge-base/fundamentals/how-email-delivery-works">
+    Understand the full journey of an email from API call to inbox.
+  </Card>
+</CardGroup>
