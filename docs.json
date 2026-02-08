@@ -57,11 +57,7 @@
               {
                 "group": "PHP",
                 "pages": [
-                  
                   "quickstart/php/introduction",
-                  "quickstart/php/symfony"
-                ,
-                  "quickstart/php/laravel",
                   "quickstart/php/symfony"
                 ]
               },
