@@ -5,11 +5,11 @@ description: "Configure open and click tracking for your emails"
 
 # Email Tracking
 
-Track email engagement with open and click tracking to measure the effectiveness of your emails.
+Tracking tells you what happens after an email is delivered. Open tracking records when a recipient views your message, and click tracking records when they interact with links inside it. Together, these signals help you measure engagement, identify content that resonates, and trigger follow-up workflows based on recipient behavior. Lettr enables both by default, but you can disable either on a per-email basis for privacy-sensitive messages.
 
 ## Default Tracking
 
-By default, Lettr tracks opens and clicks for all emails:
+By default, Lettr tracks opens and clicks for all emails. No additional configuration is needed — tracking is active as long as you send HTML content:
 
 ```javascript
 await lettr.emails.send({
@@ -23,7 +23,7 @@ await lettr.emails.send({
 
 ## Customize Tracking Options
 
-Enable or disable tracking per email:
+You can override the default tracking behavior on a per-email basis using the `options` object. This is useful for privacy-sensitive emails like password resets or data exports where tracking would be inappropriate:
 
 ```javascript
 await lettr.emails.send({
@@ -63,7 +63,7 @@ Lettr rewrites links in your email to route through our tracking servers. When a
 
 ## Custom Tracking Domain
 
-Use your own domain for tracking links instead of the default Lettr domain:
+By default, tracking links use Lettr's domain (e.g., `track.lettr.com`). Configuring a custom tracking domain (e.g., `track.yourdomain.com`) improves deliverability because links match your sending domain, and it builds trust with recipients who see a familiar domain in link previews:
 
 ```javascript
 await lettr.emails.send({
@@ -85,7 +85,7 @@ Links will use your configured tracking domain (e.g., `track.yourdomain.com`) if
 
 ## Transactional Flag
 
-Mark emails as transactional for better deliverability:
+The `transactional` option signals to Lettr how to handle the email for deliverability purposes. Transactional emails (triggered by a user action) are typically sent with higher priority and are less likely to be filtered by receiving mail servers:
 
 ```javascript
 await lettr.emails.send({
@@ -113,7 +113,7 @@ await lettr.emails.send({
 
 ## Privacy Considerations
 
-Respect user privacy by disabling tracking when appropriate:
+Some emails should not be tracked. Data exports, security notifications, and emails sent in jurisdictions with strict privacy laws (such as GDPR) may require tracking to be disabled. Disable both open and click tracking for these messages:
 
 ```javascript
 // For privacy-sensitive emails
@@ -131,7 +131,7 @@ await lettr.emails.send({
 
 ## Viewing Tracking Data
 
-Access tracking data via the API or dashboard:
+You can retrieve tracking data for any email through the API. The response includes aggregate counts (total opens, total clicks) and timestamps for the first and last engagement:
 
 ```javascript
 // Get email with tracking stats

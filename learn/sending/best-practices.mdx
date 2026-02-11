@@ -5,13 +5,15 @@ description: "Email sending best practices for deliverability and reliability"
 
 # Email Sending Best Practices
 
-Follow these best practices to maximize deliverability, maintain sender reputation, and build reliable email integrations.
+Delivering email reliably requires more than a working API integration. Your sender reputation, list quality, content, and authentication setup all affect whether emails reach the inbox or land in spam. This page consolidates the most impactful practices for maintaining high deliverability and building robust email integrations.
 
 ## Sender Reputation
 
+Your sender reputation is a score that email providers assign to your domain and IP based on your sending history. A strong reputation means emails reach the inbox; a poor one means they get filtered to spam or rejected entirely.
+
 ### Warm Up New Domains
 
-Gradually increase sending volume when using a new domain:
+Email providers are suspicious of domains that suddenly start sending high volumes. Ramp up gradually over several weeks so providers can observe your sending patterns and build trust:
 
 | Week | Daily Volume |
 |------|--------------|
@@ -37,7 +39,11 @@ Track these metrics to maintain good deliverability:
 
 ## List Hygiene
 
+Sending to invalid or unengaged addresses is the fastest way to damage your reputation. Maintaining a clean recipient list reduces bounces, complaints, and wasted sends.
+
 ### Validate Email Addresses
+
+Filter out obviously invalid addresses before they reach the API. Basic format validation catches typos and malformed entries:
 
 ```javascript
 // Validate before adding to your list
@@ -71,6 +77,8 @@ await lettr.emails.send({
 
 ### Handle Bounces Promptly
 
+When an email hard-bounces, the address is permanently invalid. Continuing to send to it hurts your reputation. Set up a webhook handler to remove hard-bounced addresses from your lists immediately:
+
 ```javascript
 app.post('/webhooks/lettr', (req, res) => {
   const event = req.body;
@@ -90,9 +98,11 @@ app.post('/webhooks/lettr', (req, res) => {
 
 ## Content Best Practices
 
+The content of your emails affects both deliverability and engagement. Spam filters analyze subject lines, HTML structure, link quality, and text-to-image ratios when deciding whether to deliver your email to the inbox.
+
 ### Include Unsubscribe Links
 
-Required by law (CAN-SPAM, GDPR) and improves deliverability:
+Unsubscribe links are legally required by CAN-SPAM and GDPR for marketing emails, and Google and Yahoo now require `List-Unsubscribe` headers for bulk senders. Including a clear unsubscribe mechanism also improves deliverability because recipients who can easily opt out are less likely to report your email as spam:
 
 ```html
 <p style="font-size: 12px; color: #666;">
@@ -103,6 +113,8 @@ Required by law (CAN-SPAM, GDPR) and improves deliverability:
 ```
 
 ### Use Clear Sender Information
+
+Recipients are more likely to open emails from a recognizable sender. Use a consistent `from_name` that matches your brand, and set a `reply_to` address that reaches a real person or team:
 
 ```javascript
 await lettr.emails.send({
@@ -115,9 +127,7 @@ await lettr.emails.send({
 
 ### Optimize Subject Lines
 
-- Keep under 50 characters for mobile
-- Avoid spam trigger words (FREE, URGENT, ACT NOW)
-- Personalize when possible
+Subject lines determine whether recipients open your email. Keep them under 50 characters so they display fully on mobile devices, avoid all-caps words and spam trigger phrases (FREE, URGENT, ACT NOW) that filters flag, and personalize with the recipient's name or relevant details when possible:
 
 ```javascript
 // Good
@@ -129,9 +139,11 @@ subject: 'FREE OFFER!!! ACT NOW!!!'
 
 ## Technical Best Practices
 
+Building a reliable email integration means handling failures gracefully, avoiding duplicate sends, and minimizing unnecessary API calls.
+
 ### Implement Idempotency
 
-Prevent duplicate sends:
+Network failures and retries can cause the same email to be sent more than once. Use metadata-based idempotency keys to check whether an email has already been sent before calling the API:
 
 ```javascript
 async function sendOnce(emailData, idempotencyKey) {
@@ -151,6 +163,8 @@ async function sendOnce(emailData, idempotencyKey) {
 ```
 
 ### Use Webhooks Instead of Polling
+
+Polling the API for delivery status wastes rate limit budget and introduces latency. Webhooks push events to your server the moment they occur, giving you real-time updates without any polling:
 
 ```javascript
 // Instead of polling for delivery status
@@ -172,6 +186,8 @@ app.post('/webhooks/lettr', (req, res) => {
 ```
 
 ### Handle Errors Gracefully
+
+Distinguish between errors that should be retried (rate limits, server errors) and errors that indicate a problem with your request (validation, authentication). Use a job queue with exponential backoff for retryable errors:
 
 ```javascript
 try {
@@ -197,9 +213,11 @@ try {
 
 ## Authentication Setup
 
+Domain authentication is the foundation of good deliverability. Without SPF, DKIM, and DMARC, email providers have no way to verify that you're authorized to send on behalf of your domain, and your emails are far more likely to be filtered or rejected.
+
 ### Complete Domain Authentication
 
-Set up all authentication records:
+Set up all four authentication records for the strongest deliverability:
 
 <Steps>
   <Step title="SPF Record">

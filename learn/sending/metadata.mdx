@@ -5,9 +5,11 @@ description: "Add custom metadata to track and organize emails"
 
 # Email Metadata
 
-Attach custom metadata to your emails for tracking, filtering, and analytics.
+Metadata lets you attach arbitrary key-value pairs to any email you send through Lettr. These pairs travel with the email through the entire delivery lifecycle — appearing in webhook payloads, API query results, and the dashboard — so you can correlate emails with your application's data model. Common uses include linking emails to orders, customers, support tickets, or internal request IDs for debugging.
 
 ## Adding Metadata
+
+Include a `metadata` object in your send request. Values can be strings, numbers, or booleans:
 
 ```javascript
 await lettr.emails.send({
@@ -26,7 +28,7 @@ await lettr.emails.send({
 
 ## Metadata in Webhooks
 
-Metadata is included in webhook payloads:
+When Lettr delivers a webhook event for an email that carries metadata, the full metadata object is included in the payload. This means your webhook handler can read the same keys you attached at send time and use them to look up the relevant order, customer, or transaction in your database without making additional API calls.
 
 ```json
 {
@@ -46,7 +48,7 @@ Metadata is included in webhook payloads:
 
 ## Query by Metadata
 
-Find emails by metadata values:
+You can filter your email history by metadata values, which is useful for finding all emails related to a specific order, customer, or campaign. Pass a `metadata` object to the list endpoint and Lettr returns only emails whose metadata matches:
 
 ```javascript
 const emails = await lettr.emails.list({
@@ -75,12 +77,14 @@ const emails = await lettr.emails.list({
 
 ## Metadata vs Tags
 
+Lettr supports both metadata and tags on emails. They serve different purposes: metadata stores structured key-value data for detailed tracking, while tags are simple string labels for broad categorization.
+
 | Feature | Metadata | Tags |
 |---------|----------|------|
 | Structure | Key-value pairs | Array of strings |
 | Values | Strings, numbers, booleans | Strings only |
 | Query support | Query by specific values | Filter by tag presence |
-| Best for | Detailed tracking data | Categorization |
+| Best for | Detailed tracking data (order IDs, customer IDs, amounts) | Categorization (transactional, marketing, region) |
 
 ## Example: Full Tracking Setup
 

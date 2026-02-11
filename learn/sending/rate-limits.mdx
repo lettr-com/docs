@@ -5,9 +5,11 @@ description: "Understand API rate limits and email quotas"
 
 # Rate Limits
 
-Lettr enforces rate limits to ensure fair usage and maintain service reliability for all users.
+Lettr enforces rate limits on API requests and monthly email quotas on sending volume. Rate limits prevent any single integration from overwhelming the service, while monthly quotas govern how many emails your plan allows. Understanding these limits helps you design integrations that send reliably without hitting throttling errors.
 
 ## API Rate Limits
+
+Lettr applies per-account rate limits based on a sliding window. If you exceed the limit, subsequent requests return a `429` status until the window resets:
 
 | Limit Type | Value | Window |
 |------------|-------|--------|
@@ -37,7 +39,7 @@ When you exceed rate limits, you'll receive a `429 Too Many Requests` response:
 
 ## Handling Rate Limits
 
-Implement exponential backoff for rate limit errors:
+When you receive a `429` response, the `retry_after` field tells you how many seconds to wait before retrying. Implement exponential backoff as a fallback when the header is missing:
 
 ```javascript
 async function sendWithBackoff(emailData, maxRetries = 5) {
@@ -60,7 +62,7 @@ async function sendWithBackoff(emailData, maxRetries = 5) {
 
 ## Batch Sending with Rate Limiting
 
-When sending large volumes, implement pacing:
+When sending to large recipient lists, pace your API calls to stay within rate limits. Adding a short delay between batches prevents bursts that trigger throttling:
 
 ```javascript
 const recipients = [...]; // Large list
@@ -121,29 +123,31 @@ console.log({
 
 <AccordionGroup>
   <Accordion title="Implement Backoff">
-    Always implement exponential backoff for rate limit errors.
+    Always implement exponential backoff for `429` responses. Use the `retry_after` value from the response when available, and fall back to a `2^attempt` delay otherwise. Without backoff, rapid retries will keep hitting the limit and delay your sends further.
   </Accordion>
   <Accordion title="Batch Efficiently">
-    Use the full 50 recipients per request to minimize API calls.
+    Each API request supports up to 50 recipients. Sending to 50 recipients per request instead of one-at-a-time reduces your API call count by 50x, making it far easier to stay within rate limits for large sends.
   </Accordion>
   <Accordion title="Monitor Usage">
-    Set up alerts when approaching your monthly quota.
+    Check your monthly email usage periodically through the dashboard or API. Set up internal alerts at 80% and 90% of your quota so you can upgrade your plan or adjust sending patterns before hitting the limit.
   </Accordion>
   <Accordion title="Queue Large Sends">
-    For large campaigns, use a queue system to pace sending.
+    For campaigns targeting thousands of recipients, use a job queue (such as BullMQ, Laravel Queues, or Celery) to pace sending over minutes or hours. This avoids burst patterns that trigger rate limits and gives you better control over delivery timing.
   </Accordion>
   <Accordion title="Use Webhooks">
-    Instead of polling for status, use webhooks to receive delivery notifications.
+    Polling the API to check delivery status consumes rate limit budget. Instead, set up webhooks to receive delivery, bounce, and engagement events asynchronously. This eliminates polling requests entirely and gives you faster, event-driven status updates.
   </Accordion>
 </AccordionGroup>
 
 ## Increasing Your Limits
 
-If you need higher limits:
+If your current limits don't match your sending volume, you have several options:
 
-1. **Upgrade your plan** for higher monthly quotas
-2. **Contact support** for custom rate limits on Enterprise plans
-3. **Optimize your integration** to use fewer API calls
+- **Upgrade your plan** — Increases your monthly email quota immediately
+- **Enterprise plans** — Custom rate limits tailored to your traffic patterns — contact sales to discuss your requirements
+- **Batch recipients** — Send up to 50 recipients per request to reduce API call volume
+- **Use webhooks** — Replace polling with event-driven notifications to save rate limit budget
+- **Implement a queue** — Smooth out traffic spikes to avoid burst patterns
 
 <Card title="Contact Sales" icon="envelope" href="mailto:sales@lettr.com">
   Need higher limits? Contact our sales team for Enterprise options.

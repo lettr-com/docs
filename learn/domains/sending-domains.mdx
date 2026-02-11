@@ -9,10 +9,12 @@ A sending domain is the domain you use in the "From" address of your emails, suc
 
 ## Why Use a Sending Domain?
 
-- **Better Deliverability** - Authenticated emails are less likely to be marked as spam
-- **Brand Recognition** - Recipients see your domain, not a generic sender
-- **Reputation Building** - Build and maintain your own sender reputation
-- **DMARC Compliance** - Required for advanced email security features like BIMI
+Configuring a sending domain provides four key benefits:
+
+- **Authentication** — Authenticated emails pass SPF and DKIM checks, which significantly reduces the chance of being flagged as spam
+- **Brand trust** — Recipients see your own domain in the "From" address rather than a generic or shared sender
+- **Sender reputation** — Consistent sending from your domain builds a positive reputation that improves inbox placement across all providers
+- **Advanced features** — A verified sending domain is a prerequisite for DMARC enforcement and BIMI, which displays your logo alongside your emails in supported clients
 
 ## Adding a Sending Domain
 
@@ -374,11 +376,10 @@ curl -X DELETE https://app.lettr.com/api/domains/example.com \
 
 ## Best Practices
 
-1. **Use subdomains for different email types** - Isolate marketing, transactional, and support emails
-2. **Start with DMARC `p=none`** - Monitor authentication results before enforcing
-3. **Set up a tracking domain** - Branded links improve click-through rates and trust
-4. **Monitor your reputation** - Check deliverability metrics regularly
-5. **Keep DNS records updated** - If you change email providers, update your SPF record
+- **Separate email types** — Use different subdomains (e.g., `mail.example.com` for marketing, `notifications.example.com` for transactional) so that complaints against one type don't affect the reputation of another
+- **Start DMARC gradually** — Begin with a `p=none` policy to monitor authentication results before moving to stricter enforcement — jumping straight to `p=reject` can block legitimate emails if your configuration isn't complete
+- **Configure a tracking domain** — Set up a [tracking domain](/learn/domains/tracking-domains) so that open and click tracking links use your brand instead of Lettr's default domain, improving both deliverability and recipient trust
+- **Monitor deliverability** — Check your metrics regularly through the Lettr dashboard, and keep your DNS records updated if you change email infrastructure providers
 
 ## Related Topics
 

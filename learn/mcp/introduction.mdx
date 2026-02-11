@@ -24,7 +24,11 @@ The Lettr MCP server provides AI assistants with a comprehensive set of tools to
 
 ### Send Emails
 
-Your AI assistant can compose and send emails through natural language. You can dictate the content directly, specifying recipients, subject lines, and body text in conversation. For more complex emails, reference pre-built templates and let the AI populate merge tags with personalization data using the `{{variable_name}}` syntax. All standard email options are available, including CC, BCC, reply-to addresses, attachments, and tracking settings.
+Your AI assistant can compose and send emails through natural language:
+
+- **Compose directly** — Dictate content, specifying recipients, subject lines, and body text in conversation
+- **Use templates** — Reference pre-built templates and let the AI populate merge tags with personalization data using the `{{variable_name}}` syntax
+- **Full options** — CC, BCC, reply-to addresses, attachments, and tracking settings are all available
 
 <Note>
   AI assistants send emails on your behalf using your verified sending domains. The same domain verification requirements apply as with the REST API.
@@ -32,19 +36,39 @@ Your AI assistant can compose and send emails through natural language. You can 
 
 ### Monitor Email Events
 
-Once emails are sent, you can ask your AI assistant to track what happens next. The event monitoring tools provide visibility into delivery status (successful deliveries, bounces, and deferrals), engagement metrics (opens, clicks, and unsubscribes), and compliance events like spam complaints. You can filter events by recipient address, date range, or event type to find exactly what you're looking for.
+Once emails are sent, you can ask your AI assistant to track what happens next. The event monitoring tools provide visibility into:
+
+- **Delivery status** — Successful deliveries, bounces, and deferrals
+- **Engagement metrics** — Opens, clicks, and unsubscribes
+- **Compliance events** — Spam complaints
+- **Filtering** — Filter by recipient address, date range, or event type to find exactly what you're looking for
 
 ### Inspect API Activity
 
-When debugging integration issues, your AI assistant can review API request logs on your behalf. This includes examining request and response payloads (truncated for large responses), HTTP status codes and error messages, client IP addresses, and the API key prefixes used for each request. Filter by date range, API key name, client type, or status code to narrow down problems quickly.
+When debugging integration issues, your AI assistant can review API request logs on your behalf:
+
+- **Request/response payloads** — Examine payloads (truncated for large responses)
+- **Status codes and errors** — HTTP status codes and error messages
+- **Client details** — Client IP addresses and API key prefixes used for each request
+- **Filtering** — Narrow down problems by date range, API key name, client type, or status code
 
 ### Manage Domains
 
-Your AI assistant can check the status of all domain types in your email infrastructure. This covers sending domains with their DKIM and SPF verification status, tracking domains for branded click and open links, inbound domains for receiving emails, and storage domains for asset CDN configuration. Ask about specific domains or request an overview of your entire setup.
+Your AI assistant can check the status of all domain types in your email infrastructure:
+
+- **Sending domains** — DKIM and SPF verification status
+- **Tracking domains** — Branded click and open links
+- **Inbound domains** — Email receiving configuration
+- **Storage domains** — Asset CDN configuration
+
+Ask about specific domains or request an overview of your entire setup.
 
 ### View Configuration
 
-Beyond domains, the AI can inspect your broader account configuration. This includes listing your API keys (showing prefixes only—never full values—for security) and reviewing webhook endpoints with their enabled event types and delivery health indicators.
+Beyond domains, the AI can inspect your broader account configuration:
+
+- **API keys** — List keys showing prefixes only (never full values) for security
+- **Webhook endpoints** — Review endpoints with their enabled event types and delivery health indicators
 
 ## Supported AI Clients
 
@@ -63,9 +87,13 @@ Lettr's MCP server works with AI assistants that support the Model Context Proto
 
 ## Security Considerations
 
-The MCP integration is designed with security as a foundational principle. AI clients authenticate through Lettr's OAuth flow rather than using API keys directly, which means your credentials are never exposed to the AI assistant itself. Access is tied to your active Lettr session, so when you sign out of Lettr, the AI loses access automatically.
+The MCP integration is designed with security as a foundational principle:
 
-Permissions are scoped to your team, meaning AI assistants can only access data and perform actions within the boundaries of your existing Lettr permissions. When the AI lists API keys, it only sees prefixes—never full key values—protecting your credentials even within the MCP context. All MCP requests follow the same rate limits as the REST API, preventing abuse.
+- **OAuth authentication** — AI clients authenticate through Lettr's OAuth flow rather than using API keys directly, so your credentials are never exposed to the AI assistant
+- **Session-tied access** — Access is tied to your active Lettr session — when you sign out, the AI loses access automatically
+- **Team-scoped permissions** — AI assistants can only access data and perform actions within the boundaries of your existing Lettr permissions
+- **Key masking** — When the AI lists API keys, it only sees prefixes — never full key values — protecting your credentials even within the MCP context
+- **Rate limiting** — All MCP requests follow the same rate limits as the REST API, preventing abuse
 
 <Warning>
   MCP allows AI assistants to send emails on your behalf. Only connect trusted AI clients and review actions before confirming sensitive operations.
@@ -109,7 +137,13 @@ Once connected, you can interact with your email infrastructure using natural la
 
 ## Technical Details
 
-For developers interested in the implementation, the MCP server is available at `https://app.lettr.com/mcp`. Authentication uses OAuth 2.1 with dynamic client registration, and standard OAuth discovery endpoints are available at `/.well-known/oauth-protected-resource` and `/.well-known/oauth-authorization-server`. Large result sets use cursor-based pagination, and all requests follow the same rate limits as the REST API.
+For developers interested in the implementation:
+
+- **Server URL** — `https://app.lettr.com/mcp`
+- **Authentication** — OAuth 2.1 with dynamic client registration
+- **Discovery endpoints** — `/.well-known/oauth-protected-resource` and `/.well-known/oauth-authorization-server`
+- **Pagination** — Cursor-based pagination for large result sets
+- **Rate limits** — Same rate limits as the REST API
 
 ## Next Steps
 

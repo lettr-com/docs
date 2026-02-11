@@ -5,11 +5,11 @@ description: "Create emails with HTML, plain text, and AMP content"
 
 # Email Content Types
 
-Lettr supports multiple content formats to ensure your emails render correctly across all email clients.
+Every email you send contains content in one or more formats: HTML for rich visual layouts, plain text for maximum compatibility, and optionally AMP HTML for interactive experiences. Lettr supports all three and lets you combine them in a single message. The recipient's email client chooses the best format it supports — HTML-capable clients render the rich version, while older or text-only clients fall back to plain text.
 
 ## HTML Emails
 
-Send rich HTML emails with full styling support:
+HTML is the most common format for transactional and marketing emails. It supports full styling, images, links, and custom layouts:
 
 ```javascript
 await lettr.emails.send({
@@ -34,7 +34,7 @@ await lettr.emails.send({
 
 ## Plain Text Emails
 
-Include a plain text version for clients that don't support HTML:
+Plain text emails contain no formatting — just characters. While most modern email clients support HTML, some recipients prefer plain text, and certain environments (CLI email clients, screen readers, automated systems) may only display the text version:
 
 ```javascript
 await lettr.emails.send({
@@ -47,7 +47,7 @@ await lettr.emails.send({
 
 ## HTML + Plain Text (Recommended)
 
-Always include both versions for best compatibility:
+Sending both an HTML and a plain text version in the same email is the industry standard. Lettr packages them as a multipart MIME message, and the recipient's client displays whichever format it prefers. Including both also improves deliverability, since spam filters may flag emails that contain only HTML with no text alternative:
 
 ```javascript
 await lettr.emails.send({
@@ -61,7 +61,7 @@ await lettr.emails.send({
 
 ## AMP Emails
 
-Create interactive emails with AMP for Email:
+AMP for Email enables interactive content directly inside the inbox — carousels, forms, live data, and accordion menus — without requiring the recipient to click through to a website. Support is currently limited to Gmail, Yahoo Mail, and Mail.ru, so you must always include an HTML fallback:
 
 ```javascript
 await lettr.emails.send({
@@ -93,7 +93,7 @@ await lettr.emails.send({
 
 ## Inline CSS Processing
 
-Lettr can automatically inline your CSS for better email client compatibility:
+Most email clients strip `<style>` blocks from the `<head>`, which breaks CSS class-based styling. Lettr can automatically convert your `<style>` rules into inline `style` attributes on each element, ensuring your styles survive even in clients like Outlook and older versions of Gmail. Enable this with the `inline_css` option:
 
 ```javascript
 await lettr.emails.send({
@@ -131,6 +131,8 @@ With `inline_css: true`, the output becomes:
 
 ## CSS Support by Client
 
+Email client CSS support is inconsistent. This reference table covers the most common properties and their support across major clients:
+
 | Property | Gmail | Outlook | Apple Mail |
 |----------|-------|---------|------------|
 | `background-color` | Yes | Yes | Yes |
@@ -143,18 +145,18 @@ With `inline_css: true`, the output becomes:
 
 <AccordionGroup>
   <Accordion title="Use Tables for Layout">
-    Tables provide the most consistent rendering across email clients.
+    HTML tables remain the most reliable way to create multi-column layouts in email. Outlook's Word-based rendering engine does not support `flexbox` or `grid`, so table-based layouts are the only way to ensure consistent structure across all major clients.
   </Accordion>
   <Accordion title="Inline Your Styles">
-    Use inline CSS or enable the `inline_css` option for best compatibility.
+    Enable the `inline_css` option or write styles inline directly. Many email clients strip `<style>` tags from the document head, which means class-based CSS will not be applied. Inline styles survive this stripping and render consistently.
   </Accordion>
   <Accordion title="Always Include Plain Text">
-    Some clients prefer or require plain text versions.
+    Include a `text` version alongside your HTML. Some recipients configure their clients to display plain text only, and spam filters view emails without a text alternative as a negative signal. The text version should contain the same core information as the HTML, without formatting.
   </Accordion>
   <Accordion title="Test Across Clients">
-    Test your emails in Gmail, Outlook, Apple Mail, and mobile clients.
+    Rendering varies significantly between Gmail (web vs mobile), Outlook (Windows vs Mac), Apple Mail, and mobile clients. Send test emails to accounts on each platform and verify that layouts, images, and links display correctly before sending to your full audience.
   </Accordion>
   <Accordion title="Keep Images Small">
-    Optimize images for faster loading and smaller file sizes.
+    Optimize images to reduce file size and loading time. Many mobile users are on slower connections, and large images can cause emails to load slowly or be clipped. Use compressed formats (WebP or optimized JPEG/PNG) and keep total image payload under 1 MB when possible.
   </Accordion>
 </AccordionGroup>

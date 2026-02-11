@@ -82,21 +82,23 @@ Lettr automatically signs emails with your domain, ensuring DKIM alignment:
 
 ## Troubleshooting
 
-| Issue | Solution |
-|-------|----------|
-| DKIM not verifying | Ensure CNAME record is exactly `lettr._domainkey` |
-| CNAME not resolving | Check for typos in the value: `dkim.lettr.dev` |
-| Signature invalid | Ensure email content isn't modified after sending |
-| DMARC failing despite DKIM pass | Check DKIM alignment (d= domain matches From domain) |
+If DKIM verification fails, check the most common causes:
+
+| Issue | Cause | Solution |
+|-------|-------|----------|
+| DKIM not verifying | CNAME record hostname is incorrect | Ensure the record uses the exact selector provided by Lettr (e.g., `scph0722._domainkey`), not a generic `_domainkey` |
+| CNAME not resolving | Typo in the CNAME target value | Verify the value matches exactly what Lettr provided; DNS changes can take up to 48 hours to propagate |
+| Signature invalid | Email content was modified in transit | Mailing list software, forwarding services, or anti-virus tools can alter message content after signing, breaking the signature |
+| DMARC failing despite DKIM pass | DKIM domain doesn't align with From header | The domain in the DKIM `d=` tag must match (or be a subdomain of) the domain in the `From:` header for DMARC alignment |
 
 ## Testing DKIM
 
-Send a test email and check the headers:
+The simplest way to verify your DKIM configuration is to send a test email to a personal account and inspect the email headers. The `Authentication-Results` header will show whether the DKIM signature was verified successfully:
 
-1. Send an email to your personal account
-2. View the email headers/source
-3. Look for `DKIM-Signature:` header
-4. Check for `dkim=pass` in the `Authentication-Results` header
+1. Send an email to your personal account (Gmail works well for header inspection)
+2. View the email headers/source (in Gmail: More → Show original)
+3. Look for `DKIM-Signature:` in the headers to confirm the signature was added
+4. Check for `dkim=pass` in the `Authentication-Results` header to confirm verification
 
 Example passing result:
 

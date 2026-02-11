@@ -5,11 +5,11 @@ description: "Schedule emails to be sent at a specific time"
 
 # Scheduled Sending
 
-Schedule emails to be delivered at a specific date and time in the future.
+Not every email should be sent the moment your code runs. Appointment reminders, time-zone-optimized delivery, drip campaigns, and business-hours notifications all benefit from scheduling emails to arrive at a specific future time. Lettr accepts a `scheduledAt` timestamp when you send an email, holds the message in a queue, and delivers it at the specified time. You can cancel or reschedule the email at any point before delivery.
 
 ## Schedule an Email
 
-Use the `scheduledAt` parameter with an ISO 8601 timestamp:
+Pass an ISO 8601 timestamp in the `scheduledAt` parameter. Lettr queues the email and delivers it at the specified time:
 
 ```javascript
 await lettr.emails.send({
@@ -39,7 +39,7 @@ Scheduled emails return a `scheduled` status:
 
 ## Cancel a Scheduled Email
 
-Cancel before it's sent:
+If conditions change before the scheduled delivery time — the user cancels their appointment, the order is refunded, or the campaign is paused — you can cancel the email to prevent it from being sent:
 
 ```javascript
 await lettr.emails.cancel('email_123abc');
@@ -47,7 +47,7 @@ await lettr.emails.cancel('email_123abc');
 
 ## Reschedule an Email
 
-Update the scheduled time:
+To change the delivery time of a scheduled email without cancelling and re-creating it, update the `scheduledAt` field:
 
 ```javascript
 await lettr.emails.update('email_123abc', {
@@ -57,7 +57,7 @@ await lettr.emails.update('email_123abc', {
 
 ## Timezone Handling
 
-Always use UTC times with the `Z` suffix:
+Lettr expects all scheduled times in UTC. If your application stores times in local timezones, convert them to UTC before passing to the API. Always include the `Z` suffix (or `+00:00` offset) to make the timezone explicit:
 
 ```javascript
 // Convert local time to UTC

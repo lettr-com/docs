@@ -24,12 +24,12 @@ Lettr supports four types of domains, each serving a specific purpose:
 
 ## Why Verify Domains?
 
-Domain verification is essential for:
+Domain verification establishes your identity as a legitimate sender:
 
-- **Deliverability** - Properly authenticated emails reach the inbox instead of spam
-- **Brand Trust** - Send from your own domain, not a shared one
-- **Compliance** - Meet email authentication requirements (SPF, DKIM, DMARC)
-- **Security** - Protect your domain from spoofing and phishing
+- **Inbox placement** — Properly authenticated emails pass SPF and DKIM checks, which is the primary signal email providers use to decide whether to deliver your message to the inbox or filter it to spam
+- **Brand recognition** — Send from your own domain rather than a shared one, reinforcing your brand with every email
+- **Compliance** — Major email providers — including Google and Yahoo — now require SPF, DKIM, and DMARC authentication for bulk senders
+- **Spoofing protection** — Domain authentication lets receiving servers reject forged messages that claim to come from your domain
 
 ## Quick Start
 
@@ -128,13 +128,13 @@ curl https://app.lettr.com/api/domains/example.com \
 
 ## Domain Approval
 
-When you add a new sending domain, Lettr automatically evaluates it for approval. Domains are scored based on several factors:
+When you add a new sending domain, Lettr automatically evaluates it for approval. The scoring considers:
 
-- **Domain age** - Older, established domains score higher
-- **Domain characteristics** - Standard TLDs and naming patterns
-- **Website content** - Active websites with legitimate content
+- **Domain age** — Older, established domains score higher
+- **Domain characteristics** — Standard TLDs and conventional naming patterns
+- **Active website** — Whether the domain hosts a website with legitimate content
 
-Domains meeting the approval threshold are automatically approved. If your domain is marked as `pending` or `blocked`, contact support for manual review.
+Domains meeting the approval threshold are approved automatically. If your domain remains in `pending` or `blocked` status, contact support for manual review.
 
 ## Learn More
 
