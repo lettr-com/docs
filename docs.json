@@ -252,55 +252,6 @@
           {
             "group": "API Reference",
             "pages": ["api-reference/introduction"]
-          },
-          {
-            "group": "Emails",
-            "pages": [
-              "api-reference/emails/send-email",
-              "api-reference/emails/list-emails",
-              "api-reference/emails/get-email"
-            ]
-          },
-          {
-            "group": "Domains",
-            "pages": [
-              "api-reference/domains/list-domains",
-              "api-reference/domains/create-domain",
-              "api-reference/domains/get-domain",
-              "api-reference/domains/delete-domain",
-              "api-reference/domains/verify-domain"
-            ]
-          },
-          {
-            "group": "Templates",
-            "pages": [
-              "api-reference/templates/list-templates",
-              "api-reference/templates/create-template",
-              "api-reference/templates/get-template",
-              "api-reference/templates/update-template",
-              "api-reference/templates/delete-template",
-              "api-reference/templates/get-merge-tags"
-            ]
-          },
-          {
-            "group": "Projects",
-            "pages": [
-              "api-reference/projects/list-projects"
-            ]
-          },
-          {
-            "group": "Webhooks",
-            "pages": [
-              "api-reference/webhooks/list-webhooks",
-              "api-reference/webhooks/get-webhook"
-            ]
-          },
-          {
-            "group": "System",
-            "pages": [
-              "api-reference/system/health-check",
-              "api-reference/system/auth-check"
-            ]
           }
         ]
       },

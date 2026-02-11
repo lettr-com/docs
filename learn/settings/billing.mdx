@@ -5,37 +5,42 @@ description: "Manage billing, invoices, and subscription"
 
 # Billing
 
-Lettr uses a tiered subscription model with calendar-month billing. Each tier includes a base number of emails per month, and additional emails beyond your limit are charged at a flat overage rate. All subscriptions renew on the 1st of each month.
+Lettr uses a tiered subscription model with calendar-month billing. Each tier includes a monthly email allowance, and emails beyond that allowance are billed at a flat overage rate. All subscriptions renew on the 1st of each month.
 
 ## Plans
 
-Lettr offers a free tier for testing and development, plus six Pro tiers for production use:
+Lettr offers a free tier for testing and development, plus five Pro tiers and custom enterprise pricing for production use.
 
 ### Free Tier
 
-All teams without an active subscription receive **3,000 emails per month** at no cost (this is the free tier limit). This is ideal for testing, development, and low-volume applications. If you exceed the free tier limit, overage charges apply.
+All teams without an active subscription receive **3,000 emails per month** at no cost, with a **100 emails per day** limit. The free tier includes 1 sending domain, basic analytics, and 7-day data retention. This is ideal for testing, development, and low-volume applications.
 
 ### Pro Tiers
 
-| Tier | Emails/Month | Sending domains | Price/Month |
+| Tier | Emails/Month | Sending Domains | Price/Month |
 |------|--------------|-----------------|-------------|
 | 50K | 50,000 | 10 | $15 |
 | 100K | 100,000 | 10 | $30 |
-| 200K | 200,000 | Unlimited | $60 |
-| 500K | 500,000 | Unlimited | $150 |
-| 1M | 1,000,000 | Unlimited | $300 |
-| 2M | 2,000,000 | Unlimited | $500 |
+| 200K | 200,000 | Unlimited | $110 |
+| 500K | 500,000 | Unlimited | $250 |
+| 1M | 1,000,000 | Unlimited | $450 |
+| 2M+ | 2,000,000+ | Unlimited | Custom |
 
 All Pro tiers include:
 - **Sending domains**: 10 for 50K and 100K; unlimited for 200K and above
+- No daily sending limit
 - Unlimited team members
-- 30-day log retention
-- Email support
-- 99.9% uptime SLA
+- Advanced analytics
+- 30-day data retention
+- Priority support
+
+<Tip>
+  For the 2M+ tier, [contact sales](mailto:sales@lettr.com) for custom pricing based on your volume needs.
+</Tip>
 
 ### Overage Pricing
 
-Emails sent beyond your tier limit are charged at **$0.80 per 1,000 emails**, rounded up to the nearest thousand.
+Emails sent beyond your tier limit are charged at **$0.80 per 1,000 emails**, rounded up to the nearest thousand. Overage is calculated and reported to Stripe automatically throughout your billing period. For the 2M+ tier, contact us for custom overage pricing.
 
 <AccordionGroup>
   <Accordion title="Overage calculation examples">
@@ -47,50 +52,41 @@ Emails sent beyond your tier limit are charged at **$0.80 per 1,000 emails**, ro
 
 ## How Billing Works
 
-Lettr uses calendar-month billing cycles, meaning all subscriptions are aligned to the 1st of each month regardless of when you signed up.
+All subscriptions use calendar-month billing cycles — they are aligned to the 1st of each month regardless of when you signed up.
 
 <Steps>
-  <Step title="Subscribe Mid-Month">
-    When you subscribe, you're charged a prorated amount for the remainder of the current month. For example, signing up on January 15th charges roughly half the monthly rate for January.
+  <Step title="Subscribe">
+    When you subscribe mid-month, you are charged a prorated amount for the remainder of the current month. For example, signing up on January 15th charges roughly half the monthly rate for January.
   </Step>
   <Step title="Monthly Renewal">
-    On the 1st of each month, your subscription renews and you're charged the full tier price. Your email counter resets to zero.
+    On the 1st of each month, your subscription renews at the full tier price and your email counter resets to zero.
   </Step>
-  <Step title="Overage Reporting">
-    Shortly before your invoice finalizes, Lettr calculates any overage emails (emails sent beyond your tier limit) and adds the overage charge to your invoice.
+  <Step title="Overage Billing">
+    Overage emails (emails sent beyond your tier limit) are tracked in real-time and reported to Stripe throughout the billing period. The overage charge appears on your next invoice.
   </Step>
   <Step title="Invoice Issued">
-    Your invoice includes the tier subscription fee plus any overage charges from the previous period. Invoices are available in your dashboard and via email.
+    Your invoice includes the tier subscription fee plus any overage charges from the previous period. Invoices are available in your dashboard and sent via email.
   </Step>
 </Steps>
 
-### Upgrading Your Tier
+### Upgrading
 
-When you upgrade to a higher tier mid-month, you receive a prorated credit for your current tier and are charged a prorated amount for the new tier. The change takes effect immediately, and your new email limit applies for the remainder of the billing period.
+When you upgrade to a higher tier mid-month, you receive a prorated credit for your current tier and are charged a prorated amount for the new tier. The change takes effect immediately and your new email limit applies for the remainder of the billing period.
 
-### Downgrading Your Tier
+### Downgrading
 
-Downgrades take effect at the end of your current billing period. You retain your current tier's limits until the 1st of the next month, when the new tier becomes active. No prorations are applied for downgrades.
+Downgrades take effect at the end of your current billing period. You keep your current tier's limits until the 1st of the next month, when the lower tier becomes active. No prorations are applied for downgrades.
 
-## View Current Plan
+## Manage Your Plan
 
-Check your current subscription and usage in the dashboard at **Settings** → **Billing**, or via the Stripe billing portal.
+Check your current subscription and usage at **Settings** → **Billing**.
 
-### Via Dashboard
-
-1. Go to **Settings** → **Billing**
-2. View your current tier, email usage, and billing period
-3. Click **Manage Subscription** to access the Stripe billing portal
-
-### Current Usage
-
-The dashboard displays:
+The billing page displays:
+- **Current tier** and monthly price
 - **Emails sent** this billing period
 - **Email limit** for your current tier
-- **Overage emails** (if any)
+- **Overage emails** sent beyond your limit (if any)
 - **Days remaining** in the current billing period
-
-## Change Your Plan
 
 ### Upgrade
 
@@ -123,7 +119,7 @@ Lettr accepts all major credit cards via Stripe. Payment methods are managed thr
 
 ### Billing Portal
 
-Access the full Stripe billing portal for:
+Access the full Stripe billing portal from **Settings** → **Billing** → **Manage Subscription** for:
 - Updating payment methods
 - Viewing and downloading invoices
 - Updating billing address
@@ -162,12 +158,11 @@ Email usage is tracked in real-time. Your counter resets to zero on the 1st of e
 
 ### What Counts as Usage
 
-Each email sent through the API counts as one email toward your limit, regardless of:
-- Number of recipients (each recipient = 1 email)
-- Email size
-- Whether tracking is enabled
+Each recipient on each API request counts as one email toward your limit:
+- Sending to 3 `to` addresses and 2 `cc` addresses counts as 5 emails
+- Email size, content type, and tracking settings do not affect the count
 
-Emails that fail validation before being queued do not count toward your limit. Emails that bounce after delivery do count.
+Emails that fail validation before being queued do **not** count toward your limit. Emails that bounce after delivery **do** count.
 
 ### Usage Alerts
 
@@ -186,18 +181,21 @@ To cancel your subscription:
 3. Select **Cancel subscription** in the Stripe portal
 
 <Note>
-  Cancellation takes effect at the end of your current billing period. You retain full access and your current email limit until then. After cancellation, your team reverts to the free tier (3,000 emails/month).
+  Cancellation takes effect at the end of your current billing period. You retain full access and your current email limit until then. After cancellation, your team reverts to the free tier (3,000 emails/month, 100/day limit).
 </Note>
+
+If you change your mind before the billing period ends, you can resume your subscription from the same page. Resuming keeps your current tier and prevents the downgrade to the free tier.
 
 ## Enterprise
 
 For teams with high-volume needs or custom requirements, contact us for enterprise pricing:
 
-- Custom email limits
-- Volume discounts
-- Annual billing options
-- Custom contracts
-- Dedicated support
+- Unlimited emails and sending domains
+- Dedicated IP addresses
+- Dedicated account manager
+- SLA guarantee
+- 30-day data retention
+- Everything included in Pro
 
 Contact [sales@lettr.com](mailto:sales@lettr.com) for enterprise inquiries.
 
@@ -213,6 +211,9 @@ Contact [sales@lettr.com](mailto:sales@lettr.com) for enterprise inquiries.
   <Accordion title="Can I change tiers mid-month?">
     Yes. Upgrades take effect immediately with prorated billing. Downgrades take effect at the start of the next billing period.
   </Accordion>
+  <Accordion title="Can I resume a cancelled subscription?">
+    Yes. If you cancel your subscription, you can resume it at any time before the current billing period ends. Your tier and email limit are preserved.
+  </Accordion>
   <Accordion title="What payment methods do you accept?">
     We accept all major credit cards (Visa, Mastercard, American Express) via Stripe. Some regions may have additional payment options available through Stripe.
   </Accordion>
@@ -221,5 +222,8 @@ Contact [sales@lettr.com](mailto:sales@lettr.com) for enterprise inquiries.
   </Accordion>
   <Accordion title="How do I get a VAT invoice?">
     Add your VAT ID in the Stripe billing portal. Your invoices will automatically include your VAT number and apply reverse charge for EU business customers.
+  </Accordion>
+  <Accordion title="How is each email counted?">
+    Each recipient on each API request counts as one email. Sending to 5 recipients in a single request uses 5 emails from your quota, regardless of email size or whether tracking is enabled.
   </Accordion>
 </AccordionGroup>
