@@ -16,6 +16,114 @@
     }
   ],
   "paths": {
+    "/health": {
+      "get": {
+        "operationId": "healthCheck",
+        "summary": "Health Check",
+        "description": "Check the health status of the API. This endpoint does not require authentication.",
+        "tags": ["System"],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "API is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["message", "data"],
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Health check passed."
+                    },
+                    "data": {
+                      "type": "object",
+                      "required": ["status", "timestamp"],
+                      "properties": {
+                        "status": {
+                          "type": "string",
+                          "example": "ok"
+                        },
+                        "timestamp": {
+                          "type": "string",
+                          "format": "date-time",
+                          "example": "2024-01-15T10:30:00.000Z"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Health check passed.",
+                  "data": {
+                    "status": "ok",
+                    "timestamp": "2024-01-15T10:30:00.000Z"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/check": {
+      "get": {
+        "operationId": "authCheck",
+        "summary": "Validate API Key",
+        "description": "Validate the provided API key and return associated team information. Use this endpoint to verify API key validity in client libraries.",
+        "tags": ["System"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "API key is valid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["message", "data"],
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "API key is valid."
+                    },
+                    "data": {
+                      "type": "object",
+                      "required": ["team_id", "timestamp"],
+                      "properties": {
+                        "team_id": {
+                          "type": "integer",
+                          "description": "The team ID associated with the API key",
+                          "example": 123
+                        },
+                        "timestamp": {
+                          "type": "string",
+                          "format": "date-time",
+                          "example": "2024-01-15T10:30:00.000Z"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "message": "API key is valid.",
+                  "data": {
+                    "team_id": 123,
+                    "timestamp": "2024-01-15T10:30:00.000Z"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
     "/emails": {
       "get": {
         "operationId": "listEmails",
@@ -1936,6 +2044,109 @@
         }
       }
     },
+    "/projects": {
+      "get": {
+        "operationId": "listProjects",
+        "summary": "List Projects",
+        "description": "Retrieve a paginated list of projects for the authenticated team.",
+        "tags": ["Projects"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "per_page",
+            "in": "query",
+            "description": "Number of results per page (1-100)",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of projects retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListProjectsResponse"
+                },
+                "example": {
+                  "message": "Projects retrieved successfully.",
+                  "data": {
+                    "projects": [
+                      {
+                        "id": 1,
+                        "name": "My Project",
+                        "emoji": "🚀",
+                        "team_id": 5,
+                        "created_at": "2025-01-15T10:00:00+00:00",
+                        "updated_at": "2025-01-20T14:30:00+00:00"
+                      }
+                    ],
+                    "pagination": {
+                      "total": 10,
+                      "per_page": 25,
+                      "current_page": 1,
+                      "last_page": 1
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                },
+                "example": {
+                  "message": "Validation failed.",
+                  "error_code": "validation_error",
+                  "errors": {
+                    "per_page": ["The per_page parameter must be between 1 and 100."]
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "Failed to retrieve projects. Please try again later.",
+                  "error_code": "send_error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/domains/{domain}/verify": {
       "post": {
         "operationId": "verifyDomain",
@@ -3031,6 +3242,104 @@
           }
         }
       },
+      "ListProjectsResponse": {
+        "type": "object",
+        "description": "Response containing a paginated list of projects",
+        "required": ["message", "data"],
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Human-readable response message",
+            "example": "Projects retrieved successfully."
+          },
+          "data": {
+            "type": "object",
+            "required": ["projects", "pagination"],
+            "properties": {
+              "projects": {
+                "type": "array",
+                "description": "List of projects",
+                "items": {
+                  "$ref": "#/components/schemas/ProjectView"
+                }
+              },
+              "pagination": {
+                "$ref": "#/components/schemas/ProjectsPagination"
+              }
+            }
+          }
+        }
+      },
+      "ProjectView": {
+        "type": "object",
+        "description": "View of a project",
+        "required": ["id", "name", "emoji", "team_id", "created_at", "updated_at"],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Unique identifier for the project",
+            "example": 1
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the project",
+            "example": "My Project"
+          },
+          "emoji": {
+            "type": ["string", "null"],
+            "description": "Emoji icon for the project (can be null)",
+            "example": "🚀"
+          },
+          "team_id": {
+            "type": "integer",
+            "description": "ID of the team that owns this project",
+            "example": 5
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the project was created",
+            "example": "2025-01-15T10:00:00+00:00"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the project was last updated",
+            "example": "2025-01-20T14:30:00+00:00"
+          }
+        }
+      },
+      "ProjectsPagination": {
+        "type": "object",
+        "description": "Pagination information for projects list",
+        "required": ["total", "per_page", "current_page", "last_page"],
+        "properties": {
+          "total": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Total number of projects",
+            "example": 10
+          },
+          "per_page": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Number of projects per page",
+            "example": 25
+          },
+          "current_page": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Current page number",
+            "example": 1
+          },
+          "last_page": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Last page number",
+            "example": 1
+          }
+        }
+      },
       "ShowTemplateResponse": {
         "type": "object",
         "description": "Response containing a single template with details",
@@ -3483,6 +3792,10 @@
     {
       "name": "Templates",
       "description": "Email template management operations"
+    },
+    {
+      "name": "Projects",
+      "description": "Project management endpoints"
     },
     {
       "name": "Domains",
