@@ -1,0 +1,8 @@
+---
+title: Update Template
+openapi: PUT /templates/{slug}
+---
+
+Updates an existing template by its slug. You can update the template name, project assignment, or content. Providing new `html` or `json` content creates a new version of the template automatically.
+
+The `html` and `json` fields are mutually exclusive. If neither is provided, only metadata (name, project) is updated without creating a new version.
