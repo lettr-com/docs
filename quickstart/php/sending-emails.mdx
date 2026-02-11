@@ -1,0 +1,219 @@
+---
+title: Sending Emails
+description: "Different ways to send emails with the Lettr PHP SDK"
+---
+
+# Sending Emails
+
+The Lettr PHP SDK offers multiple ways to send emails. Choose the approach that fits your needs.
+
+## Quick Send Methods
+
+For simple use cases, use the shorthand methods:
+
+### HTML Email
+
+```php
+$response = $lettr->emails()->sendHtml(
+    from: 'sender@yourdomain.com',
+    to: 'recipient@example.com',
+    subject: 'Hello',
+    html: '<h1>Welcome!</h1><p>Thanks for signing up.</p>',
+);
+```
+
+### Plain Text Email
+
+```php
+$response = $lettr->emails()->sendText(
+    from: ['email' => 'sender@yourdomain.com', 'name' => 'Your App'],
+    to: ['user1@example.com', 'user2@example.com'],
+    subject: 'Plain text update',
+    text: 'This is a plain text email.',
+);
+```
+
+### Template Email
+
+```php
+$response = $lettr->emails()->sendTemplate(
+    from: 'sender@yourdomain.com',
+    to: 'customer@example.com',
+    subject: 'Welcome!',
+    templateSlug: 'welcome-email',
+    substitutionData: ['name' => 'John'],
+);
+```
+
+## Email Builder
+
+For complex emails, use the fluent builder:
+
+```php
+$response = $lettr->emails()->send(
+    $lettr->emails()->create()
+        ->from('sender@yourdomain.com', 'Your Company')
+        ->to(['recipient@example.com'])
+        ->cc(['cc@example.com'])
+        ->bcc(['bcc@example.com'])
+        ->replyTo('reply@yourdomain.com')
+        ->subject('Monthly Newsletter')
+        ->html('<h1>Newsletter</h1><p>{{content}}</p>')
+        ->text('Newsletter: {{content}}')
+        ->substitutionData(['content' => $newsletterContent])
+        ->withOpenTracking(true)
+        ->withClickTracking(true)
+        ->metadata(['campaign_id' => 'newsletter-2024-01'])
+        ->campaignId('welcome-series')
+);
+
+// Access the response
+echo $response->requestId;
+echo $response->accepted;
+```
+
+## Templates with Substitution Data
+
+Send using a Lettr template with dynamic data:
+
+```php
+$response = $lettr->emails()->send(
+    $lettr->emails()->create()
+        ->from('sender@yourdomain.com')
+        ->to(['recipient@example.com'])
+        ->subject('Your Order #{{order_id}}')
+        ->useTemplate('order-confirmation', version: 1, projectId: 123)
+        ->substitutionData([
+            'order_id' => '12345',
+            'customer_name' => 'John Doe',
+            'items' => [
+                ['name' => 'Product A', 'price' => 29.99],
+                ['name' => 'Product B', 'price' => 49.99],
+            ],
+            'total' => 79.98,
+        ])
+);
+```
+
+## Attachments
+
+Add attachments from file paths or binary data:
+
+```php
+$response = $lettr->emails()->send(
+    $lettr->emails()->create()
+        ->from('billing@yourdomain.com')
+        ->to(['customer@example.com'])
+        ->subject('Your Invoice')
+        ->html('<p>Please find your invoice attached.</p>')
+        // From file path
+        ->attachFile('/path/to/invoice.pdf')
+        // With custom name and MIME type
+        ->attachFile('/path/to/file', 'custom-name.pdf', 'application/pdf')
+        // From binary data
+        ->attachData($binaryContent, 'report.csv', 'text/csv')
+);
+```
+
+## Email Options
+
+Fine-tune email behavior:
+
+```php
+$email = $lettr->emails()->create()
+    ->from('sender@yourdomain.com')
+    ->to(['recipient@example.com'])
+    ->subject('Newsletter')
+    ->html($htmlContent)
+    // Tracking
+    ->withClickTracking(true)
+    ->withOpenTracking(true)
+    // Mark as transactional (bypasses unsubscribe lists)
+    ->transactional()
+    // CSS inlining
+    ->withInlineCss(true)
+    // Template variable substitution in HTML
+    ->withSubstitutions(true);
+
+$response = $lettr->emails()->send($email);
+```
+
+## Handling Responses
+
+Every send method returns a `SendEmailResponse`:
+
+```php
+$response = $lettr->emails()->send($email);
+
+$response->requestId;      // RequestId for tracking
+$response->accepted;       // Number of accepted recipients
+$response->rejected;       // Number of rejected recipients
+$response->allAccepted();  // true if all recipients accepted
+$response->hasRejections(); // true if any were rejected
+$response->total();        // Total recipients (accepted + rejected)
+```
+
+## Retrieving Email Events
+
+Track what happened to sent emails:
+
+```php
+// Get events by request ID
+$result = $lettr->emails()->get($response->requestId);
+
+foreach ($result->events as $event) {
+    echo $event->type->value;   // 'delivery', 'open', 'click', etc.
+    echo $event->recipient;     // Recipient email
+    echo $event->timestamp;     // When the event occurred
+}
+```
+
+### List Events with Filtering
+
+```php
+use Lettr\Dto\Email\ListEmailsFilter;
+
+$filter = ListEmailsFilter::create()
+    ->perPage(50)
+    ->forRecipient('user@example.com')
+    ->fromDate('2024-01-01')
+    ->toDate('2024-12-31');
+
+$result = $lettr->emails()->list($filter);
+
+echo $result->totalCount;
+
+// Paginate through results
+while ($result->hasMore()) {
+    foreach ($result->events as $event) {
+        // Process event
+    }
+
+    $filter = $filter->cursor($result->pagination->nextCursor);
+    $result = $lettr->emails()->list($filter);
+}
+```
+
+## Error Handling
+
+```php
+use Lettr\Exceptions\ValidationException;
+use Lettr\Exceptions\UnauthorizedException;
+use Lettr\Exceptions\NotFoundException;
+use Lettr\Exceptions\ApiException;
+use Lettr\Exceptions\TransporterException;
+
+try {
+    $response = $lettr->emails()->send($email);
+} catch (ValidationException $e) {
+    // Invalid request data (422)
+} catch (UnauthorizedException $e) {
+    // Invalid API key (401)
+} catch (NotFoundException $e) {
+    // Resource not found (404)
+} catch (ApiException $e) {
+    // Other API errors
+} catch (TransporterException $e) {
+    // Network/transport errors
+}
+```

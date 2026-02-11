@@ -1,7 +1,7 @@
 {
   "$schema": "https://mintlify.com/schema.json",
   "name": "Lettr",
-  "theme": "willow",
+  "theme": "mint",
   "buildCommand": "curl -s https://app.lettr.com/openapi.json -o openapi.json",
   "openapi": "/openapi.json",
   "api": {
@@ -69,7 +69,9 @@
                 "group": "PHP",
                 "pages": [
                   "quickstart/php/introduction",
-                  "quickstart/php/symfony"
+                  "quickstart/php/installation",
+                  "quickstart/php/sending-emails",
+                  "quickstart/php/templates"
                 ]
               },
               {

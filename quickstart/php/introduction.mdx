@@ -1,67 +1,92 @@
 ---
-title: PHP Quickstart
-description: "Get started with Lettr using PHP"
+title: Introduction
+description: "Send emails from PHP using the Lettr SDK"
 ---
 
 # PHP Quickstart
 
-Integrate Lettr into your PHP application to send transactional emails. Choose the guide that matches your framework.
+Send transactional emails from any PHP application using the official Lettr PHP SDK. No framework required.
 
 ## Prerequisites
 
 Before you begin, make sure you have:
 
-1. A Lettr account — [sign up at app.lettr.com](https://app.lettr.com)
-2. An [API key](/learn/api-keys/introduction) created in your dashboard
-3. A [verified sending domain](/learn/domains/introduction)
-4. PHP 8.1 or higher
-
-## Choose Your Framework
-
 <CardGroup cols={2}>
-  <Card title="Laravel" icon="laravel" href="/quickstart/php/laravel">
-    Send emails through Lettr in a Laravel application using the HTTP API
+  <Card title="API Key" icon="key" href="https://app.lettr.com/api-keys">
+    Create an API key in the Lettr dashboard
   </Card>
-  <Card title="Symfony" icon="symfony" href="/quickstart/php/symfony">
-    Integrate Lettr with Symfony's mailer component
+  <Card title="Verified Domain" icon="globe" href="/learn/domains/sending-domains">
+    Add and verify your sending domain
   </Card>
 </CardGroup>
 
-## Using SMTP Instead?
+## Quick Setup
 
-If you prefer SMTP over the HTTP API, see the [SMTP quickstart guides](/quickstart/smtp/introduction) — including a dedicated [Laravel SMTP guide](/quickstart/smtp/laravel).
+<Steps>
+  <Step title="Install the package">
+    ```bash
+    composer require lettr/lettr-php
+    ```
+  </Step>
+  <Step title="Create a client">
+    ```php
+    use Lettr\Lettr;
 
-## Direct API Usage
+    $lettr = Lettr::client('your-api-key');
+    ```
+  </Step>
+  <Step title="Send your first email">
+    ```php
+    $response = $lettr->emails()->send(
+        $lettr->emails()->create()
+            ->from('sender@yourdomain.com', 'Your App')
+            ->to(['recipient@example.com'])
+            ->subject('Hello from Lettr')
+            ->html('<h1>Hello!</h1><p>This is a test email.</p>')
+    );
 
-For plain PHP without a framework, you can send emails directly via the REST API:
+    echo $response->requestId; // Request ID for tracking
+    echo $response->accepted;  // Number of accepted recipients
+    ```
+  </Step>
+</Steps>
+
+## Verify Your API Key
+
+Test that your API key is valid:
 
 ```php
-$apiKey = 'lttr_xxxxxxxxxxxx';
+$auth = $lettr->health()->authCheck();
 
-$data = [
-    'from' => 'you@yourdomain.com',
-    'to' => ['recipient@example.com'],
-    'subject' => 'Hello from Lettr',
-    'html' => '<p>Your email content here.</p>'
-];
-
-$ch = curl_init('https://app.lettr.com/api/emails');
-curl_setopt_array($ch, [
-    CURLOPT_POST => true,
-    CURLOPT_POSTFIELDS => json_encode($data),
-    CURLOPT_HTTPHEADER => [
-        'Authorization: Bearer ' . $apiKey,
-        'Content-Type: application/json',
-        'Accept: application/json',
-    ],
-    CURLOPT_RETURNTRANSFER => true,
-]);
-
-$response = curl_exec($ch);
-$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-curl_close($ch);
-
-echo $response;
+echo $auth->teamId; // Your team ID
 ```
 
-For the full API reference, see the [Send Email endpoint](/api-reference/emails/send-email).
+If no exception is thrown, you're ready to send emails.
+
+## Using a Framework?
+
+<CardGroup cols={2}>
+  <Card title="Laravel" icon="laravel" href="/quickstart/laravel/introduction">
+    Use the dedicated Laravel SDK with Mail facade integration
+  </Card>
+  <Card title="SMTP" icon="server" href="/quickstart/smtp/introduction">
+    Use SMTP instead of the HTTP API
+  </Card>
+</CardGroup>
+
+## What's Next
+
+<CardGroup cols={2}>
+  <Card title="Installation" icon="download" href="/quickstart/php/installation">
+    Requirements and setup details
+  </Card>
+  <Card title="Sending Emails" icon="paper-plane" href="/quickstart/php/sending-emails">
+    All the ways to send emails
+  </Card>
+  <Card title="Templates" icon="file-code" href="/quickstart/php/templates">
+    Use Lettr templates with merge tags
+  </Card>
+  <Card title="API Reference" icon="book" href="/api-reference/introduction">
+    Complete API documentation
+  </Card>
+</CardGroup>

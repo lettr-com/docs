@@ -1,0 +1,59 @@
+---
+title: Installation
+description: "Install and configure the Lettr PHP SDK"
+---
+
+# Installation
+
+Install the Lettr PHP SDK via Composer.
+
+## Requirements
+
+- PHP 8.4 or higher
+- Guzzle HTTP client 7.5+
+
+## Install the Package
+
+```bash
+composer require lettr/lettr-php
+```
+
+## Create a Client
+
+```php
+use Lettr\Lettr;
+
+$lettr = Lettr::client('your-api-key');
+```
+
+<Tip>
+  Get your API key from the [Lettr dashboard](https://app.lettr.com/api-keys).
+</Tip>
+
+## Available Services
+
+The client provides access to all Lettr API services:
+
+```php
+$lettr->emails();     // Send and retrieve emails
+$lettr->domains();    // Manage sending domains
+$lettr->templates();  // Manage email templates
+$lettr->webhooks();   // View webhook configurations
+$lettr->health();     // API health and auth checks
+```
+
+## Verify Installation
+
+Test that everything is configured correctly:
+
+```php
+// Check API health (no authentication required)
+$status = $lettr->health()->check();
+echo $status->isHealthy(); // true
+
+// Verify your API key
+$auth = $lettr->health()->authCheck();
+echo $auth->teamId;
+```
+
+If no exception is thrown, your API key is valid and you're ready to send emails.
