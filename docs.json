@@ -381,5 +381,10 @@
       }
     ]
   },
-  "footerSocials": {}
+  "footerSocials": {},
+  "integrations": {
+    "ga4": {
+      "measurementId": "G-GMH8JTRY9Q"
+    }
+  }
 }
