@@ -3,8 +3,6 @@ title: DMARC
 description: "Configure DMARC policies to protect your domain from email spoofing"
 ---
 
-# DMARC Configuration
-
 After configuring SPF and DKIM for your [sending domain](/learn/domains/sending-domains) in Lettr, DMARC is the final authentication layer that tells receiving servers what to do when emails fail those checks. Without DMARC, a failed SPF or DKIM check is informational only — the receiving server decides on its own whether to deliver, quarantine, or reject the message. With DMARC, you explicitly instruct receivers to quarantine or reject unauthenticated emails claiming to come from your domain.
 
 ## Why DMARC Matters
