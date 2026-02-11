@@ -232,9 +232,11 @@ Admins can export log data in CSV format for external analysis or compliance pur
 
 ### Monitor Regularly
 
-- Check logs periodically for unexpected errors
-- Set up alerts for high error rates using webhooks
-- Review 429 errors to optimize your rate limiting
+Check your API logs periodically to catch issues early:
+
+- **Watch for error patterns** — A sudden spike in 422 or 401 errors often indicates a configuration change or integration bug
+- **Set up alerting** — Use webhook-based alerting so your team is notified when error rates exceed a threshold
+- **Monitor rate limits** — Pay particular attention to 429 errors, which may signal that your integration needs pacing improvements or a plan upgrade
 
 ### Use Descriptive API Key Names
 

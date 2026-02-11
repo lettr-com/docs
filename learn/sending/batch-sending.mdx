@@ -5,11 +5,11 @@ description: "Send emails to multiple recipients efficiently"
 
 # Batch Sending
 
-Send emails to multiple recipients efficiently with Lettr's batch sending capabilities.
+When you need to send the same email to many recipients — newsletters, announcements, reports, or notifications — batch sending lets you do it efficiently. Each API call accepts up to 50 recipients, and you can personalize content per recipient using merge tag variables. For lists larger than 50, you split recipients into batches and send them sequentially or in parallel.
 
 ## Multiple Recipients Per Request
 
-Send the same email to up to 50 recipients in a single API call:
+Pass an array of up to 50 email addresses in the `to` field. Lettr delivers a separate copy of the email to each recipient:
 
 ```javascript
 await lettr.emails.send({
@@ -27,7 +27,7 @@ await lettr.emails.send({
 
 ## Per-Recipient Personalization
 
-Personalize content for each recipient:
+Use `recipientVariables` to provide different merge tag values for each recipient. Each recipient receives a personalized version of the email while you make only a single API call:
 
 ```javascript
 await lettr.emails.send({
@@ -52,7 +52,7 @@ await lettr.emails.send({
 
 ## Sending to Large Lists
 
-For lists larger than 50 recipients, split into multiple API calls:
+For recipient lists larger than 50, chunk the list into batches and send each batch with a separate API call. Adding a short delay between batches helps you stay within [rate limits](/learn/sending/rate-limits):
 
 ```javascript
 const recipients = [...]; // Array of 500 recipients
@@ -75,7 +75,7 @@ for (let i = 0; i < recipients.length; i += batchSize) {
 
 ## Parallel Batch Sending
 
-Send multiple batches in parallel for faster throughput:
+For faster throughput, send multiple batches concurrently using `Promise.all`. This reduces total send time proportionally to the number of parallel batches, but be mindful of your rate limits:
 
 ```javascript
 const recipients = [...]; // Large recipient list
@@ -125,25 +125,25 @@ The response indicates how many recipients were accepted or rejected:
 
 <AccordionGroup>
   <Accordion title="Validate Addresses First">
-    Validate email addresses before sending to reduce rejections and protect your sender reputation.
+    Run email addresses through basic format validation and check them against your local suppression list before including them in a batch. Each rejected address in a batch send still counts against your rate limit, and high rejection rates can signal list quality issues to Lettr.
   </Accordion>
   <Accordion title="Use Personalization">
-    Personalized emails have higher engagement rates. Use recipient variables whenever possible.
+    Personalized emails (using the recipient's name, relevant data, or tailored content) achieve significantly higher open and click rates than generic messages. Use `recipientVariables` to customize merge tags per recipient without making separate API calls.
   </Accordion>
   <Accordion title="Respect Rate Limits">
-    Monitor your API usage and implement appropriate delays between batches.
+    Add a delay between batches proportional to your API rate limit. If your limit is 300 requests per 5 minutes, spacing batches 1 second apart lets you send to 15,000 recipients per 5-minute window (300 batches × 50 recipients) without hitting limits.
   </Accordion>
   <Accordion title="Handle Partial Failures">
-    Check the `accepted` and `rejected` counts in responses and handle partial failures gracefully.
+    A batch send can partially succeed — some recipients are accepted while others are rejected (due to suppression or validation). Always check the `accepted` and `rejected` counts in the response and log rejected addresses for investigation rather than silently dropping them.
   </Accordion>
   <Accordion title="Use Webhooks for Delivery Status">
-    Set up webhooks to track delivery, bounces, and engagement for batch sends.
+    With batch sends, polling the API for each email's delivery status is impractical. Set up webhooks to receive `email.delivered`, `email.bounced`, and `email.opened` events, which let you track outcomes for every recipient asynchronously.
   </Accordion>
 </AccordionGroup>
 
 ## Tracking Batch Emails
 
-Use metadata to group and track batch sends:
+Attach metadata to batch sends so you can query all emails from a specific batch later. Include a unique `batch_id` along with any campaign or timing information relevant to your use case:
 
 ```javascript
 const batchId = `batch_${Date.now()}`;

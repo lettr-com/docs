@@ -244,15 +244,12 @@ The AI will list your domains and highlight any with verification issues.
 
 ## Security Best Practices
 
-When using MCP with Lettr, keep these security considerations in mind.
+When using MCP with Lettr, keep these security considerations in mind:
 
-Only connect AI clients from trusted, official sources. MCP allows these assistants to send emails and access account data on your behalf, so treat authorization requests with the same caution you'd apply to any OAuth connection.
-
-Most AI clients will display the intended action before executing it. Take advantage of this by reviewing email content and recipient lists before confirming sends, especially for bulk operations or sensitive communications.
-
-Periodically audit your connected AI clients and revoke access for any you no longer use. You can manage these connections in your Lettr account settings under **Settings** → **Connected Apps**.
-
-MCP respects your existing Lettr team permissions. This means team members with view-only access won't be able to send emails through MCP, providing an additional layer of protection for your sending capabilities.
+- **Only connect trusted clients** — MCP allows AI assistants to send emails and access account data on your behalf, so treat authorization requests with the same caution you'd apply to any OAuth connection
+- **Review before confirming** — Most AI clients display the intended action before executing it — review email content and recipient lists before confirming sends, especially for bulk operations or sensitive communications
+- **Audit connected clients** — Periodically revoke access for clients you no longer use via **Settings** → **Connected Apps**
+- **Permission scoping** — MCP respects your existing Lettr team permissions, so team members with view-only access won't be able to send emails through MCP
 
 ## Disconnecting
 
@@ -260,7 +257,12 @@ To revoke an AI client's access to your Lettr account, sign in to the Lettr dash
 
 ## Rate Limits
 
-MCP requests follow the same rate limits as the REST API. Standard sending rate limits apply to emails sent through AI assistants. Event queries return up to 25 results per request, while API log queries return up to 20 results per request. Both support cursor-based pagination for accessing larger result sets.
+MCP requests follow the same rate limits as the REST API:
+
+- **Sending** — Standard API rate limits apply to emails sent through AI assistants
+- **Event queries** — Up to 25 results per request
+- **API log queries** — Up to 20 results per request
+- **Pagination** — Both support cursor-based pagination for accessing larger result sets
 
 See [Rate Limits](/learn/sending/rate-limits) for detailed information.
 

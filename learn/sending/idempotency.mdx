@@ -5,11 +5,11 @@ description: "Prevent duplicate emails with request tracking"
 
 # Idempotency
 
-Prevent duplicate emails and safely retry failed requests using request IDs and idempotency patterns.
+Duplicate emails damage user trust — nobody wants to receive the same order confirmation twice. Network failures, retries, and concurrent requests can all cause a single email to be sent more than once unless your integration is designed to prevent it. This page covers how to use Lettr's request IDs and metadata-based idempotency keys to ensure each email is sent exactly once, even when failures and retries occur.
 
 ## Request IDs
 
-Every email send returns a unique `request_id`:
+Every successful send returns a unique `request_id` that identifies the transmission. This ID is your primary handle for tracking the email through delivery, webhooks, and the dashboard:
 
 ```javascript
 const response = await lettr.emails.send({
@@ -25,12 +25,7 @@ console.log(response.data.request_id);
 
 ## Using Request IDs
 
-Store the request ID to:
-
-- Track email delivery status
-- Query sent emails
-- Debug delivery issues
-- Correlate with webhook events
+Store the `request_id` alongside your business record (order, user, ticket) so you can reference it later. The request ID lets you query the email's delivery status through the API, look it up in the dashboard, trace it through webhook events, and provide it to Lettr support if you need to investigate a delivery issue.
 
 ```javascript
 // Store with your order
@@ -45,7 +40,7 @@ console.log(email.status);
 
 ## Preventing Duplicate Sends
 
-Implement idempotency in your application:
+The simplest way to prevent duplicates is to check a flag in your database before sending. If the email has already been sent for a given business event (order confirmed, password reset requested), skip the API call:
 
 ```javascript
 async function sendOrderConfirmation(order) {
@@ -77,7 +72,7 @@ async function sendOrderConfirmation(order) {
 
 ## Idempotency with Metadata
 
-Use metadata to track and deduplicate:
+For cases where a local database flag isn't sufficient — such as distributed systems where multiple workers might process the same event — you can use Lettr's metadata query to check whether an email with a specific idempotency key has already been sent:
 
 ```javascript
 // Before sending, check if already sent
@@ -107,7 +102,7 @@ const response = await lettr.emails.send({
 
 ## Safe Retry Pattern
 
-Handle network failures with safe retries:
+When a send request fails with a server error (5xx) or network timeout, it's safe to retry — but only if the error was transient. Client errors (4xx) indicate a problem with the request itself and should not be retried. This pattern implements exponential backoff for retryable errors while immediately re-throwing client errors:
 
 ```javascript
 async function sendEmailWithRetry(emailData, maxRetries = 3) {
@@ -138,7 +133,7 @@ async function sendEmailWithRetry(emailData, maxRetries = 3) {
 
 ## Request ID in Webhooks
 
-Webhook events include the request ID for correlation:
+Every webhook event includes the `request_id` from the original send. This lets your webhook handler look up the corresponding business record (order, user, ticket) and update its status based on the delivery outcome:
 
 ```json
 {
@@ -158,22 +153,22 @@ Webhook events include the request ID for correlation:
 
 <AccordionGroup>
   <Accordion title="Always Store Request IDs">
-    Store the request_id with your business records to track email delivery.
+    Persist the `request_id` alongside the business record that triggered the email (e.g., an order row, a user record, a support ticket). This gives you a direct lookup path when investigating delivery issues, correlating webhook events, or providing information to support.
   </Accordion>
   <Accordion title="Use Meaningful Idempotency Keys">
-    Create keys that uniquely identify the email purpose, like `order-confirmation-{order_id}`.
+    Construct keys from the email's purpose and the entity it relates to, such as `order-confirmation-{order_id}` or `password-reset-{user_id}-{token}`. Avoid generic keys like `email-123` — the key should make it impossible for a different email type to collide with the same value.
   </Accordion>
   <Accordion title="Check Before Sending">
-    For critical emails, check if already sent before making the API call.
+    For critical emails like order confirmations and password resets, always verify that the email hasn't already been sent before calling the API. A database flag check is fast and prevents unnecessary API calls, even before metadata-based deduplication comes into play.
   </Accordion>
   <Accordion title="Handle Timeouts Carefully">
-    A timeout doesn't mean the email wasn't sent. Check status before retrying.
+    A network timeout does not mean the email wasn't sent — the request may have reached Lettr successfully, but the response was lost. Before retrying, query the API using your idempotency key to check whether the email was already accepted for delivery.
   </Accordion>
 </AccordionGroup>
 
 ## Timeout Handling
 
-When a request times out, the email may have been sent:
+A timeout (`ETIMEDOUT`) or connection reset (`ECONNRESET`) means your client didn't receive a response, but Lettr may have already accepted and queued the email. Before retrying, check whether the email was already sent by querying your idempotency key in metadata:
 
 ```javascript
 async function safeSend(emailData) {

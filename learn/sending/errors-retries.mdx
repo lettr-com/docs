@@ -5,11 +5,11 @@ description: "Handle errors and implement retry logic"
 
 # Errors & Retries
 
-Learn how to handle errors and implement robust retry logic for reliable email delivery.
+API calls can fail for many reasons — invalid parameters, unverified domains, rate limits, or transient server issues. How your integration handles these failures determines whether emails are silently lost or reliably delivered. This page covers Lettr's error response format, common error codes, which errors are safe to retry, and patterns for building resilient send logic.
 
 ## Error Response Format
 
-All API errors follow a consistent format:
+All API errors return a JSON object with a consistent structure. The `error_code` field identifies the category of failure, `message` provides a human-readable description, and `errors` (present on validation failures) lists problems for specific fields:
 
 ```json
 {
@@ -38,7 +38,7 @@ All API errors follow a consistent format:
 
 ## Validation Errors
 
-Handle validation errors by checking the `errors` object:
+Validation errors (`422`) mean the request was well-formed but contained invalid data — a missing required field, an unverified sender domain, or a subject line exceeding the character limit. The `errors` object in the response maps each invalid field to an array of error messages:
 
 ```javascript
 try {
@@ -60,7 +60,7 @@ try {
 
 ## Domain Errors
 
-Handle domain configuration errors:
+Domain-related errors occur when the `from` address uses a domain that hasn't been verified or whose DNS records aren't properly configured. These are the most common errors during initial integration setup:
 
 ```javascript
 try {
@@ -82,7 +82,7 @@ try {
 
 ## Retry Logic
 
-Implement intelligent retry logic:
+A well-designed retry function should distinguish between retryable errors (server failures, rate limits) and non-retryable errors (validation, authentication). The following pattern uses exponential backoff and respects the `retry_after` value from rate limit responses:
 
 ```javascript
 async function sendEmailWithRetry(emailData, options = {}) {
@@ -127,6 +127,8 @@ async function sendEmailWithRetry(emailData, options = {}) {
 
 ## Retryable vs Non-Retryable Errors
 
+Not all errors should be retried. Retrying a validation error or an unauthorized request will produce the same result every time. The table below summarizes which errors are safe to retry and what action to take for each:
+
 | Error Type | Retryable | Action |
 |------------|-----------|--------|
 | `429` Rate limit | Yes | Wait and retry with backoff |
@@ -138,6 +140,8 @@ async function sendEmailWithRetry(emailData, options = {}) {
 | `404` Not found | No | Check template/resource exists |
 
 ## Error Handling Best Practices
+
+Wrapping the retry function with error-specific handling gives you a clean interface for your application code. Log errors with enough context to debug later, and return structured results so calling code can decide how to proceed:
 
 ```javascript
 async function sendEmail(emailData) {
@@ -173,7 +177,7 @@ async function sendEmail(emailData) {
 
 ## Soft Bounce Retries
 
-Lettr automatically retries soft bounces:
+After Lettr accepts an email for delivery, the receiving mail server may reject it with a temporary error (soft bounce). Lettr automatically retries soft bounces on your behalf — you don't need to implement retry logic for these. Hard bounces are permanent failures and are never retried:
 
 | Bounce Type | Auto-Retry | Max Attempts |
 |-------------|------------|--------------|
@@ -183,7 +187,7 @@ Lettr automatically retries soft bounces:
 
 ## Circuit Breaker Pattern
 
-For high-volume sending, implement a circuit breaker:
+In high-volume sending scenarios, repeated failures to the API can indicate a systemic issue (service degradation, network problem). A circuit breaker stops sending attempts after a threshold of failures, waits for a cooldown period, then allows a single test request through. If the test succeeds, normal traffic resumes. This prevents your application from wasting resources on requests that are likely to fail:
 
 ```javascript
 class EmailCircuitBreaker {
@@ -231,7 +235,7 @@ class EmailCircuitBreaker {
 
 ## Monitoring Errors
 
-Set up error monitoring with webhooks:
+Beyond handling errors in your send logic, set up webhook-based monitoring to catch delivery failures that occur after the API accepts the email. This lets you alert your team about bounces, failures, and other delivery problems in real time:
 
 ```javascript
 // Webhook handler for delivery failures

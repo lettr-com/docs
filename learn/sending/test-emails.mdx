@@ -5,11 +5,11 @@ description: "Send test emails during development and QA"
 
 # Test Emails
 
-Send test emails to verify your templates and content before sending to real recipients.
+Before sending emails to real recipients, you should verify that your templates render correctly, merge tags resolve to the expected values, and links point to the right destinations. Test emails let you send a real email through the full delivery pipeline — including template rendering and merge tag substitution — to your own inbox, without affecting your analytics or engagement metrics.
 
 ## Send a Test Email
 
-Send a test email from the Lettr dashboard or via API:
+You can send test emails from the Lettr dashboard or via API. Test emails use the same rendering pipeline as production sends, so what you see in your inbox is exactly what your recipients will receive:
 
 ```javascript
 await lettr.emails.sendTest({
@@ -39,7 +39,7 @@ await lettr.emails.sendTest({
 
 ## Multiple Test Recipients
 
-Send tests to multiple team members:
+When reviewing a template as a team, send the test to multiple recipients at once — developers, designers, and QA engineers can each verify the email in their preferred email client:
 
 ```javascript
 await lettr.emails.sendTest({
@@ -59,7 +59,7 @@ await lettr.emails.sendTest({
 
 ## Test Different Variables
 
-Verify how your template renders with different data:
+Templates often contain conditional blocks that display different content based on the data provided. Test with both minimal and complete data sets to verify that conditionals, loops, and default values all render as expected:
 
 ```javascript
 // Test with minimal data
@@ -86,7 +86,7 @@ await lettr.emails.sendTest({
 
 ## Test Email Characteristics
 
-Test emails have some special characteristics:
+Test emails behave differently from production sends in a few important ways:
 
 | Feature | Behavior |
 |---------|----------|
@@ -113,25 +113,25 @@ The Lettr dashboard provides a visual test email feature:
 
 <AccordionGroup>
   <Accordion title="Test Across Email Clients">
-    Send test emails to accounts in Gmail, Outlook, Apple Mail, and mobile clients to verify rendering.
+    Rendering varies significantly between clients. Send test emails to Gmail (web and mobile), Outlook (Windows uses Word's rendering engine, which handles CSS differently), Apple Mail, and at least one mobile client. Check layout, images, fonts, and button styling on each.
   </Accordion>
   <Accordion title="Test Edge Cases">
-    Test with missing variables, long text, special characters, and empty arrays.
+    Templates may break with unexpected data. Test with missing optional variables (to verify defaults), very long strings (to check truncation and wrapping), special characters and Unicode (to catch encoding issues), and empty arrays (to verify loop blocks render cleanly when there's no data).
   </Accordion>
   <Accordion title="Test Links">
-    Verify all links work correctly, including unsubscribe and tracking links.
+    Click every link in the test email to verify it resolves to the correct destination. Pay particular attention to merge tag links (e.g., `{{tracking_url}}`), unsubscribe links, and tracking-wrapped URLs. Broken links in transactional emails erode user trust.
   </Accordion>
   <Accordion title="Test Plain Text Version">
-    Check that your plain text fallback is readable and properly formatted.
+    If you include a plain text version, review it for readability. Confirm that links are displayed as full URLs, formatting is clear without HTML markup, and the content matches the HTML version. Some recipients and accessibility tools display only the text version.
   </Accordion>
   <Accordion title="Use Realistic Data">
-    Test with data similar to production to catch formatting issues.
+    Synthetic data like "Test User" and "$0.00" can mask formatting issues. Test with data that resembles production values — real name lengths, actual currency amounts, realistic order item counts — to catch problems like truncated fields, misaligned columns, or overflowing containers.
   </Accordion>
 </AccordionGroup>
 
 ## Staging Environment
 
-For integration testing, consider sending to a staging email service:
+For automated integration tests or CI pipelines, redirect all emails to a staging inbox rather than sending to real recipients. This lets your test suite exercise the full send path without risk of reaching customers:
 
 ```javascript
 const isProduction = process.env.NODE_ENV === 'production';

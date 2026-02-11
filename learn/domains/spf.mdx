@@ -9,6 +9,8 @@ SPF is an email authentication standard that allows you to specify which mail se
 
 ## How SPF Works
 
+SPF verification follows a four-step process that happens automatically for every incoming email:
+
 1. You publish a TXT record in your domain's DNS listing authorized sending servers
 2. When a recipient's server receives an email claiming to be from your domain, it looks up your SPF record
 3. The server checks if the sending IP is listed in your SPF record
@@ -74,12 +76,11 @@ Use a public SPF checker to see how many lookups your record uses:
 - **[MXToolbox SPF Record Lookup](https://mxtoolbox.com/spf.aspx)** – Enter your domain to see the resolved SPF record and lookup count.
 - **[DMARC Analyzer SPF Lookup](https://www.dmarcanalyzer.com/spf/spf-record-check/)** – Shows lookup chain and warns if you exceed 10.
 
-If you exceed 10 lookups, consider:
-
-- Removing unused email services from your SPF
-- Using SPF flattening services that replace includes with IP addresses
+If you exceed 10 lookups, you'll need to reduce the number of `include:` statements. Remove any email services you no longer use, and consider an SPF flattening service that resolves `include:` statements into explicit IP addresses, reducing the lookup count while maintaining the same authorization.
 
 ## Verify SPF Setup
+
+After adding your SPF record, you can check its status through the Lettr API. The response tells you whether the record was found and validated correctly:
 
 ```javascript
 const domain = await lettr.domains.get('dom_123');
@@ -93,6 +94,8 @@ if (domain.spfStatus === 'verified') {
 ```
 
 ## Troubleshooting
+
+If SPF verification fails, check the most common causes:
 
 | Issue | Solution |
 |-------|----------|

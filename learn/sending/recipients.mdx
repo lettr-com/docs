@@ -75,7 +75,7 @@ await lettr.emails.send({
 
 ## Sender Name
 
-Add a friendly name to the sender address:
+The `from_name` parameter sets the display name that appears alongside the sender's email address in the recipient's inbox. A clear, recognizable sender name improves open rates because recipients can identify who the email is from before reading the subject line:
 
 ```javascript
 await lettr.emails.send({
@@ -102,13 +102,13 @@ The recipient will see: `Acme Inc <notifications@example.com>`
 
 ## Email Address Validation
 
-Lettr validates all email addresses before sending:
+Lettr validates all email addresses before accepting a send request. Each address must pass three checks:
 
-- Must be valid RFC-compliant email format
-- Domain must exist and accept email
-- Addresses on your suppression list will be rejected
+- **RFC 5322 format** — The address must conform to standard email format
+- **Valid DNS records** — The domain must have DNS records that accept email
+- **Not suppressed** — The address must not appear on your account's suppression list
 
-When validation fails, the API returns an error and the email is not sent:
+If any address fails validation, the API rejects the request and the email is not sent to any recipient:
 
 ```json
 // Invalid email format
