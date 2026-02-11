@@ -3,6 +3,7 @@
   "name": "Lettr",
   "theme": "mint",
   "buildCommand": "curl -s https://app.lettr.com/openapi.json -o openapi.json",
+  "openapi": "/openapi.json",
   "api": {
     "baseUrl": "https://app.lettr.com/api",
     "auth": {
@@ -247,7 +248,6 @@
       },
       {
         "tab": "API Reference",
-        "openapi": "/openapi.json",
         "groups": [
           {
             "group": "API Reference",
