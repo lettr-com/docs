@@ -1,0 +1,8 @@
+---
+title: List Templates
+openapi: GET /templates
+---
+
+Returns a paginated list of templates for your team. Optionally filter by project using the `project_id` query parameter.
+
+Each template in the list includes its name, slug, project and folder assignment, and timestamps. To retrieve the full HTML content and version details for a specific template, use [Get Template](/api-reference/templates/get-template).
