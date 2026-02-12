@@ -90,6 +90,17 @@ curl -X POST https://app.lettr.com/api/emails \
 
 ## API Endpoints
 
-<Card title="Send Email" icon="envelope" href="/api-reference/emails/send-email">
-  Send emails to one or more recipients
-</Card>
+<CardGroup cols={2}>
+  <Card title="Send Email" icon="envelope" href="/api-reference/emails/send-email">
+    Send emails to one or more recipients
+  </Card>
+  <Card title="Templates" icon="file-lines" href="/api-reference/templates/list-templates">
+    Manage templates, merge tags, and rendered HTML
+  </Card>
+  <Card title="Domains" icon="globe" href="/api-reference/domains/list-domains">
+    Create, verify, and manage sending domains
+  </Card>
+  <Card title="Webhooks" icon="webhook" href="/api-reference/webhooks/list-webhooks">
+    View webhook configurations
+  </Card>
+</CardGroup>

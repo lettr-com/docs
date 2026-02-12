@@ -1,0 +1,160 @@
+---
+title: Domain Approval Process
+description: "How Lettr evaluates and approves domains for email sending"
+---
+
+When you add a new sending domain, Lettr evaluates it through an automated scoring system before allowing it to send emails. This step exists because email deliverability depends on shared infrastructure — every domain on the platform affects the reputation of the IP addresses used for sending. By screening domains before they can send, Lettr prevents bad actors from degrading delivery rates for legitimate senders and keeps the platform trusted by inbox providers like Gmail and Outlook.
+
+Most legitimate business domains pass this evaluation automatically within minutes. Understanding how the scoring works helps you set up your domain for the smoothest possible onboarding.
+
+## How Scoring Works
+
+Every domain starts with a score of **100 points**. The scoring system then runs a series of checks and deducts points for each risk signal it finds. At the end, the final score determines the outcome:
+
+| Score | Result |
+|-------|--------|
+| 50–100 | Approved automatically |
+| Below 50 | Blocked — flagged for manual review |
+
+A domain needs to retain at least half of its starting points to pass. This threshold is deliberately balanced — strict enough to catch clearly fraudulent domains, but lenient enough that most legitimate businesses pass without any manual intervention.
+
+## Scoring Criteria
+
+The system evaluates four categories, each targeting a different dimension of domain trustworthiness.
+
+### 1. Suspicious Pattern Detection
+
+Certain domain name patterns are strongly correlated with spam campaigns. Domains matching any of these patterns receive a **-50 point** penalty, which alone drops the score to the borderline:
+
+- Very long random character strings (30+ alphanumeric characters before the TLD)
+- Excessive consecutive numbers (5+ digits in a row)
+- Multiple consecutive hyphens (3+ hyphens)
+- Known spam TLDs: `.xyz`, `.tk`, `.ml`, `.ga`, `.cf`, `.gq`
+- Spammy prefixes: `free-`, `cheap-`, `best-`, `online-`, `shop-`, `buy-`, `sell-`
+
+These patterns are checked against the full domain name before any other scoring runs. A domain like `free-best-deals123456.xyz` would trigger multiple patterns, but the penalty is applied once regardless of how many patterns match.
+
+### 2. Domain Name Characteristics
+
+Beyond outright suspicious patterns, the domain name itself is evaluated for characteristics that correlate with lower legitimacy:
+
+| Characteristic | Penalty |
+|----------------|---------|
+| Too short (fewer than 3 characters) | -20 points |
+| Unusually long (more than 30 characters) | -10 points |
+| Numeric-heavy (more than 50% digits) | -30 points |
+| Uncommon or new TLD | -20 points |
+
+The TLD check compares against a list of trusted, well-established extensions. **Trusted TLDs** that incur no penalty include: `.com`, `.net`, `.org`, `.edu`, `.gov`, `.io`, `.co`, `.app`, `.dev`, `.ai`, `.uk`, `.de`, `.fr`, `.nl`, `.be`, `.eu`, `.us`, `.ca`, `.au`, `.nz`. Domains using newer or less common TLDs receive a -20 point deduction — not because they're necessarily illegitimate, but because they carry less inherent trust signal.
+
+### 3. Domain Age
+
+Domain age is one of the strongest signals of legitimacy. Spammers frequently register new domains in bulk and abandon them once they're blocklisted, so older domains have a much better track record. Lettr looks up the domain's registration date via WHOIS and applies penalties accordingly:
+
+| Domain Age | Penalty |
+|------------|---------|
+| 2+ years | No penalty |
+| 1–2 years | -10 points |
+| 6 months – 1 year | -20 points |
+| 1–6 months | No penalty |
+| Less than 1 month | -40 points |
+| WHOIS lookup unavailable | -20 points |
+
+<Note>
+  Very new domains (less than 30 days old) receive the steepest age penalty (-40 points) because recently registered domains are disproportionately used for spam and phishing campaigns. If you've just registered your domain, waiting 30 days before adding it to Lettr significantly improves your chances of automatic approval.
+</Note>
+
+### 4. Website Content Analysis
+
+The final and most nuanced check uses AI to analyze the website associated with your domain. When you register `mail.example.com` as a sending domain, the system visits `example.com` and evaluates it for legitimacy — looking at the main pages, following links to About, Contact, Privacy Policy, and Terms pages, and assessing the overall professionalism and authenticity of the site.
+
+The AI looks for **positive signals** that suggest a real business:
+
+- Clear company identity and branding
+- Physical business address and working contact information
+- Professional website design with original content
+- Privacy policy and terms of service
+- SSL certificate (HTTPS)
+- Social media presence with genuine activity
+- Industry credentials, certifications, or customer testimonials
+
+It also watches for **red flags** that suggest spam, fraud, or low-quality operations:
+
+- No company information or anonymous ownership
+- Missing or fake contact details
+- Poor grammar and spelling across the site
+- Unrealistic promises, get-rich-quick schemes, or clickbait
+- Content copied from other websites
+- Phishing-like content mimicking known brands
+- Suspicious popup ads or aggressive marketing tactics
+
+Based on this analysis, the AI assigns a score from 0 to 100, which maps to the following domain score penalties:
+
+| AI Score | Penalty |
+|----------|---------|
+| 90–100 | No penalty |
+| 80–89 | -20 points |
+| 60–79 | -40 points |
+| 40–59 | -60 points |
+| 20–39 | -80 points |
+| 0–19 | -100 points |
+
+A domain with a clearly legitimate website and strong business presence may lose no points here at all, while a domain with no website or obviously fraudulent content can lose its entire starting score from this check alone.
+
+## Domain Statuses
+
+After the scoring process completes, your domain transitions into one of three states:
+
+| Status | Meaning |
+|--------|---------|
+| **Pending** | Scoring is in progress — the system is running its checks |
+| **Approved** | Domain passed the evaluation and can send emails |
+| **Blocked** | Domain scored below 50 — flagged for manual review |
+
+Only domains with **Approved** status can send emails. If you try to send from a domain that's still pending or has been blocked, the API will return an error indicating the domain is not configured or approved for sending.
+
+## Timeline
+
+Domain scoring typically completes within a few minutes of adding your domain. The steps run in sequence:
+
+1. Pattern analysis and domain name checks (instant)
+2. WHOIS lookup for domain registration date (a few seconds)
+3. AI-powered website content analysis (up to a minute)
+
+You'll see your domain status update on the Domains page as soon as scoring finishes. In most cases the entire process takes under two minutes.
+
+## What to Do If Your Domain Is Blocked
+
+If your domain scores below the approval threshold, there are several concrete steps you can take:
+
+1. **Check your website** — Make sure your domain hosts a professional website with clear company information, contact details, and a privacy policy. The website analysis carries significant scoring weight, so even a simple but professional site can make the difference.
+2. **Wait for domain age** — If your domain was registered within the last 30 days, waiting until it passes the one-month mark eliminates the steepest age penalty (-40 points). This alone may be enough to push your score above the threshold.
+3. **Contact support** — Email [support@lettr.com](mailto:support@lettr.com) to request a manual review. Include details about your business, what you plan to send, and any context that explains why your domain may have triggered a low score. The Lettr team reviews blocked domains and can approve them manually when the business is clearly legitimate.
+
+<Tip>
+  The three most common reasons for blocked domains are: very new domain registration (less than 30 days), no website content on the domain, and uncommon TLDs. Addressing these factors before adding your domain gives you the best chance of automatic approval.
+</Tip>
+
+## Improving Your Score
+
+If you're planning to add a domain and want to maximize your chances of automatic approval, these steps will help:
+
+- **Use a common TLD** — `.com`, `.net`, `.org`, and country-code TLDs like `.de` or `.co.uk` carry the most trust
+- **Register your domain early** — Domains over 2 years old receive no age penalty at all, and even reaching the 6-month mark reduces the penalty significantly
+- **Build your website first** — A professional website with company information, contact details, and legal pages (privacy policy, terms of service) signals legitimacy to the AI analysis
+- **Use HTTPS** — An SSL certificate is a positive signal that the website is professionally maintained
+- **Avoid spammy patterns** — Keep your domain name conventional and professional, without excessive numbers, hyphens, or promotional prefixes
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Sending Domains" icon="paper-plane" href="/learn/domains/sending-domains">
+    Configure SPF, DKIM, and DMARC for your sending domain
+  </Card>
+  <Card title="Domain Connect" icon="bolt" href="/learn/domains/domain-connect">
+    Automatically configure DNS records for Cloudflare domains
+  </Card>
+  <Card title="Domains Introduction" icon="globe" href="/learn/domains/introduction">
+    Overview of domain types and verification
+  </Card>
+</CardGroup>

@@ -1,0 +1,66 @@
+---
+title: Image Storage
+description: "Manage images and files used in your email templates"
+---
+
+Every image you use in an email template needs to be hosted somewhere publicly accessible so that recipients' email clients can load it when the email is opened. Lettr handles this through a built-in File Manager integrated into the email editor, which stores your images on your team's cloud storage and serves them through your configured [Storage Domain](/learn/domains/storage-domains). This means your images are hosted on infrastructure you control, served from your own domain, and available across all templates and team members.
+
+## File Manager
+
+The File Manager is the central asset library for the Topol email editor. You'll interact with it whenever you add or edit an Image block in a template — clicking on an image placeholder opens the File Manager, where you can browse existing images, upload new ones, or search for free stock photography.
+
+The File Manager provides:
+
+- **Upload** — Drag-and-drop files or use the file browser to upload images directly from your computer
+- **Folders** — Organize your assets into folders and subfolders, just like a file system
+- **Search** — Find images by filename when your library grows large
+- **Stock images** — Browse the Pexels library for free, high-quality stock photography without leaving the editor
+
+All images in the File Manager are shared across your entire team. Every team member sees the same library, and images uploaded by anyone are available to everyone. This makes it easy to maintain brand consistency — upload your logo, social icons, and header images once, and every team member can use them in their templates.
+
+## Uploading Images
+
+To upload images into the File Manager:
+
+1. Open any template in the editor
+2. Click on an Image block (or drag a new one onto the canvas)
+3. In the image picker, click **Upload** or drag files directly into the upload area
+4. Select the destination folder, or upload to the root level
+
+When you upload a file, Lettr automatically generates a unique filename by appending a short random suffix to the original name. This prevents filename collisions when multiple team members upload files with common names like `header.png` or `logo.svg`. The original filename is preserved for display purposes so you can still find your images by their familiar names.
+
+## Folder Organization
+
+As your image library grows, folders help keep things manageable. You can create folders at any level — a simple structure like `headers/`, `footers/`, `product-images/` works well for most teams, but you can nest subfolders as deeply as you need.
+
+Folders are managed directly within the File Manager: create new ones, navigate into them, and delete ones you no longer need. Be aware that deleting a folder is a permanent, recursive operation — all files and subfolders inside it are removed.
+
+<Warning>
+  Deleting a folder permanently removes every image inside it. If any of those images are referenced in existing templates, those image links will break and recipients will see missing images in their emails. Before deleting a folder, verify that its contents are no longer in use.
+</Warning>
+
+## Built-in Image Editor
+
+Sometimes you need to make a quick adjustment to an image — crop out extra whitespace, resize it for a different layout, or apply a shape mask — and switching to an external tool breaks your editing flow. The File Manager includes a built-in image editor that handles common adjustments without leaving the email editor. You can crop, resize, and apply masks directly.
+
+Edited images are saved as new files in an `edited/` subfolder, so your originals are always preserved. If the edit doesn't turn out the way you wanted, the source image is still there unchanged.
+
+## Storage Domains
+
+By default, images are served from Lettr's infrastructure. But for brand consistency and deliverability, you can configure a [Storage Domain](/learn/domains/storage-domains) so that all image URLs use your own domain — for example, `cdn.example.com/images/header.png` instead of a Lettr URL.
+
+Using your own storage domain has two advantages. First, your emails appear more professional and trustworthy to recipients who inspect image URLs. Second, some spam filters look at the domains used for embedded images and may treat unfamiliar third-party domains with lower confidence. Serving images from your own domain eliminates both concerns.
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Topol Email Editor" icon="paintbrush" href="/learn/templates/topol-editor">
+    Full reference for the drag-and-drop editor
+  </Card>
+  <Card title="Storage Domains" icon="hard-drive" href="/learn/domains/storage-domains">
+    Configure a custom domain for hosting email assets
+  </Card>
+  <Card title="Editor Settings" icon="gear" href="/learn/templates/editor-settings">
+    Customize the editor's default behavior
+  </Card>
+</CardGroup>

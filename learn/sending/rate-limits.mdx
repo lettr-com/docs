@@ -3,7 +3,11 @@ title: Rate Limits
 description: "Understand API rate limits and email quotas"
 ---
 
-Lettr enforces rate limits on API requests and monthly email quotas on sending volume. Rate limits prevent any single integration from overwhelming the service, while monthly quotas govern how many emails your plan allows. Understanding these limits helps you design integrations that send reliably without hitting throttling errors.
+Lettr enforces per-account rate limits on API requests to prevent any single integration from overwhelming the service. Rate limits control how many API requests you can make within a time window.
+
+<Note>
+  Rate limits are different from **email quotas**. Rate limits control API request frequency (requests per minute), while email quotas control sending volume (emails per month). For details on monthly email quotas, daily sending limits, and how usage is tracked, see [Email Usage & Quotas](/learn/sending/usage-quotas).
+</Note>
 
 ## API Rate Limits
 

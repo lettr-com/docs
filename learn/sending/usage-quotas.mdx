@@ -1,0 +1,94 @@
+---
+title: Email Usage & Quotas
+description: "Understand how email quotas work, how usage is tracked, and what happens when you reach your limits"
+---
+
+Every Lettr plan includes a monthly email quota that determines how many emails you can send within a billing cycle. Usage is counted in real time as each email is accepted for delivery, and the counter resets automatically at the start of your next billing period. This page explains how quota tracking works, what happens when you approach or exceed your limit, and how quotas differ from the separate [API rate limits](/learn/sending/rate-limits) that control request frequency.
+
+## Quotas vs. Rate Limits
+
+Email quotas and API rate limits are two independent systems that serve different purposes, and they're often confused. Rate limits protect the API from being overwhelmed by too many requests in a short window — they control how fast you can call the API, regardless of how many emails each request sends. Quotas, on the other hand, control total sending volume over the billing month — they limit how many emails you can send regardless of how quickly or slowly you send them.
+
+| | Email Quotas | API Rate Limits |
+|---|---|---|
+| **What it limits** | Number of emails sent per month | Number of API requests per time window |
+| **Scope** | Per team, monthly | Per account, 5-minute window |
+| **Error code** | Quota exceeded error | `429 Too Many Requests` |
+| **Reset** | At the start of your billing cycle | Sliding window (continuous) |
+| **Solution** | Upgrade plan or wait for reset | Slow down request rate |
+
+A request that sends to 50 recipients counts as 1 API request for rate limiting purposes, but 50 emails for quota purposes. Understanding this distinction matters when planning high-volume sends.
+
+## Monthly Email Quotas by Plan
+
+| Plan | Monthly Emails | Daily Limit (Free Tier) |
+|------|----------------|------------------------|
+| Free | 3,000 | 100 |
+| Pro 50K | 50,000 | — |
+| Pro 100K | 100,000 | — |
+| Pro 200K | 200,000 | — |
+| Pro 500K | 500,000 | — |
+| Pro 1M | 1,000,000 | — |
+| Enterprise | Custom | — |
+
+<Note>
+  The free tier has both a monthly limit (3,000 emails) and a daily limit (100 emails per day). Paid plans have monthly limits only — there is no daily cap.
+</Note>
+
+## How Usage Is Tracked
+
+Lettr counts each recipient as one email. If you send a single API request with 5 recipients in the `to` field, that counts as 5 emails against your quota. Usage is tracked in real time across your entire team, regardless of which domain, API key, or team member initiated the send.
+
+Counters reset automatically at the start of each billing cycle. Per-domain usage is also tracked independently for monitoring and abuse detection, but the quota that determines whether you can keep sending is always the team-level monthly counter.
+
+## Checking Your Usage
+
+The [Dashboard](/learn/settings/dashboard) shows your current usage prominently after sign-in, including total emails sent this month, your plan's quota, and a visual indicator of how much you've used. This data is real-time — each email is reflected the moment it's accepted for delivery.
+
+<Tip>
+  Set up internal monitoring to alert you at 80% and 90% of your quota. This gives you time to upgrade your plan or adjust sending patterns before you hit the limit, rather than discovering it when a critical transactional email fails to send.
+</Tip>
+
+## What Happens When You Reach Your Limit
+
+The behavior at quota limits depends on your plan type:
+
+### Paid Plans
+
+On paid plans, your sending is never interrupted. Emails beyond your monthly quota are billed as overage at **$0.80 per 1,000 emails**, and the additional charge appears on your next invoice. This means your transactional emails — password resets, order confirmations, and other time-sensitive messages — always go through, even if you've exceeded your plan's included volume.
+
+### Free Tier
+
+The free tier enforces hard limits. Once you reach either the daily cap (100 emails per day) or the monthly cap (3,000 emails per month), additional send requests are rejected until the limit resets. The daily limit resets at midnight UTC, and the monthly limit resets at the start of your billing cycle.
+
+If you're on the free tier and consistently hitting limits, upgrading to a paid plan removes the daily cap entirely and gives you significantly more monthly volume.
+
+## Abuse Detection
+
+Lettr monitors sending patterns at the domain level to detect abnormal activity. If a domain's sending volume spikes well beyond its established baseline — for example, a domain that typically sends 100 emails per day suddenly sending 10,000 — the spike may trigger a review. This protects your sending reputation and the platform's shared infrastructure from compromised accounts or runaway automation.
+
+Abuse detection is separate from quotas. Even if you're well within your quota, an unusual traffic pattern can trigger a review. In most cases this is resolved quickly by confirming the activity was intentional.
+
+## Upgrading Your Plan
+
+If you're consistently approaching or exceeding your quota, upgrading takes effect immediately:
+
+1. Go to **Settings** → **Billing**
+2. Select a higher plan tier
+3. Your new quota is available right away — no waiting for the next billing cycle
+
+See [Billing](/learn/settings/billing) for complete plan details and pricing.
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Rate Limits" icon="gauge" href="/learn/sending/rate-limits">
+    API request rate limits and throttling
+  </Card>
+  <Card title="Billing" icon="credit-card" href="/learn/settings/billing">
+    Plan tiers, pricing, and overage charges
+  </Card>
+  <Card title="Batch Sending" icon="layer-group" href="/learn/sending/batch-sending">
+    Send efficiently to large recipient lists
+  </Card>
+</CardGroup>

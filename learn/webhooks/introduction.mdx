@@ -37,21 +37,70 @@ Webhooks enable powerful real-time integrations:
 | `message.spam_complaint` | Immediately suppress users who mark emails as spam |
 | `relay.relay_delivery` | Process inbound emails, create support tickets, track replies |
 
-## Creating a Webhook
+## Managing Webhooks
 
-You can create webhooks through the dashboard or API.
+Webhooks are created and managed through the Lettr dashboard. The API provides read-only access to list and view your configured webhooks.
 
-### Via Dashboard
+### Creating a Webhook
 
-1. Navigate to **Settings** → **Webhooks**
-2. Click **Create Webhook**
-3. Enter your endpoint URL
-4. Select the events you want to receive
-5. Configure authentication (optional but recommended)
-6. Click **Save**
+<Steps>
+  <Step title="Open Webhook Settings">
+    Navigate to **Settings** → **Webhooks** in the dashboard.
+  </Step>
+  <Step title="Click Create Webhook">
+    Click the **Create Webhook** button.
+  </Step>
+  <Step title="Enter Your Endpoint URL">
+    Provide the HTTPS URL where Lettr should send event notifications. This must be a publicly accessible endpoint.
+  </Step>
+  <Step title="Select Events">
+    Choose which events to receive. You can subscribe to **all events** or select specific event types from the five categories (Message, Engagement, Generation, Unsubscribe, Relay).
+  </Step>
+  <Step title="Configure Authentication">
+    Optionally set up authentication for webhook deliveries. Lettr supports:
+
+    - **None** — No authentication (not recommended for production)
+    - **Basic Auth** — HTTP Basic Authentication with a username and password
+    - **OAuth2** — OAuth 2.0 client credentials with client ID, client secret, and token URL
+  </Step>
+  <Step title="Save">
+    Click **Save** to create the webhook. Lettr will begin sending events to your endpoint immediately.
+  </Step>
+</Steps>
+
+### Editing a Webhook
+
+To update a webhook's URL, events, or authentication:
+
+1. Go to **Settings** → **Webhooks**
+2. Click on the webhook you want to edit
+3. Make your changes
+4. Click **Save**
+
+### Enabling and Disabling Webhooks
+
+You can temporarily disable a webhook without deleting it. This is useful during maintenance or when debugging your endpoint:
+
+1. Go to **Settings** → **Webhooks**
+2. Find the webhook you want to toggle
+3. Click **Enable** or **Disable**
+
+Disabled webhooks stop receiving events but retain their configuration. Re-enabling resumes event delivery.
+
+### Deleting a Webhook
+
+To permanently remove a webhook:
+
+1. Go to **Settings** → **Webhooks**
+2. Find the webhook you want to delete
+3. Click **Delete** and confirm
+
+<Warning>
+  Deleting a webhook is permanent. Any events that occur while no webhook is configured will not be delivered. If you're troubleshooting, consider disabling the webhook instead.
+</Warning>
 
 <Note>
-  Webhooks are created and managed through the Lettr dashboard. The API provides read-only access to list and view your configured webhooks.
+  Webhook management (create, update, enable/disable, delete) is only available through the dashboard. The API provides read-only access for listing and viewing webhook configurations.
 </Note>
 
 ## Handling Webhooks

@@ -5,6 +5,8 @@ description: "Generate type-safe enums, DTOs, and Mailables from your Lettr temp
 
 Generate type-safe PHP code from your Lettr templates. Catch errors at compile time instead of runtime.
 
+The SDK provides three Artisan commands that connect to the Lettr API, read your templates and their merge tags, and generate PHP classes you can use in your application. This means your IDE can autocomplete template slugs, enforce required merge tags, and flag typos before you deploy.
+
 ## Why Code Generation?
 
 Using string literals for template slugs and merge tags is error-prone:
@@ -23,6 +25,8 @@ Mail::lettr()->sendTemplate(
     new WelcomeEmailData(name: 'John')
 );
 ```
+
+The first example silently sends an email with the wrong template slug and missing merge tags. The second example fails at compile time with clear error messages — `LettrTemplate::WelcomEmail` doesn't exist, and `WelcomeEmailData` requires `name`, not `nme`.
 
 ## Generate Everything at Once
 
@@ -58,6 +62,8 @@ enum LettrTemplate: string
     // ... all your templates
 }
 ```
+
+The command fetches all templates from your Lettr account (using the API key in your `.env`) and generates a backed enum case for each one. The case name is a PascalCase version of the template slug.
 
 ### Usage
 
@@ -110,6 +116,8 @@ class WelcomeEmailData
 }
 ```
 
+The command reads each template's merge tags from the Lettr API and generates a DTO class with typed constructor parameters. Required merge tags become required parameters; optional ones get default `null` values. The `toArray()` method strips null values so only provided merge tags are sent.
+
 ### Usage
 
 ```php
@@ -130,6 +138,15 @@ Mail::lettr()
 - **Required fields** - Constructor enforces required merge tags
 - **Type hints** - Know exactly what data each template needs
 - **Documentation** - DTOs serve as living documentation
+
+<Tip>
+  Combine DTOs with the template enum for maximum safety:
+  ```php
+  Mail::lettr()
+      ->to($user->email)
+      ->sendTemplate(LettrTemplate::WelcomeEmail->value, $data->toArray());
+  ```
+</Tip>
 
 ---
 
@@ -175,6 +192,8 @@ class WelcomeEmail extends LettrMailable
 }
 ```
 
+Generated Mailables extend `LettrMailable` and follow standard Laravel conventions. The constructor takes typed parameters for each merge tag, and the `build()` method maps them to the template's substitution data.
+
 ### Usage
 
 ```php
@@ -208,13 +227,22 @@ php artisan lettr:generate-enum
 php artisan lettr:generate-dtos
 ```
 
+Generated files are safe to commit to version control. They act as a snapshot of your templates at generation time. If a template is renamed or a merge tag is added in Lettr, the generated code won't update automatically — run the commands again to pick up changes.
+
 <Tip>
-  Add these commands to your CI/CD pipeline to ensure code stays in sync with your templates.
+  Add these commands to your CI/CD pipeline to ensure code stays in sync with your templates. If the generated output differs from what's committed, you know someone updated a template without regenerating.
 </Tip>
+
+### Recommended Workflow
+
+1. Create or update a template in the [Lettr dashboard](https://app.lettr.com/templates)
+2. Run `php artisan lettr:generate-enum` and `php artisan lettr:generate-dtos`
+3. Commit the generated files
+4. Use the enum and DTO in your application code
 
 ## Configuration
 
-Customize paths in `config/lettr.php`:
+Customize paths and names in `config/lettr.php`:
 
 ```php
 'templates' => [
@@ -229,3 +257,39 @@ Customize paths in `config/lettr.php`:
     'mailable_namespace' => 'App\\Mail\\Lettr',
 ],
 ```
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `enum_path` | `app/Enums` | Directory for the generated enum file |
+| `enum_namespace` | `App\Enums` | PHP namespace for the enum |
+| `enum_class` | `LettrTemplate` | Class name for the generated enum |
+| `dto_path` | `app/Dto/Lettr` | Directory for generated DTO files |
+| `dto_namespace` | `App\Dto\Lettr` | PHP namespace for DTOs |
+| `mailable_path` | `app/Mail/Lettr` | Directory for generated Mailable files |
+| `mailable_namespace` | `App\Mail\Lettr` | PHP namespace for Mailables |
+
+## Artisan Commands Reference
+
+| Command | What It Generates | Output Location |
+|---------|-------------------|-----------------|
+| `lettr:init` | Enum + DTOs + config (interactive) | Configured paths |
+| `lettr:generate-enum` | Template slug enum | `app/Enums/LettrTemplate.php` |
+| `lettr:generate-dtos` | Merge tag DTOs | `app/Dto/Lettr/` |
+| `lettr:pull --with-mailables` | Mailable classes + Blade templates | `app/Mail/Lettr/` + `resources/views/emails/lettr/` |
+
+## What's Next
+
+<CardGroup cols={2}>
+  <Card title="Sending Emails" icon="paper-plane" href="/quickstart/laravel/sending-emails">
+    Put your generated code to use
+  </Card>
+  <Card title="Templates" icon="file-code" href="/quickstart/laravel/templates">
+    Template versioning, projects, and sync commands
+  </Card>
+  <Card title="API Reference" icon="book" href="/api-reference/introduction">
+    Complete REST API documentation
+  </Card>
+  <Card title="Best Practices" icon="star" href="/learn/sending/best-practices">
+    Sending best practices and deliverability tips
+  </Card>
+</CardGroup>

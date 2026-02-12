@@ -1,0 +1,92 @@
+---
+title: Get Template HTML
+description: "Retrieve rendered HTML and merge tags for a template"
+---
+
+## Endpoint
+
+```
+GET /templates/html
+```
+
+Retrieves the compiled HTML and merge tag metadata for a template identified by its project ID and slug. This is particularly useful when you need to preview a template's rendered output in your own application, or when you want to discover which merge tags a template expects before constructing a send request. The endpoint returns the HTML from the template's active version along with a structured list of all merge tags, including whether each one is required.
+
+## Authentication
+
+Requires a valid API key in the `Authorization` header. This endpoint is available to both **Full Access** and **Sending Only** API keys.
+
+```bash
+Authorization: Bearer lttr_xxxxxxxxxxxx
+```
+
+## Query Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `project_id` | integer | Yes | The ID of the project containing the template |
+| `slug` | string | Yes | The URL-friendly slug identifier of the template (max 255 characters) |
+
+Both parameters are required. The template is looked up by the combination of project and slug, so you need to know which project your template belongs to. You can find project IDs via the [List Projects](/api-reference/projects/list-projects) endpoint.
+
+## Request Example
+
+```bash
+curl -X GET "https://app.lettr.com/api/templates/html?project_id=123&slug=welcome-email" \
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxx"
+```
+
+## Success Response (200)
+
+```json
+{
+  "success": true,
+  "data": {
+    "html": "<html><body><h1>Welcome, {{first_name}}!</h1>...</body></html>",
+    "merge_tags": [
+      {
+        "key": "first_name",
+        "name": "first_name",
+        "required": true
+      },
+      {
+        "key": "company",
+        "name": "company",
+        "required": false
+      }
+    ]
+  }
+}
+```
+
+### Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `html` | string | The compiled HTML of the template's active version |
+| `merge_tags` | array | List of merge tags defined in the template |
+| `merge_tags[].key` | string | The merge tag identifier (used in `substitution_data` when sending) |
+| `merge_tags[].name` | string | Display name of the merge tag |
+| `merge_tags[].required` | boolean | Whether this merge tag must be provided when sending |
+
+<Note>
+  The HTML returned is from the template's **active version**. If no active version has been explicitly set, it falls back to the template's stored HTML. To control which version is active, use the template version management in the dashboard.
+</Note>
+
+## Error Response (404)
+
+Returned when the template cannot be found in the specified project, or when the project doesn't belong to your team. The error message includes the slug and project ID you searched for, making it easier to diagnose the issue:
+
+```json
+{
+  "success": false,
+  "message": "Template with slug 'non-existent' not found in project 123"
+}
+```
+
+## Use Cases
+
+This endpoint is useful in several integration scenarios:
+
+- **Email previews** — Fetch the rendered HTML and display it in your own UI so users can preview what an email will look like before it's sent. This is common in admin panels and CMS integrations where non-technical users manage email content.
+- **Merge tag discovery** — Before sending, retrieve the list of merge tags a template expects so you can validate that your `substitution_data` object includes all required keys. This prevents sending failures caused by missing variables.
+- **Template validation** — Verify that a template exists and contains valid HTML before wiring it into an automated sending flow. This is particularly useful during deployment or CI/CD checks.

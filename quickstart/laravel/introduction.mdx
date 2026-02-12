@@ -5,6 +5,21 @@ description: "Send emails from Laravel using the Lettr SDK"
 
 Send transactional emails from your Laravel application using the official Lettr SDK. Get up and running in under a minute with our interactive setup command.
 
+The `lettr/lettr-laravel` package provides a first-class Laravel integration that plugs directly into Laravel's mail system. Once installed, you can send emails through Lettr using the same `Mail` facade, Mailable classes, and notification channels you already know — no new abstractions to learn.
+
+## Why Use the Laravel SDK?
+
+Rather than making raw API calls, the SDK gives you:
+
+- **Native mail transport** — Lettr registers as a Laravel mailer, so `Mail::to()->send()` works out of the box
+- **Template support** — Send Lettr-managed templates with merge tags directly from your application
+- **Code generation** — Auto-generate enums, DTOs, and Mailable classes from your Lettr templates for compile-time safety
+- **Zero lock-in** — Your Mailables remain standard Laravel classes. Switching away from Lettr only requires changing the mailer config
+
+<Note>
+  If you prefer not to use the SDK, you can also send emails via [SMTP](/quickstart/smtp/laravel) or the [REST API](/api-reference/emails/send-email) directly.
+</Note>
+
 ## Prerequisites
 
 Before you begin, make sure you have:
@@ -17,6 +32,12 @@ Before you begin, make sure you have:
     Add and verify your sending domain
   </Card>
 </CardGroup>
+
+You'll also need:
+
+- **PHP 8.4+** and **Composer** installed
+- A **Laravel 10.x, 11.x, or 12.x** application
+- A `MAIL_FROM_ADDRESS` that uses your verified sending domain
 
 ## Quick Setup
 
@@ -45,6 +66,10 @@ The fastest way to get started is using our interactive init command. It configu
   </Step>
 </Steps>
 
+<Tip>
+  If you already have Mailables in your application, they'll automatically route through Lettr once you set it as your default mailer. No refactoring required.
+</Tip>
+
 ## The Init Command
 
 The `lettr:init` command provides a guided setup experience that handles everything:
@@ -63,6 +88,21 @@ The `lettr:init` command provides a guided setup experience that handles everyth
 - Configures your sending domain
 
 No more manual config file editing or copy-pasting boilerplate.
+
+<Info>
+  Prefer manual control? The [Installation](/quickstart/laravel/installation) page walks through each step individually so you can configure exactly what you need.
+</Info>
+
+## Section Overview
+
+This quickstart is organized into four pages that build on each other:
+
+| Page | What You'll Learn |
+|------|-------------------|
+| [Installation](/quickstart/laravel/installation) | Manual setup, configuration options, and verifying your installation |
+| [Sending Emails](/quickstart/laravel/sending-emails) | All the ways to send emails — Mail facade, Lettr facade, builder, Mailables, attachments, and testing |
+| [Templates](/quickstart/laravel/templates) | Working with Lettr-managed templates, versioning, projects, and pulling/pushing templates locally |
+| [Type Safety](/quickstart/laravel/type-safety) | Generating enums, DTOs, and Mailable classes for compile-time safety |
 
 ## What's Next
 

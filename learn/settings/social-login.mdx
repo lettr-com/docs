@@ -1,0 +1,79 @@
+---
+title: Social Login (OAuth)
+description: "Sign in to Lettr with your GitHub or Google account"
+---
+
+Lettr supports social login through **GitHub** and **Google**, giving you a faster way to create an account and sign in without managing a separate password. When you click a social login button on the login or registration page, Lettr uses OAuth to authenticate you through your chosen provider, pull in your name and email, and either create a new account or sign you into an existing one. This works seamlessly with team invitations, two-factor authentication, and all other Lettr account features.
+
+## Signing Up with Social Login
+
+If you don't have a Lettr account yet, social login handles account creation in a single flow. You authorize Lettr through your provider, and Lettr takes care of the rest — account creation, email verification, and team setup all happen automatically.
+
+<Steps>
+  <Step title="Click the Provider Button">
+    On the registration page, click **Continue with Google** or **Continue with GitHub**.
+  </Step>
+  <Step title="Authorize Lettr">
+    You'll be redirected to the provider's authorization page. Grant Lettr access to your basic profile information (name, email, avatar). Lettr does not request access to your repositories, files, or other provider-specific data.
+  </Step>
+  <Step title="Account Created">
+    Lettr creates your account using the email and name from the provider. Because the provider has already verified your email address, Lettr marks it as verified immediately — no confirmation email required.
+  </Step>
+  <Step title="Team Created">
+    A default team is created for you (named "[Your Name]'s Team") with all necessary infrastructure — including a sending subaccount and storage bucket — provisioned automatically.
+  </Step>
+</Steps>
+
+<Tip>
+  If you sign up via social login, you can still set a password later from **Settings** → **Password** if you want the option of signing in with email and password as well.
+</Tip>
+
+## Signing In to an Existing Account
+
+If you already have a Lettr account, clicking a social login button matches you by email address. Lettr looks for an account whose email matches the one provided by Google or GitHub — if it finds one, it links the social provider to your account and signs you in. On subsequent logins with that provider, you're taken straight to your dashboard without any extra steps.
+
+Your avatar from the social provider is imported the first time you link, but it won't overwrite an existing avatar if you've already set one.
+
+## Account Linking
+
+Social accounts are linked to your Lettr account automatically the first time you use them to sign in. There's no separate "link account" flow — if you have a Lettr account registered under `you@example.com` and you click **Continue with Google** using a Google account with the same email, Lettr recognizes the match and connects the two. From that point on, you can sign in with either your password or Google.
+
+This means you don't need to sign up again if you originally registered with email and password. Just click a social login button and the association is made.
+
+## Two-Factor Authentication
+
+Social login does **not** bypass two-factor authentication. If you've enabled 2FA on your Lettr account, the social provider handles only the first authentication factor — proving your identity. After that, Lettr still requires you to complete its own 2FA challenge before granting access:
+
+1. Authenticate with Google or GitHub
+2. Lettr recognizes your account has 2FA enabled
+3. You're prompted for your authenticator code or a recovery code
+4. After successful verification, you're signed in
+
+<Note>
+  2FA is configured on your Lettr account, not on the social provider. Even if your Google account has its own 2FA, you'll still need to complete Lettr's 2FA challenge separately. This ensures your Lettr account stays protected regardless of how the upstream provider handles security.
+</Note>
+
+## Team Invitations via Social Login
+
+When you receive a team invitation by email, you can accept it through a social login flow instead of creating a password-based account. Clicking the invitation link takes you to the sign-in page, and the invitation token is preserved through the entire OAuth redirect. After you authorize with Google or GitHub, Lettr creates your account (or matches your existing one) and adds you to the inviting team in one step. The inviting team becomes your active team immediately.
+
+This works for both new users who don't have a Lettr account yet and existing users who are joining an additional team. For existing users, no new team is created — you're simply added to the inviting team.
+
+## Security Considerations
+
+Social login introduces a few security behaviors worth understanding:
+
+- **Email verification** — Emails are automatically verified during social signup, since the provider (Google or GitHub) has already confirmed the address. This means social login users skip the email confirmation step entirely.
+- **Password** — Accounts created through social login are assigned a random password internally. This doesn't affect your ability to sign in via social login, but it means you won't be able to use email/password login until you explicitly set a password from **Settings** → **Password**.
+- **Provider access** — Lettr only requests basic profile information: name, email, and avatar. It never requests access to your repositories (GitHub), files (Google Drive), or any other provider-specific data. The OAuth scope is minimal by design.
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Account Security" icon="shield" href="/learn/settings/security">
+    Two-factor authentication and recovery codes
+  </Card>
+  <Card title="Teams" icon="users" href="/learn/settings/teams">
+    Team roles, invitations, and security settings
+  </Card>
+</CardGroup>

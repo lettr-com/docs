@@ -3,7 +3,9 @@ title: Templates
 description: "Use Lettr templates with merge tags in Laravel"
 ---
 
-Lettr templates let you manage email designs in the Lettr dashboard while your application provides the dynamic data.
+Lettr templates let you manage email designs in the Lettr dashboard while your application provides the dynamic data. This separation means designers can update email layouts without touching application code, and developers can change data without worrying about design.
+
+This page covers sending templates, versioning, projects, and syncing templates between Lettr and your local codebase. For type-safe template usage with generated enums and DTOs, see [Type Safety](/quickstart/laravel/type-safety).
 
 ## Sending with Templates
 
@@ -20,7 +22,7 @@ Mail::lettr()
     ]);
 ```
 
-The array keys correspond to merge tags in your template (e.g., `{{first_name}}`).
+The array keys correspond to merge tags in your template (e.g., `{{first_name}}`). If a required merge tag is missing from the array, the tag renders as an empty string in the sent email. See [Merge Tags & Template Language](/learn/templates/template-language) for the full syntax including conditionals and loops.
 
 ## Type-Safe Templates
 
@@ -30,6 +32,8 @@ Generate enums, DTOs, and Mailable classes from your templates for compile-time 
 php artisan lettr:generate-enum   # Template slug enum
 php artisan lettr:generate-dtos   # Merge tag DTOs
 ```
+
+This catches typos in template slugs and missing merge tags at compile time rather than in production.
 
 <Card title="Type Safety" icon="shield-check" href="/quickstart/laravel/type-safety">
   Generate enums, DTOs, and Mailables for compile-time safety
@@ -51,9 +55,17 @@ Mail::lettr()
 
 Omit the version to use the active (published) version.
 
+**When to use versioning:**
+
+- **Production safety** — Pin to a known-good version so publishing a new draft doesn't affect live emails
+- **A/B testing** — Send different versions to different cohorts and compare metrics in [Analytics](/learn/analytics/introduction)
+- **Gradual rollout** — Test a new version with a subset of users before publishing it as the active version
+
+See [Versions](/learn/templates/versions) for how versioning works in the Lettr dashboard.
+
 ## Working with Projects
 
-If you have multiple projects in Lettr, specify the project ID:
+[Projects](/learn/templates/projects) are folders for organizing templates in Lettr. If you have multiple projects, specify the project ID when sending:
 
 ```php
 // Per-request
@@ -66,11 +78,13 @@ Mail::lettr()
     );
 ```
 
-Or set a default in your `.env`:
+Or set a default in your `.env` so you don't have to pass it every time:
 
 ```env
 LETTR_DEFAULT_PROJECT_ID=123
 ```
+
+The per-request `projectId` always takes precedence over the default.
 
 ## Pull Templates Locally
 
@@ -86,6 +100,12 @@ Options:
 - `--as-html` - Save as HTML instead of Blade
 - `--with-mailables` - Also generate Mailable classes
 
+By default, templates are saved as Blade files to `resources/views/emails/lettr/`. HTML files go to `resources/templates/lettr/`. Both paths are configurable in `config/lettr.php`.
+
+<Tip>
+  Use `--with-mailables` to generate ready-to-use Mailable classes alongside the templates. This is the fastest way to scaffold email classes from your existing Lettr templates.
+</Tip>
+
 ## Push Templates to Lettr
 
 Upload local Blade templates to Lettr:
@@ -100,8 +120,12 @@ Options:
 - `--dry-run` - Preview without uploading
 
 <Note>
-  The push command converts Blade syntax to Lettr's template format automatically.
+  The push command converts Blade syntax to Lettr's template format automatically. Use `--dry-run` first to preview what will be uploaded before making changes.
 </Note>
+
+<Warning>
+  Pushing a template creates a new version in Lettr. It does not overwrite the active version. You'll need to publish the new version in the Lettr dashboard to make it active.
+</Warning>
 
 ## Listing Templates
 
@@ -126,3 +150,22 @@ echo $template->name;
 echo $template->activeVersion;
 print_r($template->mergeTags);
 ```
+
+The `mergeTags` property returns an array of merge tag names defined in the template, which is useful for validating your substitution data before sending.
+
+## What's Next
+
+<CardGroup cols={2}>
+  <Card title="Type Safety" icon="shield-check" href="/quickstart/laravel/type-safety">
+    Generate enums, DTOs, and Mailables for compile-time safety
+  </Card>
+  <Card title="Template Language" icon="code" href="/learn/templates/template-language">
+    Full merge tag syntax including conditionals and loops
+  </Card>
+  <Card title="Projects & Folders" icon="folder" href="/learn/templates/projects">
+    Organize templates into projects
+  </Card>
+  <Card title="Topol Editor" icon="paintbrush" href="/learn/templates/topol-editor">
+    Design templates visually in the Lettr dashboard
+  </Card>
+</CardGroup>

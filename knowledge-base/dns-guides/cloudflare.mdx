@@ -5,11 +5,65 @@ description: "Step-by-step guide to configuring DNS records for Lettr on Cloudfl
 
 This guide walks you through adding the required DNS records for Lettr using Cloudflare's DNS management. Cloudflare is a web infrastructure and security company that provides DNS hosting, CDN, and DDoS protection for domains managed through its dashboard at [dash.cloudflare.com](https://dash.cloudflare.com).
 
-You will configure a **sending domain** (CNAME, DKIM TXT, and DMARC TXT records) and, optionally, an **inbound domain** (MX records), **tracking domain** (two CNAME records), and **storage domain** (CNAME and two TXT records).
+Because Cloudflare supports the Domain Connect protocol, you have two ways to set up your DNS records: **automatic setup**, which configures everything in one click directly from the Lettr dashboard, or **manual setup**, where you copy each record value into Cloudflare yourself. Automatic setup is the recommended approach — it's faster, eliminates copy-paste errors, and handles all the Cloudflare-specific details (like disabling proxy mode on CNAME records) for you.
 
 ---
 
-## Sending Domain Setup
+## Automatic Setup with Domain Connect (Recommended)
+
+Cloudflare is the first DNS provider to support Lettr's Domain Connect integration, which means you can configure all required DNS records without leaving the Lettr dashboard or touching Cloudflare's DNS settings directly. Instead of manually creating each CNAME, TXT, and MX record, Lettr generates a signed link that tells Cloudflare exactly which records to add. You review the proposed changes on Cloudflare's end, click **Apply**, and the records appear in your DNS zone within seconds.
+
+This works for all domain types — sending, tracking, and inbound. The specific records configured depend on the domain type:
+
+| Domain Type | Records Configured Automatically |
+|-------------|----------------------------------|
+| **Sending** (subdomain) | CNAME for domain verification, TXT for DKIM signing, TXT for DMARC policy |
+| **Sending** (root domain) | TXT for SPF authorization, TXT for DKIM signing, TXT for DMARC policy |
+| **Tracking** | CNAME for SSL certificate provisioning, CNAME for tracking traffic routing |
+| **Inbound** | 3 MX records directing incoming mail to Lettr's servers |
+
+### How to Use Automatic Setup
+
+The process is the same regardless of which domain type you're configuring. The example below uses a sending domain, but the steps are identical for tracking and inbound domains — only the button location and the records shown on Cloudflare's review page will differ.
+
+<Steps>
+  <Step title="Create the domain in Lettr">
+    Navigate to **Domains** in the sidebar, then select the appropriate domain section — **Sending Domains**, **Tracking Domains**, or **Inbound Domains**. Click the **Create** button, enter your domain name, and create the domain. This is the same step you'd take for manual setup.
+  </Step>
+  <Step title="Click Configure with Cloudflare">
+    On the domain's detail page, you'll see a **Configure with Cloudflare** button alongside the usual DNS record table. Click it. Lettr generates a cryptographically signed URL that encodes every DNS record your domain needs, then redirects you to Cloudflare.
+  </Step>
+  <Step title="Review the proposed records">
+    Cloudflare's Domain Connect page displays a summary of the DNS records that will be added to your zone. Take a moment to review them — you'll see the record types, names, and values that match what Lettr's detail page shows. Nothing is applied until you explicitly approve.
+  </Step>
+  <Step title="Apply the changes">
+    Click **Apply** to have Cloudflare add all the records to your DNS zone. This happens instantly through Cloudflare's API. CNAME records are automatically created in **DNS only** mode (grey cloud), so you don't need to worry about proxy mode causing verification failures.
+  </Step>
+  <Step title="Return to Lettr and verify">
+    After applying, Cloudflare redirects you back to your domain's detail page in Lettr. Click **Verify DNS Records** to confirm that the records are resolving. Propagation typically completes within a few seconds for Cloudflare-hosted domains, though in rare cases it may take a minute or two.
+  </Step>
+</Steps>
+
+<Tip>
+  Domain Connect checks your existing DNS configuration before applying records. If you already have a valid DMARC or SPF record in place, it skips those records to avoid creating conflicts or duplicates. This means you can safely use automatic setup even if you've already partially configured your domain by hand.
+</Tip>
+
+For a deeper look at how Domain Connect works under the hood — including the signed URL protocol, smart record skipping, and troubleshooting — see the dedicated [Domain Connect](/learn/domains/domain-connect) article.
+
+### When to Use Manual Setup Instead
+
+Automatic setup covers the most common configurations, but there are situations where manual setup is the better choice:
+
+- **DNS not hosted on Cloudflare** — If your domain's nameservers point to a different provider (even if you have a Cloudflare account), Domain Connect won't be available. Follow the manual steps below, or consult the [DNS guide](/knowledge-base/dns-guides) for your provider.
+- **Storage domains** — Domain Connect currently supports sending, tracking, and inbound domains. Storage domain records need to be added manually.
+- **Authorization issues** — If clicking **Configure with Cloudflare** results in an error or you can't authorize the changes on Cloudflare's side, you can always fall back to copying the records manually. The domain detail page in Lettr shows every record you need.
+- **Preference for manual control** — Some teams prefer to review and add each record individually, especially if they maintain strict change control over their DNS zones.
+
+If any of these apply, the manual setup sections below walk you through adding each record type step by step.
+
+---
+
+## Manual Sending Domain Setup
 
 A sending domain authenticates your outgoing emails with DKIM and DMARC, ensuring they are delivered reliably and not marked as spam. This requires a CNAME record for domain verification, a TXT record for DKIM signing, and a TXT record for DMARC policy.
 
@@ -133,7 +187,7 @@ After adding all three DNS records, go back to Lettr and click **Verify DNS Reco
 
 ---
 
-## Inbound Domain Setup
+## Manual Inbound Domain Setup
 
 An inbound domain allows Lettr to receive emails on your behalf. This requires three MX records that direct incoming mail to Lettr's mail servers.
 
@@ -186,7 +240,7 @@ After adding all three MX records, go back to Lettr and click **Verify DNS Recor
 
 ---
 
-## Tracking Domain Setup
+## Manual Tracking Domain Setup
 
 A tracking domain allows Lettr to track email opens and link clicks using your own custom domain instead of the default Lettr tracking domain. This requires two CNAME records: one for the SSL certificate and one for routing tracking traffic to Lettr's infrastructure.
 
@@ -259,7 +313,7 @@ After adding both CNAME records, go back to Lettr and click **Verify DNS Records
 
 ---
 
-## Storage Domain Setup
+## Manual Storage Domain Setup
 
 A storage domain lets you serve email assets (images, attachments) from your own custom domain instead of the default Lettr storage URL. This requires two TXT records for certificate validation and ownership verification, and a CNAME record for routing asset requests to Lettr's storage infrastructure.
 
@@ -458,6 +512,9 @@ After adding all three records, go back to Lettr and click **Verify DNS Records*
   </Card>
   <Card title="Storage Domains" icon="hard-drive" href="/learn/domains/storage-domains">
     Serve email assets from your own custom domain.
+  </Card>
+  <Card title="Domain Connect" icon="bolt" href="/learn/domains/domain-connect">
+    How automatic DNS setup works under the hood.
   </Card>
   <Card title="Domains Overview" icon="globe" href="/learn/domains/introduction">
     Understand domain types and how they work in Lettr.
