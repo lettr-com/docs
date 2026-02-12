@@ -11,32 +11,20 @@ The most critical rule for webhook handling: **respond immediately, process asyn
 
 ```javascript
 import express from 'express';
-import { verifyWebhook } from 'lettr';
 
 const app = express();
 
-app.post('/webhooks/lettr', express.raw({ type: 'application/json' }), (req, res) => {
-  try {
-    // Verify signature first
-    const event = verifyWebhook(
-      req.body,
-      req.headers['lettr-signature'],
-      process.env.LETTR_WEBHOOK_SECRET
-    );
+app.post('/webhooks/lettr', express.json(), (req, res) => {
+  // Acknowledge receipt immediately
+  res.sendStatus(200);
 
-    // Acknowledge receipt immediately
-    res.sendStatus(200);
-
-    // Process asynchronously (after response is sent)
-    setImmediate(() => {
-      processEvent(event).catch(err => {
-        console.error('Failed to process event:', event.id, err);
-      });
+  // Process asynchronously (after response is sent)
+  setImmediate(() => {
+    const events = req.body;
+    processEvents(events).catch(err => {
+      console.error('Failed to process events:', err);
     });
-  } catch (err) {
-    console.error('Webhook verification failed:', err.message);
-    res.sendStatus(400);
-  }
+  });
 });
 ```
 
@@ -140,23 +128,20 @@ const webhookQueue = new Queue('webhooks', {
 });
 
 // Webhook endpoint - just enqueue and respond
-app.post('/webhooks/lettr', express.raw({ type: 'application/json' }), async (req, res) => {
+app.post('/webhooks/lettr', express.json(), async (req, res) => {
   try {
-    const event = verifyWebhook(
-      req.body,
-      req.headers['lettr-signature'],
-      process.env.LETTR_WEBHOOK_SECRET
-    );
+    const events = req.body;
 
-    // Add to queue with deduplication
-    await webhookQueue.add(event.type, event, {
-      jobId: event.id, // Prevents duplicate jobs
-      attempts: 3,
-      backoff: {
-        type: 'exponential',
-        delay: 1000
-      }
-    });
+    // Add each event to queue
+    for (const event of events) {
+      await webhookQueue.add('webhook-event', event, {
+        attempts: 3,
+        backoff: {
+          type: 'exponential',
+          delay: 1000
+        }
+      });
+    }
 
     res.sendStatus(200);
   } catch (err) {
@@ -170,16 +155,20 @@ import { Worker } from 'bullmq';
 
 const worker = new Worker('webhooks', async (job) => {
   const event = job.data;
+  const eventType = event.msys ? Object.keys(event.msys)[0] : null;
+  const data = eventType ? event.msys[eventType] : null;
 
-  switch (event.type) {
-    case 'email.delivered':
-      await handleEmailDelivered(event.data);
+  if (!data) return;
+
+  switch (data.type) {
+    case 'delivery':
+      await handleDelivery(data);
       break;
-    case 'email.bounced':
-      await handleEmailBounced(event.data);
+    case 'bounce':
+      await handleBounce(data);
       break;
-    case 'email.received':
-      await handleInboundEmail(event.data);
+    case 'relay_delivery':
+      await handleInboundEmail(data);
       break;
     // ... handle other events
   }
@@ -274,7 +263,7 @@ async function handleEmailDelivered(data) {
 
 ## Handling Inbound Emails
 
-Inbound email webhooks (`email.received`) require special consideration for attachments, threading, and routing.
+Inbound email webhooks (`relay.relay_delivery`) require special consideration for attachments, threading, and routing.
 
 ### Processing Attachments
 
@@ -509,32 +498,25 @@ async function processEvent(event) {
 ```typescript
 // app/api/webhooks/lettr/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyWebhook } from 'lettr';
 
 export async function POST(request: NextRequest) {
-  const body = await request.text();
-  const signature = request.headers.get('lettr-signature');
+  const events = await request.json();
 
-  if (!signature) {
-    return NextResponse.json({ error: 'Missing signature' }, { status: 400 });
-  }
+  // Queue for async processing (e.g., using Vercel's waitUntil)
+  // @ts-ignore - waitUntil is available in edge runtime
+  const ctx = (globalThis as any).__nextHandlerContext;
+  ctx?.waitUntil?.(processEvents(events));
 
-  try {
-    const event = verifyWebhook(
-      body,
-      signature,
-      process.env.LETTR_WEBHOOK_SECRET!
-    );
+  return NextResponse.json({ received: true });
+}
 
-    // Queue for async processing (e.g., using Vercel's waitUntil)
-    // @ts-ignore - waitUntil is available in edge runtime
-    const ctx = (globalThis as any).__nextHandlerContext;
-    ctx?.waitUntil?.(processEvent(event));
-
-    return NextResponse.json({ received: true });
-  } catch (err) {
-    console.error('Webhook error:', err);
-    return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
+async function processEvents(events: any[]) {
+  for (const event of events) {
+    const eventType = event.msys ? Object.keys(event.msys)[0] : null;
+    const data = eventType ? event.msys[eventType] : null;
+    if (data) {
+      await handleEvent(data);
+    }
   }
 }
 ```
@@ -543,30 +525,20 @@ export async function POST(request: NextRequest) {
 
 ```typescript
 import express, { Request, Response } from 'express';
-import { verifyWebhook, WebhookEvent } from 'lettr';
 
 const app = express();
 
 app.post(
   '/webhooks/lettr',
-  express.raw({ type: 'application/json' }),
+  express.json(),
   async (req: Request, res: Response) => {
-    const signature = req.headers['lettr-signature'] as string;
+    res.sendStatus(200);
 
-    try {
-      const event: WebhookEvent = verifyWebhook(
-        req.body,
-        signature,
-        process.env.LETTR_WEBHOOK_SECRET!
-      );
-
-      res.sendStatus(200);
-
-      // Process async
-      setImmediate(() => processEvent(event));
-    } catch (err) {
-      res.sendStatus(400);
-    }
+    // Process async
+    setImmediate(() => {
+      const events = req.body;
+      processEvents(events).catch(console.error);
+    });
   }
 );
 ```

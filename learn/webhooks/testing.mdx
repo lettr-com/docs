@@ -40,14 +40,7 @@ ngrok http 3000
 Forwarding  https://abc123.ngrok.io -> http://localhost:3000
 ```
 
-5. **Configure webhook in Lettr**:
-
-```javascript
-const webhook = await lettr.webhooks.create({
-  url: 'https://abc123.ngrok.io/webhooks/lettr',
-  events: ['email.delivered', 'email.bounced', 'email.received']
-});
-```
+5. **Configure webhook in Lettr**: Go to **Settings** -> **Webhooks** in the dashboard and create a new webhook pointing to your ngrok URL (e.g., `https://abc123.ngrok.io/webhooks/lettr`).
 
 <Tip>
   Use ngrok's paid plan to get a stable subdomain. Free URLs change each time you restart ngrok.
@@ -82,52 +75,29 @@ The Lettr dashboard provides a built-in way to send test webhook events without 
 1. Navigate to **Settings** → **Webhooks**
 2. Select the webhook you want to test
 3. Click **Send Test Event**
-4. Choose the event type (e.g., `email.delivered`, `email.received`)
+4. Choose the event type (e.g., `message.delivery`, `message.bounce`)
 5. Click **Send**
 
 The dashboard will show the delivery result, including response code and timing.
 
 ### Test Event Payloads
 
-Test events have the same structure as real events but with sample data:
+Test events have the same structure as real events but with sample data. Use them to verify your webhook handler correctly parses and processes event payloads.
 
-```json
-{
-  "id": "evt_test_123456",
-  "type": "email.delivered",
-  "createdAt": "2024-01-15T10:30:00Z",
-  "data": {
-    "emailId": "email_test_789",
-    "to": "test@example.com",
-    "deliveredAt": "2024-01-15T10:30:05Z",
-    "metadata": {}
-  }
-}
-```
+## Triggering Test Events
 
-<Note>
-  Test events have IDs prefixed with `evt_test_`. You can use this to identify test events in your logs if needed.
-</Note>
+The simplest way to trigger real webhook events during testing is to send an actual email through the API. This generates authentic `message.injection` and `message.delivery` (or `message.bounce`) events that are delivered to your webhook endpoint:
 
-## API-Based Testing
-
-Trigger test events programmatically via the API:
-
-```javascript
-// Send a test event to a specific webhook
-await lettr.webhooks.test('wh_123', {
-  eventType: 'email.delivered'
-});
-
-// Send test event with custom data
-await lettr.webhooks.test('wh_123', {
-  eventType: 'email.received',
-  data: {
-    from: 'test-sender@example.com',
-    subject: 'Test inbound email',
-    text: 'This is a test message'
-  }
-});
+```bash
+curl -X POST "https://app.lettr.com/api/emails" \
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "from": "test@yourdomain.com",
+    "to": ["verified-test@example.com"],
+    "subject": "Webhook Test",
+    "text": "Testing webhook delivery"
+  }'
 ```
 
 ## Unit Testing Your Handler
@@ -141,7 +111,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { handleWebhook } from './webhookHandler';
 
 describe('Webhook Handler', () => {
-  it('handles email.delivered event', async () => {
+  it('handles delivery event', async () => {
     const mockDb = {
       emails: {
         update: vi.fn()
@@ -149,38 +119,39 @@ describe('Webhook Handler', () => {
     };
 
     const event = {
-      id: 'evt_123',
-      type: 'email.delivered',
-      createdAt: '2024-01-15T10:30:00Z',
-      data: {
-        emailId: 'email_456',
-        to: 'recipient@example.com',
-        deliveredAt: '2024-01-15T10:30:05Z'
+      msys: {
+        message_event: {
+          type: 'delivery',
+          message_id: 'msg_456',
+          rcpt_to: 'recipient@example.com',
+          timestamp: '2024-01-15T10:30:05Z'
+        }
       }
     };
 
     await handleWebhook(event, { db: mockDb });
 
-    expect(mockDb.emails.update).toHaveBeenCalledWith('email_456', {
+    expect(mockDb.emails.update).toHaveBeenCalledWith('msg_456', {
       status: 'delivered',
       delivered_at: expect.any(Date)
     });
   });
 
-  it('handles email.bounced event', async () => {
+  it('handles bounce event', async () => {
     const mockDb = {
       emails: { update: vi.fn() },
       suppressions: { add: vi.fn() }
     };
 
     const event = {
-      id: 'evt_789',
-      type: 'email.bounced',
-      data: {
-        emailId: 'email_456',
-        to: 'invalid@example.com',
-        bounceType: 'hard',
-        message: '550 User unknown'
+      msys: {
+        message_event: {
+          type: 'bounce',
+          message_id: 'msg_456',
+          rcpt_to: 'invalid@example.com',
+          bounce_class: '10',
+          raw_reason: '550 User unknown'
+        }
       }
     };
 
@@ -192,20 +163,19 @@ describe('Webhook Handler', () => {
     );
   });
 
-  it('handles email.received event', async () => {
+  it('handles relay delivery event', async () => {
     const mockTicketService = {
       create: vi.fn().mockResolvedValue({ id: 'ticket_123' })
     };
 
     const event = {
-      id: 'evt_abc',
-      type: 'email.received',
-      data: {
-        id: 'inbound_123',
-        from: 'customer@example.com',
-        subject: 'Help needed',
-        text: 'I have a question...',
-        spamScore: 0.5
+      msys: {
+        relay_event: {
+          type: 'relay_delivery',
+          rcpt_to: 'support@mail.example.com',
+          friendly_from: 'customer@example.com',
+          subject: 'Help needed'
+        }
       }
     };
 
@@ -213,87 +183,39 @@ describe('Webhook Handler', () => {
 
     expect(mockTicketService.create).toHaveBeenCalledWith({
       sender: 'customer@example.com',
-      subject: 'Help needed',
-      body: 'I have a question...'
+      subject: 'Help needed'
     });
-  });
-
-  it('skips duplicate events', async () => {
-    const mockDb = {
-      processedEvents: {
-        exists: vi.fn().mockResolvedValue(true)
-      },
-      emails: { update: vi.fn() }
-    };
-
-    const event = {
-      id: 'evt_duplicate',
-      type: 'email.delivered',
-      data: { emailId: 'email_123' }
-    };
-
-    await handleWebhook(event, { db: mockDb });
-
-    expect(mockDb.emails.update).not.toHaveBeenCalled();
   });
 });
 ```
 
-### Testing Signature Verification
+### Testing Authentication Verification
+
+If your webhook uses basic authentication, test that your handler correctly verifies credentials:
 
 ```javascript
-import crypto from 'crypto';
-import { verifyWebhookSignature } from './webhookHandler';
+import { verifyBasicAuth } from './webhookHandler';
 
-describe('Signature Verification', () => {
-  const secret = 'whsec_test_secret';
+describe('Basic Auth Verification', () => {
+  const username = 'webhook';
+  const password = 'test-secret';
 
-  function generateSignature(payload, timestamp = Math.floor(Date.now() / 1000)) {
-    const signedPayload = `${timestamp}.${payload}`;
-    const signature = crypto
-      .createHmac('sha256', secret)
-      .update(signedPayload)
-      .digest('hex');
-    return `t=${timestamp},v1=${signature}`;
+  function encodeBasicAuth(user, pass) {
+    return 'Basic ' + Buffer.from(`${user}:${pass}`).toString('base64');
   }
 
-  it('accepts valid signature', () => {
-    const payload = JSON.stringify({ id: 'evt_123', type: 'email.delivered' });
-    const signature = generateSignature(payload);
-
-    const result = verifyWebhookSignature(payload, signature, secret);
-
-    expect(result).toEqual({ id: 'evt_123', type: 'email.delivered' });
+  it('accepts valid credentials', () => {
+    const authHeader = encodeBasicAuth(username, password);
+    expect(verifyBasicAuth(authHeader, username, password)).toBe(true);
   });
 
-  it('rejects invalid signature', () => {
-    const payload = JSON.stringify({ id: 'evt_123' });
-    const signature = 't=1234567890,v1=invalid_signature';
-
-    expect(() => {
-      verifyWebhookSignature(payload, signature, secret);
-    }).toThrow('Invalid signature');
+  it('rejects invalid credentials', () => {
+    const authHeader = encodeBasicAuth('wrong', 'credentials');
+    expect(verifyBasicAuth(authHeader, username, password)).toBe(false);
   });
 
-  it('rejects old timestamp', () => {
-    const payload = JSON.stringify({ id: 'evt_123' });
-    const oldTimestamp = Math.floor(Date.now() / 1000) - 400; // 6+ minutes ago
-    const signature = generateSignature(payload, oldTimestamp);
-
-    expect(() => {
-      verifyWebhookSignature(payload, signature, secret);
-    }).toThrow('Timestamp too old');
-  });
-
-  it('rejects tampered payload', () => {
-    const originalPayload = JSON.stringify({ id: 'evt_123', amount: 100 });
-    const signature = generateSignature(originalPayload);
-
-    const tamperedPayload = JSON.stringify({ id: 'evt_123', amount: 1000 });
-
-    expect(() => {
-      verifyWebhookSignature(tamperedPayload, signature, secret);
-    }).toThrow('Invalid signature');
+  it('rejects missing auth header', () => {
+    expect(verifyBasicAuth(undefined, username, password)).toBe(false);
   });
 });
 ```
@@ -306,60 +228,53 @@ Test the full webhook flow including HTTP handling.
 
 ```javascript
 import request from 'supertest';
-import crypto from 'crypto';
 import { app } from './app';
 
 describe('Webhook Endpoint', () => {
-  const secret = process.env.LETTR_WEBHOOK_SECRET;
+  const username = process.env.WEBHOOK_USERNAME;
+  const password = process.env.WEBHOOK_PASSWORD;
 
-  function createSignedRequest(payload) {
-    const timestamp = Math.floor(Date.now() / 1000);
-    const body = JSON.stringify(payload);
-    const signedPayload = `${timestamp}.${body}`;
-    const signature = crypto
-      .createHmac('sha256', secret)
-      .update(signedPayload)
-      .digest('hex');
-
-    return {
-      body,
-      signature: `t=${timestamp},v1=${signature}`
-    };
+  function basicAuth(user, pass) {
+    return 'Basic ' + Buffer.from(`${user}:${pass}`).toString('base64');
   }
 
-  it('returns 200 for valid webhook', async () => {
-    const { body, signature } = createSignedRequest({
-      id: 'evt_123',
-      type: 'email.delivered',
-      data: { emailId: 'email_456' }
-    });
+  it('returns 200 for valid webhook with correct auth', async () => {
+    const payload = [{
+      msys: {
+        message_event: {
+          type: 'delivery',
+          message_id: 'msg_456',
+          rcpt_to: 'recipient@example.com'
+        }
+      }
+    }];
 
     const response = await request(app)
       .post('/webhooks/lettr')
       .set('Content-Type', 'application/json')
-      .set('Lettr-Signature', signature)
-      .send(body);
+      .set('Authorization', basicAuth(username, password))
+      .send(payload);
 
     expect(response.status).toBe(200);
   });
 
-  it('returns 400 for invalid signature', async () => {
+  it('returns 401 for invalid credentials', async () => {
     const response = await request(app)
       .post('/webhooks/lettr')
       .set('Content-Type', 'application/json')
-      .set('Lettr-Signature', 't=123,v1=invalid')
-      .send(JSON.stringify({ id: 'evt_123' }));
+      .set('Authorization', basicAuth('wrong', 'credentials'))
+      .send([]);
 
-    expect(response.status).toBe(400);
+    expect(response.status).toBe(401);
   });
 
-  it('returns 400 for missing signature', async () => {
+  it('returns 401 for missing auth', async () => {
     const response = await request(app)
       .post('/webhooks/lettr')
       .set('Content-Type', 'application/json')
-      .send(JSON.stringify({ id: 'evt_123' }));
+      .send([]);
 
-    expect(response.status).toBe(400);
+    expect(response.status).toBe(401);
   });
 });
 ```
@@ -389,13 +304,11 @@ describe('Webhook E2E', () => {
 
     // Wait for webhook (with timeout)
     const webhook = await waitForWebhook({
-      type: 'email.delivered',
-      emailId: email.id,
+      type: 'delivery',
       timeout: 60000 // 60 seconds
     });
 
-    expect(webhook.type).toBe('email.delivered');
-    expect(webhook.data.emailId).toBe(email.id);
+    expect(webhook.msys.message_event.type).toBe('delivery');
   }, 120000); // Jest timeout
 });
 ```
@@ -471,17 +384,11 @@ export function createWebhookCollector(port = 4000) {
 // Usage in tests
 const collector = createWebhookCollector();
 
-// Configure webhook to point to collector
-await lettr.webhooks.create({
-  url: collector.url,
-  events: ['email.delivered']
-});
-
-// Send email and wait for webhook
-await lettr.emails.send({ /* ... */ });
+// Configure webhook in the dashboard to point to collector.url
+// Then send an email to trigger delivery events
 
 const event = await collector.waitFor(
-  (e) => e.type === 'email.delivered'
+  (e) => e.msys?.message_event?.type === 'delivery'
 );
 
 collector.close();
@@ -493,13 +400,7 @@ Before deploying to production, test webhooks in a staging environment.
 
 ### Checklist
 
-1. **Configure staging webhook endpoint**
-   ```javascript
-   await lettr.webhooks.create({
-     url: 'https://staging.example.com/webhooks/lettr',
-     events: ['*']
-   });
-   ```
+1. **Configure staging webhook endpoint** in the Lettr dashboard, pointing to your staging URL (e.g., `https://staging.example.com/webhooks/lettr`) and subscribing to all events
 
 2. **Verify SSL certificate** - Ensure your staging environment has a valid SSL certificate
 
@@ -539,11 +440,10 @@ app.post('/webhooks/lettr', (req, res) => {
 Add comprehensive logging during development:
 
 ```javascript
-app.post('/webhooks/lettr', express.raw({ type: 'application/json' }), (req, res) => {
+app.post('/webhooks/lettr', express.json(), (req, res) => {
   console.log('=== Webhook Received ===');
   console.log('Headers:', JSON.stringify(req.headers, null, 2));
-  console.log('Body:', req.body.toString());
-  console.log('Signature:', req.headers['lettr-signature']);
+  console.log('Body:', JSON.stringify(req.body, null, 2));
   console.log('========================');
 
   // ... rest of handler
@@ -576,32 +476,17 @@ The Lettr dashboard shows detailed delivery logs:
 ## Common Testing Pitfalls
 
 <AccordionGroup>
-  <Accordion title="JSON parsing before signature verification">
-    Always verify the signature using the raw body. If you parse JSON first, the re-stringified version may differ from the original.
+  <Accordion title="Hardcoded credentials in production">
+    Never commit webhook authentication credentials to source control. Use environment variables.
 
     ```javascript
     // Wrong
-    app.post('/webhooks', express.json(), (req, res) => {
-      const body = JSON.stringify(req.body); // May differ from original
-      verifySignature(body, signature, secret);
-    });
+    const username = 'webhook';
+    const password = 'my-secret-password';
 
     // Right
-    app.post('/webhooks', express.raw({ type: 'application/json' }), (req, res) => {
-      verifySignature(req.body.toString(), signature, secret);
-    });
-    ```
-  </Accordion>
-
-  <Accordion title="Hardcoded test secrets in production">
-    Never commit webhook secrets to source control. Use environment variables.
-
-    ```javascript
-    // Wrong
-    const secret = 'whsec_abc123';
-
-    // Right
-    const secret = process.env.LETTR_WEBHOOK_SECRET;
+    const username = process.env.WEBHOOK_USERNAME;
+    const password = process.env.WEBHOOK_PASSWORD;
     ```
   </Accordion>
 
@@ -610,7 +495,7 @@ The Lettr dashboard shows detailed delivery logs:
 
     ```javascript
     it('handles duplicate events idempotently', async () => {
-      const event = createTestEvent('email.delivered');
+      const event = createTestEvent('delivery');
 
       // Process twice
       await handleWebhook(event);
@@ -630,7 +515,7 @@ The Lettr dashboard shows detailed delivery logs:
     it('handles database errors gracefully', async () => {
       mockDb.update.mockRejectedValue(new Error('Connection lost'));
 
-      const event = createTestEvent('email.delivered');
+      const event = createTestEvent('delivery');
 
       // Should not throw, but should store for retry
       await handleWebhook(event);

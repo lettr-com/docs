@@ -62,14 +62,15 @@ Response:
 
 ```json
 {
-  "success": true,
+  "message": "Domain created successfully.",
   "data": {
     "domain": "example.com",
     "status": "pending",
     "status_label": "Pending Review",
     "dkim": {
+      "public": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQ...",
       "selector": "scph0722",
-      "public": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQ..."
+      "headers": "from:to:subject:date"
     }
   }
 }
@@ -110,7 +111,7 @@ curl https://app.lettr.com/api/domains/example.com \
 
 ```json
 {
-  "success": true,
+  "message": "Domain retrieved successfully.",
   "data": {
     "domain": "example.com",
     "status": "approved",
@@ -126,13 +127,17 @@ curl https://app.lettr.com/api/domains/example.com \
 
 ## Domain Approval
 
-When you add a new sending domain, Lettr automatically evaluates it for approval. The scoring considers:
+When you add a new sending domain, Lettr automatically evaluates it through a scoring system. Each domain starts at 100 points, with deductions for risk factors like very new registration, uncommon TLDs, or suspicious naming patterns. Domains scoring 50 or above are approved automatically.
 
-- **Domain age** — Older, established domains score higher
+The scoring evaluates:
+
+- **Domain age** — Older, established domains score higher (2+ years is ideal)
 - **Domain characteristics** — Standard TLDs and conventional naming patterns
-- **Active website** — Whether the domain hosts a website with legitimate content
+- **Active website** — AI-powered analysis of website legitimacy and content quality
 
-Domains meeting the approval threshold are approved automatically. If your domain remains in `pending` or `blocked` status, contact support for manual review.
+Domains meeting the approval threshold are approved within minutes. If your domain is blocked, you can request a manual review by contacting [support@lettr.com](mailto:support@lettr.com).
+
+For full details on scoring criteria, thresholds, and tips for improving your score, see [Domain Approval Process](/learn/domains/approval).
 
 ## Learn More
 
@@ -154,5 +159,11 @@ Domains meeting the approval threshold are approved automatically. If your domai
   </Card>
   <Card title="BIMI" icon="image" href="/learn/domains/bimi">
     Display your logo in email clients
+  </Card>
+  <Card title="Domain Approval" icon="check" href="/learn/domains/approval">
+    How domain scoring and approval works
+  </Card>
+  <Card title="Domain Connect" icon="bolt" href="/learn/domains/domain-connect">
+    Automatic DNS setup for Cloudflare domains
   </Card>
 </CardGroup>

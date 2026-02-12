@@ -80,16 +80,12 @@ If you exceed 10 lookups, you'll need to reduce the number of `include:` stateme
 
 After adding your SPF record, you can check its status through the Lettr API. The response tells you whether the record was found and validated correctly:
 
-```javascript
-const domain = await lettr.domains.get('dom_123');
-
-if (domain.spfStatus === 'verified') {
-  console.log('SPF is correctly configured!');
-} else {
-  console.log('SPF status:', domain.spfStatus);
-  console.log('Expected record:', domain.expectedSpfRecord);
-}
+```bash
+curl https://app.lettr.com/api/domains/example.com \
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxx"
 ```
+
+The response includes the `spf_status` field indicating whether your SPF record is correctly configured.
 
 ## Troubleshooting
 

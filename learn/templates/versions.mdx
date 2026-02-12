@@ -220,7 +220,7 @@ When using templates via API, version behavior follows these rules:
 | All versions inactive | Error returned |
 
 ```javascript
-// Get template details including version info
+// Get template details
 const response = await fetch(
   'https://app.lettr.com/api/templates/order-confirmation',
   {
@@ -231,7 +231,8 @@ const response = await fetch(
 );
 
 const template = await response.json();
-console.log(template.data.version); // Current active version number
+console.log(template.data.name); // "Order Confirmation"
+console.log(template.data.slug); // "order-confirmation"
 ```
 
 ## Related Topics

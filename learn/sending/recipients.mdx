@@ -13,7 +13,7 @@ Send to one or multiple recipients:
 // Single recipient
 await lettr.emails.send({
   from: 'you@example.com',
-  to: 'recipient@example.com',
+  to: ['recipient@example.com'],
   subject: 'Hello',
   html: '<p>Hello!</p>'
 });
@@ -111,28 +111,19 @@ If any address fails validation, the API rejects the request and the email is no
 ```json
 // Invalid email format
 {
-  "success": false,
-  "error": {
-    "code": "invalid_email",
-    "message": "Invalid email address: 'not-an-email'"
-  }
-}
-
-// Suppressed address
-{
-  "success": false,
-  "error": {
-    "code": "recipient_suppressed",
-    "message": "Recipient 'bounced@example.com' is on your suppression list."
+  "error_code": "validation_error",
+  "message": "The given data was invalid.",
+  "errors": {
+    "to.0": ["The to.0 must be a valid email address."]
   }
 }
 
 // Too many recipients
 {
-  "success": false,
-  "error": {
-    "code": "too_many_recipients",
-    "message": "Total recipients (to + cc + bcc) cannot exceed 50."
+  "error_code": "validation_error",
+  "message": "The given data was invalid.",
+  "errors": {
+    "to": ["The to field must not have more than 50 items."]
   }
 }
 ```
@@ -159,9 +150,9 @@ await lettr.emails.send({
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `to` | string or string[] | Yes | Primary recipient(s) |
-| `cc` | string or string[] | No | Carbon copy recipients |
-| `bcc` | string or string[] | No | Blind carbon copy recipients |
+| `to` | string[] | Yes | Primary recipient(s) |
+| `cc` | string[] | No | Carbon copy recipients |
+| `bcc` | string[] | No | Blind carbon copy recipients |
 | `from` | string | Yes | Sender email (must be from verified domain) |
 | `from_name` | string | No | Sender display name |
 | `reply_to` | string | No | Reply-to email address |

@@ -11,7 +11,6 @@ All API errors return a JSON object with a consistent structure. The `error_code
 
 ```json
 {
-  "status": "error",
   "error_code": "validation_error",
   "message": "The given data was invalid.",
   "errors": {
@@ -26,12 +25,10 @@ All API errors return a JSON object with a consistent structure. The `error_code
 | Error Code | HTTP Status | Description |
 |------------|-------------|-------------|
 | `validation_error` | 422 | Invalid request parameters |
-| `invalid_sending_domain` | 422 | Sender domain not verified |
-| `unconfigured_sending_domain` | 422 | Domain not ready for sending |
+| `invalid_domain` | 422 | Sender domain not verified |
+| `unconfigured_domain` | 422 | Domain not ready for sending |
 | `template_not_found` | 404 | Template slug not found |
-| `rate_limit_exceeded` | 429 | Too many requests |
-| `unauthorized` | 401 | Invalid or missing API key |
-| `forbidden` | 403 | API key lacks permission |
+| `send_error` | 500 | Email sending error |
 | `transmission_failed` | 500 | Email delivery failed |
 
 ## Validation Errors
@@ -69,10 +66,10 @@ try {
     html: '<p>Hello!</p>'
   });
 } catch (error) {
-  if (error.error_code === 'invalid_sending_domain') {
+  if (error.error_code === 'invalid_domain') {
     console.log('Domain not verified. Please verify your domain first.');
   }
-  if (error.error_code === 'unconfigured_sending_domain') {
+  if (error.error_code === 'unconfigured_domain') {
     console.log('Domain DNS records not configured correctly.');
   }
 }
@@ -160,7 +157,7 @@ async function sendEmail(emailData) {
       case 'validation_error':
         return { success: false, error: 'Invalid email data', details: error.errors };
 
-      case 'invalid_sending_domain':
+      case 'invalid_domain':
         return { success: false, error: 'Sender domain not verified' };
 
       case 'rate_limit_exceeded':

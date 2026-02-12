@@ -3,7 +3,7 @@ title: Installation
 description: "Install and configure Lettr for Laravel"
 ---
 
-Install the Lettr Laravel SDK via Composer.
+This page covers installing the `lettr/lettr-laravel` Composer package and configuring it to send emails through Lettr. If you haven't already, start with the [Introduction](/quickstart/laravel/introduction) for a quick overview of what the SDK provides.
 
 ## Requirements
 
@@ -16,6 +16,8 @@ Install the Lettr Laravel SDK via Composer.
 composer require lettr/lettr-laravel
 ```
 
+The package uses Laravel's auto-discovery, so the service provider registers automatically. No manual provider registration is needed.
+
 ## Configuration
 
 ### Option 1: Interactive Setup (Recommended)
@@ -26,7 +28,7 @@ Run the init command for guided configuration:
 php artisan lettr:init
 ```
 
-This handles all the steps below automatically.
+This handles all the steps below automatically. The command walks you through each setting interactively, so you don't need to edit config files by hand. If you want full control over each step, use the manual setup below.
 
 ### Option 2: Manual Setup
 
@@ -35,11 +37,11 @@ This handles all the steps below automatically.
     Add your Lettr API key to `.env`:
 
     ```env
-    LETTR_API_KEY=le_xxxxxxxxxxxx
+    LETTR_API_KEY=lttr_xxxxxxxxxxxx
     ```
 
     <Tip>
-      Get your API key from the [Lettr dashboard](https://app.lettr.com/api-keys).
+      Get your API key from the [Lettr dashboard](https://app.lettr.com/api-keys). API keys use the `lttr_` prefix followed by 64 hexadecimal characters. See [API Keys](/learn/api-keys/introduction) for details on creating and managing keys.
     </Tip>
   </Step>
 
@@ -48,7 +50,7 @@ This handles all the steps below automatically.
     php artisan vendor:publish --tag=lettr-config
     ```
 
-    This creates `config/lettr.php` with customizable options.
+    This creates `config/lettr.php` with customizable options. See [Configuration Options](#configuration-options) below for a full reference of available settings.
   </Step>
 
   <Step title="Add the Lettr mailer">
@@ -63,6 +65,8 @@ This handles all the steps below automatically.
         ],
     ],
     ```
+
+    This registers Lettr as an available mailer in Laravel's mail system. You can use it alongside other mailers (e.g., `smtp`, `log`, `ses`) and choose per-email which one to use.
   </Step>
 
   <Step title="Configure sender address">
@@ -74,7 +78,7 @@ This handles all the steps below automatically.
     ```
 
     <Warning>
-      The sender domain must be verified in your [Lettr dashboard](https://app.lettr.com/domains) before you can send emails.
+      The sender domain must be verified in your [Lettr dashboard](https://app.lettr.com/domains) before you can send emails. If you try to send from an unverified domain, the API will return a `422` error. See [Sending Domains](/learn/domains/sending-domains) for setup instructions.
     </Warning>
   </Step>
 
@@ -85,7 +89,15 @@ This handles all the steps below automatically.
     MAIL_MAILER=lettr
     ```
 
-    Or keep your current mailer and use Lettr explicitly when needed.
+    Or keep your current mailer and use Lettr explicitly when needed:
+
+    ```php
+    Mail::mailer('lettr')->to($user)->send(new WelcomeMail());
+    ```
+
+    <Tip>
+      During development, you may want to keep `MAIL_MAILER=log` to avoid sending real emails. Switch to `lettr` in staging and production.
+    </Tip>
   </Step>
 </Steps>
 
@@ -116,6 +128,20 @@ return [
 ];
 ```
 
+| Option | Description |
+|--------|-------------|
+| `api_key` | Your Lettr API key. Always set via the `LETTR_API_KEY` environment variable — never hardcode it. |
+| `default_project_id` | The default [project](/learn/templates/projects) to use when pulling/pushing templates. Can be overridden per-request. |
+| `templates.html_path` | Where `lettr:pull --as-html` saves raw HTML template files. |
+| `templates.blade_path` | Where `lettr:pull` saves Blade template files. |
+| `templates.mailable_path` | Where `lettr:pull --with-mailables` generates Mailable classes. |
+| `templates.mailable_namespace` | PHP namespace for generated Mailable classes. |
+| `templates.dto_path` | Where `lettr:generate-dtos` creates DTO classes. |
+| `templates.dto_namespace` | PHP namespace for generated DTOs. |
+| `templates.enum_path` | Where `lettr:generate-enum` creates the template enum. |
+| `templates.enum_namespace` | PHP namespace for the generated enum. |
+| `templates.enum_class` | Class name for the generated template enum. |
+
 ## Verify Installation
 
 Test that everything is configured correctly:
@@ -127,3 +153,38 @@ Lettr::health()->authCheck();
 ```
 
 If no exception is thrown, your API key is valid and you're ready to send emails.
+
+You can also run this check from Tinker:
+
+```bash
+php artisan tinker
+>>> \Lettr\Laravel\Facades\Lettr::health()->authCheck()
+```
+
+### Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="API key not recognized">
+    Make sure your `.env` file contains `LETTR_API_KEY` with the `lttr_` prefix. Run `php artisan config:clear` to clear any cached configuration, then try again.
+  </Accordion>
+  <Accordion title="Class not found errors">
+    Run `composer dump-autoload` to regenerate the autoloader. If you're using Laravel's config cache, run `php artisan config:clear` as well.
+  </Accordion>
+  <Accordion title="Domain verification errors when sending">
+    The `from` address must use a domain that is verified in your [Lettr dashboard](https://app.lettr.com/domains). Check that your `MAIL_FROM_ADDRESS` in `.env` matches a verified sending domain. See [Domain Verification](/knowledge-base/troubleshooting/domain-verification) for common issues.
+  </Accordion>
+  <Accordion title="Emails not arriving">
+    Check your [Lettr logs](https://app.lettr.com/logs) to see if the API accepted the request. If the email was accepted but not delivered, see [Delivery Issues](/knowledge-base/troubleshooting/delivery-issues) for diagnosis steps.
+  </Accordion>
+</AccordionGroup>
+
+## What's Next
+
+<CardGroup cols={2}>
+  <Card title="Sending Emails" icon="paper-plane" href="/quickstart/laravel/sending-emails">
+    Learn the different ways to send emails through Lettr
+  </Card>
+  <Card title="Templates" icon="file-code" href="/quickstart/laravel/templates">
+    Work with Lettr-managed templates and merge tags
+  </Card>
+</CardGroup>

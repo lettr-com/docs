@@ -142,7 +142,9 @@
                   "learn/domains/spf",
                   "learn/domains/dkim",
                   "learn/domains/dmarc",
-                  "learn/domains/bimi"
+                  "learn/domains/bimi",
+                  "learn/domains/approval",
+                  "learn/domains/domain-connect"
                 ]
               },
               {
@@ -162,6 +164,7 @@
                   "learn/sending/rate-limits",
                   "learn/sending/errors-retries",
                   "learn/sending/email-history",
+                  "learn/sending/usage-quotas",
                   "learn/sending/best-practices"
                 ]
               },
@@ -198,7 +201,8 @@
                   "learn/templates/projects",
                   "learn/templates/versions",
                   "learn/templates/saved-blocks",
-                  "learn/templates/loop-blocks"
+                  "learn/templates/loop-blocks",
+                  "learn/templates/image-storage"
                 ]
               },
               {
@@ -247,10 +251,12 @@
               {
                 "group": "Settings",
                 "pages": [
+                  "learn/settings/dashboard",
                   "learn/settings/onboarding",
                   "learn/settings/profile",
                   "learn/settings/teams",
                   "learn/settings/security",
+                  "learn/settings/social-login",
                   "learn/settings/billing"
                 ]
               }
@@ -291,7 +297,8 @@
               "api-reference/templates/get-template",
               "api-reference/templates/update-template",
               "api-reference/templates/delete-template",
-              "api-reference/templates/get-merge-tags"
+              "api-reference/templates/get-merge-tags",
+              "api-reference/templates/get-template-html"
             ]
           },
           {

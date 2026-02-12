@@ -1,0 +1,77 @@
+---
+title: Dashboard
+description: "Your central overview of email activity, domain health, and getting started checklist"
+---
+
+The Dashboard is the first thing you see after signing in to Lettr. It serves as a real-time command center for your email operations — showing how many emails you've sent, whether your domains are healthy, and if anything needs your attention. For new accounts, it also includes a getting started checklist that guides you through the essential setup steps. Once your account is fully configured, the dashboard becomes your primary tool for monitoring sending activity and catching issues early.
+
+## Email Usage
+
+At the top of the dashboard you'll find your current email usage for the billing period. This section shows the total number of emails sent this month, your plan's monthly quota, and a visual progress indicator so you can see at a glance how much capacity you've used. Usage data is real-time — each email is reflected the moment it's accepted for delivery, so you're always looking at current numbers rather than stale data.
+
+For more details about how usage tracking works, quota enforcement, and what happens when you approach your limit, see [Email Usage & Quotas](/learn/sending/usage-quotas).
+
+## Email Traffic
+
+The traffic section displays a 30-day chart of your email sending volume, broken down by day. This view is useful for identifying patterns in your sending — weekly cycles from newsletter sends, spikes from marketing campaigns, or the steady baseline of transactional emails. If you notice an unexpected drop or spike, the traffic chart is often the first place that surfaces it.
+
+## Delivery Performance
+
+Below the traffic chart, key delivery metrics give you a snapshot of how your emails are performing over the trailing 30-day period:
+
+| Metric | Description |
+|--------|-------------|
+| **Targeted** | Total emails submitted for delivery |
+| **Accepted** | Emails accepted by recipient mail servers |
+| **Bounced** | Emails that bounced (hard or soft) |
+| **Opened** | Emails opened by recipients |
+
+These numbers update approximately every 15 minutes. For deeper analysis — including breakdowns by domain, time period, and engagement type — the [Analytics](/learn/analytics/introduction) section provides more detailed reporting tools.
+
+## Domain Health
+
+The dashboard surfaces the verification status of your sending domains so you can spot DNS configuration issues without navigating to the Domains section. For each domain, you'll see whether the DKIM, CNAME, and DMARC records are valid, unverified, or missing. Domains with issues are highlighted, making it easy to identify which ones need attention and click through to resolve them.
+
+## Alerts
+
+When something in your account needs attention, the dashboard generates alerts. These are designed to surface problems before they affect your sending:
+
+| Alert | Trigger | Severity |
+|-------|---------|----------|
+| Usage approaching limit | Email usage exceeds 80% of monthly quota | Warning |
+| Usage near limit | Email usage exceeds 90% of monthly quota | Critical |
+| Unverified domain | A domain's DNS records have not been verified yet | Warning |
+| Blocked domain | A domain has been blocked from sending | Critical |
+
+Critical alerts indicate issues that are actively preventing you from sending or are about to. Warning alerts give you advance notice so you can take action before things become urgent.
+
+## Getting Started Checklist
+
+New accounts see a getting started checklist that walks you through the essential setup steps in order. Each item is automatically marked complete as you finish it, and the checklist disappears entirely once everything is done:
+
+1. **Add a sending domain** — Register your first domain in Lettr
+2. **Verify your domain** — Configure the required DNS records (SPF, DKIM, DMARC)
+3. **Create an API key** — Generate credentials for API access
+4. **Send your first email** — Successfully send an email through Lettr
+5. **Set up a webhook** — Configure event notifications for delivery tracking
+
+<Tip>
+  If you completed [onboarding](/learn/settings/onboarding) but haven't finished all checklist items yet, the dashboard is the best place to pick up where you left off. Each checklist item links directly to the relevant setup page, so you don't have to hunt for the right section in the documentation.
+</Tip>
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Analytics" icon="chart-bar" href="/learn/analytics/introduction">
+    Detailed email analytics and reporting
+  </Card>
+  <Card title="Domains" icon="globe" href="/learn/domains/introduction">
+    Configure and verify your domains
+  </Card>
+  <Card title="Email Usage & Quotas" icon="gauge" href="/learn/sending/usage-quotas">
+    Understand email quotas and usage tracking
+  </Card>
+  <Card title="Onboarding" icon="rocket" href="/learn/settings/onboarding">
+    Initial account setup wizard
+  </Card>
+</CardGroup>

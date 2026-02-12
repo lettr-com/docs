@@ -49,8 +49,8 @@ When Lettr sends an email, it adds a DKIM-Signature header:
 
 ```
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-  d=example.com; s=lettr;
-  h=from:to:subject:date:message-id;
+  d=example.com; s=scph0722;
+  h=from:to:subject:date;
   bh=abc123...;
   b=xyz789...
 ```
@@ -102,7 +102,7 @@ Example passing result:
 
 ```
 Authentication-Results: mx.google.com;
-  dkim=pass header.d=example.com header.s=lettr;
+  dkim=pass header.d=example.com header.s=scph0722;
   spf=pass smtp.mailfrom=example.com
 ```
 

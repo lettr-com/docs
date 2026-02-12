@@ -30,118 +30,123 @@ Webhooks enable powerful real-time integrations:
 
 | Event Type | Use Case |
 |------------|----------|
-| `email.delivered` | Update your database when emails are successfully delivered |
-| `email.bounced` | Remove invalid addresses from your mailing list |
-| `email.opened` | Track engagement metrics and trigger follow-up sequences |
-| `email.clicked` | Measure link performance and user interest |
-| `email.complained` | Immediately suppress users who mark emails as spam |
-| `email.received` | Process inbound emails, create support tickets, track replies |
+| `message.delivery` | Update your database when emails are successfully delivered |
+| `message.bounce` | Remove invalid addresses from your mailing list |
+| `engagament.open` | Track engagement metrics and trigger follow-up sequences |
+| `engagament.click` | Measure link performance and user interest |
+| `message.spam_complaint` | Immediately suppress users who mark emails as spam |
+| `relay.relay_delivery` | Process inbound emails, create support tickets, track replies |
 
-## Creating a Webhook
+## Managing Webhooks
 
-You can create webhooks through the dashboard or API.
+Webhooks are created and managed through the Lettr dashboard. The API provides read-only access to list and view your configured webhooks.
 
-### Via Dashboard
+### Creating a Webhook
 
-1. Navigate to **Settings** → **Webhooks**
-2. Click **Create Webhook**
-3. Enter your endpoint URL
-4. Select the events you want to receive
-5. Configure authentication (optional but recommended)
-6. Click **Save**
+<Steps>
+  <Step title="Open Webhook Settings">
+    Navigate to **Settings** → **Webhooks** in the dashboard.
+  </Step>
+  <Step title="Click Create Webhook">
+    Click the **Create Webhook** button.
+  </Step>
+  <Step title="Enter Your Endpoint URL">
+    Provide the HTTPS URL where Lettr should send event notifications. This must be a publicly accessible endpoint.
+  </Step>
+  <Step title="Select Events">
+    Choose which events to receive. You can subscribe to **all events** or select specific event types from the five categories (Message, Engagement, Generation, Unsubscribe, Relay).
+  </Step>
+  <Step title="Configure Authentication">
+    Optionally set up authentication for webhook deliveries. Lettr supports:
 
-### Via API
+    - **None** — No authentication (not recommended for production)
+    - **Basic Auth** — HTTP Basic Authentication with a username and password
+    - **OAuth2** — OAuth 2.0 client credentials with client ID, client secret, and token URL
+  </Step>
+  <Step title="Save">
+    Click **Save** to create the webhook. Lettr will begin sending events to your endpoint immediately.
+  </Step>
+</Steps>
 
-```javascript
-const webhook = await lettr.webhooks.create({
-  name: 'Production Events',
-  url: 'https://api.example.com/webhooks/lettr',
-  events: ['email.delivered', 'email.bounced', 'email.opened', 'email.received'],
-  auth_type: 'basic',
-  auth_username: 'webhook',
-  auth_password: 'your-secure-password'
-});
+### Editing a Webhook
 
-// Store the webhook ID for management
-console.log(webhook.id);
-```
+To update a webhook's URL, events, or authentication:
+
+1. Go to **Settings** → **Webhooks**
+2. Click on the webhook you want to edit
+3. Make your changes
+4. Click **Save**
+
+### Enabling and Disabling Webhooks
+
+You can temporarily disable a webhook without deleting it. This is useful during maintenance or when debugging your endpoint:
+
+1. Go to **Settings** → **Webhooks**
+2. Find the webhook you want to toggle
+3. Click **Enable** or **Disable**
+
+Disabled webhooks stop receiving events but retain their configuration. Re-enabling resumes event delivery.
+
+### Deleting a Webhook
+
+To permanently remove a webhook:
+
+1. Go to **Settings** → **Webhooks**
+2. Find the webhook you want to delete
+3. Click **Delete** and confirm
+
+<Warning>
+  Deleting a webhook is permanent. Any events that occur while no webhook is configured will not be delivered. If you're troubleshooting, consider disabling the webhook instead.
+</Warning>
 
 <Note>
-  When you create a webhook, Lettr generates a signing secret. Store this secret securely—you'll need it to verify webhook signatures.
+  Webhook management (create, update, enable/disable, delete) is only available through the dashboard. The API provides read-only access for listing and viewing webhook configurations.
 </Note>
-
-## Webhook Payload Structure
-
-All webhook events share a common structure:
-
-```json
-{
-  "id": "evt_1234567890abcdef",
-  "type": "email.delivered",
-  "createdAt": "2024-01-15T10:30:00Z",
-  "data": {
-    // Event-specific data
-  }
-}
-```
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | string | Unique identifier for this event |
-| `type` | string | The event type (e.g., `email.delivered`, `email.received`) |
-| `createdAt` | string | ISO 8601 timestamp when the event occurred |
-| `data` | object | Event-specific payload data |
 
 ## Handling Webhooks
 
-Here's a complete example of a webhook handler in Node.js with Express:
+Here's a basic example of a webhook handler in Node.js with Express:
 
 ```javascript
 import express from 'express';
-import { verifyWebhook } from 'lettr';
 
 const app = express();
 
-// Important: Use raw body for signature verification
-app.post('/webhooks/lettr', express.raw({ type: 'application/json' }), async (req, res) => {
-  const signature = req.headers['lettr-signature'];
-
+app.post('/webhooks/lettr', express.json(), async (req, res) => {
   try {
-    // Verify the webhook signature
-    const event = verifyWebhook(
-      req.body,
-      signature,
-      process.env.LETTR_WEBHOOK_SECRET
-    );
+    const events = req.body; // Array of event objects
 
-    // Handle different event types
-    switch (event.type) {
-      case 'email.delivered':
-        await handleEmailDelivered(event.data);
-        break;
+    for (const event of events) {
+      const eventType = event.msys ? Object.keys(event.msys)[0] : null;
+      const data = eventType ? event.msys[eventType] : null;
 
-      case 'email.bounced':
-        await handleEmailBounced(event.data);
-        break;
+      if (!data) continue;
 
-      case 'email.opened':
-        await handleEmailOpened(event.data);
-        break;
+      switch (data.type) {
+        case 'delivery':
+          await handleDelivery(data);
+          break;
 
-      case 'email.clicked':
-        await handleEmailClicked(event.data);
-        break;
+        case 'bounce':
+          await handleBounce(data);
+          break;
 
-      case 'email.complained':
-        await handleSpamComplaint(event.data);
-        break;
+        case 'open':
+        case 'initial_open':
+          await handleOpen(data);
+          break;
 
-      case 'email.received':
-        await handleInboundEmail(event.data);
-        break;
+        case 'click':
+          await handleClick(data);
+          break;
 
-      default:
-        console.log(`Unhandled event type: ${event.type}`);
+        case 'spam_complaint':
+          await handleSpamComplaint(data);
+          break;
+
+        default:
+          console.log(`Unhandled event type: ${data.type}`);
+      }
     }
 
     // Always respond with 200 to acknowledge receipt
@@ -152,23 +157,14 @@ app.post('/webhooks/lettr', express.raw({ type: 'application/json' }), async (re
   }
 });
 
-async function handleEmailDelivered(data) {
-  console.log(`Email ${data.emailId} delivered to ${data.to}`);
-  await db.emails.update(data.emailId, { status: 'delivered' });
+async function handleDelivery(data) {
+  console.log(`Email delivered to ${data.rcpt_to}`);
+  await db.emails.update(data.message_id, { status: 'delivered' });
 }
 
-async function handleEmailBounced(data) {
-  console.log(`Email bounced: ${data.to} - ${data.bounceType}`);
-  await db.suppressions.add(data.to, 'bounce');
-}
-
-async function handleInboundEmail(data) {
-  console.log(`Received email from ${data.from}: ${data.subject}`);
-  await createSupportTicket({
-    sender: data.from,
-    subject: data.subject,
-    body: data.text || data.html
-  });
+async function handleBounce(data) {
+  console.log(`Email bounced: ${data.rcpt_to} - ${data.raw_reason}`);
+  await db.suppressions.add(data.rcpt_to, 'bounce');
 }
 
 app.listen(3000);
@@ -176,26 +172,54 @@ app.listen(3000);
 
 ## Event Categories
 
-Lettr webhooks are organized into categories:
+Lettr webhooks are organized into five categories:
 
-### Outbound Email Events
+### Message Events
 
-Events related to emails you send through Lettr:
+Events tracking the delivery lifecycle of emails you send:
 
-- `email.sent` - Email accepted by Lettr for delivery
-- `email.delivered` - Email delivered to recipient's mail server
-- `email.bounced` - Email bounced (hard or soft)
-- `email.deferred` - Email delivery temporarily delayed
-- `email.opened` - Recipient opened the email
-- `email.clicked` - Recipient clicked a link
-- `email.complained` - Recipient marked email as spam
-- `email.unsubscribed` - Recipient unsubscribed
+- `message.injection` - Email accepted by Lettr and queued for delivery
+- `message.delivery` - Email delivered to recipient's mail server
+- `message.bounce` - Email bounced (hard or soft)
+- `message.delay` - Email delivery temporarily delayed
+- `message.out_of_band` - Out-of-band bounce after initial acceptance
+- `message.spam_complaint` - Recipient marked email as spam
+- `message.policy_rejection` - Email rejected by policy
 
-### Inbound Email Events
+### Engagement Events
 
-Events for emails received on your inbound domains:
+Events tracking recipient interaction with your emails:
 
-- `email.received` - Email received on your inbound domain
+- `engagament.open` - Recipient opened the email
+- `engagament.initial_open` - First open of the email
+- `engagament.click` - Recipient clicked a link
+- `engagament.amp_open` - Recipient opened an AMP email
+- `engagament.amp_initial_open` - First open of an AMP email
+- `engagament.amp_click` - Recipient clicked a link in an AMP email
+
+### Generation Events
+
+Events for message generation failures:
+
+- `generation.generation_failure` - Message failed during generation
+- `generation.generation_rejection` - Message rejected during generation
+
+### Unsubscribe Events
+
+Events for recipient opt-outs:
+
+- `unsubscribe.list_unsubscribe` - Recipient unsubscribed via List-Unsubscribe header
+- `unsubscribe.link_unsubscribe` - Recipient unsubscribed via a link in the email
+
+### Relay Events
+
+Events for inbound email processing:
+
+- `relay.relay_injection` - Inbound email received and queued
+- `relay.relay_delivery` - Inbound email delivered to your endpoint
+- `relay.relay_rejection` - Inbound email rejected
+- `relay.relay_tempfail` - Inbound email delivery temporarily failed
+- `relay.relay_permfail` - Inbound email delivery permanently failed
 
 <Tip>
   Subscribe only to the events you need. This reduces unnecessary traffic and processing on your server.
@@ -203,70 +227,42 @@ Events for emails received on your inbound domains:
 
 ## Subscribing to Events
 
-When creating or updating a webhook, specify which events to receive:
+When creating a webhook in the dashboard, you choose which events to receive. You can subscribe to all events or select specific event types from the five categories listed above.
 
-```javascript
-// Subscribe to specific events
-const webhook = await lettr.webhooks.create({
-  url: 'https://example.com/webhooks',
-  events: ['email.delivered', 'email.bounced', 'email.received']
-});
+## Viewing Webhooks via API
 
-// Subscribe to all events
-const webhook = await lettr.webhooks.create({
-  url: 'https://example.com/webhooks',
-  events: ['*']
-});
+The API provides read-only access to your webhooks. You can list all webhooks and view details for a specific webhook:
 
-// Subscribe to all email events (both inbound and outbound)
-const webhook = await lettr.webhooks.create({
-  url: 'https://example.com/webhooks',
-  events: ['email.*']
-});
+```bash
+# List all webhooks
+curl -X GET "https://app.lettr.com/api/webhooks" \
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+# Get a specific webhook
+curl -X GET "https://app.lettr.com/api/webhooks/{webhookId}" \
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 ```
 
-## Managing Webhooks
+The response includes the webhook configuration and its current status:
 
-### List Webhooks
-
-```javascript
-const webhooks = await lettr.webhooks.list();
-
-webhooks.forEach(webhook => {
-  console.log({
-    id: webhook.id,
-    name: webhook.name,
-    url: webhook.url,
-    enabled: webhook.enabled,
-    events: webhook.event_types
-  });
-});
+```json
+{
+  "id": "webhook-abc123",
+  "name": "Order Notifications",
+  "url": "https://example.com/webhook",
+  "enabled": true,
+  "event_types": ["message.delivery", "message.bounce"],
+  "auth_type": "basic",
+  "has_auth_credentials": true,
+  "last_successful_at": "2024-01-15T10:30:00+00:00",
+  "last_failure_at": null,
+  "last_status": "success"
+}
 ```
 
-### Update a Webhook
-
-```javascript
-await lettr.webhooks.update('wh_123', {
-  url: 'https://new-endpoint.example.com/webhooks',
-  events: ['email.delivered', 'email.bounced']
-});
-```
-
-### Enable/Disable a Webhook
-
-```javascript
-// Disable temporarily
-await lettr.webhooks.update('wh_123', { enabled: false });
-
-// Re-enable
-await lettr.webhooks.update('wh_123', { enabled: true });
-```
-
-### Delete a Webhook
-
-```javascript
-await lettr.webhooks.delete('wh_123');
-```
+<Note>
+  To create, update, enable/disable, or delete webhooks, use the Lettr dashboard. The API is read-only for webhook management.
+</Note>
 
 ## Best Practices
 

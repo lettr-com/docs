@@ -1,0 +1,114 @@
+---
+title: Domain Connect
+description: "Automatically configure DNS records for your Lettr domains using Domain Connect"
+---
+
+Setting up a domain in Lettr normally involves copying several DNS records — CNAME entries, TXT records for DKIM and DMARC, MX records for inbound mail — from the Lettr dashboard into your DNS provider's control panel. For each record you need to select the right type, paste the correct name and value, and make sure nothing is mistyped. Domain Connect eliminates this manual process entirely. For supported DNS providers, Lettr generates a single signed link that configures all required records in one click, directly within your provider's interface.
+
+Domain Connect is an open protocol supported by several major DNS providers. It works by encoding the exact DNS changes needed into a cryptographically signed URL, which your DNS provider verifies and applies on your behalf. You never have to type or paste a DNS record value.
+
+## Supported Providers
+
+Domain Connect is currently available for domains managed by **Cloudflare**. If your domain's DNS is hosted on Cloudflare, you'll see a **Configure with Cloudflare** button on your domain's detail page in the Lettr dashboard.
+
+<Note>
+  Domain Connect support for additional DNS providers will be added in the future. For providers not yet supported, configure DNS records manually using the values shown on your domain's detail page. See the [DNS Guides](/knowledge-base/dns-guides/cloudflare) for provider-specific step-by-step instructions.
+</Note>
+
+## How It Works
+
+The process is the same for all domain types — sending, tracking, and inbound. You click a button in Lettr, review the proposed records in Cloudflare, and apply them.
+
+<Steps>
+  <Step title="Lettr Generates a Signed URL">
+    Lettr creates a cryptographically signed URL containing all the DNS records your domain needs. The URL includes every record type, name, and value, along with a digital signature that ensures nothing can be altered in transit. Cloudflare verifies this signature before applying anything.
+  </Step>
+  <Step title="You're Redirected to Cloudflare">
+    Clicking the button takes you to Cloudflare's Domain Connect page, which shows a clear summary of the DNS records that will be added to your domain. You can review each record before proceeding.
+  </Step>
+  <Step title="Review and Apply">
+    Once you're satisfied, click **Apply** to have Cloudflare configure all the records in your account. This happens instantly — Cloudflare adds the records directly through its API, so there's no waiting for you to manually create each one.
+  </Step>
+  <Step title="Redirected Back to Lettr">
+    After the records are applied, Cloudflare redirects you back to your domain's detail page in Lettr. From there you can verify that the DNS records are resolving correctly.
+  </Step>
+</Steps>
+
+## What Records Are Configured
+
+Domain Connect sets up exactly the records that Lettr needs for each domain type. The specific records vary depending on whether you're configuring a sending, tracking, or inbound domain, and whether you're using a root domain or a subdomain.
+
+### Sending Domains
+
+For root domains (e.g., `example.com`), Domain Connect configures:
+- **SPF** — TXT record authorizing Lettr's mail servers to send on your behalf
+- **DKIM** — TXT record containing your domain's cryptographic signing key
+- **DMARC** — TXT record defining your domain's email authentication policy
+
+For subdomains (e.g., `mail.example.com`), the records are slightly different:
+- **CNAME** — Points your subdomain to the mail infrastructure
+- **DKIM** — TXT record with your domain's signing key, scoped to the subdomain
+- **DMARC** — TXT record with your DMARC policy, scoped to the subdomain
+
+### Tracking Domains
+
+Tracking domains need two CNAME records:
+- **Certificate validation CNAME** — Allows Lettr to provision an HTTPS certificate for your tracking subdomain
+- **Traffic CNAME** — Routes tracking requests (open pixels, click redirects) to Lettr's tracking proxy
+
+### Inbound Domains
+
+Inbound domains need three MX records (all at priority 10) that direct incoming email to Lettr's mail servers for processing.
+
+<Tip>
+  Domain Connect checks your existing DNS configuration before applying records. If you already have valid DMARC or SPF records in place, it skips those records to avoid creating conflicts or duplicates. This means you can safely use Domain Connect even if you've already partially configured your domain manually.
+</Tip>
+
+## Using Domain Connect
+
+### For Sending Domains
+
+1. Go to **Domains** → **Sending** and select your domain
+2. On the domain detail page, click **Configure with Cloudflare**
+3. Review the DNS records Cloudflare presents — you'll see the CNAME (or SPF for root domains), DKIM, and DMARC records that will be applied
+4. Click **Apply** to configure the records
+5. Back in Lettr, click **Verify Records** to confirm everything resolved correctly
+
+### For Tracking Domains
+
+1. Go to **Domains** → **Tracking** and select your tracking domain
+2. Click **Configure with Cloudflare**
+3. Review and apply the certificate validation and traffic CNAME records
+4. Return to Lettr and click **Verify Records**
+
+### For Inbound Domains
+
+1. Go to **Domains** → **Inbound** and select your inbound domain
+2. Click **Configure with Cloudflare**
+3. Review and apply the three MX records
+4. Return to Lettr and click **Verify Records**
+
+## After Domain Connect
+
+Once the records are applied, DNS propagation typically completes within a few minutes. Click **Verify Records** on your domain's detail page to check that Lettr can see the new records. If verification fails immediately after applying, wait a minute or two and try again — while Cloudflare applies the records instantly on their side, it can take a short time for those changes to become visible to external DNS queries.
+
+## Manual Configuration
+
+If your DNS provider doesn't support Domain Connect, or if you prefer to configure records by hand, the domain detail page in Lettr always shows the full set of required record types, names, and values. You can copy these into your provider's DNS management interface directly. For step-by-step instructions tailored to specific providers, see the [DNS Guides](/knowledge-base/dns-guides/cloudflare).
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Sending Domains" icon="paper-plane" href="/learn/domains/sending-domains">
+    Full guide to sending domain configuration
+  </Card>
+  <Card title="Tracking Domains" icon="chart-line" href="/learn/domains/tracking-domains">
+    Set up custom tracking domains
+  </Card>
+  <Card title="Inbound Domains" icon="inbox" href="/learn/domains/inbound-domains">
+    Configure domains for receiving email
+  </Card>
+  <Card title="Domain Approval" icon="check" href="/learn/domains/approval">
+    How domain scoring and approval works
+  </Card>
+</CardGroup>

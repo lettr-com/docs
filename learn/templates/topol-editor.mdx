@@ -188,9 +188,37 @@ Structural changes (adding, removing, or rearranging structures) made in any lan
 
 ### Autosave and version history
 
-The editor automatically saves template state at regular intervals. Autosave history provides access to previous versions for comparison or restoration.
+The editor automatically saves your template at regular intervals while you work. Each autosave creates a timestamped snapshot of the template state that you can browse and restore.
 
-Autosaves are separate from manual saves. Manual saves create the canonical version of the template that is used when the template is referenced for sending.
+**How autosaves work:**
+
+- Autosaves happen automatically during your editing session — no action required
+- Each autosave records the full template definition, a timestamp, and which team member made the change
+- Autosaves are stored separately from your manual saves
+
+**Browsing autosave history:**
+
+Click the **Autosave history** button in the editor toolbar to see a list of all autosaves for the current template. Each entry shows:
+
+- When the autosave was created
+- Which team member was editing at the time
+
+**Restoring an autosave:**
+
+Select any autosave from the history list to preview it. If you want to revert to that version, confirm the restore. This replaces the current editor state with the autosaved version.
+
+<Tip>
+  Autosaves are your safety net if the browser crashes, you close the editor accidentally, or you want to undo changes that went too far. They're independent of the manual **Save** action, so you can always recover recent work even if you didn't save manually.
+</Tip>
+
+**Autosaves vs. manual saves:**
+
+| | Autosaves | Manual Saves |
+|---|---|---|
+| **Trigger** | Automatic (periodic) | Click **Save** button |
+| **Purpose** | Crash recovery, undo | Create canonical version for sending |
+| **Used when sending** | No | Yes — the active version from manual save is what gets sent |
+| **Visible to** | Editor users only | Anyone referencing the template |
 
 ---
 

@@ -27,7 +27,7 @@ await lettr.emails.send({
 
 ### Reply-To Header
 
-Use the dedicated `replyTo` parameter (preferred) or set the header manually to direct replies to a different address than the sender:
+Use the dedicated `reply_to` parameter (preferred) or set the header manually to direct replies to a different address than the sender:
 
 ```javascript
 await lettr.emails.send({
@@ -35,7 +35,7 @@ await lettr.emails.send({
   to: ['recipient@example.com'],
   subject: 'Support Ticket Update',
   html: '<p>Your ticket has been updated.</p>',
-  replyTo: 'support@example.com'
+  reply_to: 'support@example.com'
   // Or via headers:
   // headers: { 'Reply-To': 'support@example.com' }
 });

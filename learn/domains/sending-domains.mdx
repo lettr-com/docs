@@ -69,14 +69,15 @@ Response with DNS records to configure:
 
 ```json
 {
-  "success": true,
+  "message": "Domain created successfully.",
   "data": {
     "domain": "example.com",
     "status": "pending",
     "status_label": "Pending Review",
     "dkim": {
+      "public": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQ...",
       "selector": "scph0722",
-      "public": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQ..."
+      "headers": "from:to:subject:date"
     }
   }
 }
@@ -145,13 +146,12 @@ Response:
 
 ```json
 {
-  "success": true,
+  "message": "Domain verification completed.",
   "data": {
     "domain": "example.com",
     "dkim_status": "valid",
     "cname_status": "valid",
-    "dmarc_status": "valid",
-    "ownership_verified": "example.com"
+    "dmarc_status": "valid"
   }
 }
 ```
@@ -194,7 +194,7 @@ curl https://app.lettr.com/api/domains/example.com \
 
 ```json
 {
-  "success": true,
+  "message": "Domain retrieved successfully.",
   "data": {
     "domain": "example.com",
     "status": "approved",
@@ -288,7 +288,7 @@ curl https://app.lettr.com/api/domains \
 
 ```json
 {
-  "success": true,
+  "message": "Domains retrieved successfully.",
   "data": {
     "domains": [
       {

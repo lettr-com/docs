@@ -3,7 +3,15 @@ title: Sending Emails
 description: "Different ways to send emails with Lettr for Laravel"
 ---
 
-Lettr integrates seamlessly with Laravel's mail system. Choose the approach that fits your needs.
+Lettr integrates seamlessly with Laravel's mail system. This page covers every approach — from the standard Mail facade to the low-level email builder — so you can choose the one that fits your use case.
+
+| Approach | Best For |
+|----------|----------|
+| [Mail Facade](#using-laravels-mail-facade) | Existing Laravel apps — drop-in replacement, no code changes |
+| [Quick Template Sending](#quick-template-sending) | One-off template emails without creating a Mailable class |
+| [Lettr Facade](#using-the-lettr-facade) | Direct API access with full control over every parameter |
+| [Email Builder](#email-builder) | Complex emails with tracking, metadata, and multiple recipients |
+| [Custom Mailables](#custom-mailable-classes) | Reusable, testable email classes using Lettr templates |
 
 ## Using Laravel's Mail Facade
 
@@ -14,6 +22,14 @@ use App\Mail\OrderShipped;
 use Illuminate\Support\Facades\Mail;
 
 Mail::to('customer@example.com')->send(new OrderShipped($order));
+```
+
+This is the simplest approach if you're migrating from another mail provider. Your existing Mailable classes work without modification — just change the mailer in your `.env` and all emails route through Lettr.
+
+If Lettr isn't your default mailer, specify it explicitly:
+
+```php
+Mail::mailer('lettr')->to('customer@example.com')->send(new OrderShipped($order));
 ```
 
 ## Quick Template Sending
@@ -30,6 +46,8 @@ Mail::lettr()
         'company' => 'Acme Inc',
     ]);
 ```
+
+The array keys map to merge tags in your Lettr template. For example, `'name' => 'John'` fills the `{{name}}` merge tag. See [Merge Tags & Template Language](/learn/templates/template-language) for the full syntax.
 
 With additional options:
 
@@ -49,9 +67,13 @@ Mail::lettr()
     );
 ```
 
+<Tip>
+  Use `version` to pin a specific template version in production. Omit it to always use the active (published) version. See [Template Versioning](/quickstart/laravel/templates#template-versioning) for details.
+</Tip>
+
 ## Using the Lettr Facade
 
-For full control, use the Lettr facade directly:
+For full control, use the Lettr facade directly. This bypasses Laravel's mail abstraction and calls the Lettr API with explicit parameters.
 
 ### HTML Email
 
@@ -77,6 +99,8 @@ Lettr::emails()->sendText(
 );
 ```
 
+The `to` parameter accepts both a single email string and an array of recipients.
+
 ### Template Email
 
 ```php
@@ -92,9 +116,13 @@ Lettr::emails()->sendTemplate(
 );
 ```
 
+<Note>
+  When using the Lettr facade, you must provide the `from` address explicitly since it doesn't use Laravel's `MAIL_FROM_ADDRESS` config automatically.
+</Note>
+
 ## Email Builder
 
-For complex emails, use the fluent email builder:
+For complex emails, use the fluent email builder. This gives you access to every option the Lettr API supports in a chainable interface:
 
 ```php
 use Lettr\Laravel\Facades\Lettr;
@@ -118,6 +146,17 @@ $response = Lettr::emails()->send(
 echo $response->requestId;
 echo $response->accepted;
 ```
+
+The builder is useful when you need to combine multiple features in a single email — for example, HTML content with a plain text fallback, tracking, metadata, and attachments.
+
+### Response Object
+
+The `send()` method returns a response object with:
+
+| Property | Description |
+|----------|-------------|
+| `requestId` | Unique identifier for the API request — useful for debugging in [Lettr logs](https://app.lettr.com/logs) |
+| `accepted` | Number of recipients the API accepted for delivery |
 
 ## Custom Mailable Classes
 
@@ -162,6 +201,22 @@ Send it like any Laravel Mailable:
 Mail::to($customer->email)->send(new OrderConfirmation($order));
 ```
 
+Custom Mailables are the best choice when you send the same template from multiple places in your application. They encapsulate the template slug, merge tag mapping, and subject line in one class, keeping your controllers and jobs clean.
+
+<Tip>
+  You can auto-generate Mailable classes from your Lettr templates. See [Mailable Classes](/quickstart/laravel/type-safety#mailable-classes) for details.
+</Tip>
+
+### Mailables with Queues
+
+`LettrMailable` classes work with Laravel's queue system. To send asynchronously:
+
+```php
+Mail::to($customer->email)->queue(new OrderConfirmation($order));
+```
+
+Make sure your Mailable class implements `ShouldQueue` and uses the `Queueable` trait, as you would with any standard Laravel Mailable.
+
 ## Attachments
 
 Add attachments to your emails:
@@ -187,6 +242,8 @@ Lettr::emails()->send(
 );
 ```
 
+Attachments must be base64-encoded. The `type` parameter should be a valid MIME type. See [Attachments](/learn/sending/attachments) for supported types and size limits.
+
 ## Tracking
 
 Enable open and click tracking:
@@ -202,6 +259,8 @@ Lettr::emails()->send(
         ->withClickTracking(true)
 );
 ```
+
+When tracking is enabled, Lettr inserts a tracking pixel for opens and rewrites links for click tracking. You can view tracking data in the [Analytics dashboard](https://app.lettr.com/analytics) or receive events via [webhooks](/learn/webhooks/introduction). See [Tracking](/learn/sending/tracking) for details on how tracking works and privacy considerations.
 
 ## Testing
 
@@ -223,3 +282,25 @@ public function test_welcome_email_is_sent()
     });
 }
 ```
+
+`Mail::fake()` intercepts all outbound mail, so no real emails are sent during tests. This works identically to testing any other Laravel mailer.
+
+For custom Mailable classes, assert against the class directly:
+
+```php
+Mail::assertSent(OrderConfirmation::class, function ($mail) {
+    return $mail->hasTo('customer@example.com')
+        && $mail->order->id === 42;
+});
+```
+
+## What's Next
+
+<CardGroup cols={2}>
+  <Card title="Templates" icon="file-code" href="/quickstart/laravel/templates">
+    Work with Lettr templates, versioning, and projects
+  </Card>
+  <Card title="Type Safety" icon="shield-check" href="/quickstart/laravel/type-safety">
+    Generate enums, DTOs, and Mailables for compile-time safety
+  </Card>
+</CardGroup>
