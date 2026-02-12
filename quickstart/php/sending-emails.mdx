@@ -3,11 +3,18 @@ title: Sending Emails
 description: "Different ways to send emails with the Lettr PHP SDK"
 ---
 
-The Lettr PHP SDK offers multiple ways to send emails. Choose the approach that fits your needs.
+The Lettr PHP SDK offers multiple ways to send emails, from quick one-liners to the full-featured email builder. This page covers every approach so you can choose the one that fits your use case.
+
+| Approach | Best For |
+|----------|----------|
+| [Quick Send Methods](#quick-send-methods) | Simple emails with minimal configuration |
+| [Email Builder](#email-builder) | Complex emails with tracking, metadata, and multiple recipients |
+| [Templates](#templates-with-substitution-data) | Lettr-managed templates with dynamic data |
+| [Attachments](#attachments) | Sending files alongside email content |
 
 ## Quick Send Methods
 
-For simple use cases, use the shorthand methods:
+For simple emails, use the shorthand methods. These are convenience wrappers around the email builder that handle the most common use cases with minimal code.
 
 ### HTML Email
 
@@ -20,6 +27,12 @@ $response = $lettr->emails()->sendHtml(
 );
 ```
 
+The `sendHtml()` method is perfect for simple HTML emails where you don't need advanced features like tracking configuration or metadata.
+
+<Tip>
+  When providing HTML content, the SDK automatically enables CSS inlining and template substitutions by default. You can disable these behaviors using the [email builder](#email-builder) for more control.
+</Tip>
+
 ### Plain Text Email
 
 ```php
@@ -30,6 +43,12 @@ $response = $lettr->emails()->sendText(
     text: 'This is a plain text email.',
 );
 ```
+
+The `from` parameter accepts either a string email address or an array with `email` and `name` keys to set a display name. The `to` parameter accepts a single email string or an array of recipients (maximum 50).
+
+<Note>
+  You can send both HTML and plain text in the same email by using the [email builder](#email-builder) with both `->html()` and `->text()` methods. Mail clients that don't support HTML will display the plain text version.
+</Note>
 
 ### Template Email
 
@@ -43,9 +62,13 @@ $response = $lettr->emails()->sendTemplate(
 );
 ```
 
+The `substitutionData` array keys correspond to merge tags in your Lettr template (e.g., `{{name}}`). See [Merge Tags & Template Language](/learn/templates/template-language) for the full syntax including conditionals and loops.
+
+For more advanced template usage including versioning and projects, see the [Templates](/quickstart/php/templates) page.
+
 ## Email Builder
 
-For complex emails, use the fluent builder:
+For complex emails that require multiple features, use the fluent email builder. This gives you access to every option the Lettr API supports in a chainable interface:
 
 ```php
 $response = $lettr->emails()->send(
@@ -70,6 +93,12 @@ echo $response->requestId;
 echo $response->accepted;
 ```
 
+The builder is useful when you need to combine multiple features in a single email — for example, HTML content with a plain text fallback, tracking configuration, metadata for analytics, and attachments.
+
+<Tip>
+  All builder methods return the builder instance, so you can chain as many method calls as needed. The order of method calls doesn't matter — the builder collects all the data and sends it to the API when you call `send()`.
+</Tip>
+
 ## Templates with Substitution Data
 
 Send using a Lettr template with dynamic data:
@@ -93,6 +122,14 @@ $response = $lettr->emails()->send(
 );
 ```
 
+The `useTemplate()` method accepts optional `version` and `projectId` parameters to pin specific template versions and select from different projects. See [Templates](/quickstart/php/templates) for details.
+
+**When to use versioning:**
+
+- **Production safety** — Pin to a known-good version so publishing a new draft doesn't affect live emails
+- **A/B testing** — Send different versions to different cohorts and compare metrics
+- **Gradual rollout** — Test a new version with a subset of users before publishing
+
 ## Attachments
 
 Add attachments from file paths or binary data:
@@ -113,9 +150,18 @@ $response = $lettr->emails()->send(
 );
 ```
 
+When attaching files, the SDK automatically:
+- Base64-encodes the file content
+- Detects the MIME type if not provided
+- Validates file size and format
+
+<Warning>
+  Large attachments increase email size and can affect deliverability. Keep attachments under 10 MB total per email. For larger files, consider uploading to cloud storage and including a download link in the email instead.
+</Warning>
+
 ## Email Options
 
-Fine-tune email behavior:
+Fine-tune email behavior with tracking and processing options:
 
 ```php
 $email = $lettr->emails()->create()
@@ -136,14 +182,26 @@ $email = $lettr->emails()->create()
 $response = $lettr->emails()->send($email);
 ```
 
+| Option | Default | Description |
+|--------|---------|-------------|
+| `withClickTracking()` | `true` | Track link clicks in the email |
+| `withOpenTracking()` | `true` | Track when recipients open the email |
+| `transactional()` | `true` | Mark as transactional (bypasses unsubscribe lists) |
+| `withInlineCss()` | `false` | Automatically inline CSS styles for better email client compatibility |
+| `withSubstitutions()` | `true` | Enable merge tag substitution in HTML/text content |
+
+<Note>
+  Click and open tracking are enabled by default. For transactional emails like password resets or order confirmations, leave tracking enabled — the data helps you diagnose delivery issues. For privacy-sensitive communications, disable tracking explicitly.
+</Note>
+
 ## Handling Responses
 
-Every send method returns a `SendEmailResponse`:
+Every send method returns a `SendEmailResponse` with details about the request:
 
 ```php
 $response = $lettr->emails()->send($email);
 
-$response->requestId;      // RequestId for tracking
+$response->requestId;      // Request ID for tracking
 $response->accepted;       // Number of accepted recipients
 $response->rejected;       // Number of rejected recipients
 $response->allAccepted();  // true if all recipients accepted
@@ -151,9 +209,15 @@ $response->hasRejections(); // true if any were rejected
 $response->total();        // Total recipients (accepted + rejected)
 ```
 
+The `requestId` is a unique identifier for this email transmission. Store it in your database to correlate emails with delivery events later. You can use it to query the Lettr API for detailed delivery information including opens, clicks, bounces, and complaints.
+
+<Tip>
+  Save the `requestId` in your application's database alongside the user record or transaction. This lets you look up delivery status, debug issues, and provide customer support without searching through logs.
+</Tip>
+
 ## Retrieving Email Events
 
-Track what happened to sent emails:
+Track what happened to sent emails using the request ID:
 
 ```php
 // Get events by request ID
@@ -165,6 +229,8 @@ foreach ($result->events as $event) {
     echo $event->timestamp;     // When the event occurred
 }
 ```
+
+Events include delivery confirmations, opens, clicks, bounces, and complaints. Use this data to monitor email performance and diagnose delivery issues. See [Event Types](/learn/events/event-types) for the complete list of events and their meanings.
 
 ### List Events with Filtering
 
@@ -192,7 +258,15 @@ while ($result->hasMore()) {
 }
 ```
 
+The SDK uses cursor-based pagination for efficient traversal of large result sets. The `hasMore()` method checks if additional pages exist, and `nextCursor` provides the token for fetching the next page.
+
+<Tip>
+  Use the filtering options to narrow results before paginating. Filtering by recipient or date range significantly reduces the data you need to fetch and process.
+</Tip>
+
 ## Error Handling
+
+The SDK throws typed exceptions for different API errors, making it easy to handle specific failure cases:
 
 ```php
 use Lettr\Exceptions\ValidationException;
@@ -205,13 +279,44 @@ try {
     $response = $lettr->emails()->send($email);
 } catch (ValidationException $e) {
     // Invalid request data (422)
+    // e.g., unverified sender domain, invalid email format
 } catch (UnauthorizedException $e) {
     // Invalid API key (401)
 } catch (NotFoundException $e) {
     // Resource not found (404)
+    // e.g., template slug doesn't exist
 } catch (ApiException $e) {
-    // Other API errors
+    // Other API errors (rate limits, server errors)
 } catch (TransporterException $e) {
-    // Network/transport errors
+    // Network/transport errors (connection failures, timeouts)
 }
 ```
+
+| Exception | HTTP Status | Common Causes |
+|-----------|-------------|---------------|
+| `ValidationException` | 422 | Invalid email format, unverified sending domain, missing required fields |
+| `UnauthorizedException` | 401 | Invalid or expired API key |
+| `NotFoundException` | 404 | Template slug doesn't exist, invalid project ID |
+| `ApiException` | 4xx/5xx | Rate limits, server errors, other API errors |
+| `TransporterException` | N/A | Network failures, timeouts, DNS errors |
+
+<Warning>
+  Always wrap email sending in a try-catch block in production. Network failures and API errors can happen at any time, and unhandled exceptions will crash your application.
+</Warning>
+
+## What's Next
+
+<CardGroup cols={2}>
+  <Card title="Templates" icon="file-code" href="/quickstart/php/templates">
+    Manage and send Lettr templates with versioning
+  </Card>
+  <Card title="Email Tracking" icon="chart-line" href="/learn/sending/tracking">
+    Track opens, clicks, and engagement
+  </Card>
+  <Card title="Metadata" icon="tags" href="/learn/sending/metadata">
+    Attach custom data to emails for analytics
+  </Card>
+  <Card title="Error Handling" icon="triangle-exclamation" href="/learn/sending/errors-retries">
+    Understand errors and retry strategies
+  </Card>
+</CardGroup>
