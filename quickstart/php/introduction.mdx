@@ -3,7 +3,23 @@ title: Introduction
 description: "Send emails from PHP using the Lettr SDK"
 ---
 
-Send transactional emails from any PHP application using the official Lettr PHP SDK. No framework required.
+Send transactional emails from any PHP application using the official Lettr PHP SDK. The SDK provides a clean, type-safe interface for the Lettr API without requiring a specific framework.
+
+The `lettr/lettr-php` package gives you a fluent interface for building and sending emails, managing templates, and tracking delivery — all with full IDE autocompletion and compile-time safety.
+
+## Why Use the PHP SDK?
+
+Rather than making raw HTTP requests, the SDK provides:
+
+- **Type-safe API client** — Full IDE autocompletion and type hints for all methods
+- **Fluent email builder** — Chainable methods for constructing complex emails
+- **Template support** — Send Lettr-managed templates with merge tags and versioning
+- **Error handling** — Typed exceptions for different API errors (validation, auth, not found)
+- **Zero dependencies** — Only requires Guzzle HTTP client (which most PHP projects already use)
+
+<Note>
+  If you're using Laravel or Symfony, consider using the framework-specific SDK instead for deeper integration: [Laravel SDK](/quickstart/laravel/introduction) | [Symfony Bridge](/quickstart/php/symfony)
+</Note>
 
 ## Prerequisites
 
@@ -18,13 +34,22 @@ Before you begin, make sure you have:
   </Card>
 </CardGroup>
 
+You'll also need:
+
+- **PHP 8.4+** and **Composer** installed
+- A verified sending domain in your [Lettr dashboard](https://app.lettr.com/domains)
+
 ## Quick Setup
+
+The fastest way to get started is a three-step install, configure, and send process.
 
 <Steps>
   <Step title="Install the package">
     ```bash
     composer require lettr/lettr-php
     ```
+
+    The package requires PHP 8.4+ and Guzzle 7.5+. Composer will install Guzzle automatically if it's not already in your project.
   </Step>
   <Step title="Create a client">
     ```php
@@ -32,6 +57,10 @@ Before you begin, make sure you have:
 
     $lettr = Lettr::client('your-api-key');
     ```
+
+    <Tip>
+      Store your API key in environment variables or a config file, never hardcode it. API keys use the `lttr_` prefix followed by 64 hexadecimal characters.
+    </Tip>
   </Step>
   <Step title="Send your first email">
     ```php
@@ -46,12 +75,18 @@ Before you begin, make sure you have:
     echo $response->requestId; // Request ID for tracking
     echo $response->accepted;  // Number of accepted recipients
     ```
+
+    The builder pattern lets you chain methods to construct your email. All emails require `from`, `to`, `subject`, and at least one content type (`html`, `text`, or a template).
   </Step>
 </Steps>
 
+<Warning>
+  The sender domain must be verified in your [Lettr dashboard](https://app.lettr.com/domains) before you can send emails. If you try to send from an unverified domain, the API returns a `422` validation error. See [Sending Domains](/learn/domains/sending-domains) for setup instructions.
+</Warning>
+
 ## Verify Your API Key
 
-Test that your API key is valid:
+Test that your API key is valid before sending emails:
 
 ```php
 $auth = $lettr->health()->authCheck();
@@ -59,30 +94,49 @@ $auth = $lettr->health()->authCheck();
 echo $auth->teamId; // Your team ID
 ```
 
-If no exception is thrown, you're ready to send emails.
+If no exception is thrown, you're authenticated and ready to send emails. This check verifies that your API key is correctly formatted, active, and has permission to access your team's resources.
+
+<Tip>
+  During development, use the health check endpoint to catch configuration issues early. It's a quick way to verify your setup before attempting to send emails.
+</Tip>
 
 ## Using a Framework?
 
+If you're working within a specific PHP framework, these integrations provide deeper integration:
+
 <CardGroup cols={2}>
   <Card title="Laravel" icon="laravel" href="/quickstart/laravel/introduction">
-    Use the dedicated Laravel SDK with Mail facade integration
+    Mail facade integration, Mailables, and code generation
+  </Card>
+  <Card title="Symfony" icon="symfony" href="/quickstart/php/symfony">
+    Symfony Mailer transport integration
   </Card>
   <Card title="SMTP" icon="server" href="/quickstart/smtp/introduction">
     Use SMTP instead of the HTTP API
   </Card>
 </CardGroup>
 
+## Section Overview
+
+This quickstart is organized into three focused pages:
+
+| Page | What You'll Learn |
+|------|-------------------|
+| [Installation](/quickstart/php/installation) | Package requirements, client setup, and verifying your installation |
+| [Sending Emails](/quickstart/php/sending-emails) | All sending methods — HTML, text, templates, attachments, tracking, and error handling |
+| [Templates](/quickstart/php/templates) | Managing Lettr templates, versioning, projects, and retrieving merge tags |
+
 ## What's Next
 
 <CardGroup cols={2}>
   <Card title="Installation" icon="download" href="/quickstart/php/installation">
-    Requirements and setup details
+    Detailed setup and client configuration
   </Card>
   <Card title="Sending Emails" icon="paper-plane" href="/quickstart/php/sending-emails">
-    All the ways to send emails
+    Learn all the ways to send emails
   </Card>
   <Card title="Templates" icon="file-code" href="/quickstart/php/templates">
-    Use Lettr templates with merge tags
+    Work with Lettr-managed templates
   </Card>
   <Card title="API Reference" icon="book" href="/api-reference/introduction">
     Complete API documentation
