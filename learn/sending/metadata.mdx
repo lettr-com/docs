@@ -75,14 +75,14 @@ const emails = await lettr.emails.list({
 
 ## Metadata vs Tags
 
-Lettr supports both metadata and tags on emails. They serve different purposes: metadata stores structured key-value data for detailed tracking, while tags are simple string labels for broad categorization.
+Lettr supports both metadata and [tags](/learn/sending/tags) on emails. They serve different purposes: metadata stores structured key-value data for detailed tracking, while a tag is a single string label for analytics grouping.
 
-| Feature | Metadata | Tags |
-|---------|----------|------|
-| Structure | Key-value pairs | Array of strings |
-| Values | Strings only | Strings only |
-| Query support | Query by specific values | Filter by tag presence |
-| Best for | Detailed tracking data (order IDs, customer IDs) | Categorization (transactional, marketing, region) |
+| Feature | Metadata | Tag |
+|---------|----------|-----|
+| Structure | Key-value pairs | Single string (max 64 chars) |
+| Values | Strings only | Plain string |
+| Where it appears | Webhooks, API queries, dashboard | Analytics dashboard filters and breakdowns |
+| Best for | Detailed tracking data (order IDs, customer IDs) | Grouping emails for analytics (e.g., `welcome-series`) |
 
 ## Example: Full Tracking Setup
 
@@ -92,10 +92,10 @@ await lettr.emails.send({
   to: ['customer@example.com'],
   subject: 'Order #12345 Confirmed',
   html: orderConfirmationHtml,
-  
-  // Tags for categorization
-  tags: ['transactional', 'order-confirmation', 'us-region'],
-  
+
+  // Tag for analytics grouping
+  tag: 'order-confirmation',
+
   // Metadata for detailed tracking
   metadata: {
     orderId: 'order_12345',

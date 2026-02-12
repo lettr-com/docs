@@ -139,7 +139,7 @@ $response = Lettr::emails()->send(
         ->substitutionData(['content' => $newsletterContent])
         ->withOpenTracking(true)
         ->withClickTracking(true)
-        ->metadata(['campaign_id' => 'newsletter-2024-01'])
+        ->tag('welcome')
 );
 
 // Access the response
@@ -261,6 +261,82 @@ Lettr::emails()->send(
 ```
 
 When tracking is enabled, Lettr inserts a tracking pixel for opens and rewrites links for click tracking. You can view tracking data in the [Analytics dashboard](https://app.lettr.com/analytics) or receive events via [webhooks](/learn/webhooks/introduction). See [Tracking](/learn/sending/tracking) for details on how tracking works and privacy considerations.
+
+## Tags
+
+Tags let you group emails for analytics. You can filter and break down metrics by tag in the [Analytics dashboard](/learn/analytics/filtering-and-breakdowns), and the home dashboard shows per-tag Sent, Opened, and Rate stats automatically. See [Tags](/learn/sending/tags) for the full reference.
+
+In most cases you don't need to set a tag yourself — the Laravel package resolves it automatically using this priority:
+
+1. **Explicit tag** — if you call `->tag()` on the Mailable, that value wins.
+2. **Template slug** — if you use `->template('slug')`, the server uses the slug as the tag.
+3. **Class name** — if neither of the above applies, the package generates a kebab-case tag from the Mailable class name (e.g., `OrderConfirmation` becomes `order-confirmation`).
+
+### Automatic Tag from Lettr Template
+
+When you use `->template('slug')` on a LettrMailable, the server automatically uses the template slug as the tag. No code needed — your analytics are grouped by template out of the box. The Emails page in the dashboard shows Sent, Opened, and Rate per template.
+
+### Automatic Tag from Mailable Class Name
+
+When sending raw HTML (without a Lettr template) through a `LettrMailable`, the package auto-generates a kebab-case tag from the class name. For example, `OrderConfirmation` becomes `order-confirmation`.
+
+### Overriding with Laravel's `tag()` Method
+
+Call `->tag('my-tag')` on any Mailable to override the automatic tag:
+
+```php
+class WeeklyNewsletter extends LettrMailable
+{
+    public function build(): static
+    {
+        return $this
+            ->template('newsletter')
+            ->tag('welcome'); // overrides the automatic 'newsletter' tag
+    }
+}
+```
+
+If multiple tags are set (via Laravel's `tag()` method), they are joined with `_` into a single string. The combined string must not exceed 64 characters.
+
+### Quick Template Sending
+
+The `sendTemplate` method accepts a `tag` parameter. If omitted, the template slug is used automatically:
+
+```php
+Mail::lettr()
+    ->to('user@example.com')
+    ->sendTemplate('welcome-email', [
+        'name' => 'John',
+    ], tag: 'onboarding'); // omit to use 'welcome-email' as the tag
+```
+
+### Email Builder
+
+Use `->tag()` on the email builder:
+
+```php
+Lettr::emails()->send(
+    Lettr::emails()->create()
+        ->from('marketing@yourdomain.com')
+        ->to(['subscriber@example.com'])
+        ->subject('Monthly Newsletter')
+        ->html($htmlContent)
+        ->tag('newsletter-2024-01')
+);
+```
+
+### Raw HTML via Lettr Facade
+
+When sending raw HTML via the Lettr facade (`sendHtml`, `sendText`), no automatic tag is applied. Set one manually using the email builder with `->tag()`.
+
+### Summary
+
+| Approach | Auto Tag | Override |
+|----------|----------|---------|
+| LettrMailable with `->template('slug')` | Template slug (server-side) | `->tag()` on the Mailable |
+| LettrMailable with raw HTML | Mailable class name in kebab-case | `->tag()` on the Mailable |
+| Quick `sendTemplate` | Template slug (server-side) | `tag:` parameter |
+| Email builder / Lettr facade | None | `->tag()` on the builder |
 
 ## Testing
 

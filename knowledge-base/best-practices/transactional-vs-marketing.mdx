@@ -118,9 +118,9 @@ Each subdomain builds its own sender reputation independently. See [Sending Doma
 
 Organize your templates into separate [projects](/learn/templates/projects) — one for transactional templates, one for marketing templates. This keeps your template library clean and makes it easy to apply different design standards and review processes to each type.
 
-### Use `campaign_id` for Marketing Emails
+### Use `tag` for Marketing Emails
 
-When sending marketing emails through the API, include a `campaign_id` to group related sends and track campaign-level metrics:
+When sending marketing emails through the API, include a `tag` to group related sends and track campaign-level metrics in the [Analytics dashboard](/learn/analytics/filtering-and-breakdowns):
 
 ```json
 POST /api/emails
@@ -130,7 +130,7 @@ Authorization: Bearer your-api-key
   "from": "news@campaigns.yourdomain.com",
   "to": "recipient@example.com",
   "template_id": "tmpl_summer_sale",
-  "campaign_id": "camp_summer_2025",
+  "tag": "summer-sale-2025",
   "merge_tags": {
     "first_name": "Alex",
     "offer_code": "SAVE20"
@@ -138,7 +138,7 @@ Authorization: Bearer your-api-key
 }
 ```
 
-Transactional emails typically do not need a `campaign_id` since they are triggered individually.
+Transactional emails typically do not need a `tag` since they are triggered individually. See [Tags](/learn/sending/tags) for details.
 
 ### Use Metadata for Internal Tracking
 

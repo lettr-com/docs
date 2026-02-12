@@ -103,7 +103,7 @@ curl -X POST https://app.lettr.com/api/emails \
   }'
 ```
 
-## Send with Metadata and Campaign
+## Send with Metadata and Tag
 
 ```bash
 curl -X POST https://app.lettr.com/api/emails \
@@ -114,7 +114,7 @@ curl -X POST https://app.lettr.com/api/emails \
     "to": ["subscriber@example.com"],
     "subject": "Special Offer",
     "html": "<p>Check out our special offer!</p>",
-    "campaign_id": "spring-sale-2024",
+    "tag": "spring-sale-2024",
     "metadata": {
       "user_id": "12345",
       "source": "website"

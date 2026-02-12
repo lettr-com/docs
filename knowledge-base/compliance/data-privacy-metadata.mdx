@@ -170,8 +170,8 @@ If you need to comply with data deletion requests, such as the GDPR right to era
     Password resets, account verifications, and other sensitive actions should use tokens that expire. Even if the email content is stored indefinitely, an expired token poses no security risk. Set expiry times as short as practical — 24 hours or less for password resets.
   </Accordion>
 
-  <Accordion title="Don't store PII in campaign_id or custom headers">
-    It is tempting to encode useful information into identifiers, but values like `campaign_id` are stored and visible across your team. Use opaque identifiers and resolve them in your own systems.
+  <Accordion title="Don't store PII in tag or custom headers">
+    It is tempting to encode useful information into identifiers, but values like `tag` are stored and visible across your team. Use opaque identifiers and resolve them in your own systems.
   </Accordion>
 
   <Accordion title="Audit what data you're passing to the API periodically">

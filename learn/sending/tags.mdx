@@ -1,0 +1,86 @@
+---
+title: Tags
+description: "Group emails for analytics with a single string tag"
+---
+
+Tags let you label emails with a single string identifier so you can group and analyze them in the [Analytics dashboard](/learn/analytics/filtering-and-breakdowns). Every email you send can carry one tag (max 64 characters), and you can then filter and break down metrics — sent, delivered, bounced, opened, clicked — by that tag.
+
+## Adding a Tag via API
+
+Include the `tag` field in your send request:
+
+```json
+POST /api/emails
+Authorization: Bearer lttr_xxxxxxxxxxxx
+
+{
+  "from": "marketing@yourdomain.com",
+  "to": ["subscriber@example.com"],
+  "subject": "Weekly Newsletter",
+  "html": "<p>This week's update...</p>",
+  "tag": "welcome"
+}
+```
+
+## Adding a Tag via PHP SDK
+
+Use the `->tag()` method on the email builder:
+
+```php
+$response = $lettr->emails()->send(
+    $lettr->emails()->create()
+        ->from('marketing@yourdomain.com')
+        ->to(['subscriber@example.com'])
+        ->subject('Weekly Newsletter')
+        ->html('<p>This week\'s update...</p>')
+        ->tag('welcome')
+);
+```
+
+## Automatic Tags from Templates
+
+When you send an email using a `template_slug`, Lettr automatically sets the tag to the template slug on the server. You don't need to pass a `tag` yourself — your analytics are grouped by template out of the box.
+
+This also means that each template in the Emails dashboard shows **Sent**, **Opened**, and **Rate** columns, giving you per-template engagement stats without any extra configuration.
+
+<Tip>
+  You can still override the automatic tag by passing an explicit `tag` in the request. The explicit tag takes priority.
+</Tip>
+
+## Tags in the Dashboard
+
+Tags appear in two places in the Lettr dashboard:
+
+### Analytics by Tag
+
+The home dashboard includes an **Analytics by Tag** widget that shows sending stats for the last 30 days grouped by tag — Sent, Opened, and Rate at a glance.
+
+### Analytics Filtering and Breakdowns
+
+On the Analytics page you can use tags in two ways:
+
+- **Filter by Tag** — Show only data for emails with a specific tag. Open the Configure modal, go to the Filters tab, and select "Tag" as the filter type.
+- **Break down by Tag** — Use the "Break Down By" dropdown below the chart to see your metrics split by tag. This lets you compare performance across different email categories at a glance.
+
+See [Filtering and Breakdowns](/learn/analytics/filtering-and-breakdowns) for full details on the Configure modal.
+
+## Tag Rules
+
+| Rule | Detail |
+|------|--------|
+| Maximum length | 64 characters |
+| Tags per email | One |
+| Format | Plain string — letters, numbers, hyphens, underscores |
+
+## Metadata vs Tags
+
+Tags and [metadata](/learn/sending/metadata) serve different purposes:
+
+| | Tags | Metadata |
+|---|------|----------|
+| **Purpose** | Analytics grouping | Per-email tracking data |
+| **Structure** | Single string | Key-value pairs |
+| **Where it appears** | Analytics dashboard filters and breakdowns | Webhooks, API queries, dashboard |
+| **Best for** | Comparing performance across email categories | Linking emails to orders, customers, or internal IDs |
+
+Use a tag when you want to group emails in the Analytics dashboard (e.g., `welcome-series`, `order-confirmation`). Use metadata when you need to attach structured data for webhooks or API queries (e.g., `orderId`, `customerId`).

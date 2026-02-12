@@ -29,7 +29,7 @@ The Filters tab lets you narrow the data to a subset of your sends based on spec
 |------|----------------|
 | Recipient Domain | The domain of the recipient's email address (e.g., gmail.com) |
 | Sending IP | The IP address Lettr used to deliver the email |
-| Campaign ID | A campaign identifier you attached to the email at send time |
+| Tag | A tag you attached to the email at send time |
 | Mailbox Provider | The email service provider of the recipient (e.g., gmail, outlook) |
 | Mailbox Provider Region | The geographic region of the recipient's mailbox provider |
 | Sending Domain | The verified domain you sent the email from |
@@ -61,7 +61,7 @@ Below the chart on the main Analytics page, the **Break Down By** dropdown popul
 |-----------|---------------|
 | Recipient Domain | Metrics grouped by the recipient's email domain |
 | Sending Domain | Metrics grouped by which of your sending domains was used |
-| Campaign ID | Metrics grouped by the campaign identifier you attached at send time |
+| Tag | Metrics grouped by the tag you attached at send time |
 | Sending IP | Metrics grouped by the Lettr IP that delivered the email |
 | Mailbox Provider | Metrics grouped by the recipient's email provider |
 | Mailbox Provider Region | Metrics grouped by the geographic region of the recipient's provider |
@@ -72,14 +72,14 @@ The breakdown table reflects the same date range, metrics, and filters as the ch
 
 **Sending Domain** is useful if you're sending from multiple verified domains and want to compare their performance.
 
-**Campaign ID** is useful if you use campaign identifiers to organize your sends — for example, tagging transactional emails differently from marketing emails.
+**Tag** is useful if you use tags to organize your sends — for example, tagging transactional emails differently from marketing emails. See [Tags](/learn/sending/tags) for how to attach a tag when sending.
 
 <CardGroup cols={2}>
   <Card title="Reading the Dashboard" icon="chart-line" href="/learn/analytics/reading-the-dashboard">
     How to interpret the chart, summary, and breakdown data
   </Card>
-  <Card title="Metadata" icon="tag" href="/learn/sending/metadata">
-    How to attach campaign IDs and other custom data at send time
+  <Card title="Tags" icon="tag" href="/learn/sending/tags">
+    How to attach tags for analytics grouping at send time
   </Card>
   <Card title="Events" icon="calendar-days" href="/learn/events/introduction">
     Investigate individual emails when a metric flags an issue

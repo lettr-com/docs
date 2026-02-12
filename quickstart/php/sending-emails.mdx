@@ -84,8 +84,8 @@ $response = $lettr->emails()->send(
         ->substitutionData(['content' => $newsletterContent])
         ->withOpenTracking(true)
         ->withClickTracking(true)
-        ->metadata(['campaign_id' => 'newsletter-2024-01'])
-        ->campaignId('welcome-series')
+        ->tag('welcome')
+        ->metadata(['source' => 'website'])
 );
 
 // Access the response
