@@ -39,9 +39,10 @@ Include your API key in the `Authorization` header using the Bearer scheme:
 
 ```bash
 curl https://app.lettr.com/api/emails \
+  -X POST \
   -H "Authorization: Bearer lttr_xxxxxxxxxxxx" \
   -H "Content-Type: application/json" \
-  -d '{"to": "recipient@example.com", "subject": "Hello"}'
+  -d '{"from": "sender@example.com", "to": ["recipient@example.com"], "subject": "Hello", "html": "<p>Hello!</p>"}'
 ```
 
 ### In SDKs
@@ -164,10 +165,7 @@ If no API key is provided, you'll receive:
 
 ```json
 {
-  "error": {
-    "code": "unauthorized",
-    "message": "API key is required"
-  }
+  "message": "API key is required."
 }
 ```
 
@@ -179,10 +177,7 @@ If the provided API key doesn't exist or has been revoked:
 
 ```json
 {
-  "error": {
-    "code": "unauthorized",
-    "message": "Invalid API key"
-  }
+  "message": "Invalid API key."
 }
 ```
 
@@ -194,10 +189,7 @@ If the request comes from an IP address not in the key's whitelist:
 
 ```json
 {
-  "error": {
-    "code": "forbidden",
-    "message": "IP address not allowed for this API key"
-  }
+  "message": "Access denied. Your IP address is not allowed."
 }
 ```
 
@@ -211,16 +203,21 @@ The following endpoints are available when authenticated with an API key:
 |----------|--------|-------------|---------------------|
 | `/api/emails` | POST | Send an email | Sending Only or Full Access |
 | `/api/emails` | GET | List sent emails | Full Access |
-| `/api/emails/{id}` | GET | Get email details | Full Access |
+| `/api/emails/{requestId}` | GET | Get email details | Full Access |
 | `/api/templates` | GET | List templates | Full Access |
+| `/api/templates` | POST | Create a template | Full Access |
 | `/api/templates/{slug}` | GET | Get template details | Full Access |
+| `/api/templates/{slug}` | PUT | Update a template | Full Access |
+| `/api/templates/{slug}` | DELETE | Delete a template | Full Access |
+| `/api/templates/{slug}/merge-tags` | GET | Get template merge tags | Full Access |
+| `/api/projects` | GET | List projects | Full Access |
 | `/api/domains` | GET | List domains | Full Access |
 | `/api/domains` | POST | Create a domain | Full Access |
 | `/api/domains/{domain}` | GET | Get domain details | Full Access |
 | `/api/domains/{domain}/verify` | POST | Verify a domain | Full Access |
 | `/api/domains/{domain}` | DELETE | Delete a domain | Full Access |
 | `/api/webhooks` | GET | List webhooks | Full Access |
-| `/api/webhooks/{id}` | GET | Get webhook details | Full Access |
+| `/api/webhooks/{webhookId}` | GET | Get webhook details | Full Access |
 
 ## Next Steps
 

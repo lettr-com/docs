@@ -32,48 +32,16 @@ Before setting up email receiving, ensure you have:
 
 ## Adding an Inbound Domain
 
-### Via Dashboard
-
 1. Go to **Domains** → **Inbound**
 2. Click **Add Domain**
 3. Enter your domain (e.g., `mail.example.com`)
 4. Click **Create**
 
-### Via API
+The dashboard will display the MX records you need to add, along with the domain's current status (`unverified` until DNS is configured).
 
-```javascript
-const response = await fetch('https://app.lettr.com/api/domains/inbound', {
-  method: 'POST',
-  headers: {
-    'Authorization': 'Bearer lttr_xxxxxxxxxxxx',
-    'Content-Type': 'application/json'
-  },
-  body: JSON.stringify({
-    domain: 'mail.example.com'
-  })
-});
-
-const data = await response.json();
-console.log(data);
-```
-
-Response:
-
-```json
-{
-  "success": true,
-  "data": {
-    "domain": "mail.example.com",
-    "mx_status": "unverified",
-    "mx_records": [
-      { "priority": 5, "hostname": "rx1.sparkpostmail.com" },
-      { "priority": 10, "hostname": "rx2.sparkpostmail.com" },
-      { "priority": 20, "hostname": "rx3.sparkpostmail.com" }
-    ],
-    "created_at": "2024-01-15T10:30:00Z"
-  }
-}
-```
+<Note>
+  Inbound domain management is available through the Lettr dashboard. There is no public API endpoint for creating or managing inbound domains.
+</Note>
 
 ## DNS Configuration
 
@@ -105,45 +73,11 @@ Lower numbers indicate higher priority. If the primary server is unavailable, se
 
 After adding MX records, verify they're properly configured:
 
-### Via Dashboard
-
 1. Go to **Domains** → **Inbound**
 2. Find your domain and click **Verify**
 3. Wait for the verification to complete
 
-### Via API
-
-```javascript
-const response = await fetch(
-  'https://app.lettr.com/api/domains/inbound/mail.example.com/verify',
-  {
-    method: 'POST',
-    headers: {
-      'Authorization': 'Bearer lttr_xxxxxxxxxxxx'
-    }
-  }
-);
-
-const data = await response.json();
-console.log(data);
-```
-
-Response:
-
-```json
-{
-  "success": true,
-  "data": {
-    "domain": "mail.example.com",
-    "mx_status": "valid",
-    "mx_records_found": [
-      "rx1.sparkpostmail.com",
-      "rx2.sparkpostmail.com",
-      "rx3.sparkpostmail.com"
-    ]
-  }
-}
-```
+Once verified, the domain's status changes from `unverified` to `valid`, confirming your MX records are correctly configured.
 
 ## Domain Status
 

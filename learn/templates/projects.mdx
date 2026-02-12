@@ -106,7 +106,7 @@ await lettr.emails.send({
   to: ['recipient@example.com'],
   subject: 'Welcome',
   template_slug: 'welcome-email',
-  project_id: 'proj_abc123'
+  project_id: 123
 });
 ```
 
@@ -129,16 +129,22 @@ Response includes project information:
 {
   "data": [
     {
-      "slug": "welcome-email",
+      "id": 1,
       "name": "Welcome Email",
-      "version": 2,
-      "project_id": "proj_abc123"
+      "slug": "welcome-email",
+      "project_id": 123,
+      "folder_id": null,
+      "created_at": "2026-01-10T09:00:00Z",
+      "updated_at": "2026-01-15T14:30:00Z"
     },
     {
-      "slug": "order-confirmation",
+      "id": 2,
       "name": "Order Confirmation",
-      "version": 5,
-      "project_id": "proj_abc123"
+      "slug": "order-confirmation",
+      "project_id": 123,
+      "folder_id": 5,
+      "created_at": "2026-01-12T11:00:00Z",
+      "updated_at": "2026-01-20T08:15:00Z"
     }
   ]
 }

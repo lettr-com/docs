@@ -7,7 +7,7 @@ Metadata lets you attach arbitrary key-value pairs to any email you send through
 
 ## Adding Metadata
 
-Include a `metadata` object in your send request. Values can be strings, numbers, or booleans:
+Include a `metadata` object in your send request. All values must be strings:
 
 ```javascript
 await lettr.emails.send({
@@ -18,7 +18,7 @@ await lettr.emails.send({
   metadata: {
     orderId: 'order_12345',
     customerId: 'cust_67890',
-    orderTotal: 99.99,
+    orderTotal: '99.99',
     source: 'checkout'
   }
 });
@@ -37,7 +37,7 @@ When Lettr delivers a webhook event for an email that carries metadata, the full
     "metadata": {
       "orderId": "order_12345",
       "customerId": "cust_67890",
-      "orderTotal": 99.99,
+      "orderTotal": "99.99",
       "source": "checkout"
     }
   }
@@ -80,9 +80,9 @@ Lettr supports both metadata and tags on emails. They serve different purposes: 
 | Feature | Metadata | Tags |
 |---------|----------|------|
 | Structure | Key-value pairs | Array of strings |
-| Values | Strings, numbers, booleans | Strings only |
+| Values | Strings only | Strings only |
 | Query support | Query by specific values | Filter by tag presence |
-| Best for | Detailed tracking data (order IDs, customer IDs, amounts) | Categorization (transactional, marketing, region) |
+| Best for | Detailed tracking data (order IDs, customer IDs) | Categorization (transactional, marketing, region) |
 
 ## Example: Full Tracking Setup
 
@@ -100,9 +100,9 @@ await lettr.emails.send({
   metadata: {
     orderId: 'order_12345',
     customerId: 'cust_67890',
-    orderTotal: 299.99,
+    orderTotal: '299.99',
     currency: 'USD',
-    itemCount: 3,
+    itemCount: '3',
     shippingMethod: 'express',
     requestId: 'req_xyz789'
   }

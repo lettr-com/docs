@@ -28,12 +28,11 @@ When you exceed rate limits, you'll receive a `429 Too Many Requests` response:
 
 ```json
 {
-  "status": "error",
-  "error_code": "rate_limit_exceeded",
-  "message": "Too many requests. Please retry after 60 seconds.",
-  "retry_after": 60
+  "message": "Too many requests. Please retry after 60 seconds."
 }
 ```
+
+Rate limiting is handled at the infrastructure level. The response may include a `Retry-After` header indicating how many seconds to wait before retrying.
 
 ## Handling Rate Limits
 

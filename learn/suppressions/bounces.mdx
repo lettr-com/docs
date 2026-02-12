@@ -191,26 +191,6 @@ Response includes all events for that email, including bounces:
 }
 ```
 
-### Listing Bounces via SDK
-
-You can also query bounces and statistics using the Lettr SDK:
-
-```javascript
-// List all bounces for a date range
-const bounces = await lettr.bounces.list({
-  startDate: '2024-01-01',
-  endDate: '2024-01-31'
-});
-
-// Get bounce rate statistics
-const stats = await lettr.stats.get({
-  startDate: '2024-01-01',
-  endDate: '2024-01-31'
-});
-
-console.log(`Bounce rate: ${stats.bounceRate}%`);
-```
-
 ## Bounce Rate Guidelines
 
 Monitor your bounce rates to maintain good deliverability:

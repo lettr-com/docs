@@ -62,14 +62,15 @@ Response:
 
 ```json
 {
-  "success": true,
+  "message": "Domain created successfully.",
   "data": {
     "domain": "example.com",
     "status": "pending",
     "status_label": "Pending Review",
     "dkim": {
+      "public": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQ...",
       "selector": "scph0722",
-      "public": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQ..."
+      "headers": "from:to:subject:date"
     }
   }
 }
@@ -110,7 +111,7 @@ curl https://app.lettr.com/api/domains/example.com \
 
 ```json
 {
-  "success": true,
+  "message": "Domain retrieved successfully.",
   "data": {
     "domain": "example.com",
     "status": "approved",

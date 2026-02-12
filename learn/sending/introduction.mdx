@@ -39,13 +39,13 @@ curl -X POST https://app.lettr.com/api/emails \
 |-----------|------|----------|-------------|
 | `from` | string | Yes | Sender email address (must be from verified domain) |
 | `from_name` | string | No | Friendly sender name |
-| `to` | string or string[] | Yes | Recipient address(es), max 50 |
+| `to` | string[] | Yes | Recipient address(es), max 50 |
 | `subject` | string | Yes | Email subject line (max 998 chars) |
 | `html` | string | No* | HTML content |
 | `text` | string | No* | Plain text content |
 | `amp_html` | string | No | AMP HTML content |
-| `cc` | string or string[] | No | CC recipients |
-| `bcc` | string or string[] | No | BCC recipients |
+| `cc` | string[] | No | CC recipients |
+| `bcc` | string[] | No | BCC recipients |
 | `reply_to` | string | No | Reply-to address |
 | `reply_to_name` | string | No | Reply-to display name |
 | `attachments` | array | No | File attachments |
@@ -54,13 +54,12 @@ curl -X POST https://app.lettr.com/api/emails \
 | `metadata` | object | No | Custom metadata (available in webhooks) |
 | `substitution_data` | object | No | Variables for template substitution |
 
-*At least one of `html` or `text` is required.
+*At least one of `html`, `text`, or `template_slug` is required.
 
 ## Response
 
 ```json
 {
-  "success": true,
   "message": "Email queued for delivery.",
   "data": {
     "request_id": "7582751837467401763",
@@ -226,13 +225,12 @@ The API returns structured errors to help you diagnose issues:
 
 ```json
 {
-  "status": "error",
-  "error_code": "invalid_sending_domain",
+  "error_code": "invalid_domain",
   "message": "The sending domain is not verified."
 }
 ```
 
-Common errors include unverified domains (`invalid_sending_domain`), validation failures (`validation_error`), and rate limits (`rate_limit_exceeded`). Rate limit responses include a `retryAfter` value. Server errors (5xx) are safe to retry with exponential backoff, while client errors (4xx other than 429) should not be retried.
+Common errors include unverified domains (`invalid_domain`), unconfigured domains (`unconfigured_domain`), validation failures (`validation_error`), and template errors (`template_not_found`). Server errors (5xx) are safe to retry with exponential backoff, while client errors (4xx) should not be retried.
 
 See [Errors & Retries](/learn/sending/errors-retries) for a complete error code reference and retry patterns.
 

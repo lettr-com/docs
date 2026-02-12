@@ -60,33 +60,10 @@ app.post('/webhooks/inbound', async (req, res) => {
 
 ## Configuring Spam Sensitivity
 
-Configure spam filtering sensitivity for your inbound domain:
-
-```javascript
-// Update domain spam filter settings
-const response = await fetch(
-  'https://app.lettr.com/api/domains/inbound/mail.example.com',
-  {
-    method: 'PATCH',
-    headers: {
-      'Authorization': 'Bearer lttr_xxxxxxxxxxxx',
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      spamFilter: 'aggressive' // 'off', 'moderate', 'aggressive'
-    })
-  }
-);
-```
-
-| Setting | Behavior |
-|---------|----------|
-| `off` | No server-side filtering, receive all emails |
-| `moderate` | Block obvious spam (score > 8) |
-| `aggressive` | Block likely spam (score > 5) |
+You can configure spam filtering sensitivity for your inbound domain through the Lettr dashboard under **Domains** → **Inbound**, then selecting your domain.
 
 <Note>
-  Even with filtering set to `off`, you still receive the spam score and can implement your own filtering logic.
+  Regardless of your server-side filtering configuration, you always receive the `spamScore` field with each inbound email and can implement your own filtering logic in your webhook handler.
 </Note>
 
 ## Advanced Spam Detection
@@ -332,25 +309,24 @@ app.post('/admin/quarantine/:id/release', async (req, res) => {
 
 ## Reporting Spam
 
-Report false negatives (spam that wasn't caught) to improve filtering:
+When spam gets through your filters, maintain a local blocklist to prevent future deliveries from the same sender:
 
 ```javascript
 // User reports an email as spam
 app.post('/api/report-spam', async (req, res) => {
   const { emailId } = req.body;
 
-  await fetch('https://app.lettr.com/api/inbound/report-spam', {
-    method: 'POST',
-    headers: {
-      'Authorization': 'Bearer lttr_xxxxxxxxxxxx',
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ emailId })
-  });
-
-  // Also add sender to local blocklist
+  // Add sender to local blocklist
   const email = await getEmailById(emailId);
   await addToBlocklist(email.from);
+
+  // Log for analysis and tuning
+  await logSpamReport({
+    emailId,
+    sender: email.from,
+    spamScore: email.spamScore,
+    reportedAt: new Date()
+  });
 
   res.json({ success: true });
 });

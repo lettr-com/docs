@@ -170,18 +170,28 @@ Each webhook has a status that reflects its health:
 
 ### Check Webhook Status via API
 
-```javascript
-const webhook = await lettr.webhooks.get('wh_123');
+You can check webhook status using the read-only API:
 
-console.log({
-  id: webhook.id,
-  status: webhook.status,
-  url: webhook.url,
-  enabled: webhook.enabled,
-  lastSuccessfulAt: webhook.last_successful_at,
-  lastFailureAt: webhook.last_failure_at,
-  lastStatus: webhook.last_status
-});
+```bash
+curl -X GET "https://app.lettr.com/api/webhooks/{webhookId}" \
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+```
+
+The response includes status information:
+
+```json
+{
+  "id": "webhook-abc123",
+  "name": "Order Notifications",
+  "url": "https://example.com/webhook",
+  "enabled": true,
+  "event_types": ["message.delivery", "message.bounce"],
+  "auth_type": "basic",
+  "has_auth_credentials": true,
+  "last_successful_at": "2024-01-15T10:30:00+00:00",
+  "last_failure_at": null,
+  "last_status": "success"
+}
 ```
 
 ### Dashboard Monitoring
@@ -194,69 +204,11 @@ The Lettr dashboard provides detailed visibility into webhook delivery:
 
 ## Viewing Delivery History
 
-Track individual webhook deliveries to debug issues:
+You can view delivery history for each webhook in the Lettr dashboard:
 
-```javascript
-// List recent deliveries for a webhook
-const deliveries = await lettr.webhooks.listDeliveries('wh_123', {
-  limit: 20
-});
-
-deliveries.forEach(delivery => {
-  console.log({
-    eventId: delivery.event_id,
-    eventType: delivery.event_type,
-    status: delivery.status,
-    attempts: delivery.attempts,
-    responseCode: delivery.response_code,
-    responseTime: delivery.response_time_ms,
-    lastAttemptAt: delivery.last_attempt_at,
-    nextRetryAt: delivery.next_retry_at
-  });
-});
-```
-
-### Delivery Status Values
-
-| Status | Description |
-|--------|-------------|
-| `pending` | Delivery queued, not yet attempted |
-| `succeeded` | Delivered successfully |
-| `failed` | All retry attempts exhausted |
-| `retrying` | Failed, retry scheduled |
-
-## Manual Retry
-
-If a delivery failed and you've fixed the underlying issue, you can manually retry:
-
-```javascript
-// Retry a specific failed delivery
-await lettr.webhooks.retryDelivery('wh_123', 'delivery_abc123');
-```
-
-This queues an immediate retry attempt, bypassing the normal backoff schedule.
-
-### Bulk Retry
-
-To retry all failed deliveries for a webhook:
-
-```javascript
-// Get all failed deliveries
-const failedDeliveries = await lettr.webhooks.listDeliveries('wh_123', {
-  status: 'failed',
-  limit: 100
-});
-
-// Retry each one
-for (const delivery of failedDeliveries) {
-  try {
-    await lettr.webhooks.retryDelivery('wh_123', delivery.id);
-    console.log(`Retried delivery ${delivery.id}`);
-  } catch (err) {
-    console.error(`Failed to retry ${delivery.id}:`, err.message);
-  }
-}
-```
+1. Navigate to **Settings** -> **Webhooks**
+2. Select a webhook
+3. View the delivery log showing recent attempts, response codes, and failure reasons
 
 ## Automatic Disabling
 
@@ -266,14 +218,7 @@ Webhooks are automatically disabled after sustained failures to protect both sys
 - Reduces load on your failing endpoint
 - Alerts you to investigate the issue
 
-When a webhook is auto-disabled, you'll see it in the dashboard and can re-enable it after fixing the issue:
-
-```javascript
-// Re-enable a disabled webhook
-await lettr.webhooks.update('wh_123', {
-  enabled: true
-});
-```
+When a webhook is auto-disabled, you'll see it in the dashboard and can re-enable it after fixing the issue. Navigate to **Settings** -> **Webhooks**, select the disabled webhook, and toggle it back on.
 
 <Warning>
   Before re-enabling, ensure the underlying issue is resolved. Re-enabling without fixing the problem will lead to immediate failures and potentially another auto-disable.

@@ -121,10 +121,7 @@ When a request is made from a non-whitelisted IP:
 
 ```json
 {
-  "error": {
-    "code": "forbidden",
-    "message": "IP address not allowed for this API key"
-  }
+  "message": "Access denied. Your IP address is not allowed."
 }
 ```
 
@@ -152,10 +149,7 @@ When an API key attempts an operation outside its permission scope, you'll recei
 
 ```json
 {
-  "error": {
-    "code": "forbidden",
-    "message": "API key lacks required permission for this operation"
-  }
+  "message": "API key lacks required permission for this operation."
 }
 ```
 
@@ -174,17 +168,22 @@ The following table shows which endpoints are accessible with each permission le
 |----------|--------|-------------|--------------|
 | `/api/emails` | POST | Yes | Yes |
 | `/api/emails` | GET | Yes | No |
-| `/api/emails/{id}` | GET | Yes | No |
+| `/api/emails/{requestId}` | GET | Yes | No |
 | `/api/templates` | GET | Yes | Read-only |
+| `/api/templates` | POST | Yes | No |
 | `/api/templates/{slug}` | GET | Yes | Read-only |
+| `/api/templates/{slug}` | PUT | Yes | No |
+| `/api/templates/{slug}` | DELETE | Yes | No |
+| `/api/templates/{slug}/merge-tags` | GET | Yes | Read-only |
 | `/api/templates/html` | GET | Yes | Yes |
+| `/api/projects` | GET | Yes | No |
 | `/api/domains` | GET | Yes | No |
 | `/api/domains` | POST | Yes | No |
 | `/api/domains/{domain}` | GET | Yes | No |
 | `/api/domains/{domain}/verify` | POST | Yes | No |
 | `/api/domains/{domain}` | DELETE | Yes | No |
 | `/api/webhooks` | GET | Yes | No |
-| `/api/webhooks/{id}` | GET | Yes | No |
+| `/api/webhooks/{webhookId}` | GET | Yes | No |
 
 ## Security Recommendations
 
