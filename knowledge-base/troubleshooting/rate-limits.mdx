@@ -81,7 +81,7 @@ async function sendWithBackoff(url, payload, maxRetries = 5) {
 ```bash
 # Send a request and check for 429 status
 curl -s -w "\nHTTP Status: %{http_code}\n" \
-  -X POST https://api.lettr.com/v1/emails \
+  -X POST https://app.lettr.com/api/emails \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -113,7 +113,7 @@ async function sendToAll(recipients, emailPayload) {
   const chunks = chunkRecipients(recipients);
 
   for (const chunk of chunks) {
-    await sendWithBackoff("https://api.lettr.com/v1/emails", {
+    await sendWithBackoff("https://app.lettr.com/api/emails", {
       ...emailPayload,
       to: chunk,
     });
@@ -175,7 +175,7 @@ async function processQueue(queue, emailPayload, delayMs = 1000) {
 
   for (const chunk of chunks) {
     try {
-      await sendWithBackoff("https://api.lettr.com/v1/emails", {
+      await sendWithBackoff("https://app.lettr.com/api/emails", {
         ...emailPayload,
         to: chunk,
       });

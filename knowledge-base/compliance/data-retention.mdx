@@ -69,7 +69,7 @@ Pass internal IDs instead of personally identifiable information in your API cal
 
 ```bash
 # Avoid — PII in metadata
-curl -X POST https://api.lettr.com/api/emails \
+curl -X POST https://app.lettr.com/api/emails \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -84,9 +84,9 @@ curl -X POST https://api.lettr.com/api/emails \
   }'
 
 # Better — opaque identifiers only
-curl -X POST https://api.lettr.com/api/emails \
+curl -X POST https://app.lettr.com/api/emails \
   -H "Authorization: Bearer YOUR_API_KEY" \
-  -H "Content-Type: application/json" \
+  -H "Content-Type": "application/json" \
   -d '{
     "from": "orders@shop.com",
     "to": "customer@example.com",
