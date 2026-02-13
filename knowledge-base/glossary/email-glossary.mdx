@@ -33,11 +33,23 @@ An email content type (`text/x-amp-html`) that allows interactive elements like 
 
 See [Email Content Types](/knowledge-base/fundamentals/content-types).
 
+### API Error Code
+
+A machine-readable identifier returned in Lettr API error responses (alongside human-readable error messages) to indicate the specific type of failure. Common error codes include `validation_error`, `invalid_domain`, `unconfigured_domain`, `send_error`, `template_not_found`, and `resource_already_exists`. Error codes enable programmatic error handling and logging.
+
+See [API Reference Introduction](/api-reference/introduction).
+
 ### API Key
 
 A secret token used to authenticate requests to the Lettr API. API keys should be stored in environment variables and never committed to source code or shared publicly. Each key can be scoped to specific permissions.
 
 See [API Keys](/learn/api-keys/introduction) and [Security Best Practices](/knowledge-base/best-practices/security).
+
+### ARC (Authenticated Received Chain)
+
+An email authentication protocol (RFC 8617) that preserves authentication results when email is forwarded or modified by intermediaries (mailing lists, forwarding services). ARC creates a chain of cryptographically signed headers showing each server's authentication verification, allowing final recipients to trust authentication results despite email modifications that would normally break DKIM signatures.
+
+See [Understanding SPF, DKIM, and DMARC](/knowledge-base/fundamentals/spf-dkim-dmarc).
 
 ### ARF (Abuse Reporting Format)
 
@@ -51,6 +63,12 @@ An email header added by the receiving mail server that shows the pass/fail stat
 
 See [Email Headers Explained](/knowledge-base/fundamentals/email-headers).
 
+### Auto-Submitted Header
+
+An email header (`Auto-Submitted: auto-reply` or `auto-generated`) that indicates a message was generated automatically rather than by a human. Auto-submitted headers identify out-of-office replies, bounce notifications, mailing list responses, and automated system messages. Properly setting this header prevents auto-reply loops and helps receiving systems classify automated messages.
+
+See [Reply Tracking](/learn/receiving/reply-tracking) and [Email Headers Explained](/knowledge-base/fundamentals/email-headers).
+
 ---
 
 ## B
@@ -58,6 +76,12 @@ See [Email Headers Explained](/knowledge-base/fundamentals/email-headers).
 ### Backscatter
 
 Bounce messages sent to an innocent third party whose email address was forged as the sender of spam. Proper SPF, DKIM, and DMARC configuration prevents your domain from being used in backscatter attacks.
+
+### Base64 Encoding
+
+A MIME encoding method that converts binary data into ASCII text using a 64-character alphabet (A-Z, a-z, 0-9, +, /). Base64 is used for encoding email attachments (images, PDFs, documents) and HTML email content in some clients. While less efficient than binary (33% size overhead), Base64 ensures safe transmission through systems that only support 7-bit ASCII.
+
+See [Attachments](/learn/sending/attachments).
 
 ### Batch Sending
 
@@ -105,6 +129,12 @@ A US federal law (2003) governing commercial email. Requires accurate header inf
 
 See [CAN-SPAM Requirements](/knowledge-base/compliance/can-spam).
 
+### Character Encoding
+
+The method of representing text characters as bytes in email content. UTF-8 is the modern standard that supports all Unicode characters (emoji, non-Latin scripts, symbols). Older emails may use ISO-8859-1 (Latin-1), Windows-1252, or other legacy encodings. The character encoding is declared in the `Content-Type` header (e.g., `text/html; charset=utf-8`). Mismatched encoding declarations and content cause rendering issues.
+
+See [Email Parsing](/learn/receiving/parsing) and [Rendering Issues](/knowledge-base/troubleshooting/rendering-issues).
+
 ### CASL (Canadian Anti-Spam Legislation)
 
 A Canadian federal law (2014) regulating commercial electronic messages sent to or from Canadian computer systems. CASL is stricter than CAN-SPAM — it requires **prior consent** (either [express](#express-consent) or [implied](#implied-consent)) before sending, rather than allowing an opt-out model. CASL applies regardless of the sender's location if the recipient is in Canada. Penalties can reach CAD $10 million per violation for organizations.
@@ -117,6 +147,12 @@ A technique that detects when a recipient clicks a link in an email by routing l
 
 See [Tracking Accuracy](/knowledge-base/troubleshooting/tracking-accuracy).
 
+### CID (Content-ID)
+
+A standard for referencing inline images and attachments within multipart email messages. CID URIs (e.g., `<img src="cid:logo123">`) link to attachments by their Content-ID header value rather than external URLs. This keeps images embedded within the email rather than loaded from remote servers, improving rendering reliability and avoiding external resource blocking.
+
+See [Attachments](/learn/sending/attachments).
+
 ### CNAME Record
 
 A DNS record type that creates an alias from one domain name to another. Lettr uses CNAME records for sending domain verification and tracking domain configuration. A CNAME points your subdomain to Lettr's infrastructure, delegating email authentication.
@@ -126,6 +162,12 @@ A DNS record type that creates an alias from one domain name to another. Lettr u
 When a recipient marks an email as spam or junk in their email client. Complaints are reported back to senders through [feedback loops](#feedback-loop-fbl). A complaint rate above 0.1% is a warning sign; above 0.3% risks deliverability penalties from major providers.
 
 See [List Hygiene](/knowledge-base/best-practices/list-hygiene).
+
+### Content Block
+
+In the Topol email editor, a content block is a discrete element added to a structure container — such as text, image, button, divider, spacer, HTML, or video. Content blocks are the building blocks of email templates. Each block type has configurable properties (alignment, padding, colors, fonts) and can include merge tags for dynamic content.
+
+See [Topol Email Editor](/learn/templates/topol-editor) and [Saved Blocks](/learn/templates/saved-blocks).
 
 ### Content Filtering
 
@@ -173,6 +215,12 @@ A temporary delay in email delivery caused by the receiving server responding wi
 
 See [How Email Delivery Works](/knowledge-base/fundamentals/how-email-delivery-works) and [Bounce Codes Reference](/knowledge-base/fundamentals/bounce-codes-reference).
 
+### Delay
+
+A temporary delay in email delivery caused by the recipient server's deferral response (4xx SMTP codes) or rate limiting. Delay events indicate the email is queued for retry and will be delivered later if subsequent attempts succeed. Delays are normal during IP warm-up, high-volume sending, or when recipient servers are experiencing load. Distinct from a soft bounce (which may convert to hard bounce) or delivery (which indicates success).
+
+See [Event Types](/learn/events/event-types) and [Bounce Codes Reference](/knowledge-base/fundamentals/bounce-codes-reference).
+
 ### Deliverability
 
 The ability of an email to reach the recipient's inbox (as opposed to the spam folder, or being rejected entirely). Deliverability is influenced by sender reputation, authentication, content quality, list hygiene, and engagement metrics. Distinct from **delivery**, which simply means the receiving server accepted the message.
@@ -213,11 +261,29 @@ The time it takes for DNS record changes to spread across DNS servers worldwide.
 
 See [Domain Verification](/knowledge-base/troubleshooting/domain-verification).
 
+### Domain Connect
+
+An open protocol that enables one-click DNS record configuration through cryptographically signed URLs. When a sender's domain is hosted on a supporting DNS provider (such as Cloudflare), Lettr can generate a Domain Connect link that automatically adds the required SPF, DKIM, DMARC, and verification records without manual DNS editing. This streamlines domain verification and reduces configuration errors.
+
+See [Domains Introduction](/learn/domains/introduction).
+
 ### Domain Reputation
 
 A score or classification that mailbox providers assign to your sending domain based on the quality and history of email sent from it. Domain reputation is independent of [IP reputation](#ip-reputation) and is increasingly the primary factor in filtering decisions at providers like Gmail. Factors include bounce rates, complaint rates, spam trap hits, and engagement.
 
 See [Sending Reputation](/knowledge-base/best-practices/sending-reputation) and [IP and Domain Warm-Up Guide](/knowledge-base/best-practices/ip-domain-warmup).
+
+### Domain Status
+
+The current state of a sending domain in Lettr's approval workflow. Domains progress through three statuses: **Pending** (awaiting manual review), **Approved** (cleared for sending), and **Blocked** (prohibited from sending due to policy violations or abuse). Only approved domains can send email. Domain status is returned in API responses and displayed in the Lettr dashboard.
+
+See [Domains Introduction](/learn/domains/introduction).
+
+### DSN (Delivery Status Notification)
+
+A standardized bounce message format (defined in RFC 3464) that reports delivery failures back to the sender. DSNs include machine-readable sections with SMTP status codes, enhanced status codes, recipient addresses, and diagnostic messages. Modern bounce handling relies on parsing DSN fields rather than analyzing freeform bounce text.
+
+See [Bounce Codes Reference](/knowledge-base/fundamentals/bounce-codes-reference) and [Bounce Diagnosis](/knowledge-base/troubleshooting/bounce-diagnosis).
 
 ### Double Opt-In
 
@@ -234,6 +300,18 @@ See [Email Consent Best Practices](/knowledge-base/compliance/email-consent) and
 When an email client truncates a message that exceeds a size threshold, hiding the remaining content behind a "View entire message" link. Gmail clips emails larger than 102 KB. Clipped content is not rendered, which can hide tracking pixels, unsubscribe links, and important information.
 
 See [Email Content Rendering Issues](/knowledge-base/troubleshooting/rendering-issues) and [Email Rendering Across Clients](/knowledge-base/fundamentals/email-rendering-clients).
+
+### Editor Settings
+
+Customization options in the Topol email editor that control the editing environment, including custom fonts, color palettes, default styles, merge tag definitions, and editor UI preferences. Editor settings can be configured per-team or per-project to standardize design systems and branding across email templates.
+
+See [Editor Settings](/learn/templates/editor-settings) and [Email Editor Best Practices](/knowledge-base/best-practices/email-editor-best-practices).
+
+### EHLO / HELO
+
+SMTP commands used to initiate a connection between sending and receiving mail servers. **HELO** (defined in the original SMTP spec) identifies the sending server by hostname. **EHLO** (Extended HELO) is used for ESMTP and requests a list of supported extensions (STARTTLS, AUTH, SIZE, etc.). Modern servers use EHLO; if the receiving server doesn't support it, the sender falls back to HELO.
+
+See [SMTP Protocol Basics](/knowledge-base/fundamentals/smtp-protocol-basics).
 
 ### Engagement
 
@@ -315,6 +393,18 @@ An EU regulation governing the processing of personal data, including email addr
 
 See [GDPR and Email Sending](/knowledge-base/compliance/gdpr-email).
 
+### Generation Failure
+
+A webhook event indicating a template failed to render before transmission. Generation failures occur when template syntax errors, missing merge tags, or invalid substitution data prevent rendering. These errors occur before the email enters the SMTP transmission phase and should be caught during development and testing.
+
+See [Webhook Event Types](/learn/webhooks/event-types) and [Template Language](/learn/templates/template-language).
+
+### Generation Rejection
+
+A webhook event indicating template content was rejected during the generation phase before transmission. Generation rejections occur when content fails validation rules (prohibited content, missing required fields). These errors occur before the email enters the SMTP transmission phase.
+
+See [Webhook Event Types](/learn/webhooks/event-types).
+
 ### Google Postmaster Tools
 
 A free service from Google that provides Gmail-specific data about your sending domain, including domain reputation, spam rate, authentication pass rates, and delivery errors. Google Postmaster Tools is the most important diagnostic tool for troubleshooting Gmail deliverability, as this data is not available from any other source.
@@ -369,6 +459,18 @@ See [CASL (Canadian Anti-Spam Law)](/knowledge-base/compliance/casl) and [Email 
 
 Whether an email appears in the recipient's primary inbox, as opposed to the spam folder, promotions tab, or other filtered location. Inbox placement is determined by sender reputation, authentication, content quality, and recipient engagement.
 
+### Initial Open
+
+The first time a recipient opens an email, tracked as a distinct event from subsequent opens. Initial open metrics provide a more accurate measure of unique engagement than total opens (which count every time the tracking pixel loads). Lettr fires `initial_open` webhook events separately from generic `open` events.
+
+See [Event Types](/learn/events/event-types) and [Tracking Accuracy](/knowledge-base/troubleshooting/tracking-accuracy).
+
+### Injection
+
+The first event in an email's lifecycle, occurring when Lettr accepts an email for delivery via API or SMTP and queues it for transmission. A successful injection indicates the email passed validation and has been accepted into the sending pipeline. Injection events are logged and can trigger webhooks. Distinct from delivery (when the recipient server accepts the message) and inbox placement (when the email reaches the inbox).
+
+See [Event Types](/learn/events/event-types) and [Webhook Event Types](/learn/webhooks/event-types).
+
 ### Inline CSS
 
 CSS styling applied directly to HTML elements using the `style` attribute rather than in a `<style>` block or external stylesheet. Inline CSS is the most reliable styling method for HTML email because some clients (notably Gmail on the web) strip `<style>` tags from the `<head>`. Many email tools automatically inline CSS during the build process.
@@ -413,6 +515,18 @@ An email header that provides a machine-readable unsubscribe mechanism. Google a
 
 See [Unsubscribe Best Practices](/knowledge-base/compliance/unsubscribe-best-practices).
 
+### List Unsubscribe
+
+An unsubscribe triggered by the recipient using the mailbox provider's native unsubscribe interface (e.g., Gmail's "Unsubscribe" button) via the `List-Unsubscribe-Post` header. Distinct from **link unsubscribe**, which occurs when a recipient clicks an unsubscribe link embedded in the email content. List unsubscribes are processed through one-click unsubscribe and may not load your preference center.
+
+See [Unsubscribe Best Practices](/knowledge-base/compliance/unsubscribe-best-practices) and [Webhook Event Types](/learn/webhooks/event-types).
+
+### Loop Block
+
+A special template block in Lettr that repeats for each item in an array passed as substitution data. Loop blocks enable dynamic list rendering (order items, feature lists, product catalogs) without manually creating individual blocks for each item. Loop blocks use a `{{ #each items }}...{{ /each }}` syntax and can access array properties using merge tags.
+
+See [Loop Blocks](/learn/templates/loop-blocks) and [Template Language](/learn/templates/template-language).
+
 ---
 
 ## M
@@ -439,11 +553,23 @@ Email sent to promote a product, service, or offer. Marketing email requires exp
 
 See [Transactional vs Marketing](/knowledge-base/best-practices/transactional-vs-marketing).
 
+### MCP (Model Context Protocol)
+
+An open protocol for connecting AI assistants (like Claude) to external data sources and tools. Lettr implements an MCP server that exposes email sending, template management, domain configuration, and analytics as tools that AI assistants can invoke on behalf of users. MCP integration enables natural-language email operations and template creation through conversational interfaces.
+
+See [MCP Introduction](/learn/mcp/introduction), [MCP Setup](/learn/mcp/setup), and [MCP Tools Reference](/learn/mcp/tools-reference).
+
 ### Merge Tag
 
-A placeholder variable in an email template (e.g., `{{ name }}`, `{{ order_id }}`) that is replaced with recipient-specific data at send time. Merge tags enable personalization without creating individual templates for each recipient. Also called [substitution data](#substitution-data) or template variables.
+A placeholder variable in an email template (e.g., `{{ name }}`, `{{ order_id }}`) that is replaced with recipient-specific data at send time. Merge tags enable personalization without creating individual templates for each recipient. The actual values that populate merge tags are provided as [substitution data](#substitution-data) in API requests.
 
-See [Personalization and Dynamic Content](/knowledge-base/best-practices/personalization-dynamic-content).
+See [Personalization and Dynamic Content](/knowledge-base/best-practices/personalization-dynamic-content) and [Template Language](/learn/templates/template-language).
+
+### Message Threading
+
+The email client feature that groups related messages into conversation threads using email headers (`Message-ID`, `In-Reply-To`, `References`). When replying to an email, the reply includes these headers to indicate the relationship to the original message. Lettr supports message threading for inbound emails, enabling reply tracking and conversation reconstruction.
+
+See [Reply Tracking](/learn/receiving/reply-tracking), [Custom Headers](/learn/sending/custom-headers), and [Email Headers Explained](/knowledge-base/fundamentals/email-headers).
 
 ### Message-ID
 
@@ -453,9 +579,19 @@ See [Email Headers Explained](/knowledge-base/fundamentals/email-headers).
 
 ### MIME (Multipurpose Internet Mail Extensions)
 
-A standard that extends email to support content beyond plain ASCII text — HTML, images, attachments, and multiple content types in a single message. MIME defines content types (`text/plain`, `text/html`, `multipart/alternative`) and encoding methods.
+A standard that extends email to support content beyond plain ASCII text — HTML, images, attachments, and multiple content types in a single message. MIME defines content types and encoding methods. Common multipart types include:
+
+- `multipart/alternative`: Contains multiple versions of the same content (text + HTML)
+- `multipart/mixed`: Contains message content plus attachments
+- `multipart/related`: Contains HTML content with inline images referenced via [CID](#cid-content-id)
 
 See [Email Content Types](/knowledge-base/fundamentals/content-types).
+
+### MUA (Mail User Agent)
+
+Client software used by end users to read, compose, and send email — such as Outlook, Apple Mail, Thunderbird, or webmail interfaces like Gmail. The MUA interacts with mail servers via IMAP/POP3 (for receiving) and SMTP (for sending). Contrast with [MTA (Mail Transfer Agent)](#mta-mail-transfer-agent), which is server software that routes email between mail servers.
+
+See [How Email Delivery Works](/knowledge-base/fundamentals/how-email-delivery-works).
 
 ### MTA (Mail Transfer Agent)
 
@@ -499,6 +635,12 @@ The act of a recipient withdrawing permission to receive email, typically by cli
 
 See [Unsubscribe Best Practices](/knowledge-base/compliance/unsubscribe-best-practices).
 
+### Out of Band Bounce
+
+A bounce notification received separately from the original SMTP conversation, typically through a feedback loop or delayed DSN (Delivery Status Notification). Out-of-band bounces occur when the initial delivery succeeds but the message is later rejected by content filtering, mailbox rules, or delayed quota checks. These bounces are harder to associate with the original message.
+
+See [Event Types](/learn/events/event-types).
+
 ---
 
 ## P
@@ -507,21 +649,39 @@ See [Unsubscribe Best Practices](/knowledge-base/compliance/unsubscribe-best-pra
 
 A social engineering attack where a fraudulent email impersonates a trusted sender to trick recipients into revealing sensitive information or clicking malicious links. SPF, DKIM, and DMARC help prevent attackers from spoofing your domain in phishing emails.
 
+### Policy Rejection
+
+When an email is rejected by the recipient's mail server due to policy violations rather than technical delivery issues. Policy rejections include: failing DMARC checks, sender IP/domain blocklisting, content filtering rules, or recipient-side anti-spam policies. Unlike hard bounces (invalid address), policy rejections indicate the recipient exists but the server refuses the message based on filtering rules.
+
+See [Event Types](/learn/events/event-types) and [Bounce Diagnosis](/knowledge-base/troubleshooting/bounce-diagnosis).
+
 ### Plus Addressing
 
-A feature supported by most mailbox providers where a `+` sign and additional text can be appended to the local part of an email address (e.g., `user+newsletter@gmail.com`). The email is delivered to the same mailbox as `user@gmail.com`. Plus addressing is commonly used for filtering and identifying how an address was shared.
+A feature supported by most mailbox providers where a `+` sign and additional text can be appended to the local part of an email address (e.g., `user+newsletter@gmail.com`). The email is delivered to the same mailbox as `user@gmail.com`. Plus addressing (also called sub-addressing or detailed addressing) is commonly used for filtering and identifying how an address was shared.
 
-See [Email Address Anatomy](/knowledge-base/fundamentals/email-address-anatomy).
+See [Email Address Anatomy](/knowledge-base/fundamentals/email-address-anatomy) and [Variable Reply-To Address](#variable-reply-to-address).
 
 ### Preheader Text
 
-The short text snippet displayed next to or below the subject line in the inbox preview. Preheader text is typically the first text content in the HTML body. You can set it explicitly using a hidden HTML element to provide additional context that encourages recipients to open the email, rather than showing template boilerplate.
+The short text snippet displayed next to or below the subject line in the inbox preview. Preheader text is extracted from the first text content in the HTML body, often hidden using CSS (`display:none`, `font-size:0`, or similar). Maximum length varies by client (typically 50-140 characters). You can set it explicitly using a hidden HTML element to provide additional context that encourages recipients to open the email, rather than showing template boilerplate.
 
 ### Preference Center
 
 A web page where recipients can manage their email subscription settings — choosing which types of email they want to receive rather than unsubscribing entirely. Preference centers reduce unsubscribes and complaints by giving recipients control.
 
 See [Unsubscribe Best Practices](/knowledge-base/compliance/unsubscribe-best-practices).
+
+### Premade Template
+
+A professionally designed email template provided by Lettr in the template library. Premade templates cover common use cases (welcome emails, password resets, order confirmations, newsletters) and can be customized in the Topol editor. Using premade templates accelerates development and ensures responsive design best practices.
+
+See [Premade Templates](/learn/templates/premade-templates) and [Templates Introduction](/learn/templates/introduction).
+
+### Project
+
+An organizational container in Lettr that groups related email templates into folders. Projects help teams organize templates by application, feature, or campaign type (e.g., "User Authentication," "E-commerce," "Notifications"). Templates within a project can share settings, and projects can have their own access controls in team environments.
+
+See [Projects & Folders](/learn/templates/projects).
 
 ### Promotions Tab
 
@@ -537,6 +697,16 @@ See [Google & Yahoo Sender Requirements](/knowledge-base/compliance/google-yahoo
 
 ---
 
+## Q
+
+### Quoted-Printable Encoding
+
+A MIME encoding method (defined in RFC 2045) that represents 8-bit characters using ASCII-safe `=XX` hexadecimal codes. Quoted-printable encoding is used for email content that is mostly ASCII text with occasional non-ASCII characters (accented letters, special symbols). It's more human-readable than Base64 encoding and is the default for `text/plain` and `text/html` email parts.
+
+See [Email Parsing](/learn/receiving/parsing) and [Content Types](/knowledge-base/fundamentals/content-types).
+
+---
+
 ## R
 
 ### Rate Limiting
@@ -544,6 +714,18 @@ See [Google & Yahoo Sender Requirements](/knowledge-base/compliance/google-yahoo
 A server's restriction on how many requests or emails a sender can submit within a given time period. Lettr enforces rate limits to protect infrastructure and deliverability (standard: 300 requests per 5 minutes). Exceeding limits returns a 429 HTTP status code with a `retry_after` value.
 
 See [Rate Limits](/knowledge-base/troubleshooting/rate-limits) and [Rate Limits](/learn/sending/rate-limits).
+
+### RCPT TO
+
+An SMTP command that specifies one or more envelope recipients during the email transmission conversation. The `RCPT TO` addresses can differ from the `To:` header visible to recipients — this is how BCC recipients and mailing list forwarding work. Multiple `RCPT TO` commands can be issued for a single message to deliver to multiple recipients.
+
+See [SMTP Protocol Basics](/knowledge-base/fundamentals/smtp-protocol-basics).
+
+### Relay
+
+The process of receiving inbound email on a domain configured with Lettr and forwarding (relaying) it to a destination endpoint via webhook or SMTP. Relay events track the lifecycle of inbound messages: injection (received), delivery (successfully forwarded), rejection (blocked by spam filtering or routing rules), temporary failure, and permanent failure.
+
+See [Receiving Email Setup](/learn/receiving/introduction) and [Email Routing](/learn/receiving/routing).
 
 ### Rendering Engine
 
@@ -583,9 +765,15 @@ See [List Hygiene](/knowledge-base/best-practices/list-hygiene).
 
 ### Sandbox Mode
 
-A testing environment that allows you to verify your email integration without sending to real recipients or affecting your sending reputation. Sandbox mode is used during development to validate API requests, check response formats, and test webhook handling before going to production.
+A testing environment that allows you to verify your email integration without sending to real recipients or affecting your sending reputation. In Lettr's sandbox mode, the API accepts requests and returns success responses, but emails are logged rather than transmitted to recipients. Sandbox mode is used during development and CI/CD testing to validate API requests, check response formats, and test webhook handling before going to production.
 
 See [Sandbox and Testing Mode](/knowledge-base/troubleshooting/sandbox-testing).
+
+### Saved Block
+
+A reusable content block template that can be saved from the Topol email editor and inserted into multiple email templates. Saved blocks are useful for standardizing common email components like headers, footers, social media icons, promotional banners, or legal disclaimers across templates. Changes to saved blocks do not automatically update templates where they've been inserted — they function as starting points rather than linked components.
+
+See [Saved Blocks](/learn/templates/saved-blocks) and [Email Editor Best Practices](/knowledge-base/best-practices/email-editor-best-practices).
 
 ### Seed List
 
@@ -639,11 +827,29 @@ A temporary delivery failure indicating the email could not be delivered right n
 
 See [Bounce Diagnosis](/knowledge-base/troubleshooting/bounce-diagnosis).
 
+### Spam Score
+
+A numeric value (0.0–10.0) assigned to incoming emails indicating the likelihood of spam. Scores near 0.0 indicate legitimate email, while scores approaching 10.0 indicate almost certain spam. Lettr's inbound email processing uses spam scores to route or filter messages based on configurable thresholds.
+
+See [Spam Filtering](/learn/receiving/spam-filtering).
+
 ### Spam Trap
 
 An email address used by mailbox providers and blocklist operators to identify senders with poor list practices. **Pristine traps** are addresses that never opted in — hitting one means you're using a purchased or scraped list. **Recycled traps** are abandoned addresses repurposed as traps — hitting one means you're not cleaning inactive subscribers.
 
 See [List Hygiene](/knowledge-base/best-practices/list-hygiene).
+
+### Structure
+
+In the Topol email editor, a structure is a layout container that defines column arrangement and responsive behavior for email content. Structures are added first when building a template, then populated with content blocks. Common structures include single-column, two-column, three-column, and asymmetric layouts. Structures handle responsive email design by automatically stacking columns on mobile devices.
+
+See [Topol Email Editor](/learn/templates/topol-editor) and [Email Editor Best Practices](/knowledge-base/best-practices/email-editor-best-practices).
+
+### Substitution Data
+
+Variables and values passed in an API request that are merged into an email template at send time. Substitution data populates merge tags (e.g., `{{ first_name }}`, `{{ order_id }}`) with recipient-specific information. Substitution data is processed per-recipient and should never contain sensitive information like passwords or credit card numbers. Distinct from metadata, which is used for tracking and analytics rather than content personalization.
+
+See [Template Language](/learn/templates/template-language), [Personalization](/knowledge-base/best-practices/personalization-dynamic-content), and [Merge Tag](#merge-tag).
 
 ### SPF (Sender Policy Framework)
 
@@ -669,12 +875,6 @@ A prefix added to a root domain (e.g., `mail.yourdomain.com` is a subdomain of `
 
 See [Subdomain vs Root Domain](/knowledge-base/fundamentals/subdomain-vs-root).
 
-### Substitution Data
-
-Variables passed in an API request that are merged into an email template at send time (e.g., `{{first_name}}`, `{{order_id}}`). Substitution data is processed per-recipient and should never contain sensitive information like passwords or credit card numbers.
-
-See [Data Privacy in Email Metadata](/knowledge-base/compliance/data-privacy-metadata) and [Personalization and Dynamic Content](/knowledge-base/best-practices/personalization-dynamic-content).
-
 ### Sunset Policy
 
 A rule that automatically removes or suppresses recipients who haven't engaged with your email over a defined period (e.g., no opens or clicks in 90 days). Sunset policies prevent list decay, reduce complaints from disengaged recipients, and protect sender reputation.
@@ -691,6 +891,24 @@ See [Understanding Suppression Lists](/knowledge-base/fundamentals/suppression-l
 
 ## T
 
+### Tag
+
+A single string label (maximum 64 characters) attached to an email at send time to categorize messages for analytics, filtering, and reporting. Unlike metadata (which stores key-value pairs for tracking), tags are used exclusively for grouping emails in the Lettr dashboard and analytics breakdowns. Multiple emails can share the same tag.
+
+See [Email Tags](/learn/sending/tags) and [Analytics Filtering](/learn/analytics/filtering-and-breakdowns).
+
+### Template Slug
+
+A unique string identifier used to retrieve email templates via the Lettr API. Template slugs are URL-safe identifiers (typically lowercase with hyphens, e.g., `password-reset-email`) that remain stable even when template names or content change. Using slugs instead of numeric IDs improves code readability and decouples code from template database IDs.
+
+See [Templates Introduction](/learn/templates/introduction) and [Type Safety](/quickstart/laravel/type-safety).
+
+### Template Version
+
+A snapshot of an email template at a specific point in time. Lettr automatically creates versions when templates are edited, providing version control and rollback capability. Each version stores the complete template content, settings, and merge tags. Users can view version history, compare changes, and restore previous versions without losing the current version.
+
+See [Template Versions](/learn/templates/versions) and [Templates Introduction](/learn/templates/introduction).
+
 ### Throttling
 
 When a mailbox provider intentionally slows down the rate at which it accepts email from a sender, typically in response to volume spikes, poor reputation, or warm-up concerns. Throttling results in [deferrals](#deferral) (4xx responses) rather than outright rejections. The sending server is expected to retry later at a reduced rate.
@@ -700,6 +918,12 @@ See [Bounce Codes Reference](/knowledge-base/fundamentals/bounce-codes-reference
 ### TLS (Transport Layer Security)
 
 An encryption protocol that secures the connection between mail servers during SMTP transmission. TLS prevents eavesdropping on email content in transit. Most modern mail servers support opportunistic TLS (encrypt if both sides support it, fall back to unencrypted if not).
+
+### Topol Email Editor
+
+A drag-and-drop visual email editor integrated into Lettr for creating and editing HTML email templates without writing code. Topol uses a block-based system where users add content blocks (text, images, buttons, dividers) within structure containers (single column, multi-column layouts) that define responsive behavior. Templates created in Topol can include merge tags for personalization.
+
+See [Topol Email Editor](/learn/templates/topol-editor) and [Email Editor Best Practices](/knowledge-base/best-practices/email-editor-best-practices).
 
 ### Tracking Domain
 
@@ -727,11 +951,23 @@ A DNS record type used to store text data. Email authentication relies heavily o
 
 ## V
 
+### Variable Reply-To Address
+
+A technique where data is encoded in the reply-to email address (e.g., `reply+ticket_ID@domain.com`) to track which emails recipients reply to without parsing email headers. When a recipient replies, the variable portion is extracted from the recipient address, associating the reply with the original context. This is a more reliable alternative to threading headers for tracking replies across systems.
+
+See [Reply Tracking](/learn/receiving/reply-tracking), [Inbound Domains](/learn/domains/inbound-domains), and [Plus Addressing](#plus-addressing).
+
 ### Verified Mark Certificate (VMC)
 
 A digital certificate issued by an authorized Certificate Authority (such as DigiCert or Entrust) that proves ownership of a trademarked logo. VMCs are required by Gmail and Apple Mail for displaying [BIMI](#bimi-brand-indicators-for-message-identification) logos in recipient inboxes. Obtaining a VMC requires a registered trademark in an eligible jurisdiction.
 
 See [BIMI: Brand Indicators for Message Identification](/knowledge-base/fundamentals/bimi).
+
+### VERP (Variable Envelope Return Path)
+
+A technique that encodes the recipient address in the envelope sender (return-path) address to precisely identify which recipient caused a bounce. Instead of using a generic bounce address like `bounces@domain.com`, VERP creates unique addresses like `bounces+user=example.com@domain.com`. When a bounce occurs, the recipient can be identified from the bounce address alone, without parsing bounce message content.
+
+See [Custom Return-Path](/knowledge-base/fundamentals/custom-return-path).
 
 ---
 
