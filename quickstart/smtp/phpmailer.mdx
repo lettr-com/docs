@@ -3,7 +3,25 @@ title: PHPMailer
 description: "Use Lettr with PHPMailer"
 ---
 
-Learn how to send emails through Lettr using PHPMailer.
+Send emails through Lettr using PHPMailer, the popular PHP email library. PHPMailer works in any PHP project — WordPress, custom applications, or legacy codebases.
+
+## Prerequisites
+
+Before you begin, make sure you have:
+
+<CardGroup cols={2}>
+  <Card title="API Key" icon="key" href="https://app.lettr.com/api-keys">
+    Create an API key in the Lettr dashboard
+  </Card>
+  <Card title="Verified Domain" icon="globe" href="/learn/domains/sending-domains">
+    Add and verify your sending domain
+  </Card>
+</CardGroup>
+
+You'll also need:
+
+- **PHP 8.0+** installed
+- **Composer** for package management (or manual installation)
 
 ## Installation
 
@@ -13,7 +31,17 @@ Install PHPMailer via Composer:
 composer require phpmailer/phpmailer
 ```
 
-## Configuration
+Or download manually from [GitHub](https://github.com/PHPMailer/PHPMailer) and require the files:
+
+```php
+require 'path/to/PHPMailer/src/Exception.php';
+require 'path/to/PHPMailer/src/PHPMailer.php';
+require 'path/to/PHPMailer/src/SMTP.php';
+```
+
+## Basic Configuration
+
+Here's a complete example showing how to send an email through Lettr with PHPMailer:
 
 ```php
 <?php
@@ -28,65 +56,163 @@ $mail = new PHPMailer(true);
 
 try {
     // Server settings
-    $mail->SMTPDebug = SMTP::DEBUG_OFF;
-    $mail->isSMTP();
-    $mail->Host       = 'smtp.lettr.com';
-    $mail->SMTPAuth   = true;
-    $mail->Username   = 'lettr';
-    $mail->Password   = 'your-api-key';
-    $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-    $mail->Port       = 587;
+    $mail->SMTPDebug = SMTP::DEBUG_OFF;                 // Disable debug output
+    $mail->isSMTP();                                    // Use SMTP
+    $mail->Host       = 'smtp.lettr.com';               // Lettr SMTP server
+    $mail->SMTPAuth   = true;                           // Enable authentication
+    $mail->Username   = 'lettr';                        // SMTP username
+    $mail->Password   = 'lttr_your_api_key_here';       // Your Lettr API key
+    $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS; // Enable TLS encryption
+    $mail->Port       = 587;                            // TCP port
 
     // Recipients
-    $mail->setFrom('you@example.com', 'Your Name');
+    $mail->setFrom('you@yourdomain.com', 'Your Name');
     $mail->addAddress('recipient@example.com', 'Recipient Name');
-    $mail->addReplyTo('reply@example.com', 'Reply Address');
+    $mail->addReplyTo('reply@yourdomain.com', 'Reply Address');
 
     // Content
-    $mail->isHTML(true);
+    $mail->isHTML(true);                                // Set email format to HTML
     $mail->Subject = 'Hello from Lettr';
-    $mail->Body    = '<p>Welcome to <b>Lettr</b>!</p>';
-    $mail->AltBody = 'Welcome to Lettr!';
+    $mail->Body    = '<h1>Hello!</h1><p>Welcome to <b>Lettr</b>!</p>';
+    $mail->AltBody = 'Hello! Welcome to Lettr!';        // Plain text for non-HTML clients
 
     $mail->send();
-    echo 'Message has been sent';
+    echo 'Message has been sent successfully';
 } catch (Exception $e) {
     echo "Message could not be sent. Mailer Error: {$mail->ErrorInfo}";
 }
 ```
 
+<Warning>
+  Replace `lttr_your_api_key_here` with your actual Lettr API key. Never commit API keys to version control.
+</Warning>
+
 ## Adding Attachments
 
+Attach files to your emails using `addAttachment()`:
+
 ```php
-$mail->addAttachment('/path/to/file.pdf', 'document.pdf');
-$mail->addAttachment('/path/to/image.jpg', 'photo.jpg');
+// Attach a PDF file
+$mail->addAttachment('/path/to/invoice.pdf', 'invoice.pdf');
+
+// Attach an image
+$mail->addAttachment('/path/to/logo.png', 'company-logo.png');
+
+// Attach multiple files
+$mail->addAttachment('/path/to/file1.pdf');
+$mail->addAttachment('/path/to/file2.docx');
 ```
+
+The first parameter is the file path, the second (optional) is the filename shown to recipients.
 
 ## Adding CC and BCC
 
+Send copies to multiple recipients:
+
 ```php
-$mail->addCC('cc@example.com');
+// CC (carbon copy) - visible to all recipients
+$mail->addCC('manager@example.com');
+$mail->addCC('team@example.com', 'Team Lead');
+
+// BCC (blind carbon copy) - hidden from other recipients
 $mail->addBCC('bcc@example.com');
+$mail->addBCC('archive@example.com');
+
+// Multiple primary recipients
+$mail->addAddress('user1@example.com');
+$mail->addAddress('user2@example.com');
 ```
 
-## Using SSL Instead of TLS
+## Custom Headers
 
-If you prefer SSL encryption:
+Add custom headers for tracking or additional metadata:
 
 ```php
-$mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
-$mail->Port       = 465;
+$mail->addCustomHeader('X-Campaign-ID', 'newsletter-2024-01');
+$mail->addCustomHeader('X-Customer-ID', '12345');
 ```
 
-## Debug Mode
+## WordPress Integration
 
-Enable debug mode to troubleshoot issues:
+If you're using PHPMailer in WordPress, hook into `phpmailer_init`:
 
 ```php
-$mail->SMTPDebug = SMTP::DEBUG_SERVER;
+add_action('phpmailer_init', function($phpmailer) {
+    $phpmailer->isSMTP();
+    $phpmailer->Host       = 'smtp.lettr.com';
+    $phpmailer->SMTPAuth   = true;
+    $phpmailer->Username   = 'lettr';
+    $phpmailer->Password   = 'lttr_your_api_key_here';
+    $phpmailer->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+    $phpmailer->Port       = 587;
+});
 ```
 
-<Warning>
-  Never enable debug mode in production as it may expose sensitive information.
-</Warning>
+Add this to your theme's `functions.php` or a custom plugin.
 
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="SMTP Error: Could not authenticate">
+    Check your API key is correct and starts with `lttr_`. Verify the username is exactly `lettr` (lowercase). Ensure your API key hasn't been revoked in the [dashboard](https://app.lettr.com/api-keys).
+  </Accordion>
+
+  <Accordion title="SMTP Error: Could not connect to SMTP host">
+    Your firewall may be blocking outbound SMTP connections on port 587. Try alternate ports (`465`, `2465`, or `2587`). Verify `smtp.lettr.com` resolves correctly: `nslookup smtp.lettr.com`.
+  </Accordion>
+
+  <Accordion title="Invalid address error">
+    Check that all email addresses are properly formatted. Ensure the "from" address uses a verified sending domain.
+  </Accordion>
+
+  <Accordion title="Could not access file (attachments)">
+    Verify attachment file paths are correct and the PHP process has read permissions. Check that files exist using `file_exists()` before attaching.
+  </Accordion>
+
+  <Accordion title="Enable debug output">
+    Enable SMTP debugging during development:
+
+    ```php
+    $mail->SMTPDebug = SMTP::DEBUG_SERVER;
+    ```
+
+    Debug levels:
+    - `SMTP::DEBUG_OFF` (0) — No output (production)
+    - `SMTP::DEBUG_CLIENT` (1) — Client messages
+    - `SMTP::DEBUG_SERVER` (2) — Client and server messages (recommended)
+    - `SMTP::DEBUG_CONNECTION` (3) — Connection status + messages
+    - `SMTP::DEBUG_LOWLEVEL` (4) — Low-level data output
+
+    <Warning>
+      Never enable debug mode in production. It outputs sensitive information including your API key.
+    </Warning>
+  </Accordion>
+
+  <Accordion title="Using port 465 instead of 587">
+    If you prefer port 465 with implicit SSL/TLS:
+
+    ```php
+    $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+    $mail->Port       = 465;
+    ```
+
+    Both ports are equally secure. Port 465 establishes an encrypted connection immediately, while port 587 upgrades via STARTTLS.
+  </Accordion>
+</AccordionGroup>
+
+## What's Next
+
+<CardGroup cols={2}>
+  <Card title="SMTP Introduction" icon="server" href="/quickstart/smtp/introduction">
+    Learn more about Lettr's SMTP service
+  </Card>
+  <Card title="API Reference" icon="book" href="/api-reference/introduction">
+    Use the HTTP API for more features
+  </Card>
+  <Card title="Troubleshooting" icon="wrench" href="/knowledge-base/troubleshooting/delivery-issues">
+    Fix common delivery issues
+  </Card>
+  <Card title="Best Practices" icon="shield" href="/knowledge-base/best-practices/deliverability">
+    Improve email deliverability
+  </Card>
+</CardGroup>

@@ -1,0 +1,180 @@
+---
+title: Cloudflare Workers
+description: "Get started with sending emails from Cloudflare Workers in minutes"
+---
+
+Send transactional emails from Cloudflare Workers using Lettr's HTTP API. Workers run on Cloudflare's global edge network with instant cold starts and zero-millisecond latency — perfect for email APIs that need to be fast anywhere in the world.
+
+## Prerequisites
+
+Before you begin, make sure you have:
+
+<CardGroup cols={2}>
+  <Card title="API Key" icon="key" href="https://app.lettr.com/api-keys">
+    Create an API key in the Lettr dashboard
+  </Card>
+  <Card title="Verified Domain" icon="globe" href="/learn/domains/sending-domains">
+    Add and verify your sending domain
+  </Card>
+</CardGroup>
+
+You'll also need:
+
+- **Cloudflare account** (free tier works)
+- **Wrangler CLI** installed (`npm install -g wrangler`)
+- **Node.js 18.x or 20.x** for local development
+
+## Quick Setup
+
+<Steps>
+  <Step title="Create a new Worker project">
+    ```bash
+    npm create cloudflare@latest my-email-worker
+    cd my-email-worker
+    ```
+
+    When prompted, choose:
+    - Type: "Hello World" Worker
+    - TypeScript: Yes (recommended)
+    - Git: Yes (optional)
+    - Deploy: No (we'll deploy later)
+  </Step>
+
+  <Step title="Install the Lettr SDK">
+    ```bash
+    npm install lettr
+    ```
+
+    The SDK works seamlessly with Workers and provides a clean, type-safe interface.
+  </Step>
+
+  <Step title="Add your API key as a secret">
+    ```bash
+    npx wrangler secret put LETTR_API_KEY
+    ```
+
+    When prompted, paste your Lettr API key (starts with `lttr_`).
+
+    <Tip>
+      Secrets are encrypted environment variables that are not visible in your code or Wrangler config. They're perfect for API keys.
+    </Tip>
+  </Step>
+
+  <Step title="Deploy your Worker">
+    ```bash
+    npm run deploy
+    ```
+
+    Your Worker will be deployed to Cloudflare's edge network and available at `https://my-email-worker.your-subdomain.workers.dev`.
+  </Step>
+</Steps>
+
+## Worker Implementation
+
+Create or update `src/index.ts`:
+
+```typescript
+import { Lettr } from 'lettr';
+
+export interface Env {
+  LETTR_API_KEY: string;
+  FROM_EMAIL?: string;
+}
+
+export default {
+  async fetch(request: Request, env: Env): Promise<Response> {
+    // Only allow POST requests
+    if (request.method !== 'POST') {
+      return new Response('Method not allowed', { status: 405 });
+    }
+
+    // Initialize Lettr client
+    const lettr = new Lettr(env.LETTR_API_KEY);
+
+    try {
+      const body = await request.json() as {
+        to: string | string[];
+        subject: string;
+        html?: string;
+        text?: string;
+      };
+
+      const { to, subject, html, text } = body;
+
+      // Validate required fields
+      if (!to || !subject || (!html && !text)) {
+        return Response.json(
+          { error: 'Missing required fields: to, subject, and html or text' },
+          { status: 400 }
+        );
+      }
+
+      // Send email
+      const result = await lettr.emails.send({
+        from: env.FROM_EMAIL || 'noreply@yourdomain.com',
+        to: Array.isArray(to) ? to : [to],
+        subject,
+        html,
+        text,
+      });
+
+      console.log(`Email sent successfully. Request ID: ${result.request_id}`);
+
+      return Response.json({
+        success: true,
+        requestId: result.request_id,
+        accepted: result.accepted,
+      });
+    } catch (error: any) {
+      console.error('Failed to send email:', error);
+
+      return Response.json(
+        { error: error.message || 'Failed to send email' },
+        { status: error.status || 500 }
+      );
+    }
+  },
+};
+```
+
+<Info>
+  Cloudflare Workers use the `Env` interface to define environment variables and secrets. The Lettr SDK automatically handles retries and provides detailed error messages.
+</Info>
+
+## Configuration
+
+Configure your Worker in `wrangler.toml`:
+
+```toml
+name = "my-email-worker"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+# Non-sensitive environment variables
+[vars]
+FROM_EMAIL = "noreply@yourdomain.com"
+
+# Secrets (set via wrangler secret put)
+# LETTR_API_KEY = "set via CLI"
+```
+
+<Warning>
+  Never commit API keys to `wrangler.toml`. Always use `wrangler secret put` for sensitive values.
+</Warning>
+
+## What's Next
+
+<CardGroup cols={2}>
+  <Card title="Advanced Guide" icon="book-open" href="/quickstart/serverless/cloudflare-advanced">
+    Learn about deployment, monitoring, and advanced patterns
+  </Card>
+  <Card title="AWS Lambda" icon="aws" href="/quickstart/serverless/aws-lambda-quickstart">
+    Deploy on AWS Lambda
+  </Card>
+  <Card title="Vercel Functions" icon="bolt" href="/quickstart/serverless/vercel-quickstart">
+    Deploy on Vercel
+  </Card>
+  <Card title="API Reference" icon="book" href="/api-reference/emails/send-email">
+    Complete API documentation
+  </Card>
+</CardGroup>

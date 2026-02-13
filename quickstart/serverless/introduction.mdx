@@ -1,31 +1,9 @@
 ---
-title: Serverless Quickstart
+title: Getting Started
 description: "Send emails from serverless functions with Lettr"
 ---
 
-Deploy email sending on serverless platforms. Lettr's REST API works seamlessly with serverless functions — no persistent connections or background workers needed.
-
-## Prerequisites
-
-Before you begin, make sure you have:
-
-1. A Lettr account — [sign up at app.lettr.com](https://app.lettr.com)
-2. An [API key](/learn/api-keys/introduction) created in your dashboard
-3. A [verified sending domain](/learn/domains/introduction)
-
-## Choose Your Platform
-
-<CardGroup cols={3}>
-  <Card title="AWS Lambda" icon="aws" href="/quickstart/serverless/aws-lambda">
-    Send emails from AWS Lambda functions
-  </Card>
-  <Card title="Vercel Functions" icon="bolt" href="/quickstart/serverless/vercel-functions">
-    Integrate with Vercel serverless functions
-  </Card>
-  <Card title="Cloudflare Workers" icon="cloudflare" href="/quickstart/serverless/cloudflare-workers">
-    Send emails from Cloudflare Workers
-  </Card>
-</CardGroup>
+Send transactional emails from serverless functions on AWS Lambda, Vercel, Cloudflare Workers, and other platforms. Lettr's HTTP API is designed for serverless environments — no persistent connections or background workers needed.
 
 ## Why Lettr Works Well with Serverless
 
@@ -35,10 +13,42 @@ Serverless functions are stateless and short-lived, which makes SMTP connections
 - **Fast cold starts** — A single HTTP call is all it takes to send an email
 - **Built-in retries** — Lettr handles delivery retries, so your function doesn't need to
 - **Async by design** — Fire-and-forget sending keeps function execution time short
+- **No state management** — Send emails without databases or queues
+
+<Info>
+  Unlike SMTP, which requires maintaining a persistent TCP connection, HTTP requests are stateless and complete in milliseconds — perfect for serverless architectures where functions can be cold-started at any time.
+</Info>
+
+## Prerequisites
+
+Before you begin, make sure you have:
+
+<CardGroup cols={2}>
+  <Card title="API Key" icon="key" href="https://app.lettr.com/api-keys">
+    Create an API key in the Lettr dashboard
+  </Card>
+  <Card title="Verified Domain" icon="globe" href="/learn/domains/sending-domains">
+    Add and verify your sending domain
+  </Card>
+</CardGroup>
+
+## Choose Your Platform
+
+<CardGroup cols={3}>
+  <Card title="AWS Lambda" icon="aws" href="/quickstart/serverless/aws-lambda-quickstart">
+    Send emails from AWS Lambda functions
+  </Card>
+  <Card title="Vercel Functions" icon="bolt" href="/quickstart/serverless/vercel-quickstart">
+    Integrate with Vercel serverless functions
+  </Card>
+  <Card title="Cloudflare Workers" icon="cloudflare" href="/quickstart/serverless/cloudflare-quickstart">
+    Send emails from Cloudflare Workers
+  </Card>
+</CardGroup>
 
 ## Generic Example
 
-On any serverless platform, sending email is a single HTTP POST:
+On any serverless platform, sending an email is a single HTTP POST request:
 
 ```javascript
 export async function handler(event) {
@@ -56,7 +66,19 @@ export async function handler(event) {
     }),
   });
 
-  return { statusCode: response.status };
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(`Email sending failed: ${data.message}`);
+  }
+
+  return {
+    statusCode: 200,
+    body: JSON.stringify({
+      message: 'Email sent',
+      requestId: data.request_id,
+    }),
+  };
 }
 ```
 
@@ -64,4 +86,296 @@ export async function handler(event) {
   Store your API key in environment variables or your platform's secrets manager — never hardcode it in your function source.
 </Tip>
 
-For the full API reference, see the [Send Email endpoint](/api-reference/emails/send-email).
+## Complete Example with Error Handling
+
+Here's a production-ready example with error handling, logging, and retry logic:
+
+```javascript
+async function sendEmail({ to, subject, html }) {
+  const MAX_RETRIES = 3;
+  let lastError;
+
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const response = await fetch('https://app.lettr.com/api/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.LETTR_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: process.env.FROM_EMAIL || 'noreply@yourdomain.com',
+          to: Array.isArray(to) ? to : [to],
+          subject,
+          html,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        // Don't retry on validation errors (4xx)
+        if (response.status >= 400 && response.status < 500) {
+          throw new Error(`Validation error: ${data.message}`);
+        }
+        // Retry on server errors (5xx)
+        throw new Error(`Server error: ${data.message}`);
+      }
+
+      console.log(`Email sent successfully. Request ID: ${data.request_id}`);
+      return data;
+
+    } catch (error) {
+      lastError = error;
+      console.error(`Attempt ${attempt} failed:`, error.message);
+
+      if (attempt < MAX_RETRIES) {
+        // Exponential backoff
+        await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+      }
+    }
+  }
+
+  throw new Error(`Failed to send email after ${MAX_RETRIES} attempts: ${lastError.message}`);
+}
+
+export async function handler(event) {
+  try {
+    await sendEmail({
+      to: 'user@example.com',
+      subject: 'Welcome!',
+      html: '<h1>Hello!</h1><p>Thanks for signing up.</p>',
+    });
+
+    return { statusCode: 200, body: JSON.stringify({ success: true }) };
+  } catch (error) {
+    console.error('Email sending failed:', error);
+    return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
+  }
+}
+```
+
+## Using with Lettr SDK
+
+If your platform supports npm packages, you can use the Lettr Node.js SDK for a cleaner interface:
+
+```javascript
+import { Lettr } from 'lettr';
+
+const lettr = new Lettr(process.env.LETTR_API_KEY);
+
+export async function handler(event) {
+  try {
+    const result = await lettr.emails.send({
+      from: 'you@yourdomain.com',
+      to: ['recipient@example.com'],
+      subject: 'Hello from Lettr',
+      html: '<p>Sent from a serverless function!</p>',
+    });
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ requestId: result.request_id }),
+    };
+  } catch (error) {
+    console.error('Failed to send email:', error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: error.message }),
+    };
+  }
+}
+```
+
+See platform-specific guides for SDK installation and configuration:
+
+- [AWS Lambda with SDK](/quickstart/serverless/aws-lambda-quickstart)
+- [Vercel Functions with SDK](/quickstart/serverless/vercel-quickstart)
+- [Cloudflare Workers with SDK](/quickstart/serverless/cloudflare-quickstart)
+
+## Environment Variables
+
+All serverless platforms support environment variables. Set these for your function:
+
+```bash
+LETTR_API_KEY=lttr_your_api_key_here
+FROM_EMAIL=noreply@yourdomain.com
+```
+
+**Platform-specific instructions:**
+
+- **AWS Lambda**: Use AWS Secrets Manager or Lambda environment variables
+- **Vercel**: Add via dashboard or `vercel env add`
+- **Cloudflare Workers**: Use `wrangler secret put`
+
+<Warning>
+  Never commit API keys to version control. Always use environment variables or secrets management services.
+</Warning>
+
+## Best Practices for Serverless Email
+
+### 1. Set Appropriate Timeouts
+
+Ensure your function timeout is long enough for the HTTP request:
+
+```javascript
+// Most email API calls complete in < 1 second
+// Set timeout to 10-30 seconds to account for retries
+export const config = {
+  maxDuration: 30, // Vercel
+};
+```
+
+### 2. Handle Cold Starts
+
+The first request to a cold function may be slower. Use a lightweight HTTP client to minimize initialization time:
+
+```javascript
+// Use built-in fetch (no dependencies)
+const response = await fetch('https://app.lettr.com/api/emails', {
+  // ...
+});
+```
+
+### 3. Implement Idempotency
+
+Use the `idempotency_key` parameter to prevent duplicate sends on retries:
+
+```javascript
+const idempotencyKey = `${userId}-${actionId}-${Date.now()}`;
+
+await fetch('https://app.lettr.com/api/emails', {
+  headers: {
+    'Idempotency-Key': idempotencyKey,
+    // ...
+  },
+  // ...
+});
+```
+
+### 4. Monitor Function Execution
+
+Log request IDs for debugging:
+
+```javascript
+const data = await response.json();
+console.log(`Email request ID: ${data.request_id}`);
+```
+
+Then track delivery via [webhooks](/learn/webhooks/introduction) or the [Events API](/learn/events/introduction).
+
+### 5. Keep Functions Lightweight
+
+Avoid large dependencies. Use the platform's native `fetch` API instead of libraries like `axios`:
+
+```javascript
+// ✅ Good - no dependencies
+const response = await fetch(url, options);
+
+// ❌ Avoid - adds bundle size
+const axios = require('axios');
+await axios.post(url, data);
+```
+
+## Common Serverless Architectures
+
+### Event-Triggered Emails
+
+Send emails in response to events (user signup, purchase, etc.):
+
+```javascript
+export async function handler(event) {
+  const { userId, email, action } = JSON.parse(event.body);
+
+  const templates = {
+    signup: {
+      subject: 'Welcome to our app!',
+      html: `<h1>Welcome!</h1><p>Thanks for signing up.</p>`,
+    },
+    purchase: {
+      subject: 'Order confirmed',
+      html: `<h1>Thanks for your order!</h1>`,
+    },
+  };
+
+  const template = templates[action];
+
+  await sendEmail({
+    to: email,
+    subject: template.subject,
+    html: template.html,
+  });
+
+  return { statusCode: 200 };
+}
+```
+
+### Scheduled Emails
+
+Use platform-specific schedulers (CloudWatch Events, Vercel Cron, etc.):
+
+```javascript
+// Scheduled function that runs daily
+export async function handler(event) {
+  const users = await fetchUsersNeedingReminder();
+
+  for (const user of users) {
+    await sendEmail({
+      to: user.email,
+      subject: 'Daily reminder',
+      html: `<p>You have ${user.tasks} tasks pending.</p>`,
+    });
+  }
+
+  return { statusCode: 200 };
+}
+```
+
+### Batch Processing
+
+Process multiple emails in a single function invocation:
+
+```javascript
+export async function handler(event) {
+  const recipients = JSON.parse(event.body);
+
+  const promises = recipients.map(recipient =>
+    sendEmail({
+      to: recipient.email,
+      subject: 'Batch email',
+      html: `<p>Hello ${recipient.name}!</p>`,
+    })
+  );
+
+  const results = await Promise.allSettled(promises);
+
+  const successful = results.filter(r => r.status === 'fulfilled').length;
+  const failed = results.filter(r => r.status === 'rejected').length;
+
+  return {
+    statusCode: 200,
+    body: JSON.stringify({ successful, failed }),
+  };
+}
+```
+
+<Info>
+  For sending to many recipients (100+), consider using [batch sending](/learn/sending/batch-sending) with a single API call or processing in smaller chunks to avoid function timeouts.
+</Info>
+
+## What's Next
+
+<CardGroup cols={2}>
+  <Card title="AWS Lambda" icon="aws" href="/quickstart/serverless/aws-lambda-quickstart">
+    Deploy on AWS Lambda
+  </Card>
+  <Card title="Vercel Functions" icon="bolt" href="/quickstart/serverless/vercel-quickstart">
+    Deploy on Vercel
+  </Card>
+  <Card title="Cloudflare Workers" icon="cloudflare" href="/quickstart/serverless/cloudflare-quickstart">
+    Deploy on Cloudflare
+  </Card>
+  <Card title="API Reference" icon="book" href="/api-reference/emails/send-email">
+    Complete API documentation
+  </Card>
+</CardGroup>

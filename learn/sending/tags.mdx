@@ -1,9 +1,9 @@
 ---
 title: Tags
-description: "Group emails for analytics with a single string tag"
+description: "Group and analyze emails with a single string tag"
 ---
 
-Tags let you label emails with a single string identifier so you can group and analyze them in the [Analytics dashboard](/learn/analytics/filtering-and-breakdowns). Every email you send can carry one tag (max 64 characters), and you can then filter and break down metrics — sent, delivered, bounced, opened, clicked — by that tag.
+Tags let you label emails with a single string identifier so you can group and analyze them in the [Analytics dashboard](/learn/analytics/filtering-and-breakdowns). Every email can carry one tag (max 64 characters), and you can filter and break down metrics — sent, delivered, bounced, opened, clicked — by that tag.
 
 ## Adding a Tag via API
 
@@ -44,7 +44,7 @@ When you send an email using a `template_slug`, Lettr automatically sets the tag
 This also means that each template in the Emails dashboard shows **Sent**, **Opened**, and **Rate** columns, giving you per-template engagement stats without any extra configuration.
 
 <Tip>
-  You can still override the automatic tag by passing an explicit `tag` in the request. The explicit tag takes priority.
+  You can override the automatic tag by passing an explicit `tag` in the request. The explicit tag takes priority.
 </Tip>
 
 ## Tags in the Dashboard
@@ -62,7 +62,9 @@ On the Analytics page you can use tags in two ways:
 - **Filter by Tag** — Show only data for emails with a specific tag. Open the Configure modal, go to the Filters tab, and select "Tag" as the filter type.
 - **Break down by Tag** — Use the "Break Down By" dropdown below the chart to see your metrics split by tag. This lets you compare performance across different email categories at a glance.
 
-See [Filtering and Breakdowns](/learn/analytics/filtering-and-breakdowns) for full details on the Configure modal.
+<Card title="Filtering and Breakdowns" icon="chart-line" href="/learn/analytics/filtering-and-breakdowns">
+  Learn more about the Configure modal, filters, and breakdowns
+</Card>
 
 ## Tag Rules
 
@@ -72,7 +74,7 @@ See [Filtering and Breakdowns](/learn/analytics/filtering-and-breakdowns) for fu
 | Tags per email | One |
 | Format | Plain string — letters, numbers, hyphens, underscores |
 
-## Metadata vs Tags
+## Tags vs Metadata
 
 Tags and [metadata](/learn/sending/metadata) serve different purposes:
 
@@ -84,3 +86,7 @@ Tags and [metadata](/learn/sending/metadata) serve different purposes:
 | **Best for** | Comparing performance across email categories | Linking emails to orders, customers, or internal IDs |
 
 Use a tag when you want to group emails in the Analytics dashboard (e.g., `welcome-series`, `order-confirmation`). Use metadata when you need to attach structured data for webhooks or API queries (e.g., `orderId`, `customerId`).
+
+<Card title="Metadata" icon="tag" href="/learn/sending/metadata">
+  Learn how to attach key-value data to emails for detailed tracking
+</Card>

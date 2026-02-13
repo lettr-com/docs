@@ -1,0 +1,251 @@
+---
+title: Getting Started
+description: "Send transactional emails from Python using the Lettr SDK"
+---
+
+Send transactional emails from your Python applications using the official Lettr Python SDK. The SDK provides a type-safe, intuitive interface for the Lettr API with full async support and comprehensive error handling.
+
+The `lettr` package gives you a Pythonic API client that works with any Python application — Django, Flask, FastAPI, or standalone scripts. It follows Python conventions and integrates seamlessly with your existing codebase.
+
+## Why Use the Python SDK?
+
+Rather than making raw HTTP requests, the SDK provides:
+
+- **Type hints** — Full type annotations for IDE autocompletion and type checking
+- **Sync and async** — Both synchronous and asynchronous API clients
+- **Pythonic interface** — Snake_case naming and Python conventions
+- **Error handling** — Typed exceptions for different error scenarios
+- **Minimal dependencies** — Only requires `httpx` for HTTP requests
+
+<Note>
+  If you prefer not to use the SDK, you can also send emails via [SMTP](/quickstart/smtp/introduction) or make direct [HTTP API](/api-reference/emails/send-email) calls.
+</Note>
+
+## Prerequisites
+
+Before you begin, make sure you have:
+
+<CardGroup cols={2}>
+  <Card title="API Key" icon="key" href="https://app.lettr.com/api-keys">
+    Create an API key in the Lettr dashboard
+  </Card>
+  <Card title="Verified Domain" icon="globe" href="/learn/domains/sending-domains">
+    Add and verify your sending domain
+  </Card>
+</CardGroup>
+
+You'll also need:
+
+- **Python 3.8 or later** installed
+- **pip** for package management
+- A verified sending domain in your [Lettr dashboard](https://app.lettr.com/domains)
+
+## Quick Setup
+
+Get started in three quick steps: install, configure, and send.
+
+<Steps>
+  <Step title="Install the SDK">
+    ```bash
+    pip install lettr
+    ```
+
+    The SDK requires Python 3.8+ and automatically installs `httpx` as a dependency. For async support, httpx's async features are included by default.
+  </Step>
+  <Step title="Create a client">
+    ```python
+    import lettr
+
+    client = lettr.Lettr("your-api-key")
+
+    # Verify the client is configured correctly
+    auth = client.health.auth_check()
+    print(f"Connected to Lettr (Team ID: {auth.team_id})")
+    ```
+
+    <Tip>
+      Store your API key in environment variables, never hardcode it. API keys use the `lttr_` prefix followed by 64 hexadecimal characters.
+    </Tip>
+  </Step>
+  <Step title="Send your first email">
+    ```python
+    response = client.emails.send(
+        from_email="sender@yourdomain.com",
+        to=["recipient@example.com"],
+        subject="Hello from Lettr",
+        html="<h1>Hello!</h1><p>This is a test email.</p>",
+    )
+
+    print(f"Email sent! Request ID: {response.request_id}")
+    print(f"Accepted: {response.accepted}")
+    ```
+
+    The response includes a `request_id` for tracking and the number of accepted recipients.
+  </Step>
+</Steps>
+
+<Warning>
+  The sender domain must be verified in your [Lettr dashboard](https://app.lettr.com/domains) before you can send emails. Sending from an unverified domain returns a validation error.
+</Warning>
+
+## Configuration
+
+### Environment Variables
+
+Read your API key from an environment variable:
+
+```python
+import os
+import lettr
+
+api_key = os.environ.get("LETTR_API_KEY")
+if not api_key:
+    raise ValueError("LETTR_API_KEY environment variable is required")
+
+client = lettr.Lettr(api_key)
+```
+
+### Using python-dotenv
+
+Load environment variables from a `.env` file using `python-dotenv`:
+
+```bash
+pip install python-dotenv
+```
+
+Create a `.env` file:
+
+```env
+LETTR_API_KEY=lttr_your_api_key_here
+```
+
+Load it in your application:
+
+```python
+from dotenv import load_dotenv
+import os
+import lettr
+
+# Load .env file
+load_dotenv()
+
+client = lettr.Lettr(os.environ["LETTR_API_KEY"])
+```
+
+<Tip>
+  Add `.env` to your `.gitignore` file to prevent accidentally committing your API key to version control.
+</Tip>
+
+### Custom HTTP Client
+
+Use a custom httpx client with custom timeouts:
+
+```python
+import httpx
+import lettr
+
+http_client = httpx.Client(timeout=30.0)
+client = lettr.Lettr("your-api-key", http_client=http_client)
+```
+
+### Async Client
+
+Use the async client for non-blocking operations:
+
+```python
+import asyncio
+import lettr
+
+async def main():
+    client = lettr.AsyncLettr("your-api-key")
+
+    response = await client.emails.send(
+        from_email="sender@yourdomain.com",
+        to=["recipient@example.com"],
+        subject="Hello",
+        html="<p>Hello!</p>",
+    )
+
+    print(f"Email sent: {response.request_id}")
+
+asyncio.run(main())
+```
+
+## Sending Emails
+
+### Basic HTML Email
+
+Send a simple HTML email:
+
+```python
+response = client.emails.send(
+    from_email="notifications@yourdomain.com",
+    to=["user@example.com"],
+    subject="Welcome to our service",
+    html="<h1>Welcome!</h1><p>Thanks for signing up.</p>",
+)
+
+print(f"Email sent successfully (Request ID: {response.request_id})")
+```
+
+### With Display Name
+
+Add a friendly display name to the sender address:
+
+```python
+response = client.emails.send(
+    from_email="notifications@yourdomain.com",
+    from_name="Acme Corp",
+    to=["user@example.com"],
+    subject="Welcome to Acme",
+    html="<h1>Hello!</h1>",
+)
+```
+
+### Plain Text Email
+
+Send a plain text email without HTML:
+
+```python
+response = client.emails.send(
+    from_email="notifications@yourdomain.com",
+    to=["user@example.com"],
+    subject="Plain text email",
+    text="This is a plain text email.\n\nIt has no HTML formatting.",
+)
+```
+
+### Multipart Emails (HTML + Text)
+
+Send both HTML and plain text versions for maximum compatibility:
+
+```python
+response = client.emails.send(
+    from_email="notifications@yourdomain.com",
+    to=["user@example.com"],
+    subject="Multipart email",
+    html="<h1>Hello!</h1><p>This is the HTML version.</p>",
+    text="Hello!\n\nThis is the plain text version.",
+)
+```
+
+<Tip>
+  Providing both HTML and plain text ensures your emails are readable in all email clients, including text-only clients and accessibility tools.
+</Tip>
+
+## What's Next
+
+<CardGroup cols={2}>
+  <Card title="Advanced Features" icon="wand-magic-sparkles" href="/quickstart/python/advanced">
+    Multiple recipients, attachments, templates, error handling, and more
+  </Card>
+  <Card title="Flask Integration" icon="flask" href="/quickstart/python/send-with-flask">
+    Use Lettr with Flask applications
+  </Card>
+  <Card title="FastAPI Integration" icon="bolt" href="/quickstart/python/send-with-fastapi">
+    Use Lettr with FastAPI applications
+  </Card>
+  <Card title="API Reference" icon="book" href="/api-reference/introduction">
+    Complete API documentation
+  </Card>
+</CardGroup>

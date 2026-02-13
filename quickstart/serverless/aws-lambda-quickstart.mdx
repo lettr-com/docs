@@ -1,0 +1,216 @@
+---
+title: AWS Lambda
+description: "Get started with sending emails from AWS Lambda in minutes"
+---
+
+Send transactional emails from AWS Lambda using Lettr's HTTP API. Lambda's event-driven architecture pairs perfectly with Lettr — no persistent connections, no background workers, just simple HTTP requests.
+
+## Prerequisites
+
+Before you begin, make sure you have:
+
+<CardGroup cols={2}>
+  <Card title="API Key" icon="key" href="https://app.lettr.com/api-keys">
+    Create an API key in the Lettr dashboard
+  </Card>
+  <Card title="Verified Domain" icon="globe" href="/learn/domains/sending-domains">
+    Add and verify your sending domain
+  </Card>
+</CardGroup>
+
+You'll also need:
+
+- **AWS account** with Lambda access and appropriate IAM permissions
+- **Node.js 18.x or 20.x** runtime (or Python 3.9+)
+- **AWS CLI** installed and configured (optional, but recommended)
+
+## Quick Setup
+
+<Steps>
+  <Step title="Create a Lambda function">
+    Create a new Lambda function in the AWS Console or via AWS CLI:
+
+    ```bash
+    aws lambda create-function \
+      --function-name send-email \
+      --runtime nodejs20.x \
+      --role arn:aws:iam::YOUR_ACCOUNT_ID:role/lambda-execution-role \
+      --handler index.handler \
+      --zip-file fileb://function.zip
+    ```
+  </Step>
+
+  <Step title="Add environment variables">
+    Set your Lettr API key as an environment variable:
+
+    ```bash
+    aws lambda update-function-configuration \
+      --function-name send-email \
+      --environment "Variables={LETTR_API_KEY=lttr_your_api_key_here,FROM_EMAIL=noreply@yourdomain.com}"
+    ```
+
+    <Tip>
+      For production, use AWS Secrets Manager instead of environment variables. See the [Advanced Guide](/quickstart/serverless/aws-lambda-advanced#using-aws-secrets-manager) for details.
+    </Tip>
+  </Step>
+
+  <Step title="Deploy your function">
+    Deploy the function code (see examples below) and test it:
+
+    ```bash
+    aws lambda invoke \
+      --function-name send-email \
+      --payload '{"body":"{\"to\":\"user@example.com\",\"subject\":\"Test\",\"html\":\"<p>Hello!</p>\"}"}' \
+      response.json
+    ```
+  </Step>
+</Steps>
+
+## Node.js Implementation
+
+Install the SDK in your Lambda function:
+
+```bash
+npm install lettr
+```
+
+Then create your handler:
+
+```javascript
+import { Lettr } from 'lettr';
+
+const lettr = new Lettr(process.env.LETTR_API_KEY);
+
+export const handler = async (event) => {
+  try {
+    // Parse request body (API Gateway proxy integration)
+    const body = JSON.parse(event.body || '{}');
+    const { to, subject, html, text } = body;
+
+    // Validate required fields
+    if (!to || !subject || (!html && !text)) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({
+          error: 'Missing required fields: to, subject, and html or text',
+        }),
+      };
+    }
+
+    // Send email via Lettr
+    const result = await lettr.emails.send({
+      from: process.env.FROM_EMAIL || 'noreply@yourdomain.com',
+      to: Array.isArray(to) ? to : [to],
+      subject,
+      html,
+      text,
+    });
+
+    console.log(`Email sent successfully. Request ID: ${result.request_id}`);
+
+    return {
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        success: true,
+        requestId: result.request_id,
+        accepted: result.accepted,
+      }),
+    };
+  } catch (error) {
+    console.error('Failed to send email:', error);
+
+    return {
+      statusCode: error.status || 500,
+      body: JSON.stringify({
+        error: error.message || 'Internal server error',
+      }),
+    };
+  }
+};
+```
+
+<Info>
+  The Lettr SDK automatically handles retries for transient failures and provides better error messages than raw fetch calls.
+</Info>
+
+## Python Implementation
+
+Install the SDK:
+
+```bash
+pip install lettr -t .
+```
+
+Then create your handler:
+
+```python
+import json
+import os
+from lettr import Lettr
+
+lettr = Lettr(os.environ['LETTR_API_KEY'])
+
+def handler(event, context):
+    try:
+        # Parse request body
+        body = json.loads(event.get('body', '{}'))
+        to = body.get('to')
+        subject = body.get('subject')
+        html = body.get('html')
+
+        # Validate required fields
+        if not to or not subject or not html:
+            return {
+                'statusCode': 400,
+                'body': json.dumps({
+                    'error': 'Missing required fields: to, subject, html'
+                })
+            }
+
+        # Send email
+        result = lettr.emails.send(
+            from_email=os.environ.get('FROM_EMAIL', 'noreply@yourdomain.com'),
+            to=[to] if isinstance(to, str) else to,
+            subject=subject,
+            html=html
+        )
+
+        print(f"Email sent successfully. Request ID: {result['request_id']}")
+
+        return {
+            'statusCode': 200,
+            'body': json.dumps({
+                'success': True,
+                'requestId': result['request_id'],
+                'accepted': result['accepted']
+            })
+        }
+
+    except Exception as e:
+        print(f"Failed to send email: {str(e)}")
+
+        return {
+            'statusCode': 500,
+            'body': json.dumps({'error': str(e)})
+        }
+```
+
+## What's Next
+
+<CardGroup cols={2}>
+  <Card title="Advanced Guide" icon="book-open" href="/quickstart/serverless/aws-lambda-advanced">
+    Learn about deployment strategies, event triggers, and best practices
+  </Card>
+  <Card title="Vercel Functions" icon="bolt" href="/quickstart/serverless/vercel-quickstart">
+    Deploy on Vercel
+  </Card>
+  <Card title="Cloudflare Workers" icon="cloudflare" href="/quickstart/serverless/cloudflare-quickstart">
+    Deploy on Cloudflare
+  </Card>
+  <Card title="API Reference" icon="book" href="/api-reference/emails/send-email">
+    Complete API documentation
+  </Card>
+</CardGroup>

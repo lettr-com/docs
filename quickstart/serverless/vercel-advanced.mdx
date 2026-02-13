@@ -1,0 +1,536 @@
+---
+title: Vercel Functions Advanced
+description: "Advanced Vercel Functions patterns for sending emails with Lettr"
+---
+
+<Note>
+  This is the advanced guide for Vercel Functions. If you're just getting started, check out the [Quickstart Guide](/quickstart/serverless/vercel-quickstart) first.
+</Note>
+
+This guide covers advanced patterns for sending emails from Vercel Functions, including Server Actions, Edge Runtime, environment variables, and production best practices.
+
+## Using Raw Fetch API
+
+For a zero-dependency approach, use the native fetch API:
+
+### App Router
+
+```typescript
+import { NextResponse } from 'next/server';
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const { to, subject, html } = body;
+
+    const response = await fetch('https://app.lettr.com/api/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.LETTR_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: process.env.FROM_EMAIL || 'noreply@yourdomain.com',
+        to: Array.isArray(to) ? to : [to],
+        subject,
+        html,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to send email');
+    }
+
+    return NextResponse.json({
+      success: true,
+      requestId: data.request_id,
+    });
+  } catch (error: any) {
+    return NextResponse.json(
+      { error: error.message },
+      { status: 500 }
+    );
+  }
+}
+
+export const maxDuration = 30;
+```
+
+### Pages Router
+
+```typescript
+import type { NextApiRequest, NextApiResponse } from 'next';
+
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  try {
+    const { to, subject, html } = req.body;
+
+    const response = await fetch('https://app.lettr.com/api/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.LETTR_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: process.env.FROM_EMAIL || 'noreply@yourdomain.com',
+        to: Array.isArray(to) ? to : [to],
+        subject,
+        html,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to send email');
+    }
+
+    res.status(200).json({
+      success: true,
+      requestId: data.request_id,
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+}
+
+export const config = {
+  maxDuration: 30,
+};
+```
+
+## Server Actions (Next.js 14+)
+
+For Next.js 14+ projects, you can send emails directly from Server Actions:
+
+### Creating a Server Action
+
+Create a file at `app/actions/email.ts`:
+
+```typescript
+'use server';
+
+import { Lettr } from 'lettr';
+
+const lettr = new Lettr(process.env.LETTR_API_KEY!);
+
+export async function sendEmail(formData: FormData) {
+  const to = formData.get('email') as string;
+  const subject = formData.get('subject') as string;
+  const message = formData.get('message') as string;
+
+  // Validate inputs
+  if (!to || !subject || !message) {
+    return {
+      success: false,
+      error: 'All fields are required',
+    };
+  }
+
+  try {
+    const result = await lettr.emails.send({
+      from: process.env.FROM_EMAIL || 'noreply@yourdomain.com',
+      to: [to],
+      subject,
+      html: `<p>${message}</p>`,
+    });
+
+    return {
+      success: true,
+      requestId: result.request_id,
+    };
+  } catch (error: any) {
+    console.error('Failed to send email:', error);
+
+    return {
+      success: false,
+      error: error.message || 'Failed to send email',
+    };
+  }
+}
+```
+
+### Using in a Component
+
+```tsx
+'use client';
+
+import { sendEmail } from '@/app/actions/email';
+import { useFormState } from 'react-dom';
+
+export default function ContactForm() {
+  const [state, formAction] = useFormState(sendEmail, null);
+
+  return (
+    <form action={formAction}>
+      <input
+        type="email"
+        name="email"
+        placeholder="Your email"
+        required
+      />
+      <input
+        type="text"
+        name="subject"
+        placeholder="Subject"
+        required
+      />
+      <textarea
+        name="message"
+        placeholder="Your message"
+        required
+      />
+      <button type="submit">Send Email</button>
+
+      {state?.success && <p>Email sent successfully!</p>}
+      {state?.error && <p>Error: {state.error}</p>}
+    </form>
+  );
+}
+```
+
+<Tip>
+  Server Actions are perfect for form submissions that trigger emails — no need to create a separate API route.
+</Tip>
+
+## Edge Runtime
+
+For ultra-fast cold starts, deploy your email function to Vercel's Edge Runtime:
+
+```typescript
+import { Lettr } from 'lettr';
+
+export const runtime = 'edge';
+
+const lettr = new Lettr(process.env.LETTR_API_KEY!);
+
+export async function POST(request: Request) {
+  try {
+    const { to, subject, html } = await request.json();
+
+    const result = await lettr.emails.send({
+      from: process.env.FROM_EMAIL || 'noreply@yourdomain.com',
+      to: [to],
+      subject,
+      html,
+    });
+
+    return Response.json({
+      success: true,
+      requestId: result.request_id,
+    });
+  } catch (error: any) {
+    return Response.json(
+      { error: error.message },
+      { status: 500 }
+    );
+  }
+}
+```
+
+<Info>
+  Edge Runtime functions deploy to Vercel's global edge network for sub-50ms cold starts. However, they have some limitations compared to Node.js runtime (e.g., no native Node.js APIs).
+</Info>
+
+## Environment Variables
+
+### Development Setup
+
+Create a `.env.local` file in your project root:
+
+```env
+LETTR_API_KEY=lttr_your_api_key_here
+FROM_EMAIL=noreply@yourdomain.com
+```
+
+<Warning>
+  Never commit `.env.local` to version control. Add it to your `.gitignore` file.
+</Warning>
+
+### Production Setup
+
+Add environment variables via the Vercel dashboard or CLI:
+
+```bash
+# Add production variables
+vercel env add LETTR_API_KEY production
+vercel env add FROM_EMAIL production
+
+# Add preview variables (optional)
+vercel env add LETTR_API_KEY preview
+vercel env add FROM_EMAIL preview
+```
+
+You can also add environment variables in the Vercel dashboard:
+
+1. Go to your project settings
+2. Navigate to Environment Variables
+3. Add `LETTR_API_KEY` and `FROM_EMAIL`
+4. Select the environments (Production, Preview, Development)
+
+## Calling Your API Route
+
+### From Client Components
+
+```tsx
+'use client';
+
+async function sendEmail(to: string, subject: string, html: string) {
+  const response = await fetch('/api/send', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ to, subject, html }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || 'Failed to send email');
+  }
+
+  return data;
+}
+
+export default function ContactForm() {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    try {
+      const result = await sendEmail(
+        'user@example.com',
+        'Test Email',
+        '<p>Hello from Vercel!</p>'
+      );
+
+      console.log('Email sent:', result.requestId);
+      alert('Email sent successfully!');
+    } catch (error) {
+      console.error('Failed to send:', error);
+      alert('Failed to send email');
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      {/* Form fields */}
+      <button type="submit">Send Email</button>
+    </form>
+  );
+}
+```
+
+### From Server Components
+
+```tsx
+import { Lettr } from 'lettr';
+
+const lettr = new Lettr(process.env.LETTR_API_KEY!);
+
+export default async function WelcomePage() {
+  // Send email directly from server component
+  await lettr.emails.send({
+    from: process.env.FROM_EMAIL!,
+    to: ['user@example.com'],
+    subject: 'Welcome!',
+    html: '<p>Thanks for signing up.</p>',
+  });
+
+  return <div>Welcome! Check your email.</div>;
+}
+```
+
+## Advanced Patterns
+
+### Rate Limiting with Upstash
+
+Implement rate limiting to prevent abuse:
+
+```typescript
+import { Ratelimit } from '@upstash/ratelimit';
+import { Redis } from '@upstash/redis';
+import { NextResponse } from 'next/server';
+import { Lettr } from 'lettr';
+
+const redis = Redis.fromEnv();
+const ratelimit = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(5, '1 m'), // 5 requests per minute
+});
+
+const lettr = new Lettr(process.env.LETTR_API_KEY!);
+
+export async function POST(request: Request) {
+  // Get client IP
+  const ip = request.headers.get('x-forwarded-for') || 'unknown';
+
+  // Check rate limit
+  const { success } = await ratelimit.limit(ip);
+
+  if (!success) {
+    return NextResponse.json(
+      { error: 'Too many requests' },
+      { status: 429 }
+    );
+  }
+
+  // Send email...
+}
+```
+
+### Email Validation
+
+Add email validation before sending:
+
+```typescript
+function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
+
+export async function POST(request: Request) {
+  const { to, subject, html } = await request.json();
+
+  if (!isValidEmail(to)) {
+    return NextResponse.json(
+      { error: 'Invalid email address' },
+      { status: 400 }
+    );
+  }
+
+  // Send email...
+}
+```
+
+### Template-Based Emails
+
+Use Lettr templates for consistent email design:
+
+```typescript
+const result = await lettr.emails.send({
+  from: process.env.FROM_EMAIL!,
+  to: ['user@example.com'],
+  template_id: 'welcome-email',
+  merge_tags: {
+    user_name: 'John Doe',
+    activation_link: 'https://example.com/activate?token=...',
+  },
+});
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Environment variables not loading">
+    If environment variables aren't available in your function:
+
+    1. **Verify `.env.local` exists** in your project root
+    2. **Restart the dev server** after adding new variables
+    3. **Check Vercel dashboard** for production variables
+    4. **Redeploy** after adding production variables
+  </Accordion>
+
+  <Accordion title="Function timeouts">
+    If your function times out:
+
+    1. **Increase maxDuration** (requires Pro plan or higher):
+       ```typescript
+       export const maxDuration = 30;
+       ```
+    2. **Check your API key** is valid and not rate-limited
+    3. **Monitor Vercel logs** for specific error messages
+  </Accordion>
+
+  <Accordion title="CORS errors">
+    If you're calling the API from a different domain, add CORS headers:
+
+    ```typescript
+    export async function POST(request: Request) {
+      // Handle CORS preflight
+      if (request.method === 'OPTIONS') {
+        return new Response(null, {
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'POST',
+            'Access-Control-Allow-Headers': 'Content-Type',
+          },
+        });
+      }
+
+      // Send email...
+
+      // Add CORS headers to response
+      return NextResponse.json(data, {
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+        },
+      });
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="TypeScript errors">
+    If you see TypeScript errors about `process.env`:
+
+    1. **Use non-null assertion** for required variables:
+       ```typescript
+       process.env.LETTR_API_KEY!
+       ```
+    2. **Add type definitions** in `env.d.ts`:
+       ```typescript
+       namespace NodeJS {
+         interface ProcessEnv {
+           LETTR_API_KEY: string;
+           FROM_EMAIL: string;
+         }
+       }
+       ```
+  </Accordion>
+
+  <Accordion title="Rate limiting">
+    If you're hitting Lettr's rate limits:
+
+    1. **Implement request queuing** to smooth out bursts
+    2. **Add exponential backoff** for retries
+    3. **Consider upgrading** your Lettr plan
+    4. **Use batch sending** for multiple recipients
+  </Accordion>
+</AccordionGroup>
+
+## Best Practices
+
+1. **Use environment variables** for all sensitive data
+2. **Set appropriate maxDuration** based on your plan (30s recommended)
+3. **Validate inputs** before sending emails
+4. **Implement rate limiting** to prevent abuse
+5. **Log request IDs** for debugging and tracking
+6. **Use Edge Runtime** for faster cold starts when possible
+7. **Handle errors gracefully** with proper HTTP status codes
+8. **Consider Server Actions** for form-triggered emails
+
+## What's Next
+
+<CardGroup cols={2}>
+  <Card title="Quickstart Guide" icon="rocket" href="/quickstart/serverless/vercel-quickstart">
+    Back to quickstart
+  </Card>
+  <Card title="AWS Lambda" icon="aws" href="/quickstart/serverless/aws-lambda-quickstart">
+    Deploy on AWS Lambda
+  </Card>
+  <Card title="Cloudflare Workers" icon="cloudflare" href="/quickstart/serverless/cloudflare-quickstart">
+    Deploy on Cloudflare
+  </Card>
+  <Card title="Templates" icon="file-code" href="/learn/templates/introduction">
+    Use Lettr templates
+  </Card>
+</CardGroup>

@@ -1,16 +1,35 @@
 ---
-title: Send with SMTP
+title: Getting Started
 description: "Connect to Lettr via SMTP relay"
 ---
 
-If you prefer SMTP over HTTP, you can send emails using Lettr's SMTP relay service.
+Send transactional emails through Lettr's SMTP relay server. If your application already uses SMTP or you're migrating from another email provider, you can switch to Lettr without changing your code — just update your SMTP credentials.
+
+## Why Use SMTP?
+
+SMTP is a good choice when:
+
+- **Legacy applications** — Your application already uses SMTP and changing to an HTTP API would require significant refactoring
+- **Framework built-ins** — Your framework has built-in mail functions that expect SMTP credentials (WordPress, Django, Rails, etc.)
+- **Third-party integrations** — You're connecting a CMS, CRM, or other tool that only supports SMTP configuration
+- **Gradual migration** — You're migrating from another email provider and want to minimize code changes
+
+<Note>
+  If you're building a new application or have flexibility in your stack, consider using the [HTTP API](/api-reference/emails/send-email) or one of our SDKs instead. The API offers better error handling, request tracking, and doesn't require maintaining a persistent connection.
+</Note>
 
 ## Prerequisites
 
 Before you begin, make sure you have:
 
-1. [Created an API key](https://app.lettr.com/api-keys)
-2. [Verified your domain](https://app.lettr.com/domains)
+<CardGroup cols={2}>
+  <Card title="API Key" icon="key" href="https://app.lettr.com/api-keys">
+    Create an API key in the Lettr dashboard
+  </Card>
+  <Card title="Verified Domain" icon="globe" href="/learn/domains/sending-domains">
+    Add and verify your sending domain
+  </Card>
+</CardGroup>
 
 ## SMTP Credentials
 
@@ -21,7 +40,11 @@ Use the following settings to connect to Lettr's SMTP server:
 | Host     | `smtp.lettr.com`       |
 | Port     | `465` (recommended), `2465`, `25`, `587`, `2587`|
 | Username | `lettr`                   |
-| Password | Your API key              |
+| Password | Your API key (starts with `lttr_`)              |
+
+<Warning>
+  Your SMTP password is your Lettr API key. Never commit this to version control or share it publicly. Store it in environment variables or a secrets manager.
+</Warning>
 
 ## Ports & Security
 
@@ -32,11 +55,15 @@ The port you choose determines the security protocol for your SMTP connection:
 | SMTPS    | `465`, `2465`    | Implicit TLS — establishes a secure connection immediately               |
 | STARTTLS | `25`, `587`, `2587` | Explicit TLS — starts unencrypted, then upgrades to a secure connection |
 
-We recommend using port `465` with implicit TLS for the best security and compatibility.
+We recommend using **port 465** with implicit TLS for the best security and compatibility. Port 587 with STARTTLS is also widely supported.
 
-## Example
+<Tip>
+  If you're behind a restrictive firewall, port `2465` and `2587` are alternate ports that often work when standard ports are blocked.
+</Tip>
 
-Here's a basic example using `swaks` (Swiss Army Knife for SMTP):
+## Quick Test with swaks
+
+Verify your SMTP connection using `swaks` (Swiss Army Knife for SMTP):
 
 ```bash
 swaks --to recipient@example.com \
@@ -44,8 +71,91 @@ swaks --to recipient@example.com \
   --server smtp.lettr.com:465 \
   --auth LOGIN \
   --auth-user lettr \
-  --auth-password "your_api_key" \
+  --auth-password "lttr_your_api_key_here" \
   --tlsc \
   --header "Subject: Hello from Lettr" \
   --body "This is a test email sent via SMTP."
 ```
+
+If the connection succeeds, you'll see output showing the SMTP conversation and a confirmation that the message was accepted.
+
+<Tip>
+  `swaks` is available via package managers: `brew install swaks` (macOS), `apt-get install swaks` (Ubuntu/Debian), or download from [jetmore.org/john/code/swaks](http://www.jetmore.org/john/code/swaks/).
+</Tip>
+
+## Framework Integration Guides
+
+Choose your framework or library for specific setup instructions:
+
+<CardGroup cols={2}>
+  <Card title="Laravel" icon="laravel" href="/quickstart/smtp/laravel">
+    Configure Laravel's mail system with SMTP
+  </Card>
+  <Card title="PHPMailer" icon="php" href="/quickstart/smtp/phpmailer">
+    Send emails with PHPMailer
+  </Card>
+</CardGroup>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Authentication Failed">
+    If you see "Authentication failed" or "535 Authentication credentials invalid":
+
+    - Verify your API key is correct and starts with `lttr_`
+    - Check that the username is exactly `lettr` (lowercase)
+    - Ensure your API key hasn't been revoked in the [dashboard](https://app.lettr.com/api-keys)
+  </Accordion>
+
+  <Accordion title="Connection Timeout">
+    If the connection times out:
+
+    - Check your firewall isn't blocking outbound connections on the SMTP port
+    - Try alternate ports (`2465` or `2587`)
+    - Verify `smtp.lettr.com` resolves correctly: `nslookup smtp.lettr.com`
+  </Accordion>
+
+  <Accordion title="TLS/SSL Errors">
+    If you see TLS or SSL handshake errors:
+
+    - Ensure you're using the correct encryption setting for your port (implicit TLS for 465, STARTTLS for 587)
+    - Update your TLS/SSL libraries if you're using older versions
+    - Some older SMTP clients may not support modern TLS versions — consider upgrading or using the HTTP API instead
+  </Accordion>
+</AccordionGroup>
+
+## SMTP vs API
+
+Here's a quick comparison to help you decide:
+
+| Feature | SMTP | HTTP API |
+|---------|------|----------|
+| **Setup complexity** | Low — standard SMTP config | Medium — requires SDK or HTTP client |
+| **Error handling** | Limited — SMTP status codes only | Rich — detailed JSON error responses |
+| **Request tracking** | No request ID returned | Returns `request_id` for tracking |
+| **Attachments** | Standard MIME encoding | Base64 in JSON payload |
+| **Templates** | Not supported | Full template support |
+| **Metadata** | Not supported | Custom metadata supported |
+| **Webhooks** | Not supported | Full event tracking |
+| **Performance** | Slower — persistent connection overhead | Faster — single HTTP request |
+
+<Info>
+  Both SMTP and the HTTP API deliver emails with the same reliability and deliverability. The choice depends on your application's needs and existing infrastructure.
+</Info>
+
+## What's Next
+
+<CardGroup cols={2}>
+  <Card title="Laravel SMTP Setup" icon="laravel" href="/quickstart/smtp/laravel">
+    Configure Laravel to send via SMTP
+  </Card>
+  <Card title="PHPMailer Setup" icon="php" href="/quickstart/smtp/phpmailer">
+    Use PHPMailer with Lettr SMTP
+  </Card>
+  <Card title="API Reference" icon="book" href="/api-reference/introduction">
+    Explore the HTTP API alternative
+  </Card>
+  <Card title="Troubleshooting" icon="wrench" href="/knowledge-base/troubleshooting/delivery-issues">
+    Common delivery issues
+  </Card>
+</CardGroup>

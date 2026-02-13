@@ -1,0 +1,506 @@
+---
+title: AWS Lambda Advanced
+description: "Advanced AWS Lambda patterns for sending emails with Lettr"
+---
+
+<Note>
+  This is the advanced guide for AWS Lambda. If you're just getting started, check out the [Quickstart Guide](/quickstart/serverless/aws-lambda-quickstart) first.
+</Note>
+
+This guide covers advanced patterns for sending emails from AWS Lambda, including deployment strategies, event triggers, monitoring, and production best practices.
+
+## Using Raw Fetch API
+
+If you prefer not to add the SDK dependency, use the native fetch API:
+
+### Node.js
+
+```javascript
+export const handler = async (event) => {
+  try {
+    const body = JSON.parse(event.body || '{}');
+    const { to, subject, html } = body;
+
+    const response = await fetch('https://app.lettr.com/api/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.LETTR_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: process.env.FROM_EMAIL || 'noreply@yourdomain.com',
+        to: Array.isArray(to) ? to : [to],
+        subject,
+        html,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(`Lettr API error: ${data.message || response.statusText}`);
+    }
+
+    console.log(`Email sent. Request ID: ${data.request_id}`);
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({
+        success: true,
+        requestId: data.request_id,
+      }),
+    };
+  } catch (error) {
+    console.error('Email send failed:', error);
+
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: error.message }),
+    };
+  }
+};
+```
+
+### Python
+
+```python
+import json
+import os
+import urllib.request
+
+def handler(event, context):
+    try:
+        body = json.loads(event.get('body', '{}'))
+
+        # Prepare email data
+        email_data = {
+            'from': os.environ.get('FROM_EMAIL', 'noreply@yourdomain.com'),
+            'to': [body['to']] if isinstance(body['to'], str) else body['to'],
+            'subject': body['subject'],
+            'html': body['html']
+        }
+
+        # Create request
+        req = urllib.request.Request(
+            'https://app.lettr.com/api/emails',
+            data=json.dumps(email_data).encode('utf-8'),
+            headers={
+                'Authorization': f"Bearer {os.environ['LETTR_API_KEY']}",
+                'Content-Type': 'application/json'
+            },
+            method='POST'
+        )
+
+        # Send request
+        with urllib.request.urlopen(req) as response:
+            result = json.loads(response.read().decode('utf-8'))
+
+        return {
+            'statusCode': 200,
+            'body': json.dumps({
+                'success': True,
+                'requestId': result['request_id']
+            })
+        }
+
+    except Exception as e:
+        return {
+            'statusCode': 500,
+            'body': json.dumps({'error': str(e)})
+        }
+```
+
+## Using AWS Secrets Manager
+
+For production deployments, store your API key in AWS Secrets Manager instead of environment variables:
+
+<Steps>
+  <Step title="Create a secret">
+    ```bash
+    aws secretsmanager create-secret \
+      --name lettr-api-key \
+      --secret-string "lttr_your_api_key_here"
+    ```
+  </Step>
+
+  <Step title="Grant Lambda permission">
+    Add the `secretsmanager:GetSecretValue` permission to your Lambda execution role:
+
+    ```json
+    {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "secretsmanager:GetSecretValue",
+          "Resource": "arn:aws:secretsmanager:us-east-1:YOUR_ACCOUNT_ID:secret:lettr-api-key-*"
+        }
+      ]
+    }
+    ```
+  </Step>
+
+  <Step title="Update your function code">
+    Retrieve the secret at runtime:
+
+    ```javascript
+    import { SecretsManagerClient, GetSecretValueCommand } from '@aws-sdk/client-secrets-manager';
+    import { Lettr } from 'lettr';
+
+    const secretsManager = new SecretsManagerClient({ region: 'us-east-1' });
+    let cachedLettrClient;
+
+    async function getLettrClient() {
+      if (!cachedLettrClient) {
+        const response = await secretsManager.send(
+          new GetSecretValueCommand({ SecretId: 'lettr-api-key' })
+        );
+        cachedLettrClient = new Lettr(response.SecretString);
+      }
+      return cachedLettrClient;
+    }
+
+    export const handler = async (event) => {
+      const lettr = await getLettrClient();
+
+      // Send email using lettr...
+    };
+    ```
+
+    <Tip>
+      Cache the Lettr client instance across invocations to avoid fetching the secret on every request. Lambda containers are reused, so the cached client will persist between invocations.
+    </Tip>
+  </Step>
+</Steps>
+
+## Deployment Strategies
+
+### Using Lambda Layers
+
+Create a Lambda Layer to share the Lettr SDK across multiple functions:
+
+<Steps>
+  <Step title="Create the layer directory">
+    ```bash
+    mkdir -p nodejs
+    cd nodejs
+    npm init -y
+    npm install lettr
+    ```
+  </Step>
+
+  <Step title="Package and upload">
+    ```bash
+    cd ..
+    zip -r lettr-layer.zip nodejs
+
+    aws lambda publish-layer-version \
+      --layer-name lettr-sdk \
+      --description "Lettr Node.js SDK" \
+      --zip-file fileb://lettr-layer.zip \
+      --compatible-runtimes nodejs18.x nodejs20.x
+    ```
+  </Step>
+
+  <Step title="Attach to your function">
+    ```bash
+    aws lambda update-function-configuration \
+      --function-name send-email \
+      --layers arn:aws:lambda:us-east-1:YOUR_ACCOUNT_ID:layer:lettr-sdk:1
+    ```
+  </Step>
+</Steps>
+
+### Using Container Images
+
+Deploy Lambda functions as container images for more control:
+
+```dockerfile
+FROM public.ecr.aws/lambda/nodejs:20
+
+# Copy function code
+COPY index.js package*.json ./
+
+# Install dependencies
+RUN npm ci --omit=dev
+
+# Set the CMD to your handler
+CMD [ "index.handler" ]
+```
+
+Build and deploy:
+
+```bash
+docker build -t send-email .
+
+aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin YOUR_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com
+
+docker tag send-email:latest YOUR_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/send-email:latest
+docker push YOUR_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/send-email:latest
+
+aws lambda update-function-code \
+  --function-name send-email \
+  --image-uri YOUR_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/send-email:latest
+```
+
+## Event Triggers
+
+### API Gateway Integration
+
+Connect your Lambda function to API Gateway for HTTP-triggered emails:
+
+```javascript
+export const handler = async (event) => {
+  // Handle CORS preflight
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST',
+        'Access-Control-Allow-Headers': 'Content-Type',
+      },
+      body: '',
+    };
+  }
+
+  // Only allow POST
+  if (event.httpMethod !== 'POST') {
+    return {
+      statusCode: 405,
+      body: JSON.stringify({ error: 'Method not allowed' }),
+    };
+  }
+
+  // Send email...
+};
+```
+
+### EventBridge Integration
+
+Trigger emails from EventBridge events:
+
+```javascript
+export const handler = async (event) => {
+  const { detail } = event;
+
+  // Event detail contains custom data
+  const { userId, email, eventType } = detail;
+
+  const templates = {
+    'user.signup': {
+      subject: 'Welcome to our platform!',
+      html: '<h1>Welcome!</h1><p>Thanks for signing up.</p>',
+    },
+    'user.password_reset': {
+      subject: 'Password reset requested',
+      html: '<p>Click here to reset your password.</p>',
+    },
+  };
+
+  const template = templates[eventType];
+
+  if (!template) {
+    console.warn(`No template for event type: ${eventType}`);
+    return;
+  }
+
+  await lettr.emails.send({
+    from: process.env.FROM_EMAIL,
+    to: [email],
+    subject: template.subject,
+    html: template.html,
+  });
+
+  console.log(`Email sent for event ${eventType} to ${email}`);
+};
+```
+
+### SQS Integration
+
+Process email requests from an SQS queue for reliable, async sending:
+
+```javascript
+export const handler = async (event) => {
+  const results = await Promise.allSettled(
+    event.Records.map(async (record) => {
+      const message = JSON.parse(record.body);
+
+      return await lettr.emails.send({
+        from: process.env.FROM_EMAIL,
+        to: [message.to],
+        subject: message.subject,
+        html: message.html,
+      });
+    })
+  );
+
+  // Log failed sends
+  results.forEach((result, index) => {
+    if (result.status === 'rejected') {
+      console.error(`Failed to send email for record ${index}:`, result.reason);
+    }
+  });
+
+  // Return success - failed records remain in queue for retry
+  return { statusCode: 200 };
+};
+```
+
+## Monitoring and Logging
+
+### CloudWatch Logs
+
+Lambda automatically sends logs to CloudWatch. Structure your logs for easy searching:
+
+```javascript
+// Good logging practice
+console.log(JSON.stringify({
+  event: 'email_sent',
+  requestId: result.request_id,
+  to: to,
+  timestamp: new Date().toISOString(),
+}));
+```
+
+### CloudWatch Metrics
+
+Create custom metrics for email sending:
+
+```javascript
+import { CloudWatchClient, PutMetricDataCommand } from '@aws-sdk/client-cloudwatch';
+
+const cloudwatch = new CloudWatchClient({ region: 'us-east-1' });
+
+async function recordMetric(metricName, value) {
+  await cloudwatch.send(
+    new PutMetricDataCommand({
+      Namespace: 'EmailService',
+      MetricData: [
+        {
+          MetricName: metricName,
+          Value: value,
+          Unit: 'Count',
+          Timestamp: new Date(),
+        },
+      ],
+    })
+  );
+}
+
+// In your handler
+await recordMetric('EmailsSent', 1);
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Cold start performance">
+    Lambda cold starts can add 1-3 seconds to the first invocation. Optimize by:
+
+    1. **Using Provisioned Concurrency** for predictable latency
+    2. **Minimizing dependencies** — use native fetch instead of axios
+    3. **Caching clients** outside the handler function
+
+    ```javascript
+    // ❌ Bad - creates new client on every invocation
+    export const handler = async (event) => {
+      const lettr = new Lettr(process.env.LETTR_API_KEY);
+      // ...
+    };
+
+    // ✅ Good - reuses client across invocations
+    const lettr = new Lettr(process.env.LETTR_API_KEY);
+
+    export const handler = async (event) => {
+      // ...
+    };
+    ```
+  </Accordion>
+
+  <Accordion title="Function timeouts">
+    If emails fail to send before the function times out:
+
+    1. **Increase timeout** to 30 seconds (default is 3 seconds)
+    2. **Use async processing** — send to SQS and process in a separate function
+    3. **Check for network issues** — ensure Lambda has internet access
+
+    ```bash
+    aws lambda update-function-configuration \
+      --function-name send-email \
+      --timeout 30
+    ```
+  </Accordion>
+
+  <Accordion title="Authentication errors (401 Unauthorized)">
+    If you see `401 Unauthorized` errors:
+
+    - Verify your API key is correctly set in environment variables
+    - Check that the key starts with `lttr_` and is 68 characters total
+    - Ensure the key hasn't been deleted or revoked in the Lettr dashboard
+  </Accordion>
+
+  <Accordion title="Rate limiting (429 errors)">
+    If you're sending high volumes, you may hit rate limits. Use exponential backoff:
+
+    ```javascript
+    async function sendEmailWithRetry(emailData, maxRetries = 3) {
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          return await lettr.emails.send(emailData);
+        } catch (error) {
+          if (error.status === 429 && attempt < maxRetries) {
+            // Rate limited - wait and retry
+            const delay = Math.pow(2, attempt) * 1000;
+            console.log(`Rate limited. Retrying in ${delay}ms...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+          } else {
+            throw error;
+          }
+        }
+      }
+    }
+    ```
+
+    <Warning>
+      If you consistently hit rate limits, consider upgrading your Lettr plan or implementing a queue-based architecture with SQS to smooth out bursts.
+    </Warning>
+  </Accordion>
+
+  <Accordion title="Secrets Manager errors">
+    If you have issues retrieving secrets:
+
+    1. **Verify IAM permissions** — ensure `secretsmanager:GetSecretValue` is granted
+    2. **Check secret name** — it must match exactly
+    3. **Verify region** — Secrets Manager is region-specific
+    4. **Cache the client** — avoid fetching on every invocation
+  </Accordion>
+</AccordionGroup>
+
+## Best Practices
+
+1. **Use environment variables** for configuration (API key, from email, etc.)
+2. **Cache the Lettr client** outside the handler to improve performance
+3. **Set appropriate timeouts** — 10-30 seconds for email sending functions
+4. **Implement proper error handling** — distinguish between retryable and permanent errors
+5. **Log request IDs** for debugging and tracking delivery
+6. **Use IAM roles** with least privilege permissions
+7. **Enable X-Ray tracing** for performance monitoring
+8. **Consider SQS** for high-volume or batch sending
+
+## What's Next
+
+<CardGroup cols={2}>
+  <Card title="Quickstart Guide" icon="rocket" href="/quickstart/serverless/aws-lambda-quickstart">
+    Back to quickstart
+  </Card>
+  <Card title="Vercel Functions" icon="bolt" href="/quickstart/serverless/vercel-quickstart">
+    Deploy on Vercel
+  </Card>
+  <Card title="Cloudflare Workers" icon="cloudflare" href="/quickstart/serverless/cloudflare-quickstart">
+    Deploy on Cloudflare
+  </Card>
+  <Card title="Webhooks" icon="webhook" href="/learn/webhooks/introduction">
+    Track delivery with webhooks
+  </Card>
+</CardGroup>
