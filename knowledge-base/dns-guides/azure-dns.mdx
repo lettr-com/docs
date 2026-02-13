@@ -39,8 +39,6 @@ This will display a list of DNS records that need to be configured. Keep this pa
 
 Log in to the [Azure Portal](https://portal.azure.com) and navigate to **Azure DNS** in the left-hand menu. Click **DNS zones** to view your zones, and select the zone that matches your domain.
 
-{/* TODO: Add screenshot of Azure DNS zones list */}
-
 <Tip>
   If your domain was purchased through Azure or your nameservers already point to Azure DNS, skip nameserver
   configuration entirely. Your domain is already using Azure DNS's nameservers by default — proceed directly to adding the
@@ -56,8 +54,6 @@ Log in to the [Azure Portal](https://portal.azure.com) and navigate to **Azure D
   </Accordion>
 </AccordionGroup>
 
-{/* TODO: Add screenshot of Azure DNS nameserver configuration inside the accordion above */}
-
 ### Add CNAME Record
 
 The CNAME record verifies domain ownership with Lettr's email infrastructure.
@@ -72,8 +68,6 @@ Add the record in Azure DNS:
 6. Click **Save**.
 
 <img src="/images/lettr-mailing-1.png" alt="CNAME record Hostname and Value in Lettr" />
-
-{/* TODO: Add screenshot of CNAME record in Azure DNS */}
 
 <Info>
   Azure DNS automatically appends your zone name to the record name. Always paste only the subdomain portion (e.g.
@@ -95,8 +89,6 @@ Add the record in Azure DNS:
 
 <img src="/images/lettr-mailing-2.png" alt="DKIM TXT record Hostname and Value in Lettr" />
 
-{/* TODO: Add screenshot of DKIM TXT record in Azure DNS */}
-
 <Info>
   DKIM values are long strings. After saving, re-open the record set to confirm the full value was stored correctly. If it
   appears truncated, delete and re-add the record.
@@ -116,8 +108,6 @@ Add the record in Azure DNS:
 6. Click **Save**.
 
 <img src="/images/lettr-mailing-3.png" alt="DMARC TXT record Hostname and Value in Lettr" />
-
-{/* TODO: Add screenshot of DMARC TXT record in Azure DNS */}
 
 ### Verify Your Sending Domain
 
@@ -165,8 +155,6 @@ Add each MX record in Azure DNS:
 7. Click **Save**.
 
 <img src="/images/lettr-inbound-1.png" alt="MX record values in Lettr for inbound domain" />
-
-{/* TODO: Add screenshot of MX records in Azure DNS */}
 
 <Warning>
   Adding MX records to a domain or subdomain will route all incoming email for that address to Lettr. Use a dedicated
@@ -219,8 +207,6 @@ Add the record in Azure DNS:
 
 <img src="/images/lettr-tracking-1.png" alt="SSL Certificate CNAME record values in Lettr for tracking domain" />
 
-{/* TODO: Add screenshot of SSL Certificate CNAME record in Azure DNS */}
-
 ### Add Traffic CNAME Record
 
 The Traffic CNAME record routes click and open tracking requests from your custom domain to Lettr's tracking servers.
@@ -235,8 +221,6 @@ Add the record in Azure DNS:
 6. Click **Save**.
 
 <img src="/images/lettr-tracking-2.png" alt="Traffic CNAME record values in Lettr for tracking domain" />
-
-{/* TODO: Add screenshot of Traffic CNAME record in Azure DNS */}
 
 ### Verify Your Tracking Domain
 
@@ -284,8 +268,6 @@ Add the record in Azure DNS:
 
 <img src="/images/lettr-storage-1.png" alt="Certificate Validation TXT record values in Lettr for storage domain" />
 
-{/* TODO: Add screenshot of Certificate Validation TXT record in Azure DNS */}
-
 ### Add TXT Record (Hostname Pre-validation)
 
 The Hostname Pre-validation TXT record verifies ownership of the storage domain before Lettr provisions a custom hostname for it.
@@ -301,8 +283,6 @@ Add the record in Azure DNS:
 
 <img src="/images/lettr-storage-2.png" alt="Hostname Pre-validation TXT record values in Lettr for storage domain" />
 
-{/* TODO: Add screenshot of Hostname Pre-validation TXT record in Azure DNS */}
-
 ### Add CNAME Record (Domain Routing)
 
 The Domain Routing CNAME record routes asset requests from your custom domain to Lettr's storage infrastructure.
@@ -317,8 +297,6 @@ Add the record in Azure DNS:
 6. Click **Save**.
 
 <img src="/images/lettr-storage-3.png" alt="Domain Routing CNAME record values in Lettr for storage domain" />
-
-{/* TODO: Add screenshot of Domain Routing CNAME record in Azure DNS */}
 
 ### Verify Your Storage Domain
 

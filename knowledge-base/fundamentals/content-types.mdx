@@ -219,7 +219,7 @@ When you include both `html` and `text` in a single API call, Lettr constructs a
 ### Example: Sending a Multipart Email
 
 ```bash
-curl -X POST https://api.lettr.com/v1/emails \
+curl -X POST https://app.lettr.com/api/emails \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -324,10 +324,10 @@ The email client reads all parts and picks the one it prefers — typically HTML
   <Card title="Templates" icon="paintbrush" href="/learn/templates/introduction">
     Build reusable email templates with the Topol editor and merge tags.
   </Card>
-  <Card title="Templates" icon="paintbrush" href="/learn/templates/introduction">
-    Build and manage email templates with the Topol editor
-  </Card>
   <Card title="How Email Delivery Works" icon="paper-plane" href="/knowledge-base/fundamentals/how-email-delivery-works">
     Understand the full journey of an email from API call to inbox.
+  </Card>
+  <Card title="Email Rendering Clients" icon="desktop" href="/knowledge-base/fundamentals/email-rendering-clients">
+    Learn how different email clients render HTML and CSS.
   </Card>
 </CardGroup>
