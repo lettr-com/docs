@@ -1,13 +1,17 @@
 ---
-title: Send emails with Flask
-description: "Send your first email using Flask and the Lettr Python SDK"
+title: Flask
+description: "Send transactional emails from Flask using the Lettr Python SDK"
 ---
 
-Learn how to send your first email using Flask and the Lettr Python SDK.
+<Note>
+  New to the Lettr Python SDK? Start with the [Python Quickstart](/quickstart/python/send-with-python) to learn the basics, then return here for Flask-specific integration patterns.
+</Note>
+
+Send transactional emails from your Flask applications using the official Lettr Python SDK. Flask's flexible architecture makes it easy to integrate Lettr for user notifications, password resets, order confirmations, and other transactional emails.
 
 ## Prerequisites
 
-To get the most out of this guide, you'll need to:
+Before you begin, make sure you have:
 
 <CardGroup cols={2}>
   <Card title="API Key" icon="key" href="https://app.lettr.com/api-keys">
@@ -18,51 +22,519 @@ To get the most out of this guide, you'll need to:
   </Card>
 </CardGroup>
 
-## 1. Install
+You'll also need:
 
-Get the Lettr Python SDK and Flask.
+- **Python 3.8 or later** installed
+- **Flask** web framework
+- A verified sending domain in your [Lettr dashboard](https://app.lettr.com/domains)
 
-```bash
-pip install lettr flask
+## Quick Setup
+
+Get started in three quick steps: install dependencies, configure Flask, and send.
+
+<Steps>
+  <Step title="Install dependencies">
+    ```bash
+    pip install lettr flask python-dotenv
+    ```
+
+    This installs the Lettr SDK, Flask web framework, and python-dotenv for environment variable management.
+  </Step>
+  <Step title="Configure environment">
+    Create a `.env` file in your project root:
+
+    ```env
+    LETTR_API_KEY=lttr_your_api_key_here
+    FLASK_ENV=development
+    ```
+
+    <Tip>
+      Add `.env` to your `.gitignore` to prevent committing your API key to version control.
+    </Tip>
+  </Step>
+  <Step title="Create Flask application">
+    ```python
+    import os
+    from flask import Flask, jsonify, request
+    from dotenv import load_dotenv
+    import lettr
+
+    load_dotenv()
+
+    app = Flask(__name__)
+    client = lettr.Lettr(os.environ["LETTR_API_KEY"])
+
+    @app.route("/send-email", methods=["POST"])
+    def send_email():
+        data = request.json
+
+        response = client.emails.send(
+            from_email="notifications@yourdomain.com",
+            to=[data["to"]],
+            subject=data["subject"],
+            html=data["html"],
+        )
+
+        return jsonify({
+            "success": True,
+            "request_id": response.request_id,
+            "accepted": response.accepted,
+        })
+
+    if __name__ == "__main__":
+        app.run()
+    ```
+
+    Run with `python app.py` or `flask run`.
+  </Step>
+</Steps>
+
+<Warning>
+  The sender domain must be verified in your [Lettr dashboard](https://app.lettr.com/domains) before you can send emails. Sending from an unverified domain returns a validation error.
+</Warning>
+
+## Flask Application Structure
+
+For production applications, organize your code with a proper structure:
+
+```
+myapp/
+├── app.py              # Application factory
+├── config.py           # Configuration
+├── services/
+│   └── email.py        # Email service
+├── routes/
+│   ├── __init__.py
+│   ├── auth.py         # Authentication routes
+│   └── api.py          # API routes
+├── .env                # Environment variables
+└── requirements.txt    # Dependencies
 ```
 
-## 2. Send email using HTML
+### Configuration
 
-The easiest way to send an email is by using the `html` parameter. Create a route and call the Lettr client.
+Create a `config.py` file for application configuration:
 
 ```python
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+class Config:
+    """Base configuration."""
+    LETTR_API_KEY = os.environ.get("LETTR_API_KEY")
+    MAIL_FROM_ADDRESS = os.environ.get("MAIL_FROM_ADDRESS", "notifications@yourdomain.com")
+    MAIL_FROM_NAME = os.environ.get("MAIL_FROM_NAME", "My Application")
+
+class DevelopmentConfig(Config):
+    """Development configuration."""
+    DEBUG = True
+
+class ProductionConfig(Config):
+    """Production configuration."""
+    DEBUG = False
+
+config = {
+    "development": DevelopmentConfig,
+    "production": ProductionConfig,
+    "default": DevelopmentConfig,
+}
+```
+
+### Email Service
+
+Create an email service in `services/email.py`:
+
+```python
 import lettr
-from flask import Flask, jsonify
+from flask import current_app
 
-client = lettr.Lettr(os.environ["LETTR_API_KEY"])
+class EmailService:
+    """Email service for sending transactional emails."""
 
-app = Flask(__name__)
+    def __init__(self, client=None):
+        self.client = client or lettr.Lettr(current_app.config["LETTR_API_KEY"])
 
+    def send_welcome_email(self, recipient, name):
+        """Send a welcome email to a new user."""
+        response = self.client.emails.send(
+            from_email=current_app.config["MAIL_FROM_ADDRESS"],
+            from_name=current_app.config["MAIL_FROM_NAME"],
+            to=[recipient],
+            subject=f"Welcome to {current_app.config['MAIL_FROM_NAME']}, {name}!",
+            html=f"""
+                <h1>Welcome, {name}!</h1>
+                <p>Thanks for signing up. We're excited to have you on board.</p>
+                <p>If you have any questions, feel free to reply to this email.</p>
+            """,
+            metadata={
+                "email_type": "welcome",
+                "user_email": recipient,
+            },
+        )
+        return response.request_id
 
-@app.route("/")
-def index():
-    response = client.emails.send(
-        from_email="Acme <onboarding@yourdomain.com>",
-        to=["delivered@example.com"],
-        subject="hello world",
-        html="<strong>it works!</strong>",
-    )
-    return jsonify({"request_id": response.request_id, "accepted": response.accepted})
+    def send_password_reset(self, recipient, reset_token):
+        """Send a password reset email."""
+        reset_url = f"https://yourdomain.com/reset-password?token={reset_token}"
 
+        response = self.client.emails.send(
+            from_email=current_app.config["MAIL_FROM_ADDRESS"],
+            from_name=current_app.config["MAIL_FROM_NAME"],
+            to=[recipient],
+            subject="Reset your password",
+            html=f"""
+                <h1>Reset your password</h1>
+                <p>Click the link below to reset your password:</p>
+                <p><a href="{reset_url}">Reset Password</a></p>
+                <p>This link expires in 1 hour.</p>
+                <p>If you didn't request this, please ignore this email.</p>
+            """,
+            metadata={
+                "email_type": "password_reset",
+                "user_email": recipient,
+            },
+        )
+        return response.request_id
+
+    def send_order_confirmation(self, recipient, order_id, items, total):
+        """Send an order confirmation email."""
+        items_html = "".join([
+            f"<li>{item['name']} - ${item['price']}</li>"
+            for item in items
+        ])
+
+        response = self.client.emails.send(
+            from_email=current_app.config["MAIL_FROM_ADDRESS"],
+            from_name=current_app.config["MAIL_FROM_NAME"],
+            to=[recipient],
+            subject=f"Order Confirmation #{order_id}",
+            html=f"""
+                <h1>Order Confirmation</h1>
+                <p>Thank you for your order!</p>
+                <h2>Order #{order_id}</h2>
+                <ul>{items_html}</ul>
+                <p><strong>Total: ${total}</strong></p>
+            """,
+            metadata={
+                "email_type": "order_confirmation",
+                "order_id": order_id,
+                "user_email": recipient,
+            },
+        )
+        return response.request_id
+```
+
+### Application Factory
+
+Create an application factory in `app.py`:
+
+```python
+from flask import Flask
+import lettr
+from config import config
+
+def create_app(config_name="default"):
+    """Application factory pattern."""
+    app = Flask(__name__)
+    app.config.from_object(config[config_name])
+
+    # Initialize Lettr client as an app extension
+    app.lettr_client = lettr.Lettr(app.config["LETTR_API_KEY"])
+
+    # Register blueprints
+    from routes.auth import auth_bp
+    from routes.api import api_bp
+
+    app.register_blueprint(auth_bp, url_prefix="/auth")
+    app.register_blueprint(api_bp, url_prefix="/api")
+
+    return app
 
 if __name__ == "__main__":
+    app = create_app()
     app.run()
 ```
 
-Run the app (with `LETTR_API_KEY` set), then open `http://127.0.0.1:5000/` to trigger the send.
+### Routes
 
-## 3. Try it yourself
+Create authentication routes in `routes/auth.py`:
 
-<Card title="Python SDK" icon="arrow-up-right-from-square" href="/quickstart/python/send-with-python">
-  More options: templates, attachments, and configuration.
-</Card>
+```python
+from flask import Blueprint, request, jsonify, current_app
+from services.email import EmailService
 
-<Card title="Python SDK on GitHub" icon="arrow-up-right-from-square" href="https://github.com/lettr-com/lettr-python">
-  View the full source and examples.
-</Card>
+auth_bp = Blueprint("auth", __name__)
+
+@auth_bp.route("/register", methods=["POST"])
+def register():
+    """Register a new user and send welcome email."""
+    data = request.json
+    email = data.get("email")
+    name = data.get("name")
+    password = data.get("password")
+
+    # ... validate data and create user ...
+
+    # Send welcome email
+    try:
+        email_service = EmailService()
+        request_id = email_service.send_welcome_email(email, name)
+
+        return jsonify({
+            "success": True,
+            "message": "Registration successful",
+            "email_request_id": request_id,
+        }), 201
+    except Exception as e:
+        current_app.logger.error(f"Failed to send welcome email: {e}")
+        return jsonify({
+            "success": True,
+            "message": "Registration successful, but email failed to send",
+        }), 201
+
+@auth_bp.route("/forgot-password", methods=["POST"])
+def forgot_password():
+    """Send password reset email."""
+    data = request.json
+    email = data.get("email")
+
+    # ... generate reset token ...
+    reset_token = "example_token_123"
+
+    try:
+        email_service = EmailService()
+        request_id = email_service.send_password_reset(email, reset_token)
+
+        return jsonify({
+            "success": True,
+            "message": "Password reset email sent",
+            "request_id": request_id,
+        })
+    except Exception as e:
+        current_app.logger.error(f"Failed to send password reset: {e}")
+        return jsonify({
+            "success": False,
+            "message": "Failed to send email",
+        }), 500
+```
+
+## Advanced Features
+
+### Using Templates
+
+Send emails using Lettr-managed templates:
+
+```python
+def send_template_email(self, recipient, template_id, merge_tags):
+    """Send an email using a Lettr template."""
+    response = self.client.emails.send(
+        from_email=current_app.config["MAIL_FROM_ADDRESS"],
+        to=[recipient],
+        template_id=template_id,
+        merge_tags=merge_tags,
+    )
+    return response.request_id
+
+# Usage
+email_service = EmailService()
+email_service.send_template_email(
+    recipient="user@example.com",
+    template_id="welcome-email",
+    merge_tags={
+        "name": "John Doe",
+        "verify_url": "https://example.com/verify/abc123",
+    },
+)
+```
+
+<Tip>
+  See the [Python Quickstart](/quickstart/python/send-with-python#templates) for more details on templates, attachments, and other SDK features.
+</Tip>
+
+### Background Task Queue with Celery
+
+For production applications, send emails asynchronously using Celery:
+
+```bash
+pip install celery redis
+```
+
+Create `tasks.py`:
+
+```python
+from celery import Celery
+import lettr
+import os
+
+celery = Celery(__name__, broker=os.environ["REDIS_URL"])
+
+@celery.task
+def send_email_task(from_email, to, subject, html, **kwargs):
+    """Asynchronous email sending task."""
+    client = lettr.Lettr(os.environ["LETTR_API_KEY"])
+    response = client.emails.send(
+        from_email=from_email,
+        to=to,
+        subject=subject,
+        html=html,
+        **kwargs,
+    )
+    return response.request_id
+```
+
+Use in routes:
+
+```python
+from tasks import send_email_task
+
+@app.route("/register", methods=["POST"])
+def register():
+    data = request.json
+    # ... create user ...
+
+    # Queue email to be sent in background
+    send_email_task.delay(
+        from_email="notifications@yourdomain.com",
+        to=[data["email"]],
+        subject="Welcome!",
+        html="<h1>Welcome to our platform!</h1>",
+    )
+    return jsonify({"success": True})
+```
+
+## Error Handling
+
+Implement error handling in your routes:
+
+```python
+from lettr.exceptions import LettrException, LettrValidationException
+
+@app.route("/send-email", methods=["POST"])
+def send_email():
+    try:
+        response = client.emails.send(...)
+        app.logger.info(f"Email sent: {response.request_id}")
+        return jsonify({"success": True, "request_id": response.request_id})
+    except LettrValidationException as e:
+        app.logger.error(f"Validation error: {e.message}")
+        return jsonify({"success": False, "error": "Invalid email parameters"}), 422
+    except LettrException as e:
+        app.logger.error(f"Email service error: {e.message}")
+        return jsonify({"success": False, "error": "Email service error"}), 500
+```
+
+<Note>
+  See [Error Handling](/quickstart/python/send-with-python#error-handling) in the Python Quickstart for comprehensive error handling patterns.
+</Note>
+
+## Testing
+
+Create unit tests for your email service using Flask's test client:
+
+```python
+import unittest
+from unittest.mock import Mock, patch
+from app import create_app
+
+class TestAuthRoutes(unittest.TestCase):
+    def setUp(self):
+        self.app = create_app("testing")
+        self.client = self.app.test_client()
+
+    @patch("services.email.EmailService.send_welcome_email")
+    def test_register_endpoint(self, mock_send_email):
+        """Test user registration endpoint."""
+        mock_send_email.return_value = "test-request-id"
+
+        response = self.client.post("/auth/register", json={
+            "email": "test@example.com",
+            "name": "Test User",
+            "password": "password123",
+        })
+
+        self.assertEqual(response.status_code, 201)
+        data = response.get_json()
+        self.assertTrue(data["success"])
+```
+
+## Best Practices
+
+### Use Flask Configuration
+
+Store email settings in Flask configuration:
+
+```python
+class Config:
+    LETTR_API_KEY = os.environ.get("LETTR_API_KEY")
+    MAIL_FROM_ADDRESS = "notifications@yourdomain.com"
+    MAIL_FROM_NAME = "My Application"
+    MAIL_REPLY_TO = "support@yourdomain.com"
+    MAIL_ENABLE_TRACKING = True
+```
+
+### Logging
+
+Use Flask's built-in logger:
+
+```python
+@app.route("/send-email", methods=["POST"])
+def send_email():
+    try:
+        response = client.emails.send(...)
+        app.logger.info(
+            f"Email sent successfully",
+            extra={
+                "request_id": response.request_id,
+                "to": data["to"],
+            },
+        )
+        return jsonify({"success": True})
+    except Exception as e:
+        app.logger.error(f"Failed to send email: {e}")
+        return jsonify({"success": False}), 500
+```
+
+### Rate Limiting
+
+Use Flask-Limiter to prevent abuse:
+
+```bash
+pip install flask-limiter
+```
+
+```python
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+
+limiter = Limiter(
+    app=app,
+    key_func=get_remote_address,
+    default_limits=["200 per day", "50 per hour"],
+)
+
+@app.route("/send-email", methods=["POST"])
+@limiter.limit("10 per minute")
+def send_email():
+    # ... send email ...
+    pass
+```
+
+
+## What's Next
+
+<CardGroup cols={2}>
+  <Card title="Python SDK" icon="python" href="/quickstart/python/send-with-python">
+    Complete Python SDK documentation
+  </Card>
+  <Card title="FastAPI Integration" icon="bolt" href="/quickstart/python/send-with-fastapi">
+    Use Lettr with FastAPI
+  </Card>
+  <Card title="API Reference" icon="book" href="/api-reference/introduction">
+    Complete API documentation
+  </Card>
+  <Card title="Templates" icon="file-code" href="/learn/templates/introduction">
+    Use Lettr-managed templates
+  </Card>
+</CardGroup>

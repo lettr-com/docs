@@ -1,13 +1,17 @@
 ---
-title: Send emails with FastAPI
-description: "Send your first email using FastAPI and the Lettr Python SDK"
+title: FastAPI
+description: "Send transactional emails from FastAPI using the Lettr Python SDK"
 ---
 
-Learn how to send your first email using FastAPI and the Lettr Python SDK.
+<Note>
+  New to the Lettr Python SDK? Start with the [Python Quickstart](/quickstart/python/send-with-python) to learn the basics, then return here for FastAPI-specific integration patterns.
+</Note>
+
+Send transactional emails from your FastAPI applications using the official Lettr Python SDK. FastAPI's async-first architecture pairs perfectly with Lettr's async client for high-performance email delivery in modern Python applications.
 
 ## Prerequisites
 
-To get the most out of this guide, you'll need to:
+Before you begin, make sure you have:
 
 <CardGroup cols={2}>
   <Card title="API Key" icon="key" href="https://app.lettr.com/api-keys">
@@ -18,49 +22,538 @@ To get the most out of this guide, you'll need to:
   </Card>
 </CardGroup>
 
-## 1. Install
+You'll also need:
 
-Get the Lettr Python SDK and FastAPI.
+- **Python 3.8 or later** installed
+- **FastAPI** web framework
+- A verified sending domain in your [Lettr dashboard](https://app.lettr.com/domains)
 
-```bash
-pip install lettr fastapi uvicorn
+## Quick Setup
+
+Get started in three quick steps: install dependencies, configure FastAPI, and send.
+
+<Steps>
+  <Step title="Install dependencies">
+    ```bash
+    pip install lettr fastapi uvicorn python-dotenv
+    ```
+
+    This installs the Lettr SDK, FastAPI framework, Uvicorn ASGI server, and python-dotenv for environment variable management.
+  </Step>
+  <Step title="Configure environment">
+    Create a `.env` file in your project root:
+
+    ```env
+    LETTR_API_KEY=lttr_your_api_key_here
+    ```
+
+    <Tip>
+      Add `.env` to your `.gitignore` to prevent committing your API key to version control.
+    </Tip>
+  </Step>
+  <Step title="Create FastAPI application">
+    ```python
+    import os
+    from typing import Dict
+    from fastapi import FastAPI
+    from pydantic import BaseModel, EmailStr
+    from dotenv import load_dotenv
+    import lettr
+
+    load_dotenv()
+
+    app = FastAPI()
+    client = lettr.AsyncLettr(os.environ["LETTR_API_KEY"])
+
+    class EmailRequest(BaseModel):
+        to: EmailStr
+        subject: str
+        html: str
+
+    @app.post("/send-email")
+    async def send_email(email: EmailRequest) -> Dict:
+        response = await client.emails.send(
+            from_email="notifications@yourdomain.com",
+            to=[email.to],
+            subject=email.subject,
+            html=email.html,
+        )
+
+        return {
+            "success": True,
+            "request_id": response.request_id,
+            "accepted": response.accepted,
+        }
+
+    if __name__ == "__main__":
+        import uvicorn
+        uvicorn.run(app, host="0.0.0.0", port=8000)
+    ```
+
+    Run with `python main.py` or `uvicorn main:app --reload`.
+  </Step>
+</Steps>
+
+<Warning>
+  The sender domain must be verified in your [Lettr dashboard](https://app.lettr.com/domains) before you can send emails. Sending from an unverified domain returns a validation error.
+</Warning>
+
+## FastAPI Application Structure
+
+For production applications, organize your code with a proper structure:
+
+```
+myapp/
+├── main.py             # FastAPI application
+├── config.py           # Configuration settings
+├── models/
+│   └── email.py        # Pydantic models
+├── services/
+│   └── email.py        # Email service
+├── routers/
+│   ├── __init__.py
+│   ├── auth.py         # Authentication routes
+│   └── api.py          # API routes
+├── .env                # Environment variables
+└── requirements.txt    # Dependencies
 ```
 
-## 2. Send email using HTML
+### Configuration
 
-The easiest way to send an email is by using the `html` parameter. Create an endpoint and call the Lettr client.
+Create a `config.py` file using Pydantic settings:
 
 ```python
-import os
-from typing import Any, Dict
+from pydantic_settings import BaseSettings
+from functools import lru_cache
 
-import lettr
-from fastapi import FastAPI
+class Settings(BaseSettings):
+    """Application settings."""
+    lettr_api_key: str
+    mail_from_address: str = "notifications@yourdomain.com"
+    mail_from_name: str = "My Application"
+    environment: str = "development"
 
-client = lettr.Lettr(os.environ["LETTR_API_KEY"])
+    class Config:
+        env_file = ".env"
 
-app = FastAPI()
-
-
-@app.post("/send")
-def send_mail() -> Dict[str, Any]:
-    response = client.emails.send(
-        from_email="Acme <onboarding@yourdomain.com>",
-        to=["delivered@example.com"],
-        subject="hello world",
-        html="<strong>it works!</strong>",
-    )
-    return {"request_id": response.request_id, "accepted": response.accepted}
+@lru_cache()
+def get_settings() -> Settings:
+    """Get cached settings instance."""
+    return Settings()
 ```
 
-Run the app with `uvicorn main:app --reload` (and `LETTR_API_KEY` set), then `POST /send` to trigger the send.
+### Pydantic Models
 
-## 3. Try it yourself
+Create email models in `models/email.py`:
 
-<Card title="Python SDK" icon="arrow-up-right-from-square" href="/quickstart/python/send-with-python">
-  More options: templates, attachments, and configuration.
-</Card>
+```python
+from pydantic import BaseModel, EmailStr
+from typing import List, Optional, Dict
 
-<Card title="Python SDK on GitHub" icon="arrow-up-right-from-square" href="https://github.com/lettr-com/lettr-python">
-  View the full source and examples.
-</Card>
+class EmailRequest(BaseModel):
+    """Email sending request."""
+    to: List[EmailStr]
+    subject: str
+    html: str
+    from_email: Optional[EmailStr] = None
+    metadata: Optional[Dict[str, str]] = None
+
+class TemplateEmailRequest(BaseModel):
+    """Template email sending request."""
+    to: List[EmailStr]
+    template_id: str
+    merge_tags: Dict[str, str]
+```
+
+### Email Service
+
+Create an email service in `services/email.py`:
+
+```python
+import lettr
+from config import get_settings
+
+settings = get_settings()
+
+class EmailService:
+    """Async email service for sending transactional emails."""
+
+    def __init__(self):
+        self.client = lettr.AsyncLettr(settings.lettr_api_key)
+
+    async def send_welcome_email(self, recipient: str, name: str) -> str:
+        """Send a welcome email to a new user."""
+        response = await self.client.emails.send(
+            from_email=settings.mail_from_address,
+            from_name=settings.mail_from_name,
+            to=[recipient],
+            subject=f"Welcome to {settings.mail_from_name}, {name}!",
+            html=f"""
+                <h1>Welcome, {name}!</h1>
+                <p>Thanks for signing up. We're excited to have you on board.</p>
+            """,
+            metadata={"email_type": "welcome", "user_email": recipient},
+        )
+        return response.request_id
+
+    async def send_password_reset(self, recipient: str, reset_token: str) -> str:
+        """Send a password reset email."""
+        reset_url = f"https://yourdomain.com/reset-password?token={reset_token}"
+        response = await self.client.emails.send(
+            from_email=settings.mail_from_address,
+            to=[recipient],
+            subject="Reset your password",
+            html=f"""
+                <h1>Reset your password</h1>
+                <p><a href="{reset_url}">Reset Password</a></p>
+                <p>This link expires in 1 hour.</p>
+            """,
+        )
+        return response.request_id
+
+# Dependency injection
+async def get_email_service() -> EmailService:
+    """Get email service instance."""
+    return EmailService()
+```
+
+
+### Routers with Dependency Injection
+
+Create authentication routes in `routers/auth.py`:
+
+```python
+from fastapi import APIRouter, HTTPException, Depends, status
+from pydantic import BaseModel, EmailStr
+from services.email import EmailService, get_email_service
+import logging
+
+logger = logging.getLogger(__name__)
+router = APIRouter(prefix="/auth", tags=["authentication"])
+
+class RegisterRequest(BaseModel):
+    email: EmailStr
+    name: str
+    password: str
+
+@router.post("/register", status_code=status.HTTP_201_CREATED)
+async def register(
+    request: RegisterRequest,
+    email_service: EmailService = Depends(get_email_service),
+):
+    """Register a new user and send welcome email."""
+    # ... validate data and create user ...
+
+    try:
+        request_id = await email_service.send_welcome_email(request.email, request.name)
+        return {"success": True, "email_request_id": request_id}
+    except Exception as e:
+        logger.error(f"Failed to send welcome email: {e}")
+        return {"success": True, "message": "Registration successful, but email failed to send"}
+
+@router.post("/forgot-password")
+async def forgot_password(
+    email: EmailStr,
+    email_service: EmailService = Depends(get_email_service),
+):
+    """Send password reset email."""
+    reset_token = "example_token_123"  # ... generate reset token ...
+    request_id = await email_service.send_password_reset(email, reset_token)
+    return {"success": True, "request_id": request_id}
+```
+
+### Main Application
+
+Bring it all together in `main.py`:
+
+```python
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from routers import auth, api
+from config import get_settings
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+settings = get_settings()
+
+app = FastAPI(
+    title="My API",
+    description="API with Lettr email integration",
+    version="1.0.0",
+)
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Include routers
+app.include_router(auth.router)
+app.include_router(api.router)
+
+@app.get("/")
+async def root():
+    """Root endpoint."""
+    return {"message": "API is running"}
+
+@app.on_event("startup")
+async def startup_event():
+    """Startup event handler."""
+    logger.info("Application starting up...")
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Shutdown event handler."""
+    logger.info("Application shutting down...")
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
+```
+
+## Advanced Features
+
+### Using Templates
+
+Send emails using Lettr-managed templates:
+
+```python
+from models.email import TemplateEmailRequest
+
+@app.post("/send-template")
+async def send_template(
+    request: TemplateEmailRequest,
+    email_service: EmailService = Depends(get_email_service),
+):
+    """Send an email using a template."""
+    response = await email_service.client.emails.send(
+        from_email=settings.mail_from_address,
+        to=request.to,
+        template_id=request.template_id,
+        merge_tags=request.merge_tags,
+    )
+    return {"success": True, "request_id": response.request_id}
+```
+
+<Tip>
+  See the [Python Quickstart](/quickstart/python/send-with-python#templates) for more details on templates, attachments, and other SDK features.
+</Tip>
+
+### Background Tasks
+
+Use FastAPI's background tasks for async email sending:
+
+```python
+from fastapi import BackgroundTasks
+
+async def send_email_background(recipient: str, subject: str, html: str):
+    """Background task for sending emails."""
+    email_service = EmailService()
+    await email_service.client.emails.send(
+        from_email=settings.mail_from_address,
+        to=[recipient],
+        subject=subject,
+        html=html,
+    )
+
+@app.post("/register")
+async def register(
+    email: EmailStr,
+    name: str,
+    background_tasks: BackgroundTasks,
+):
+    """Register user and send welcome email in background."""
+    # ... create user ...
+
+    # Add email to background tasks
+    background_tasks.add_task(
+        send_email_background,
+        email,
+        "Welcome!",
+        f"<h1>Welcome, {name}!</h1>",
+    )
+
+    return {"success": True, "message": "Registration successful"}
+```
+
+### Batch Sending with asyncio
+
+Send multiple emails concurrently using asyncio.gather:
+
+```python
+import asyncio
+from typing import List
+
+class BatchEmailRequest(BaseModel):
+    recipients: List[EmailStr]
+    subject: str
+    html: str
+
+@app.post("/send-batch")
+async def send_batch(
+    request: BatchEmailRequest,
+    email_service: EmailService = Depends(get_email_service),
+):
+    """Send emails to multiple recipients concurrently."""
+    async def send_to_recipient(recipient: str):
+        return await email_service.client.emails.send(
+            from_email=settings.mail_from_address,
+            to=[recipient],
+            subject=request.subject,
+            html=request.html,
+        )
+
+    results = await asyncio.gather(
+        *[send_to_recipient(r) for r in request.recipients],
+        return_exceptions=True,
+    )
+
+    successful = sum(1 for r in results if not isinstance(r, Exception))
+    return {"total": len(results), "successful": successful, "failed": len(results) - successful}
+```
+
+## Error Handling
+
+Implement error handling using FastAPI's HTTPException:
+
+```python
+from fastapi import HTTPException, status
+from lettr.exceptions import LettrValidationException, LettrException
+
+@app.post("/send-email")
+async def send_email(request: EmailRequest):
+    try:
+        response = await client.emails.send(...)
+        return {"success": True, "request_id": response.request_id}
+    except LettrValidationException as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Invalid email parameters"
+        )
+    except LettrException as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Email service error"
+        )
+```
+
+<Note>
+  See [Error Handling](/quickstart/python/send-with-python#error-handling) in the Python Quickstart for comprehensive error handling patterns.
+</Note>
+
+## Testing
+
+Create tests using pytest and httpx:
+
+```bash
+pip install pytest pytest-asyncio httpx
+```
+
+```python
+import pytest
+from httpx import AsyncClient
+from main import app
+from unittest.mock import Mock, patch
+
+@pytest.mark.asyncio
+async def test_register_endpoint():
+    """Test user registration endpoint."""
+    async with AsyncClient(app=app, base_url="http://test") as client:
+        with patch("services.email.EmailService.send_welcome_email") as mock_send:
+            mock_send.return_value = "test-request-id"
+
+            response = await client.post("/auth/register", json={
+                "email": "test@example.com",
+                "name": "Test User",
+                "password": "password123",
+            })
+
+            assert response.status_code == 201
+            assert response.json()["success"] is True
+```
+
+## Best Practices
+
+### Use Pydantic Models
+
+Validate all input with Pydantic:
+
+```python
+from pydantic import BaseModel, EmailStr, validator
+
+class EmailRequest(BaseModel):
+    to: EmailStr
+    subject: str
+    html: str
+
+    @validator("subject")
+    def subject_not_empty(cls, v):
+        if not v.strip():
+            raise ValueError("Subject cannot be empty")
+        return v
+```
+
+### Structured Logging
+
+Use structured logging for better observability:
+
+```python
+import logging
+
+logger = logging.getLogger(__name__)
+
+@app.post("/send-email")
+async def send_email(request: EmailRequest):
+    response = await client.emails.send(...)
+    logger.info(
+        "Email sent successfully",
+        extra={"request_id": response.request_id, "to": request.to}
+    )
+    return {"success": True}
+```
+
+### Rate Limiting
+
+Use slowapi for rate limiting:
+
+```bash
+pip install slowapi
+```
+
+```python
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+
+@app.post("/send-email")
+@limiter.limit("10/minute")
+async def send_email(request: Request, email: EmailRequest):
+    # ... send email ...
+    pass
+```
+
+## What's Next
+
+<CardGroup cols={2}>
+  <Card title="Python SDK" icon="python" href="/quickstart/python/send-with-python">
+    Complete Python SDK documentation
+  </Card>
+  <Card title="Flask Integration" icon="flask" href="/quickstart/python/send-with-flask">
+    Use Lettr with Flask
+  </Card>
+  <Card title="API Reference" icon="book" href="/api-reference/introduction">
+    Complete API documentation
+  </Card>
+  <Card title="Templates" icon="file-code" href="/learn/templates/introduction">
+    Use Lettr-managed templates
+  </Card>
+</CardGroup>

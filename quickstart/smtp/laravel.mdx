@@ -1,77 +1,332 @@
 ---
-title: Laravel SMTP
+title: Laravel
 description: "Configure SMTP in Laravel for Lettr"
 ---
 
-Configure Laravel to send emails through Lettr using SMTP.
+Configure Laravel to send emails through Lettr using SMTP. This approach works with Laravel's built-in mail system — no package installation required, just update your environment variables.
+
+<Note>
+  If you prefer a tighter integration with template support and code generation, check out the [Laravel SDK](/quickstart/laravel/introduction) instead. The SDK integrates directly with Laravel's mail transport while adding type-safe template features.
+</Note>
+
+## Prerequisites
+
+Before you begin, make sure you have:
+
+<CardGroup cols={2}>
+  <Card title="API Key" icon="key" href="https://app.lettr.com/api-keys">
+    Create an API key in the Lettr dashboard
+  </Card>
+  <Card title="Verified Domain" icon="globe" href="/learn/domains/sending-domains">
+    Add and verify your sending domain
+  </Card>
+</CardGroup>
+
+You'll also need:
+
+- **Laravel 10.x, 11.x, or 12.x** installed
+- A `MAIL_FROM_ADDRESS` that uses your verified sending domain
 
 ## Configuration
 
-Update your `.env` file with the following SMTP settings:
+<Steps>
+  <Step title="Update your .env file">
+    Add the following SMTP settings to your `.env` file:
 
-```env
-MAIL_MAILER=smtp
-MAIL_HOST=smtp.lettr.com
-MAIL_PORT=587
-MAIL_USERNAME=lettr
-MAIL_PASSWORD=your-api-key
-MAIL_ENCRYPTION=tls
-MAIL_FROM_ADDRESS=you@example.com
-MAIL_FROM_NAME="${APP_NAME}"
-```
+    ```env
+    MAIL_MAILER=smtp
+    MAIL_HOST=smtp.lettr.com
+    MAIL_PORT=587
+    MAIL_USERNAME=lettr
+    MAIL_PASSWORD=lttr_your_api_key_here
+    MAIL_ENCRYPTION=tls
+    MAIL_FROM_ADDRESS=you@yourdomain.com
+    MAIL_FROM_NAME="${APP_NAME}"
+    ```
 
-## Verify Configuration
+    <Warning>
+      Replace `lttr_your_api_key_here` with your actual Lettr API key. Your API key is your SMTP password.
+    </Warning>
+  </Step>
 
-Ensure your `config/mail.php` is using the correct mailer:
+  <Step title="Verify config/mail.php">
+    Ensure your `config/mail.php` has the SMTP mailer configured. Laravel ships with this by default:
 
-```php
-'default' => env('MAIL_MAILER', 'smtp'),
+    ```php
+    'default' => env('MAIL_MAILER', 'smtp'),
 
-'mailers' => [
-    'smtp' => [
-        'transport' => 'smtp',
-        'host' => env('MAIL_HOST', 'smtp.mailgun.org'),
-        'port' => env('MAIL_PORT', 587),
-        'encryption' => env('MAIL_ENCRYPTION', 'tls'),
-        'username' => env('MAIL_USERNAME'),
-        'password' => env('MAIL_PASSWORD'),
-        'timeout' => null,
-        'local_domain' => env('MAIL_EHLO_DOMAIN'),
+    'mailers' => [
+        'smtp' => [
+            'transport' => 'smtp',
+            'host' => env('MAIL_HOST', 'smtp.mailgun.org'),
+            'port' => env('MAIL_PORT', 587),
+            'encryption' => env('MAIL_ENCRYPTION', 'tls'),
+            'username' => env('MAIL_USERNAME'),
+            'password' => env('MAIL_PASSWORD'),
+            'timeout' => null,
+            'local_domain' => env('MAIL_EHLO_DOMAIN'),
+        ],
+        // ...
     ],
-    // ...
-],
-```
+    ```
+
+    No changes needed — the environment variables from `.env` will be automatically loaded.
+  </Step>
+
+  <Step title="Clear configuration cache">
+    After updating your `.env` file, clear Laravel's configuration cache:
+
+    ```bash
+    php artisan config:clear
+    ```
+
+    This ensures Laravel picks up your new SMTP settings.
+  </Step>
+</Steps>
 
 ## Sending Emails
 
-Use Laravel's Mail facade as usual:
+Once configured, send emails using Laravel's Mail facade exactly as you normally would:
+
+### Using Mailables
 
 ```php
 use Illuminate\Support\Facades\Mail;
 use App\Mail\WelcomeEmail;
 
-Mail::to('recipient@example.com')->send(new WelcomeEmail());
+Mail::to('user@example.com')->send(new WelcomeEmail($user));
+```
+
+### Using Mail::raw()
+
+For simple text emails without a Mailable class:
+
+```php
+use Illuminate\Support\Facades\Mail;
+
+Mail::raw('This is a plain text email.', function ($message) {
+    $message->to('recipient@example.com')
+            ->subject('Hello from Lettr');
+});
+```
+
+### Using Mail::html()
+
+For HTML emails without a Mailable class:
+
+```php
+use Illuminate\Support\Facades\Mail;
+
+Mail::html('<h1>Hello!</h1><p>This is an HTML email.</p>', function ($message) {
+    $message->to('recipient@example.com')
+            ->subject('HTML Email');
+});
 ```
 
 ## Testing Your Setup
 
-Send a test email using Tinker:
+### Quick Test with Tinker
+
+Send a test email using Tinker to verify your SMTP configuration:
 
 ```bash
 php artisan tinker
 ```
 
 ```php
-Mail::raw('Test email from Lettr', function ($message) {
-    $message->to('test@example.com')
-            ->subject('Test Email');
+Mail::raw('Test email from Lettr via SMTP', function ($message) {
+    $message->to('your-email@example.com')
+            ->subject('SMTP Test Email');
 });
 ```
 
+If the command succeeds without errors, check your inbox. The email should arrive within a few seconds.
+
+### Test with a Real Mailable
+
+Create a test Mailable:
+
+```bash
+php artisan make:mail TestEmail
+```
+
+Update `app/Mail/TestEmail.php`:
+
+```php
+<?php
+
+namespace App\Mail;
+
+use Illuminate\Bus\Queueable;
+use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Content;
+use Illuminate\Mail\Mailables\Envelope;
+use Illuminate\Queue\SerializesModels;
+
+class TestEmail extends Mailable
+{
+    use Queueable, SerializesModels;
+
+    public function envelope(): Envelope
+    {
+        return new Envelope(
+            subject: 'Test Email from Lettr',
+        );
+    }
+
+    public function content(): Content
+    {
+        return new Content(
+            view: 'emails.test',
+        );
+    }
+}
+```
+
+Create the view at `resources/views/emails/test.blade.php`:
+
+```blade
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Email</title>
+</head>
+<body>
+    <h1>Hello from Lettr!</h1>
+    <p>If you're seeing this, your Laravel SMTP configuration is working correctly.</p>
+</body>
+</html>
+```
+
+Send the test email:
+
+```php
+use App\Mail\TestEmail;
+use Illuminate\Support\Facades\Mail;
+
+Mail::to('your-email@example.com')->send(new TestEmail());
+```
+
+## Port Options
+
+Lettr supports multiple SMTP ports. If port 587 doesn't work for your environment, try these alternatives:
+
+| Port | Encryption | Configuration |
+|------|------------|---------------|
+| `587` | STARTTLS (recommended) | `MAIL_PORT=587` `MAIL_ENCRYPTION=tls` |
+| `465` | Implicit TLS | `MAIL_PORT=465` `MAIL_ENCRYPTION=ssl` |
+| `2465` | Implicit TLS (alternate) | `MAIL_PORT=2465` `MAIL_ENCRYPTION=ssl` |
+| `2587` | STARTTLS (alternate) | `MAIL_PORT=2587` `MAIL_ENCRYPTION=tls` |
+
 <Tip>
-  Clear your config cache after changing environment variables:
-  ```bash
-  php artisan config:clear
-  ```
+  Port 465 uses implicit SSL/TLS, which establishes a secure connection immediately. Port 587 uses explicit STARTTLS, which upgrades an unencrypted connection. Both are secure.
 </Tip>
 
+## Multiple Mailers
+
+If you need to use both Lettr and another email provider (e.g., for different email types), configure multiple mailers:
+
+```php
+// config/mail.php
+'mailers' => [
+    'smtp' => [
+        'transport' => 'smtp',
+        'host' => env('MAIL_HOST'),
+        // ... default mailer (Lettr)
+    ],
+
+    'lettr' => [
+        'transport' => 'smtp',
+        'host' => 'smtp.lettr.com',
+        'port' => 587,
+        'encryption' => 'tls',
+        'username' => 'lettr',
+        'password' => env('LETTR_API_KEY'),
+    ],
+
+    'backup' => [
+        'transport' => 'smtp',
+        'host' => env('BACKUP_MAIL_HOST'),
+        // ... backup provider
+    ],
+],
+```
+
+Send using a specific mailer:
+
+```php
+Mail::mailer('lettr')
+    ->to('user@example.com')
+    ->send(new WelcomeEmail());
+```
+
+## Error Handling
+
+Wrap your mail sending in try-catch blocks to handle SMTP errors:
+
+```php
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
+
+try {
+    Mail::to('user@example.com')->send(new WelcomeEmail());
+} catch (\Exception $e) {
+    Log::error('Failed to send email: ' . $e->getMessage());
+
+    // Handle the error (retry, alert admin, etc.)
+}
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Authentication failed">
+    Check your API key is correct and starts with `lttr_`. Verify the username is exactly `lettr` (lowercase). Run `php artisan config:clear` to clear cached configuration.
+  </Accordion>
+
+  <Accordion title="Connection timeout">
+    Your firewall may be blocking outbound SMTP connections. Try alternate ports (`465`, `2465`, or `2587`). Verify `smtp.lettr.com` resolves correctly.
+  </Accordion>
+
+  <Accordion title="Domain not verified">
+    Ensure your `MAIL_FROM_ADDRESS` domain is verified in the [Lettr dashboard](https://app.lettr.com/domains). See [Domain Verification](/knowledge-base/troubleshooting/domain-verification) for help.
+  </Accordion>
+
+  <Accordion title="Emails not arriving">
+    Check your [Lettr logs](https://app.lettr.com/logs) to see if the API accepted the request. If accepted but not delivered, see [Delivery Issues](/knowledge-base/troubleshooting/delivery-issues).
+  </Accordion>
+
+  <Accordion title="Enable debug logging">
+    Enable Laravel's mail debug logging in `.env`:
+
+    ```env
+    MAIL_LOG_CHANNEL=stack
+    LOG_CHANNEL=stack
+    ```
+
+    This logs all outgoing emails to `storage/logs/laravel.log`.
+
+    For testing without sending real emails, use the log mailer:
+
+    ```env
+    MAIL_MAILER=log
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## What's Next
+
+<CardGroup cols={2}>
+  <Card title="Laravel SDK" icon="laravel" href="/quickstart/laravel/introduction">
+    Upgrade to the Laravel SDK for template support
+  </Card>
+  <Card title="Sending Best Practices" icon="book" href="/learn/sending/best-practices">
+    Improve deliverability and engagement
+  </Card>
+  <Card title="Templates" icon="file-code" href="/learn/templates/introduction">
+    Create reusable email templates
+  </Card>
+  <Card title="Troubleshooting" icon="wrench" href="/knowledge-base/troubleshooting/delivery-issues">
+    Fix common delivery issues
+  </Card>
+</CardGroup>

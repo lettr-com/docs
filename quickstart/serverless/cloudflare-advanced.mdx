@@ -1,0 +1,575 @@
+---
+title: Cloudflare Workers Advanced
+description: "Advanced Cloudflare Workers patterns for sending emails with Lettr"
+---
+
+<Note>
+  This is the advanced guide for Cloudflare Workers. If you're just getting started, check out the [Quickstart Guide](/quickstart/serverless/cloudflare-quickstart) first.
+</Note>
+
+This guide covers advanced patterns for sending emails from Cloudflare Workers, including deployment strategies, monitoring, rate limiting, and production best practices.
+
+## Using Raw Fetch API
+
+For a zero-dependency approach, use the native fetch API:
+
+```typescript
+export interface Env {
+  LETTR_API_KEY: string;
+  FROM_EMAIL?: string;
+}
+
+export default {
+  async fetch(request: Request, env: Env): Promise<Response> {
+    if (request.method !== 'POST') {
+      return new Response('Method not allowed', { status: 405 });
+    }
+
+    try {
+      const body = await request.json() as {
+        to: string | string[];
+        subject: string;
+        html: string;
+      };
+
+      const { to, subject, html } = body;
+
+      // Send email via Lettr API
+      const response = await fetch('https://app.lettr.com/api/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${env.LETTR_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: env.FROM_EMAIL || 'noreply@yourdomain.com',
+          to: Array.isArray(to) ? to : [to],
+          subject,
+          html,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to send email');
+      }
+
+      return Response.json({
+        success: true,
+        requestId: data.request_id,
+      });
+    } catch (error: any) {
+      return Response.json(
+        { error: error.message },
+        { status: 500 }
+      );
+    }
+  },
+};
+```
+
+## Configuration
+
+### wrangler.toml
+
+Configure your Worker in `wrangler.toml`:
+
+```toml
+name = "my-email-worker"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+# Non-sensitive environment variables
+[vars]
+FROM_EMAIL = "noreply@yourdomain.com"
+
+# Secrets (set via wrangler secret put)
+# LETTR_API_KEY = "set via CLI"
+```
+
+### Environment Variables vs Secrets
+
+**Use `[vars]` for:**
+- Non-sensitive configuration (from email, feature flags)
+- Values that can be committed to version control
+
+**Use secrets for:**
+- API keys, passwords, tokens
+- Any sensitive credentials
+
+Add secrets via Wrangler:
+
+```bash
+# Production secret
+npx wrangler secret put LETTR_API_KEY
+
+# Preview/development secret (optional)
+npx wrangler secret put LETTR_API_KEY --env dev
+```
+
+## Local Development
+
+### Running Locally
+
+Start the local development server:
+
+```bash
+npm run dev
+```
+
+This starts Wrangler's local development server at `http://localhost:8787`.
+
+<Tip>
+  Wrangler automatically uses your production secrets in local development. If you need different credentials for local testing, use `.dev.vars`.
+</Tip>
+
+### Using .dev.vars for Local Secrets
+
+Create a `.dev.vars` file for local-only secrets:
+
+```env
+LETTR_API_KEY=lttr_your_dev_api_key_here
+FROM_EMAIL=dev@yourdomain.com
+```
+
+**Important:** Add `.dev.vars` to `.gitignore`:
+
+```gitignore
+.dev.vars
+node_modules/
+dist/
+.wrangler/
+```
+
+### Testing Your Worker
+
+Test with cURL:
+
+```bash
+curl -X POST http://localhost:8787 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "to": "user@example.com",
+    "subject": "Test Email",
+    "html": "<h1>Hello!</h1><p>Sent from Cloudflare Workers.</p>"
+  }'
+```
+
+## Deployment
+
+### Deploy to Production
+
+```bash
+npm run deploy
+```
+
+This deploys your Worker to Cloudflare's global edge network. Your Worker will be available at:
+
+```
+https://my-email-worker.your-subdomain.workers.dev
+```
+
+### Custom Domains
+
+Add a custom domain in the Cloudflare dashboard:
+
+1. Go to Workers & Pages > your worker
+2. Click "Triggers"
+3. Add a custom domain (e.g., `email-api.yourdomain.com`)
+
+Or configure in `wrangler.toml`:
+
+```toml
+routes = [
+  { pattern = "email-api.yourdomain.com/*", zone_name = "yourdomain.com" }
+]
+```
+
+### Multiple Environments
+
+Define environments in `wrangler.toml`:
+
+```toml
+[env.production]
+name = "email-worker-prod"
+vars = { FROM_EMAIL = "noreply@yourdomain.com" }
+
+[env.staging]
+name = "email-worker-staging"
+vars = { FROM_EMAIL = "staging@yourdomain.com" }
+```
+
+Deploy to specific environments:
+
+```bash
+# Deploy to production
+npx wrangler deploy --env production
+
+# Deploy to staging
+npx wrangler deploy --env staging
+```
+
+## Advanced Patterns
+
+### Rate Limiting with KV
+
+Implement rate limiting using Cloudflare KV:
+
+```typescript
+export interface Env {
+  LETTR_API_KEY: string;
+  EMAIL_RATE_LIMIT: KVNamespace;
+}
+
+async function checkRateLimit(
+  ip: string,
+  kv: KVNamespace
+): Promise<boolean> {
+  const key = `rate_limit:${ip}`;
+  const count = await kv.get(key);
+
+  if (count && parseInt(count) >= 5) {
+    return false; // Rate limited
+  }
+
+  await kv.put(key, String(parseInt(count || '0') + 1), {
+    expirationTtl: 60, // 60 seconds
+  });
+
+  return true;
+}
+
+export default {
+  async fetch(request: Request, env: Env): Promise<Response> {
+    const ip = request.headers.get('cf-connecting-ip') || 'unknown';
+
+    const allowed = await checkRateLimit(ip, env.EMAIL_RATE_LIMIT);
+
+    if (!allowed) {
+      return Response.json(
+        { error: 'Too many requests' },
+        { status: 429 }
+      );
+    }
+
+    // Send email...
+  },
+};
+```
+
+Add KV namespace in `wrangler.toml`:
+
+```toml
+kv_namespaces = [
+  { binding = "EMAIL_RATE_LIMIT", id = "your-kv-id" }
+]
+```
+
+### CORS Support
+
+Add CORS headers for cross-origin requests:
+
+```typescript
+function corsHeaders(origin: string = '*') {
+  return {
+    'Access-Control-Allow-Origin': origin,
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+  };
+}
+
+export default {
+  async fetch(request: Request, env: Env): Promise<Response> {
+    // Handle CORS preflight
+    if (request.method === 'OPTIONS') {
+      return new Response(null, {
+        headers: corsHeaders(),
+      });
+    }
+
+    // Process request...
+    const result = await sendEmail(/* ... */);
+
+    return Response.json(result, {
+      headers: corsHeaders(),
+    });
+  },
+};
+```
+
+### Request Validation
+
+Add robust input validation:
+
+```typescript
+interface EmailRequest {
+  to: string | string[];
+  subject: string;
+  html?: string;
+  text?: string;
+}
+
+function validateEmailRequest(body: any): {
+  valid: boolean;
+  error?: string;
+  data?: EmailRequest;
+} {
+  if (!body.to || !body.subject) {
+    return {
+      valid: false,
+      error: 'Missing required fields: to, subject',
+    };
+  }
+
+  if (!body.html && !body.text) {
+    return {
+      valid: false,
+      error: 'Either html or text content is required',
+    };
+  }
+
+  // Validate email format
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const recipients = Array.isArray(body.to) ? body.to : [body.to];
+
+  for (const email of recipients) {
+    if (!emailRegex.test(email)) {
+      return {
+        valid: false,
+        error: `Invalid email address: ${email}`,
+      };
+    }
+  }
+
+  return {
+    valid: true,
+    data: body as EmailRequest,
+  };
+}
+
+export default {
+  async fetch(request: Request, env: Env): Promise<Response> {
+    const body = await request.json();
+    const validation = validateEmailRequest(body);
+
+    if (!validation.valid) {
+      return Response.json(
+        { error: validation.error },
+        { status: 400 }
+      );
+    }
+
+    // Send email with validated data...
+  },
+};
+```
+
+### Template-Based Emails
+
+Use Lettr templates for consistent design:
+
+```typescript
+const result = await lettr.emails.send({
+  from: env.FROM_EMAIL,
+  to: [email],
+  template_id: 'welcome-email',
+  merge_tags: {
+    user_name: userName,
+    activation_url: `https://app.example.com/activate?token=${token}`,
+  },
+});
+```
+
+### Scheduled Emails with Cron Triggers
+
+Trigger Workers via Cron Triggers for scheduled emails:
+
+```typescript
+export default {
+  async fetch(request: Request, env: Env): Promise<Response> {
+    // Handle HTTP requests
+  },
+
+  async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext) {
+    // Send scheduled emails
+    const lettr = new Lettr(env.LETTR_API_KEY);
+
+    const users = await fetchUsersNeedingReminder(); // Your logic
+
+    for (const user of users) {
+      await lettr.emails.send({
+        from: env.FROM_EMAIL,
+        to: [user.email],
+        subject: 'Daily reminder',
+        html: `<p>You have ${user.tasks} tasks pending.</p>`,
+      });
+    }
+  },
+};
+```
+
+Configure in `wrangler.toml`:
+
+```toml
+[triggers]
+crons = ["0 9 * * *"] # Every day at 9 AM UTC
+```
+
+## Monitoring and Debugging
+
+### Logging
+
+Workers automatically send logs to the Cloudflare dashboard:
+
+```typescript
+console.log('Email sent:', result.request_id);
+console.error('Failed to send email:', error);
+```
+
+View logs in:
+- Cloudflare dashboard: Workers & Pages > your worker > Logs
+- Or via Wrangler: `npx wrangler tail`
+
+### Real-Time Logs with Wrangler
+
+Stream logs in real-time:
+
+```bash
+npx wrangler tail
+```
+
+Filter logs:
+
+```bash
+# Only show errors
+npx wrangler tail --status error
+
+# Filter by search term
+npx wrangler tail --search "email sent"
+```
+
+### Analytics
+
+View Worker analytics in the Cloudflare dashboard:
+
+- Requests per second
+- Success rate
+- P50/P99 latency
+- Error rate
+
+Access metrics via the [Workers Analytics API](https://developers.cloudflare.com/analytics/graphql-api/).
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Cold start performance">
+    Workers have near-zero cold starts, but you can optimize further:
+
+    1. **Minimize dependencies** — Workers have a 1MB size limit
+    2. **Use native APIs** — Workers provide fetch, crypto, and other built-ins
+    3. **Avoid heavy SDKs** — Consider using raw fetch for simpler use cases
+
+    ```bash
+    # Check Worker size
+    npx wrangler deploy --dry-run --outdir=dist
+    ls -lh dist
+    ```
+  </Accordion>
+
+  <Accordion title="Secret not found errors">
+    If you see "secret not found" errors:
+
+    1. **Verify the secret exists**: `npx wrangler secret list`
+    2. **Re-add the secret**: `npx wrangler secret put LETTR_API_KEY`
+    3. **Check the environment**: Secrets are per-environment
+    4. **Redeploy**: `npm run deploy`
+  </Accordion>
+
+  <Accordion title="CPU time exceeded">
+    Workers have a 50ms CPU time limit (free tier). If you exceed it:
+
+    1. **Offload work to external APIs** (like Lettr)
+    2. **Use async I/O** — don't block the CPU
+    3. **Upgrade to paid plan** for 30-second limit
+
+    ```typescript
+    // ❌ Bad - blocks CPU
+    const hash = await bcrypt.hash(password, 10);
+
+    // ✅ Good - offloads to I/O
+    await fetch('https://api.example.com/hash', { body: password });
+    ```
+  </Accordion>
+
+  <Accordion title="CORS issues">
+    If requests fail due to CORS:
+
+    1. **Add CORS headers** to responses (see [CORS Support](#cors-support))
+    2. **Handle OPTIONS requests** for preflight
+    3. **Check request origin** in browser console
+  </Accordion>
+
+  <Accordion title="Environment variables not loading">
+    If `env.LETTR_API_KEY` is undefined:
+
+    1. **Check `wrangler.toml`** for the binding name
+    2. **Verify secret exists**: `npx wrangler secret list`
+    3. **Use correct environment**: `--env production`
+    4. **Restart dev server**: `npm run dev`
+  </Accordion>
+
+  <Accordion title="Rate limiting">
+    If you're hitting Lettr's rate limits:
+
+    1. **Implement request queuing** with Durable Objects or queues
+    2. **Add exponential backoff** for retries
+    3. **Consider upgrading** your Lettr plan
+    4. **Use batch sending** for multiple recipients
+  </Accordion>
+</AccordionGroup>
+
+## Best Practices
+
+1. **Use secrets for API keys** — never commit them to `wrangler.toml`
+2. **Implement rate limiting** to prevent abuse
+3. **Add CORS headers** for public APIs
+4. **Validate inputs** before sending emails
+5. **Log request IDs** for tracking and debugging
+6. **Use custom domains** for production APIs
+7. **Set up multiple environments** (dev, staging, production)
+8. **Monitor Worker analytics** for performance insights
+
+## Performance Characteristics
+
+Cloudflare Workers offer excellent performance for email APIs:
+
+| Metric | Performance |
+|--------|-------------|
+| Cold start | < 10ms |
+| Typical latency | 10-50ms (globally) |
+| Concurrent requests | Unlimited |
+| CPU time | 50ms (free) / 30s (paid) |
+| Memory | 128MB |
+| Script size | 1MB (compressed) |
+
+<Info>
+  Workers run on Cloudflare's global network across 300+ cities, so your email API is fast everywhere in the world.
+</Info>
+
+## What's Next
+
+<CardGroup cols={2}>
+  <Card title="Quickstart Guide" icon="rocket" href="/quickstart/serverless/cloudflare-quickstart">
+    Back to quickstart
+  </Card>
+  <Card title="AWS Lambda" icon="aws" href="/quickstart/serverless/aws-lambda-quickstart">
+    Deploy on AWS Lambda
+  </Card>
+  <Card title="Vercel Functions" icon="bolt" href="/quickstart/serverless/vercel-quickstart">
+    Deploy on Vercel
+  </Card>
+  <Card title="Templates" icon="file-code" href="/learn/templates/introduction">
+    Use Lettr templates
+  </Card>
+</CardGroup>

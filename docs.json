@@ -94,27 +94,40 @@
                 "group": "Serverless",
                 "pages": [
                   "quickstart/serverless/introduction",
-                  "quickstart/serverless/aws-lambda",
-                  "quickstart/serverless/vercel-functions",
-                  "quickstart/serverless/cloudflare-workers"
+                  "quickstart/serverless/aws-lambda-quickstart",
+                  "quickstart/serverless/aws-lambda-advanced",
+                  "quickstart/serverless/vercel-quickstart",
+                  "quickstart/serverless/vercel-advanced",
+                  "quickstart/serverless/cloudflare-quickstart",
+                  "quickstart/serverless/cloudflare-advanced"
                 ]
               },
               {
                 "group": "Go",
-                "pages": ["quickstart/go/send-with-go"]
+                "pages": [
+                  "quickstart/go/quickstart",
+                  "quickstart/go/advanced"
+                ]
               },
               {
                 "group": "Rust",
-                "pages": ["quickstart/rust/send-with-rust"]
+                "pages": [
+                  "quickstart/rust/quickstart",
+                  "quickstart/rust/advanced"
+                ]
               },
               {
                 "group": "Java",
-                "pages": ["quickstart/java/send-with-java"]
+                "pages": [
+                  "quickstart/java/quickstart",
+                  "quickstart/java/advanced"
+                ]
               },
               {
                 "group": "Python",
                 "pages": [
-                  "quickstart/python/send-with-python",
+                  "quickstart/python/quickstart",
+                  "quickstart/python/advanced",
                   "quickstart/python/send-with-flask",
                   "quickstart/python/send-with-fastapi"
                 ]
