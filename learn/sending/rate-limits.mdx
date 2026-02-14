@@ -3,21 +3,20 @@ title: Rate Limits
 description: "Understand API rate limits and email quotas"
 ---
 
-Lettr enforces per-account rate limits on API requests to prevent any single integration from overwhelming the service. Rate limits control how many API requests you can make within a time window.
+Lettr enforces per-team rate limits on API requests to prevent any single integration from overwhelming the service. Rate limits control how many API requests you can make within a time window.
 
 <Note>
-  Rate limits are different from **email quotas**. Rate limits control API request frequency (requests per minute), while email quotas control sending volume (emails per month). For details on monthly email quotas, daily sending limits, and how usage is tracked, see [Email Usage & Quotas](/learn/sending/usage-quotas).
+  Rate limits are different from **email quotas**. Rate limits control API request frequency (requests per second), while email quotas control sending volume (emails per month). For details on monthly email quotas, daily sending limits, and how usage is tracked, see [Email Usage & Quotas](/learn/sending/usage-quotas).
 </Note>
 
 ## API Rate Limits
 
-Lettr applies per-account rate limits based on a sliding window. If you exceed the limit, subsequent requests return a `429` status until the window resets:
+The default rate limit is **3 requests per second** per team, shared across all API keys belonging to the same team. If you exceed the limit, subsequent requests return a `429` status until the window resets.
 
-| Limit Type | Value | Window |
-|------------|-------|--------|
-| API requests | 300 requests | 5 minutes |
-| High-volume API | 2,000 requests | 5 minutes |
-| Authentication failures | 5 failures | 5 minutes (15 min block) |
+| Limit Type | Value |
+|------------|-------|
+| API requests | 3 requests per second |
+| Authentication failures | 5 failures / 5 minutes (15 min block) |
 
 ## Email Sending Limits
 
@@ -25,22 +24,50 @@ Lettr applies per-account rate limits based on a sliding window. If you exceed t
 |-------|-------|
 | Recipients per request | 50 (combined to, cc, bcc) |
 | Monthly email quota | Based on your plan |
+| Daily email limit | 100 (free tier only) |
 
-## Rate Limit Response
+## Rate Limit Response Headers
 
-When you exceed rate limits, you'll receive a `429 Too Many Requests` response:
+Every API response includes headers that let you track your rate limit status in real time. Use these to pace your requests and avoid hitting the limit:
+
+| Header | Description |
+|--------|-------------|
+| `X-RateLimit-Limit` | Maximum number of requests allowed per second. |
+| `X-RateLimit-Remaining` | How many requests you have left in the current window. |
+| `X-RateLimit-Reset` | Unix timestamp (in seconds) when the rate limit window resets. |
+| `Retry-After` | How many seconds to wait before retrying. Only present on `429` responses. |
+
+## Rate Limit Error Response
+
+When you exceed rate limits, you'll receive a `429 Too Many Requests` response with the `rate_limit_exceeded` error code:
 
 ```json
 {
-  "message": "Too many requests. Please retry after 60 seconds."
+  "message": "Rate limit exceeded. Please slow down your requests.",
+  "error_code": "rate_limit_exceeded"
 }
 ```
 
-Rate limiting is handled at the infrastructure level. The response may include a `Retry-After` header indicating how many seconds to wait before retrying.
+The response includes a `Retry-After` header indicating how many seconds to wait before retrying.
+
+## Sending Quota Headers
+
+The [Send Email](/api-reference/emails/send-email) endpoint returns additional headers that track your daily and monthly email quotas. These headers are present for **free tier** teams:
+
+| Header | Description |
+|--------|-------------|
+| `X-Daily-Limit` | Maximum number of emails you can send per day. |
+| `X-Daily-Remaining` | How many emails you have left today. |
+| `X-Daily-Reset` | Unix timestamp when the daily counter resets (midnight UTC). |
+| `X-Monthly-Limit` | Maximum number of emails you can send per billing month. |
+| `X-Monthly-Remaining` | How many emails you have left this month. |
+| `X-Monthly-Reset` | Unix timestamp when the monthly counter resets. |
+
+For full details on these headers, see the [API Reference — Rate Limit](/api-reference/rate-limit).
 
 ## Handling Rate Limits
 
-When you receive a `429` response, the `retry_after` field tells you how many seconds to wait before retrying. Implement exponential backoff as a fallback when the header is missing:
+When you receive a `429` response, use the `Retry-After` header to determine how long to wait. Implement exponential backoff as a fallback:
 
 ```javascript
 async function sendWithBackoff(emailData, maxRetries = 5) {
@@ -68,7 +95,7 @@ When sending to large recipient lists, pace your API calls to stay within rate l
 ```javascript
 const recipients = [...]; // Large list
 const batchSize = 50;
-const delayBetweenBatches = 200; // milliseconds
+const delayBetweenBatches = 500; // milliseconds
 
 for (let i = 0; i < recipients.length; i += batchSize) {
   const batch = recipients.slice(i, i + batchSize);
@@ -105,32 +132,20 @@ Your monthly email quota depends on your plan:
   Emails beyond your tier limit are charged at $0.80 per 1,000 emails. See [Billing](/learn/settings/billing) for details.
 </Note>
 
-## Checking Your Usage
-
-Monitor your email usage via the dashboard or API:
-
-```javascript
-const usage = await lettr.usage.get();
-
-console.log({
-  sent: usage.emailsSent,
-  quota: usage.monthlyQuota,
-  remaining: usage.monthlyQuota - usage.emailsSent,
-  percentUsed: (usage.emailsSent / usage.monthlyQuota) * 100
-});
-```
-
 ## Best Practices
 
 <AccordionGroup>
   <Accordion title="Implement Backoff">
-    Always implement exponential backoff for `429` responses. Use the `retry_after` value from the response when available, and fall back to a `2^attempt` delay otherwise. Without backoff, rapid retries will keep hitting the limit and delay your sends further.
+    Always implement exponential backoff for `429` responses. Use the `Retry-After` header from the response when available, and fall back to a `2^attempt` delay otherwise. Without backoff, rapid retries will keep hitting the limit and delay your sends further.
+  </Accordion>
+  <Accordion title="Monitor Rate Limit Headers">
+    Check the `X-RateLimit-Remaining` header on every response. When it approaches zero, slow down your request rate proactively instead of waiting for a `429` response.
   </Accordion>
   <Accordion title="Batch Efficiently">
     Each API request supports up to 50 recipients. Sending to 50 recipients per request instead of one-at-a-time reduces your API call count by 50x, making it far easier to stay within rate limits for large sends.
   </Accordion>
-  <Accordion title="Monitor Usage">
-    Check your monthly email usage periodically through the dashboard or API. Set up internal alerts at 80% and 90% of your quota so you can upgrade your plan or adjust sending patterns before hitting the limit.
+  <Accordion title="Monitor Quota Headers">
+    On free tier, check the `X-Daily-Remaining` and `X-Monthly-Remaining` headers to track your quota usage in real time. Set up internal alerts at 80% and 90% of your quota so you can upgrade your plan before hitting the limit.
   </Accordion>
   <Accordion title="Queue Large Sends">
     For campaigns targeting thousands of recipients, use a job queue (such as BullMQ, Laravel Queues, or Celery) to pace sending over minutes or hours. This avoids burst patterns that trigger rate limits and gives you better control over delivery timing.

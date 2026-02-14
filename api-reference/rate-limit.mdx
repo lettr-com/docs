@@ -1,0 +1,72 @@
+---
+title: Rate Limit
+description: "Learn about API rate limits, sending quotas, and the response headers that track your usage"
+---
+
+Lettr rate limits API requests to ensure fair usage across all customers. In addition to request-level rate limits, the Send Email endpoint returns quota headers that track your daily and monthly email usage.
+
+## Rate Limit
+
+The default rate limit is **3 requests per second** per team, shared across all API keys belonging to the same team. If you exceed the limit, subsequent requests return `429 Too Many Requests` until the window resets.
+
+## Rate Limit Headers
+
+Every API response includes rate limit headers:
+
+| Header | Type | Description |
+|--------|------|-------------|
+| `X-RateLimit-Limit` | `integer` | Maximum number of requests allowed per second. |
+| `X-RateLimit-Remaining` | `integer` | How many requests you have left in the current window. |
+| `X-RateLimit-Reset` | `integer` | Unix timestamp (in seconds) when the rate limit window resets. |
+| `Retry-After` | `integer` | How many seconds to wait before retrying. Only present on `429` responses. |
+
+## Sending Quota Headers
+
+The [Send Email](/api-reference/emails/send-email) endpoint returns additional headers that track your email sending quotas. These headers are present for **free tier** teams.
+
+### Daily Quota
+
+| Header | Type | Description |
+|--------|------|-------------|
+| `X-Daily-Limit` | `integer` | Maximum number of emails you can send per day. |
+| `X-Daily-Remaining` | `integer` | How many emails you have left today. |
+| `X-Daily-Reset` | `integer` | Unix timestamp (in seconds) when the daily counter resets (midnight UTC). |
+
+### Monthly Quota
+
+| Header | Type | Description |
+|--------|------|-------------|
+| `X-Monthly-Limit` | `integer` | Maximum number of emails you can send per billing month. |
+| `X-Monthly-Remaining` | `integer` | How many emails you have left this month. |
+| `X-Monthly-Reset` | `integer` | Unix timestamp (in seconds) when the monthly counter resets (start of next billing month). |
+
+## Error Codes
+
+When you exceed a limit, the API returns a `429` response with one of these error codes:
+
+| Error Code | Description |
+|------------|-------------|
+| `rate_limit_exceeded` | Too many API requests. Slow down and retry after the `Retry-After` period. |
+| `daily_quota_exceeded` | Daily sending quota exceeded (free tier). Try again after midnight UTC. |
+| `quota_exceeded` | Monthly sending quota exceeded. Upgrade your plan to continue sending. |
+
+```json 429 Rate Limit Exceeded
+{
+  "message": "Rate limit exceeded. Please slow down your requests.",
+  "error_code": "rate_limit_exceeded"
+}
+```
+
+```json 429 Daily Quota Exceeded
+{
+  "message": "Daily sending quota exceeded. Please try again tomorrow.",
+  "error_code": "daily_quota_exceeded"
+}
+```
+
+```json 429 Monthly Quota Exceeded
+{
+  "message": "Sending quota exceeded. Upgrade your plan to continue sending.",
+  "error_code": "quota_exceeded"
+}
+```

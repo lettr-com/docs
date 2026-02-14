@@ -41,6 +41,23 @@ Lettr counts each recipient as one email. If you send a single API request with 
 
 Counters reset automatically at the start of each billing cycle. Per-domain usage is also tracked independently for monitoring and abuse detection, but the quota that determines whether you can keep sending is always the team-level monthly counter.
 
+## Quota Response Headers
+
+The [Send Email](/api-reference/emails/send-email) endpoint returns headers that let you track your quota usage in real time. These headers are present for **free tier** teams:
+
+| Header | Description |
+|--------|-------------|
+| `X-Daily-Limit` | Maximum number of emails you can send per day. |
+| `X-Daily-Remaining` | How many emails you have left today. |
+| `X-Daily-Reset` | Unix timestamp when the daily counter resets (midnight UTC). |
+| `X-Monthly-Limit` | Maximum number of emails you can send per billing month. |
+| `X-Monthly-Remaining` | How many emails you have left this month. |
+| `X-Monthly-Reset` | Unix timestamp when the monthly counter resets (start of next billing month). |
+
+Use these headers to monitor your usage programmatically and take action before you hit the limit. For example, you can check `X-Monthly-Remaining` after each send and alert your team when it drops below a threshold.
+
+For the full list of rate limit and quota headers, see the [API Reference — Rate Limit](/api-reference/rate-limit).
+
 ## Checking Your Usage
 
 The [Dashboard](/learn/settings/dashboard) shows your current usage prominently after sign-in, including total emails sent this month, your plan's quota, and a visual indicator of how much you've used. This data is real-time — each email is reflected the moment it's accepted for delivery.

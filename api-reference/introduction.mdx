@@ -76,6 +76,7 @@ curl -X POST https://app.lettr.com/api/emails \
 | `400` | Bad Request - Domain configuration error |
 | `401` | Unauthorized - Invalid or missing API key |
 | `422` | Unprocessable Entity - Validation failed |
+| `429` | Too Many Requests - Rate limit or sending quota exceeded |
 | `502` | Bad Gateway - Upstream transmission failed |
 
 ## Error Codes
@@ -86,6 +87,9 @@ curl -X POST https://app.lettr.com/api/emails \
 | `invalid_domain` | 400 | The sender domain could not be determined from the email address. |
 | `unconfigured_domain` | 400 | The sender domain is not configured or approved for sending. |
 | `send_error` | 400 | General error during email send preparation. |
+| `rate_limit_exceeded` | 429 | Too many API requests. Slow down and retry after the `Retry-After` period. |
+| `quota_exceeded` | 429 | Monthly sending quota exceeded. Upgrade your plan to continue sending. |
+| `daily_quota_exceeded` | 429 | Daily sending quota exceeded (free tier). Try again tomorrow. |
 | `transmission_failed` | 502 | Email transmission to the upstream provider failed. |
 
 ## API Endpoints
