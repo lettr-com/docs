@@ -56,7 +56,7 @@ $lettr = Lettr::client($config['lettr_api_key']);
 The client provides access to all Lettr API resources through dedicated service objects:
 
 ```php
-$lettr->emails();     // Send and retrieve emails
+$lettr->emails();     // Send emails (HTML, text, templates)
 $lettr->domains();    // Manage sending domains
 $lettr->templates();  // Manage email templates
 $lettr->webhooks();   // View webhook configurations
@@ -65,9 +65,8 @@ $lettr->health();     // API health and auth checks
 
 Each service corresponds to a set of API endpoints. For example, `$lettr->emails()` gives you access to:
 - Sending emails (HTML, text, templates)
-- Listing sent emails with filtering
-- Retrieving delivery details by request ID
 - Building complex emails with the fluent builder
+- Attaching files and configuring tracking options
 
 See [Sending Emails](/quickstart/php/sending-emails) for detailed examples of each service.
 

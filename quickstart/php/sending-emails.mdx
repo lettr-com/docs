@@ -36,15 +36,17 @@ The `sendHtml()` method is perfect for simple HTML emails where you don't need a
 ### Plain Text Email
 
 ```php
+use Lettr\ValueObjects\EmailAddress;
+
 $response = $lettr->emails()->sendText(
-    from: ['email' => 'sender@yourdomain.com', 'name' => 'Your App'],
+    from: new EmailAddress('sender@yourdomain.com', 'Your App'),
     to: ['user1@example.com', 'user2@example.com'],
     subject: 'Plain text update',
     text: 'This is a plain text email.',
 );
 ```
 
-The `from` parameter accepts either a string email address or an array with `email` and `name` keys to set a display name. The `to` parameter accepts a single email string or an array of recipients (maximum 50).
+The `from` parameter accepts either a string email address or an `EmailAddress` value object to set a display name. The `to` parameter accepts a single email string or an array of recipients (maximum 50).
 
 <Note>
   You can send both HTML and plain text in the same email by using the [email builder](#email-builder) with both `->html()` and `->text()` methods. Mail clients that don't support HTML will display the plain text version.
@@ -64,7 +66,7 @@ $response = $lettr->emails()->sendTemplate(
 
 The `substitutionData` array keys correspond to merge tags in your Lettr template (e.g., `{{name}}`). See [Merge Tags & Template Language](/learn/templates/template-language) for the full syntax including conditionals and loops.
 
-For more advanced template usage including versioning and projects, see the [Templates](/quickstart/php/templates) page.
+For more advanced template usage including versioning, see the [Templates](/quickstart/php/templates) page.
 
 ## Email Builder
 
@@ -122,7 +124,7 @@ $response = $lettr->emails()->send(
 );
 ```
 
-The `useTemplate()` method accepts optional `version` and `projectId` parameters to pin specific template versions and select from different projects. See [Templates](/quickstart/php/templates) for details.
+The `useTemplate()` method accepts an optional `version` parameter to pin a specific template version. See [Templates](/quickstart/php/templates) for details.
 
 **When to use versioning:**
 
@@ -215,55 +217,6 @@ The `requestId` is a unique identifier for this email transmission. Store it in 
   Save the `requestId` in your application's database alongside the user record or transaction. This lets you look up delivery status, debug issues, and provide customer support without searching through logs.
 </Tip>
 
-## Retrieving Email Events
-
-Track what happened to sent emails using the request ID:
-
-```php
-// Get events by request ID
-$result = $lettr->emails()->get($response->requestId);
-
-foreach ($result->events as $event) {
-    echo $event->type->value;   // 'delivery', 'open', 'click', etc.
-    echo $event->recipient;     // Recipient email
-    echo $event->timestamp;     // When the event occurred
-}
-```
-
-Events include delivery confirmations, opens, clicks, bounces, and complaints. Use this data to monitor email performance and diagnose delivery issues. See [Event Types](/learn/events/event-types) for the complete list of events and their meanings.
-
-### List Events with Filtering
-
-```php
-use Lettr\Dto\Email\ListEmailsFilter;
-
-$filter = ListEmailsFilter::create()
-    ->perPage(50)
-    ->forRecipient('user@example.com')
-    ->fromDate('2024-01-01')
-    ->toDate('2024-12-31');
-
-$result = $lettr->emails()->list($filter);
-
-echo $result->totalCount;
-
-// Paginate through results
-while ($result->hasMore()) {
-    foreach ($result->events as $event) {
-        // Process event
-    }
-
-    $filter = $filter->cursor($result->pagination->nextCursor);
-    $result = $lettr->emails()->list($filter);
-}
-```
-
-The SDK uses cursor-based pagination for efficient traversal of large result sets. The `hasMore()` method checks if additional pages exist, and `nextCursor` provides the token for fetching the next page.
-
-<Tip>
-  Use the filtering options to narrow results before paginating. Filtering by recipient or date range significantly reduces the data you need to fetch and process.
-</Tip>
-
 ## Error Handling
 
 The SDK throws typed exceptions for different API errors, making it easy to handle specific failure cases:
@@ -272,6 +225,9 @@ The SDK throws typed exceptions for different API errors, making it easy to hand
 use Lettr\Exceptions\ValidationException;
 use Lettr\Exceptions\UnauthorizedException;
 use Lettr\Exceptions\NotFoundException;
+use Lettr\Exceptions\ConflictException;
+use Lettr\Exceptions\QuotaExceededException;
+use Lettr\Exceptions\RateLimitException;
 use Lettr\Exceptions\ApiException;
 use Lettr\Exceptions\TransporterException;
 
@@ -285,8 +241,17 @@ try {
 } catch (NotFoundException $e) {
     // Resource not found (404)
     // e.g., template slug doesn't exist
+} catch (ConflictException $e) {
+    // Resource conflict (409)
+} catch (QuotaExceededException $e) {
+    // Sending quota exceeded (429) — monthly or daily limit reached
+    // $e->quota contains quota details (free tier only)
+} catch (RateLimitException $e) {
+    // API rate limit exceeded (429) — too many requests per second
+    // $e->rateLimit contains limit/remaining/reset info
+    // $e->retryAfter contains seconds to wait
 } catch (ApiException $e) {
-    // Other API errors (rate limits, server errors)
+    // Other API errors (server errors, etc.)
 } catch (TransporterException $e) {
     // Network/transport errors (connection failures, timeouts)
 }
@@ -297,7 +262,10 @@ try {
 | `ValidationException` | 422 | Invalid email format, unverified sending domain, missing required fields |
 | `UnauthorizedException` | 401 | Invalid or expired API key |
 | `NotFoundException` | 404 | Template slug doesn't exist, invalid project ID |
-| `ApiException` | 4xx/5xx | Rate limits, server errors, other API errors |
+| `ConflictException` | 409 | Resource already exists or conflicts with current state |
+| `QuotaExceededException` | 429 | Monthly or daily sending limit reached (free tier) |
+| `RateLimitException` | 429 | Too many requests per second (3 req/s per team) |
+| `ApiException` | 4xx/5xx | Server errors, other API errors |
 | `TransporterException` | N/A | Network failures, timeouts, DNS errors |
 
 <Warning>

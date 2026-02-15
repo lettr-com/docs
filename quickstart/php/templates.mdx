@@ -5,7 +5,7 @@ description: "Manage and send Lettr templates with the PHP SDK"
 
 Lettr templates let you manage email designs in the Lettr dashboard while your application provides the dynamic data. This separation means designers can update email layouts without touching application code, and developers can change data without worrying about design.
 
-This page covers sending templates, versioning, projects, and managing templates programmatically via the API.
+This page covers sending templates, versioning, and managing templates programmatically via the API.
 
 ## Sending with Templates
 
@@ -54,27 +54,6 @@ Omit the `templateVersion` parameter to use the active (published) version. Lett
 - **Gradual rollout** — Test a new version with a subset of users before publishing it as the active version
 
 See [Template Versions](/learn/templates/versions) for how versioning works in the Lettr dashboard.
-
-## Working with Projects
-
-[Projects](/learn/templates/projects) are folders for organizing templates in Lettr. If you have multiple projects, specify the project ID when sending:
-
-```php
-$response = $lettr->emails()->sendTemplate(
-    from: 'sender@yourdomain.com',
-    to: 'user@example.com',
-    subject: 'Welcome!',
-    templateSlug: 'welcome-email',
-    projectId: 123,
-    substitutionData: ['first_name' => 'John'],
-);
-```
-
-If you only work with one project, you can omit the `projectId` parameter — templates are globally unique by slug across your team.
-
-<Note>
-  Projects help organize templates when you have multiple applications or brands sharing a Lettr account. Use the project ID to keep templates separate and avoid naming conflicts.
-</Note>
 
 ## Using the Builder
 
@@ -203,11 +182,18 @@ Use this method to:
 ```php
 use Lettr\Dto\Template\CreateTemplateData;
 
+// With HTML content
 $template = $lettr->templates()->create(new CreateTemplateData(
     name: 'My Template',
     slug: 'my-template',
     projectId: 123,
-    html: '<html>...</html>',
+    html: '<html>...</html>',   // provide html OR json, not both
+));
+
+// Or with TOPOL.io JSON format
+$template = $lettr->templates()->create(new CreateTemplateData(
+    name: 'My Template',
+    json: '{"blocks":[]}',      // TOPOL.io editor JSON
 ));
 
 echo $template->id;
@@ -222,28 +208,6 @@ Creating templates programmatically is useful for:
 <Warning>
   Template slugs must be unique within your account. If you try to create a template with an existing slug, the API returns a `422` validation error.
 </Warning>
-
-## Update a Template
-
-Modify an existing template's content or metadata:
-
-```php
-use Lettr\Dto\Template\UpdateTemplateData;
-
-$template = $lettr->templates()->update(
-    slug: 'welcome-email',
-    data: new UpdateTemplateData(
-        name: 'Welcome Email (Updated)',
-        html: '<html>Updated content...</html>',
-    )
-);
-```
-
-Updates create a new template version in Lettr. The new version is not automatically published — you'll need to publish it in the Lettr dashboard to make it the active version.
-
-<Note>
-  Updating a template doesn't affect emails in flight or change the active version. This design prevents accidental changes to production templates.
-</Note>
 
 ## Delete a Template
 
@@ -266,9 +230,6 @@ $lettr->templates()->delete('my-template', projectId: 123);
   </Card>
   <Card title="Template Language" icon="code" href="/learn/templates/template-language">
     Learn merge tag syntax, conditionals, and loops
-  </Card>
-  <Card title="Projects & Folders" icon="folder" href="/learn/templates/projects">
-    Organize templates with projects and folders
   </Card>
   <Card title="API Reference" icon="book" href="/api-reference/templates/list-templates">
     Complete template API reference

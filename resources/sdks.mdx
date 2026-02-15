@@ -50,9 +50,6 @@ Official Lettr SDKs for all major programming languages.
   <Card title="Laravel" icon="laravel" href="https://github.com/lettr/lettr-laravel">
     Official Laravel package
   </Card>
-  <Card title="Symfony" icon="symfony" href="https://github.com/lettr/lettr-symfony">
-    Symfony bundle
-  </Card>
   <Card title="Django" icon="python" href="https://github.com/lettr/lettr-django">
     Django email backend
   </Card>
@@ -103,18 +100,19 @@ composer require lettr/lettr-php
 
 use Lettr\Lettr;
 
-$lettr = new Lettr('your-api-key');
+$lettr = Lettr::client('your-api-key');
 
 // Send email
-$email = $lettr->emails->send([
-    'from' => 'you@example.com',
-    'to' => ['recipient@example.com'],
-    'subject' => 'Hello',
-    'html' => '<p>Hello World</p>'
-]);
+$response = $lettr->emails()->send(
+    $lettr->emails()->create()
+        ->from('you@example.com')
+        ->to(['recipient@example.com'])
+        ->subject('Hello')
+        ->html('<p>Hello World</p>')
+);
 
-// List emails
-$emails = $lettr->emails->list(['limit' => 10]);
+// Manage domains
+$domains = $lettr->domains()->list();
 ```
 
 ## Python SDK
