@@ -288,9 +288,7 @@
           {
             "group": "Emails",
             "pages": [
-              "api-reference/emails/send-email",
-              "api-reference/emails/list-emails",
-              "api-reference/emails/get-email"
+              "api-reference/emails/send-email"
             ]
           },
           {
@@ -313,12 +311,6 @@
               "api-reference/templates/delete-template",
               "api-reference/templates/get-merge-tags",
               "api-reference/templates/get-template-html"
-            ]
-          },
-          {
-            "group": "Projects",
-            "pages": [
-              "api-reference/projects/list-projects"
             ]
           },
           {
