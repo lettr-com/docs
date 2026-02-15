@@ -41,7 +41,7 @@ use Illuminate\Support\Facades\Mail;
 
 Mail::lettr()
     ->to('user@example.com')
-    ->sendTemplate('welcome-email', [
+    ->sendTemplate('welcome-email', 'Welcome!', [
         'name' => 'John',
         'company' => 'Acme Inc',
     ]);
@@ -58,12 +58,12 @@ Mail::lettr()
     ->bcc('archive@example.com')
     ->sendTemplate(
         templateSlug: 'order-confirmation',
+        subject: 'Order Confirmation',
         substitutionData: [
             'order_id' => $order->id,
             'items' => $order->items->toArray(),
         ],
         version: 2,
-        projectId: 123
     );
 ```
 
@@ -305,7 +305,7 @@ The `sendTemplate` method accepts a `tag` parameter. If omitted, the template sl
 ```php
 Mail::lettr()
     ->to('user@example.com')
-    ->sendTemplate('welcome-email', [
+    ->sendTemplate('welcome-email', 'Welcome!', [
         'name' => 'John',
     ], tag: 'onboarding'); // omit to use 'welcome-email' as the tag
 ```

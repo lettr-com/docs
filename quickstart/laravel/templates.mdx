@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Mail;
 
 Mail::lettr()
     ->to('user@example.com')
-    ->sendTemplate('welcome-email', [
+    ->sendTemplate('welcome-email', 'Welcome!', [
         'first_name' => 'John',
         'activation_url' => 'https://example.com/activate/abc123',
     ]);
@@ -48,6 +48,7 @@ Mail::lettr()
     ->to('user@example.com')
     ->sendTemplate(
         templateSlug: 'welcome-email',
+        subject: 'Welcome!',
         substitutionData: $data,
         version: 2  // Use version 2 of the template
     );

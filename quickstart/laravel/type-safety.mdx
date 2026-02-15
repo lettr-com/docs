@@ -13,7 +13,7 @@ Using string literals for template slugs and merge tags is error-prone:
 
 ```php
 // ❌ Typos cause runtime errors
-Mail::lettr()->sendTemplate('welcom-email', ['nme' => 'John']);
+Mail::lettr()->sendTemplate('welcom-email', 'Welcome!', ['nme' => 'John']);
 ```
 
 With generated code, your IDE catches mistakes immediately:
@@ -22,6 +22,7 @@ With generated code, your IDE catches mistakes immediately:
 // ✅ Type-safe, autocomplete-friendly
 Mail::lettr()->sendTemplate(
     LettrTemplate::WelcomeEmail->value,
+    'Welcome!',
     new WelcomeEmailData(name: 'John')
 );
 ```
@@ -73,7 +74,7 @@ use App\Enums\LettrTemplate;
 // IDE autocomplete shows all available templates
 Mail::lettr()
     ->to($user->email)
-    ->sendTemplate(LettrTemplate::WelcomeEmail->value, $data);
+    ->sendTemplate(LettrTemplate::WelcomeEmail->value, 'Welcome!', $data);
 ```
 
 ### Benefits
@@ -130,7 +131,7 @@ $data = new WelcomeEmailData(
 
 Mail::lettr()
     ->to($user->email)
-    ->sendTemplate('welcome-email', $data->toArray());
+    ->sendTemplate('welcome-email', 'Welcome!', $data->toArray());
 ```
 
 ### Benefits
@@ -144,7 +145,7 @@ Mail::lettr()
   ```php
   Mail::lettr()
       ->to($user->email)
-      ->sendTemplate(LettrTemplate::WelcomeEmail->value, $data->toArray());
+      ->sendTemplate(LettrTemplate::WelcomeEmail->value, 'Welcome!', $data->toArray());
   ```
 </Tip>
 
