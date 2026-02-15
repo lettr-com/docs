@@ -63,29 +63,6 @@ Omit the version to use the active (published) version.
 
 See [Versions](/learn/templates/versions) for how versioning works in the Lettr dashboard.
 
-## Working with Projects
-
-[Projects](/learn/templates/projects) are folders for organizing templates in Lettr. If you have multiple projects, specify the project ID when sending:
-
-```php
-// Per-request
-Mail::lettr()
-    ->to('user@example.com')
-    ->sendTemplate(
-        templateSlug: 'welcome-email',
-        substitutionData: $data,
-        projectId: 123
-    );
-```
-
-Or set a default in your `.env` so you don't have to pass it every time:
-
-```env
-LETTR_DEFAULT_PROJECT_ID=123
-```
-
-The per-request `projectId` always takes precedence over the default.
-
 ## Pull Templates Locally
 
 Download templates from Lettr to edit locally as Blade files:
@@ -105,27 +82,6 @@ By default, templates are saved as Blade files to `resources/views/emails/lettr/
 <Tip>
   Use `--with-mailables` to generate ready-to-use Mailable classes alongside the templates. This is the fastest way to scaffold email classes from your existing Lettr templates.
 </Tip>
-
-## Push Templates to Lettr
-
-Upload local Blade templates to Lettr:
-
-```bash
-php artisan lettr:push
-```
-
-Options:
-- `--template=name` - Push a specific template
-- `--project=id` - Push to a specific project
-- `--dry-run` - Preview without uploading
-
-<Note>
-  The push command converts Blade syntax to Lettr's template format automatically. Use `--dry-run` first to preview what will be uploaded before making changes.
-</Note>
-
-<Warning>
-  Pushing a template creates a new version in Lettr. It does not overwrite the active version. You'll need to publish the new version in the Lettr dashboard to make it active.
-</Warning>
 
 ## Listing Templates
 
