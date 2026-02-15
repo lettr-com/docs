@@ -144,22 +144,13 @@ return [
 
 ## Verify Installation
 
-Test that everything is configured correctly:
-
-```php
-use Lettr\Laravel\Facades\Lettr;
-
-Lettr::health()->authCheck();
-```
-
-If no exception is thrown, your API key is valid and you're ready to send emails.
-
-You can also run this check from Tinker:
+Run the check command to verify your installation:
 
 ```bash
-php artisan tinker
->>> \Lettr\Laravel\Facades\Lettr::health()->authCheck()
+php artisan lettr:check
 ```
+
+This validates your API key and configuration. If everything is set up correctly, you'll see a success message.
 
 ### Troubleshooting
 
