@@ -40,7 +40,7 @@ ngrok http 3000
 Forwarding  https://abc123.ngrok.io -> http://localhost:3000
 ```
 
-5. **Configure webhook in Lettr**: Go to **Settings** -> **Webhooks** in the dashboard and create a new webhook pointing to your ngrok URL (e.g., `https://abc123.ngrok.io/webhooks/lettr`).
+5. **Configure webhook in Lettr**: Go to **Webhooks** in the sidebar and create a new webhook pointing to your ngrok URL (e.g., `https://abc123.ngrok.io/webhooks/lettr`).
 
 <Tip>
   Use ngrok's paid plan to get a stable subdomain. Free URLs change each time you restart ngrok.
@@ -65,24 +65,6 @@ cloudflared tunnel --url http://localhost:3000
 ```bash
 npx localtunnel --port 3000
 ```
-
-## Dashboard Test Events
-
-The Lettr dashboard provides a built-in way to send test webhook events without triggering real email activity.
-
-### Sending Test Events
-
-1. Navigate to **Settings** → **Webhooks**
-2. Select the webhook you want to test
-3. Click **Send Test Event**
-4. Choose the event type (e.g., `message.delivery`, `message.bounce`)
-5. Click **Send**
-
-The dashboard will show the delivery result, including response code and timing.
-
-### Test Event Payloads
-
-Test events have the same structure as real events but with sample data. Use them to verify your webhook handler correctly parses and processes event payloads.
 
 ## Triggering Test Events
 
@@ -408,7 +390,7 @@ Before deploying to production, test webhooks in a staging environment.
 
 4. **Test retry handling** - Temporarily return errors to verify retry behavior
 
-5. **Test signature verification** - Confirm your staging environment uses the correct secret
+5. **Test authentication** - Confirm your staging environment uses the correct webhook credentials
 
 6. **Load testing** - Send multiple webhooks to test concurrent handling
 
@@ -459,19 +441,13 @@ Use tools like [Webhook.site](https://webhook.site) or [RequestBin](https://requ
 3. Send test events and inspect the raw requests
 4. Copy the payload structure for your tests
 
-### Dashboard Delivery Logs
+### Dashboard Webhook Details
 
-The Lettr dashboard shows detailed delivery logs:
+The Lettr dashboard shows webhook status information:
 
-1. Go to **Settings** → **Webhooks**
+1. Go to **Webhooks** in the sidebar
 2. Select your webhook
-3. View **Delivery History**
-4. Click on any delivery to see:
-   - Request payload
-   - Response code
-   - Response body (if any)
-   - Timing information
-   - Retry attempts
+3. View the webhook details including last attempt time, last status, and enabled state
 
 ## Common Testing Pitfalls
 
@@ -533,7 +509,7 @@ The Lettr dashboard shows detailed delivery logs:
     Best practices for processing webhooks reliably
   </Card>
   <Card title="Authorization" icon="lock" href="/learn/webhooks/authorization">
-    Secure your endpoints with signature verification
+    Secure your endpoints with authentication
   </Card>
   <Card title="Retries" icon="rotate" href="/learn/webhooks/retries">
     Understand retry behavior and failure handling

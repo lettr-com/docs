@@ -14,10 +14,10 @@ When an event occurs, Lettr sends an HTTP POST request to your configured endpoi
     An email is sent, delivered, bounced, opened, or received on your inbound domain.
   </Step>
   <Step title="Lettr Sends Webhook">
-    A signed POST request is sent to your endpoint with the event payload.
+    An authenticated POST request is sent to your endpoint with the event payload (using your configured auth method).
   </Step>
   <Step title="You Verify & Process">
-    Your server verifies the signature, processes the event, and responds with a 2xx status.
+    Your server verifies authentication, processes the event, and responds with a 2xx status.
   </Step>
   <Step title="Lettr Confirms Receipt">
     Upon receiving a success response, Lettr marks the delivery as complete.
@@ -45,7 +45,7 @@ Webhooks are created and managed through the Lettr dashboard. The API provides r
 
 <Steps>
   <Step title="Open Webhook Settings">
-    Navigate to **Settings** → **Webhooks** in the dashboard.
+    Navigate to **Webhooks** in the sidebar.
   </Step>
   <Step title="Click Create Webhook">
     Click the **Create Webhook** button.
@@ -72,7 +72,7 @@ Webhooks are created and managed through the Lettr dashboard. The API provides r
 
 To update a webhook's URL, events, or authentication:
 
-1. Go to **Settings** → **Webhooks**
+1. Go to **Webhooks**
 2. Click on the webhook you want to edit
 3. Make your changes
 4. Click **Save**
@@ -81,7 +81,7 @@ To update a webhook's URL, events, or authentication:
 
 You can temporarily disable a webhook without deleting it. This is useful during maintenance or when debugging your endpoint:
 
-1. Go to **Settings** → **Webhooks**
+1. Go to **Webhooks**
 2. Find the webhook you want to toggle
 3. Click **Enable** or **Disable**
 
@@ -91,7 +91,7 @@ Disabled webhooks stop receiving events but retain their configuration. Re-enabl
 
 To permanently remove a webhook:
 
-1. Go to **Settings** → **Webhooks**
+1. Go to **Webhooks**
 2. Find the webhook you want to delete
 3. Click **Delete** and confirm
 
@@ -100,7 +100,7 @@ To permanently remove a webhook:
 </Warning>
 
 <Note>
-  Webhook management (create, update, enable/disable, delete) is only available through the dashboard. The API provides read-only access for listing and viewing webhook configurations.
+  You can create up to 5 webhooks per account. Webhook management (create, update, enable/disable, delete) is only available through the dashboard. The API provides read-only access for listing and viewing webhook configurations.
 </Note>
 
 ## Handling Webhooks
@@ -247,16 +247,19 @@ The response includes the webhook configuration and its current status:
 
 ```json
 {
-  "id": "webhook-abc123",
-  "name": "Order Notifications",
-  "url": "https://example.com/webhook",
-  "enabled": true,
-  "event_types": ["message.delivery", "message.bounce"],
-  "auth_type": "basic",
-  "has_auth_credentials": true,
-  "last_successful_at": "2024-01-15T10:30:00+00:00",
-  "last_failure_at": null,
-  "last_status": "success"
+  "message": "Webhook retrieved successfully.",
+  "data": {
+    "id": "webhook-abc123",
+    "name": "Order Notifications",
+    "url": "https://example.com/webhook",
+    "enabled": true,
+    "event_types": ["message.delivery", "message.bounce"],
+    "auth_type": "basic",
+    "has_auth_credentials": true,
+    "last_successful_at": "2024-01-15T10:30:00+00:00",
+    "last_failure_at": null,
+    "last_status": "success"
+  }
 }
 ```
 
@@ -270,8 +273,8 @@ The response includes the webhook configuration and its current status:
   <Accordion title="Respond Quickly">
     Return a 200 response as soon as possible. If processing takes time, acknowledge receipt immediately and process asynchronously. Lettr waits up to 30 seconds for a response before marking the delivery as failed.
   </Accordion>
-  <Accordion title="Verify Signatures">
-    Always verify the webhook signature before processing. This ensures the request came from Lettr and hasn't been tampered with.
+  <Accordion title="Verify Authentication">
+    Always verify the webhook authentication before processing. Configure Basic Auth or OAuth 2.0 on your webhook and validate credentials in your handler to ensure the request came from Lettr.
   </Accordion>
   <Accordion title="Handle Duplicates">
     Implement idempotency in your handler. Due to retries, you may receive the same event multiple times. Use the event `id` to detect and skip duplicates.
@@ -294,7 +297,7 @@ The response includes the webhook configuration and its current status:
     Best practices for processing webhooks reliably
   </Card>
   <Card title="Authorization" icon="lock" href="/learn/webhooks/authorization">
-    Secure your endpoints with signature verification
+    Secure your endpoints with authentication
   </Card>
   <Card title="Retries" icon="rotate" href="/learn/webhooks/retries">
     Understand retry behavior and failure handling
