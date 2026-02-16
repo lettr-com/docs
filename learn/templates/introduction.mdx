@@ -19,7 +19,7 @@ Templates are reusable email designs that separate your content from your code. 
 
 <Steps>
   <Step title="Create a Template">
-    Go to **Templates** in your dashboard and click **New Template**.
+    Go to **Emails** in your dashboard and click **New Email**.
   </Step>
   <Step title="Design Your Email">
     Use the visual editor to design your email, or paste custom HTML.
@@ -36,49 +36,58 @@ Templates are reusable email designs that separate your content from your code. 
 
 Reference templates by their slug when sending:
 
-```javascript
-await lettr.emails.send({
-  from: 'you@example.com',
-  to: ['recipient@example.com'],
-  subject: 'Welcome to Acme',
-  template_slug: 'welcome-email',
-  substitution_data: {
-    name: 'John',
-    company: 'Acme Inc'
-  }
-});
+```bash
+curl -X POST https://app.lettr.com/api/emails \
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "from": "you@example.com",
+    "to": ["recipient@example.com"],
+    "subject": "Welcome to Acme",
+    "template_slug": "welcome-email",
+    "substitution_data": {
+      "name": "John",
+      "company": "Acme Inc"
+    }
+  }'
 ```
 
 ### Specifying a Template Version
 
 By default, Lettr uses the **active version** of the template. To use a specific version:
 
-```javascript
-await lettr.emails.send({
-  from: 'you@example.com',
-  to: ['recipient@example.com'],
-  subject: 'Newsletter',
-  template_slug: 'monthly-newsletter',
-  template_version: 3
-});
+```bash
+curl -X POST https://app.lettr.com/api/emails \
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "from": "you@example.com",
+    "to": ["recipient@example.com"],
+    "subject": "Newsletter",
+    "template_slug": "monthly-newsletter",
+    "template_version": 3
+  }'
 ```
 
 ### Project-Scoped Templates
 
 If your template is in a specific project, include the `project_id`:
 
-```javascript
-await lettr.emails.send({
-  from: 'you@example.com',
-  to: ['recipient@example.com'],
-  subject: 'Welcome',
-  template_slug: 'welcome',
-  project_id: 123
-});
+```bash
+curl -X POST https://app.lettr.com/api/emails \
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "from": "you@example.com",
+    "to": ["recipient@example.com"],
+    "subject": "Welcome",
+    "template_slug": "welcome",
+    "project_id": 123
+  }'
 ```
 
 <Note>
-  If no `project_id` is specified, Lettr uses your team's default project.
+  If no `project_id` is specified, Lettr uses your team's default project. Make sure a default project is configured in your team settings, or the API will return a 404 error.
 </Note>
 
 ## Template vs Inline Content
@@ -97,18 +106,21 @@ Choose the approach that fits your use case:
 
 When both a template and inline content are provided in the same request:
 
-1. **Template content takes precedence**—the template's HTML replaces any `html` parameter
-2. The `subject` parameter in your request **overrides** the template's subject
+1. **Template content takes precedence**—the template version's HTML replaces any `html` parameter
+2. The `subject` in your request is always used—templates do not provide a fallback subject
 3. Inline `html` or `text` is only used when no `template_slug` is provided
 
-```javascript
-await lettr.emails.send({
-  from: 'you@example.com',
-  to: ['recipient@example.com'],
-  subject: 'Custom Subject', // Overrides template subject
-  template_slug: 'welcome-email',
-  html: '<p>This HTML is ignored when template_slug is provided</p>'
-});
+```bash
+curl -X POST https://app.lettr.com/api/emails \
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "from": "you@example.com",
+    "to": ["recipient@example.com"],
+    "subject": "Custom Subject",
+    "template_slug": "welcome-email",
+    "html": "<p>This HTML is ignored when template_slug is provided</p>"
+  }'
 ```
 
 <Warning>
@@ -165,7 +177,7 @@ Each template has a unique slug used to reference it in API calls:
 | `order-confirmation` | E-commerce receipts |
 | `weekly-digest` | Recurring newsletters |
 
-Slugs are auto-generated from template names but can be customized. They must be unique within your team.
+Slugs are auto-generated from template names but can be customized. They must be unique within a project.
 
 ## Visual vs Code Editing
 
@@ -185,7 +197,7 @@ Lettr supports two editing modes:
 - Advanced customization
 - Direct code editing
 
-You can switch between modes or use both—design visually and fine-tune with code.
+Each template has an `editor_type` field (`topol` or `custom_html`) that reflects which editing mode is active. You can switch between modes or use both—design visually and fine-tune with code.
 
 ## Template Parameters Reference
 
@@ -196,8 +208,8 @@ When sending with templates, these parameters control template behavior:
 | `template_slug` | string | No* | Template identifier (slug name) |
 | `template_version` | integer | No | Specific version number (uses active version if omitted) |
 | `project_id` | integer | No | Project containing the template (uses default project if omitted) |
-| `substitution_data` | object | No | Key-value data for template variable substitution |
-| `metadata` | object | No | Key-value data passed to webhooks (not used in templates) |
+| `substitution_data` | object | No | Key-value pairs for template variable substitution. All values must be strings. |
+| `metadata` | object | No | Key-value data passed to webhooks (not used in templates). All values must be strings. |
 
 *Required if not providing `html` or `text` content directly.
 
@@ -207,11 +219,11 @@ When sending with templates, these parameters control template behavior:
 
 ## Template API
 
-List and retrieve templates programmatically:
+List and retrieve templates programmatically. The list endpoint supports pagination with `per_page` (default 25, max 100) and `page` query parameters:
 
 ```bash
-# List all templates
-curl https://app.lettr.com/api/templates \
+# List all templates (with optional pagination)
+curl "https://app.lettr.com/api/templates?per_page=10&page=1" \
   -H "Authorization: Bearer lttr_xxxxxxxxxxxx"
 ```
 
@@ -219,35 +231,60 @@ Response:
 
 ```json
 {
-  "data": [
-    {
-      "id": 1,
-      "name": "Welcome Email",
-      "slug": "welcome-email",
-      "project_id": 123,
-      "folder_id": null,
-      "created_at": "2026-01-10T09:00:00Z",
-      "updated_at": "2026-01-15T14:30:00Z"
-    },
-    {
-      "id": 2,
-      "name": "Order Confirmation",
-      "slug": "order-confirmation",
-      "project_id": 123,
-      "folder_id": 5,
-      "created_at": "2026-01-12T11:00:00Z",
-      "updated_at": "2026-01-20T08:15:00Z"
+  "message": "Templates retrieved successfully.",
+  "data": {
+    "templates": [
+      {
+        "id": 1,
+        "name": "Welcome Email",
+        "slug": "welcome-email",
+        "project_id": 5,
+        "folder_id": 10,
+        "created_at": "2026-01-15T10:00:00+00:00",
+        "updated_at": "2026-01-20T14:30:00+00:00"
+      }
+    ],
+    "pagination": {
+      "total": 42,
+      "per_page": 10,
+      "current_page": 1,
+      "last_page": 5
     }
-  ]
+  }
 }
 ```
 
-Get a specific template:
+Get a specific template by slug:
 
 ```bash
 curl https://app.lettr.com/api/templates/welcome-email \
   -H "Authorization: Bearer lttr_xxxxxxxxxxxx"
 ```
+
+Response:
+
+```json
+{
+  "message": "Template retrieved successfully.",
+  "data": {
+    "id": 1,
+    "name": "Welcome Email",
+    "slug": "welcome-email",
+    "project_id": 5,
+    "folder_id": 10,
+    "active_version": 1,
+    "versions_count": 3,
+    "html": "<html>...</html>",
+    "json": "{...}",
+    "created_at": "2026-01-15T10:00:00+00:00",
+    "updated_at": "2026-01-20T14:30:00+00:00"
+  }
+}
+```
+
+<Tip>
+  You can scope both endpoints to a specific project by adding `?project_id=123`. If omitted, your team's default project is used.
+</Tip>
 
 ## Best Practices
 

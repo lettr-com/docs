@@ -133,7 +133,7 @@ Response includes project information:
       "name": "Welcome Email",
       "slug": "welcome-email",
       "project_id": 123,
-      "folder_id": null,
+      "folder_id": 3,
       "created_at": "2026-01-10T09:00:00Z",
       "updated_at": "2026-01-15T14:30:00Z"
     },
@@ -257,8 +257,12 @@ To change the default project:
 
 When you delete a folder:
 
-- Templates in the folder are moved to the project root
-- The folder is removed
+- All templates in the folder are permanently deleted
+- This action cannot be undone
+
+<Warning>
+  Deleting a folder permanently removes all templates inside it. Move important templates to another folder before deleting.
+</Warning>
 
 ### Deleting a Project
 
