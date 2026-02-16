@@ -30,6 +30,8 @@ Below the summary, the **Event Details** section shows information specific to t
 - **Timestamp** — When the event occurred, in UTC.
 - **Event ID** — A unique identifier for this specific event occurrence.
 - **User Agent** — The email client or system that triggered the event. For open and click events, this is the recipient's email client. For other event types, this field may be empty.
+- **Prefetched** — For open events only. Indicates whether the open was triggered by a mail client prefetching images rather than the recipient actively viewing the email.
+- **Pixel** — For open events only. Shows whether the tracking pixel was placed at the top or bottom of the email.
 - **Geo IP** — The approximate geographic location associated with the IP address that triggered the event. This is derived from IP geolocation and is an approximation.
 - **IP Address** — The IP address from which the event was triggered.
 
@@ -43,7 +45,7 @@ The **Recipient** section provides details about where the email was routed:
 - **Recipient Domain** — The domain portion of the recipient's email address.
 - **Recipient Address** — The recipient's email address as it was specified when you sent the email.
 - **Recipient Address (raw)** — The unprocessed recipient address, which may include additional routing information.
-- **Recipient Metadata** — Any custom metadata you attached to this recipient when sending the email. This is the per-recipient data from your `substitution_data` or metadata fields. See [Metadata](/learn/sending/metadata) for how to attach this information at send time.
+- **Recipient Metadata** — Any custom metadata you attached to this recipient when sending the email via the `metadata` field. See [Metadata](/learn/sending/metadata) for how to attach this information at send time.
 
 ## Sender Information
 

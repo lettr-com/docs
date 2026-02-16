@@ -194,58 +194,9 @@ VMC certificates are typically valid for one year. Plan for renewal:
 - **Update the hosted file** — After renewal, replace the PEM file at your hosted URL. The BIMI DNS record doesn't need to change as long as the URL remains the same.
 - **Verify after renewal** — Send test emails to Gmail and Yahoo to confirm your logo still displays correctly after replacing the certificate.
 
-## Configuring BIMI in Lettr
+## Verifying Your BIMI Setup
 
-### Via Dashboard
-
-1. Go to **Domains** → **Sending**
-2. Select your domain
-3. Navigate to the **BIMI** section
-4. Enter your logo URL and optional VMC URL
-5. Click **Save**
-
-### Via API
-
-```bash
-curl -X PATCH https://app.lettr.com/api/domains/example.com \
-  -H "Authorization: Bearer lttr_xxxxxxxxxxxx" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "bimi": {
-      "logo_url": "https://example.com/logo.svg",
-      "vmc_url": "https://example.com/vmc.pem"
-    }
-  }'
-```
-
-## Check BIMI Status
-
-### Via API
-
-```bash
-curl https://app.lettr.com/api/domains/example.com \
-  -H "Authorization: Bearer lttr_xxxxxxxxxxxx"
-```
-
-```json
-{
-  "message": "Domain retrieved successfully.",
-  "data": {
-    "domain": "example.com",
-    "bimi_status": "verified",
-    "bimi_logo_url": "https://example.com/logo.svg",
-    "bimi_vmc_url": "https://example.com/vmc.pem"
-  }
-}
-```
-
-### BIMI Status Values
-
-| Status | Description |
-|--------|-------------|
-| `verified` | BIMI record found and valid |
-| `missing` | No BIMI record found |
-| `invalid` | BIMI record has errors |
+BIMI is configured entirely through DNS records — there is no BIMI configuration in the Lettr dashboard or API. Once you've added the BIMI TXT record to your DNS and ensured DMARC enforcement is in place, email clients will automatically look up and display your logo.
 
 ## Email Client Support
 

@@ -28,33 +28,9 @@ Configuring a sending domain provides four key benefits:
   </Step>
 </Steps>
 
-## Via API
-
-Create a sending domain with `POST /domains`. The request body contains only the domain name:
-
-### Via Dashboard
-
-<Steps>
-  <Step title="Navigate to Domains">
-    Go to **Domains** → **Sending** in your dashboard.
-  </Step>
-  <Step title="Add Domain">
-    Click **Add Domain** and enter your domain name (e.g., `example.com`).
-  </Step>
-  <Step title="Copy DNS Records">
-    Copy the provided DNS records. You'll need to add these to your DNS provider.
-  </Step>
-  <Step title="Configure DNS">
-    Add the SPF, DKIM, CNAME, and DMARC records to your domain's DNS settings.
-  </Step>
-  <Step title="Verify Domain">
-    Return to Lettr and click **Verify** to check your DNS configuration.
-  </Step>
-</Steps>
-
 ### Via API
 
-Create a sending domain:
+Create a sending domain with the API:
 
 ```bash
 curl -X POST https://app.lettr.com/api/domains \
@@ -151,7 +127,10 @@ Response:
     "domain": "example.com",
     "dkim_status": "valid",
     "cname_status": "valid",
-    "dmarc_status": "valid"
+    "dmarc_status": "valid",
+    "spf_status": "valid",
+    "ownership_verified": true,
+    "is_primary_domain": true
   }
 }
 ```
@@ -167,17 +146,18 @@ Each DNS record has its own verification status:
 | `valid` | Record found and valid |
 | `unverified` | Record not yet detected |
 | `invalid` | Record found but invalid |
-| `missing` | No record found (DMARC only) |
+| `missing` | No record found |
+| `not_applicable` | Record not required for this domain type (e.g., SPF on subdomains, CNAME on root domains) |
 
 ### Approval Status
 
 Sending domains also have an approval status that determines whether you can send emails:
 
-| Status | Description | Can Send? |
-|--------|-------------|-----------|
-| `approved` | Domain approved for sending | Yes |
-| `pending` | Under review | No |
-| `blocked` | Domain blocked | No |
+| Status | Label | Can Send? |
+|--------|-------|-----------|
+| `approved` | Approved | Yes |
+| `pending` | Pending Review | No |
+| `blocked` | Blocked | No |
 
 <Note>
   Lettr automatically evaluates new domains for approval based on domain age, reputation, and other factors. Most legitimate business domains are approved automatically.
@@ -200,8 +180,13 @@ curl https://app.lettr.com/api/domains/example.com \
     "status": "approved",
     "status_label": "Approved",
     "can_send": true,
-    "dkim_status": "valid",
     "cname_status": "valid",
+    "dkim_status": "valid",
+    "dmarc_status": "valid",
+    "spf_status": "valid",
+    "is_primary_domain": true,
+    "tracking_domain": "links.example.com",
+    "dns_provider": "cloudflare",
     "created_at": "2024-01-15T10:30:00Z",
     "updated_at": "2024-01-15T10:35:00Z"
   }
@@ -268,17 +253,6 @@ Link a [tracking domain](/learn/domains/tracking-domains) to your sending domain
 2. Select your sending domain
 3. Under **Tracking Domain**, select or add a tracking domain
 
-### Via API
-
-```bash
-curl -X PATCH https://app.lettr.com/api/domains/example.com \
-  -H "Authorization: Bearer lttr_xxxxxxxxxxxx" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "tracking_domain": "links.example.com"
-  }'
-```
-
 ## List All Sending Domains
 
 ```bash
@@ -289,30 +263,28 @@ curl https://app.lettr.com/api/domains \
 ```json
 {
   "message": "Domains retrieved successfully.",
-  "data": {
-    "domains": [
-      {
-        "domain": "example.com",
-        "status": "approved",
-        "status_label": "Approved",
-        "can_send": true,
-        "dkim_status": "valid",
-        "cname_status": "valid",
-        "created_at": "2024-01-15T10:30:00Z",
-        "updated_at": "2024-01-15T10:35:00Z"
-      },
-      {
-        "domain": "notifications.example.com",
-        "status": "approved",
-        "status_label": "Approved",
-        "can_send": true,
-        "dkim_status": "valid",
-        "cname_status": "valid",
-        "created_at": "2024-01-15T11:00:00Z",
-        "updated_at": "2024-01-15T11:05:00Z"
-      }
-    ]
-  }
+  "data": [
+    {
+      "domain": "example.com",
+      "status": "approved",
+      "status_label": "Approved",
+      "can_send": true,
+      "cname_status": "valid",
+      "dkim_status": "valid",
+      "created_at": "2024-01-15T10:30:00Z",
+      "updated_at": "2024-01-15T10:35:00Z"
+    },
+    {
+      "domain": "notifications.example.com",
+      "status": "approved",
+      "status_label": "Approved",
+      "can_send": true,
+      "cname_status": "valid",
+      "dkim_status": "valid",
+      "created_at": "2024-01-15T11:00:00Z",
+      "updated_at": "2024-01-15T11:05:00Z"
+    }
+  ]
 }
 ```
 

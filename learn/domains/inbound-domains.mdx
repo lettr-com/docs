@@ -41,45 +41,9 @@ Inbound domains let your application participate in two-way email communication:
   </Step>
 </Steps>
 
-### Via API
-
-Create an inbound domain:
-
-```bash
-curl -X POST https://app.lettr.com/api/domains/inbound \
-  -H "Authorization: Bearer lttr_xxxxxxxxxxxx" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "domain": "mail.example.com"
-  }'
-```
-
-Response:
-
-```json
-{
-  "message": "Success.",
-  "data": {
-    "domain": "mail.example.com",
-    "mx_status": "unverified",
-    "mx_records": [
-      {
-        "priority": 5,
-        "hostname": "rx1.sparkpostmail.com"
-      },
-      {
-        "priority": 10,
-        "hostname": "rx2.sparkpostmail.com"
-      },
-      {
-        "priority": 20,
-        "hostname": "rx3.sparkpostmail.com"
-      }
-    ],
-    "created_at": "2024-01-15T10:30:00Z"
-  }
-}
-```
+<Note>
+  Inbound domains are managed through the Lettr dashboard. API endpoints for inbound domains are not currently available.
+</Note>
 
 ## DNS Configuration
 
@@ -87,9 +51,9 @@ Add these MX records to your domain's DNS settings:
 
 | Type | Host/Name | Priority | Value |
 |------|-----------|----------|-------|
-| MX | `@` or subdomain | 5 | `rx1.sparkpostmail.com` |
+| MX | `@` or subdomain | 10 | `rx1.sparkpostmail.com` |
 | MX | `@` or subdomain | 10 | `rx2.sparkpostmail.com` |
-| MX | `@` or subdomain | 20 | `rx3.sparkpostmail.com` |
+| MX | `@` or subdomain | 10 | `rx3.sparkpostmail.com` |
 
 <Note>
   If using a subdomain like `mail.example.com`, set the Host/Name field to `mail` instead of `@`.
@@ -97,15 +61,7 @@ Add these MX records to your domain's DNS settings:
 
 ### Understanding MX Priority
 
-MX priority determines the order email servers try to deliver:
-
-| Priority | Server | Purpose |
-|----------|--------|---------|
-| 5 (highest) | `rx1.sparkpostmail.com` | Primary server |
-| 10 | `rx2.sparkpostmail.com` | Secondary fallback |
-| 20 (lowest) | `rx3.sparkpostmail.com` | Tertiary fallback |
-
-Lower numbers = higher priority. If the primary server is unavailable, senders try the next.
+All three MX records use the same priority (10), which means email servers will distribute delivery across all three servers equally. If one server is unavailable, senders automatically try the others.
 
 ## Verifying Your Inbound Domain
 
@@ -114,30 +70,6 @@ Lower numbers = higher priority. If the primary server is unavailable, senders t
 1. Go to **Domains** → **Inbound**
 2. Find your domain and click **Verify**
 3. Lettr checks that all MX records are configured correctly
-
-### Via API
-
-```bash
-curl -X POST https://app.lettr.com/api/domains/inbound/mail.example.com/verify \
-  -H "Authorization: Bearer lttr_xxxxxxxxxxxx"
-```
-
-Response:
-
-```json
-{
-  "message": "Success.",
-  "data": {
-    "domain": "mail.example.com",
-    "mx_status": "valid",
-    "mx_records_found": [
-      "rx1.sparkpostmail.com",
-      "rx2.sparkpostmail.com",
-      "rx3.sparkpostmail.com"
-    ]
-  }
-}
-```
 
 ## Inbound Domain Status
 
@@ -196,61 +128,6 @@ Set up a webhook to receive notifications when emails arrive:
 
 See [Webhooks](/learn/webhooks/introduction) for setup instructions.
 
-### API Retrieval
-
-Query inbound emails via the API:
-
-```bash
-curl https://app.lettr.com/api/inbound \
-  -H "Authorization: Bearer lttr_xxxxxxxxxxxx"
-```
-
-## Check Inbound Domain Status
-
-### Via API
-
-```bash
-curl https://app.lettr.com/api/domains/inbound/mail.example.com \
-  -H "Authorization: Bearer lttr_xxxxxxxxxxxx"
-```
-
-```json
-{
-  "message": "Success.",
-  "data": {
-    "domain": "mail.example.com",
-    "mx_status": "valid",
-    "created_at": "2024-01-15T10:30:00Z",
-    "updated_at": "2024-01-15T10:35:00Z"
-  }
-}
-```
-
-## List All Inbound Domains
-
-```bash
-curl https://app.lettr.com/api/domains/inbound \
-  -H "Authorization: Bearer lttr_xxxxxxxxxxxx"
-```
-
-```json
-{
-  "message": "Success.",
-  "data": {
-    "domains": [
-      {
-        "domain": "mail.example.com",
-        "mx_status": "valid"
-      },
-      {
-        "domain": "reply.example.com",
-        "mx_status": "valid"
-      }
-    ]
-  }
-}
-```
-
 ## Delete an Inbound Domain
 
 <Warning>
@@ -262,13 +139,6 @@ curl https://app.lettr.com/api/domains/inbound \
 1. Go to **Domains** → **Inbound**
 2. Find the domain and click **Delete**
 3. Confirm deletion
-
-### Via API
-
-```bash
-curl -X DELETE https://app.lettr.com/api/domains/inbound/mail.example.com \
-  -H "Authorization: Bearer lttr_xxxxxxxxxxxx"
-```
 
 ## Use Cases
 
@@ -318,7 +188,7 @@ Extract structured data from incoming emails:
   <Accordion title="Partial MX records detected">
     - All three MX servers must be configured
     - Check for typos in server hostnames
-    - Ensure priorities are set correctly (5, 10, 20)
+    - Ensure all three records have priority 10
   </Accordion>
 
   <Accordion title="Conflict with existing email provider">

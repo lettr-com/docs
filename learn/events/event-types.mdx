@@ -17,7 +17,7 @@ These events track whether your email was successfully handed off to the recipie
 
 These events indicate that the recipient interacted with your email.
 
-**Opened** (blue) — The recipient opened the email. Open tracking works by embedding a small invisible image; when the email client loads that image, the open is recorded. Some email clients block images by default or prefetch them automatically, so open rates are an approximation rather than an exact count.
+**Opened** (blue) — The recipient opened the email. Open tracking works by embedding a small invisible image; when the email client loads that image, the open is recorded. Some email clients block images by default or prefetch them automatically, so open rates are an approximation rather than an exact count. Under the hood, Lettr tracks both the initial open and subsequent opens as separate events, but both are displayed as "Opened" in the dashboard.
 
 **AMP Opened** (blue) — Same as Opened, but for emails delivered in AMP format. AMP emails are interactive and may be tracked slightly differently depending on the receiving mail client.
 
@@ -55,7 +55,12 @@ These events occur before the email reaches the recipient's mail server.
 
 These events track when recipients opt out of receiving your emails.
 
-**Unsubscribed** (purple) — The recipient unsubscribed from your mailing list. This can happen via the List-Unsubscribe header (a one-click unsubscribe option built into email standards) or by clicking an unsubscribe link in your email. Either way, the address is added to your suppression list automatically. See [Complaints and Unsubscribes](/learn/suppressions/complaints-unsubscribes) for more on how suppressions work.
+**Unsubscribed** (purple) — The recipient unsubscribed from your emails. This event covers two distinct mechanisms, both displayed as "Unsubscribed" in the dashboard:
+
+- **List-Unsubscribe** — The recipient used the one-click unsubscribe option built into email standards (the List-Unsubscribe header). Most major email clients surface this as a button in the inbox UI.
+- **Link Unsubscribe** — The recipient clicked an unsubscribe link within the email body.
+
+Either way, the address is added to your suppression list automatically. See [Complaints and Unsubscribes](/learn/suppressions/complaints-unsubscribes) for more on how suppressions work.
 
 ## Complaint Events
 

@@ -142,11 +142,12 @@ To optimize storage and display, some large fields are truncated in the logs:
 
 | Field | Behavior |
 |-------|----------|
-| **HTML body** | Truncated after 1,000 characters |
-| **Plain text body** | Truncated after 1,000 characters |
-| **AMP HTML body** | Truncated after 1,000 characters |
-| **Attachments** | File metadata shown, content not stored |
-| **Recipient Metadata** | Truncated for large recipient lists |
+| **HTML body** | Truncated after 200 characters |
+| **Plain text body** | Truncated after 200 characters |
+| **AMP HTML body** | Truncated after 200 characters |
+| **Attachments** | Replaced with item count (e.g., "3 items") |
+| **Metadata** | Replaced with item count (e.g., "2 items") |
+| **Substitution Data** | Replaced with item count (e.g., "4 items") |
 
 <Note>
   Truncation only affects log display. The actual email sent contains the full content.

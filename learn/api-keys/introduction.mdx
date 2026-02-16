@@ -67,16 +67,11 @@ $lettr = new Client(getenv('LETTR_API_KEY'));
 
 ## Permission Levels
 
-Lettr API keys support two permission levels to help you follow the principle of least privilege:
+When creating an API key, you can choose between two permission levels: **Full Access** and **Sending Only**.
 
-| Permission Level | Description | Use Case |
-|-----------------|-------------|----------|
-| **Full Access** | Complete access to all API endpoints including email sending, domain management, webhooks, and templates | Server-side applications requiring full platform control |
-| **Sending Only** | Limited to email sending operations only | Applications that only need to send transactional emails |
-
-<Tip>
-  Use **Sending Only** keys whenever your application only needs to send emails. This reduces the potential impact if a key is compromised.
-</Tip>
+<Info>
+  Permission-level enforcement is currently in development. At this time, both permission levels grant the same access to all API endpoints. We recommend selecting **Full Access** for now. You can change the permission level on any key later, so once enforcement is rolled out your keys will automatically respect the assigned level.
+</Info>
 
 ## IP Restrictions
 
@@ -199,25 +194,28 @@ If the request comes from an IP address not in the key's whitelist:
 
 The following endpoints are available when authenticated with an API key:
 
-| Endpoint | Method | Description | Required Permission |
-|----------|--------|-------------|---------------------|
-| `/api/emails` | POST | Send an email | Sending Only or Full Access |
-| `/api/emails` | GET | List sent emails | Full Access |
-| `/api/emails/{requestId}` | GET | Get email details | Full Access |
-| `/api/templates` | GET | List templates | Full Access |
-| `/api/templates` | POST | Create a template | Full Access |
-| `/api/templates/{slug}` | GET | Get template details | Full Access |
-| `/api/templates/{slug}` | PUT | Update a template | Full Access |
-| `/api/templates/{slug}` | DELETE | Delete a template | Full Access |
-| `/api/templates/{slug}/merge-tags` | GET | Get template merge tags | Full Access |
-| `/api/projects` | GET | List projects | Full Access |
-| `/api/domains` | GET | List domains | Full Access |
-| `/api/domains` | POST | Create a domain | Full Access |
-| `/api/domains/{domain}` | GET | Get domain details | Full Access |
-| `/api/domains/{domain}/verify` | POST | Verify a domain | Full Access |
-| `/api/domains/{domain}` | DELETE | Delete a domain | Full Access |
-| `/api/webhooks` | GET | List webhooks | Full Access |
-| `/api/webhooks/{webhookId}` | GET | Get webhook details | Full Access |
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/emails` | POST | Send an email |
+| `/api/emails` | GET | List sent emails |
+| `/api/emails/{requestId}` | GET | Get email details |
+| `/api/templates` | GET | List templates |
+| `/api/templates` | POST | Create a template |
+| `/api/templates/{slug}` | GET | Get template details |
+| `/api/templates/{slug}` | PUT | Update a template |
+| `/api/templates/{slug}` | DELETE | Delete a template |
+| `/api/templates/{slug}/merge-tags` | GET | Get template merge tags |
+| `/api/templates/html` | GET | Get rendered template HTML |
+| `/api/projects` | GET | List projects |
+| `/api/domains` | GET | List domains |
+| `/api/domains` | POST | Create a domain |
+| `/api/domains/{domain}` | GET | Get domain details |
+| `/api/domains/{domain}/verify` | POST | Verify a domain |
+| `/api/domains/{domain}` | DELETE | Delete a domain |
+| `/api/webhooks` | GET | List webhooks |
+| `/api/webhooks/{webhookId}` | GET | Get webhook details |
+| `/api/health` | GET | Health check |
+| `/api/auth/check` | GET | Verify API key validity |
 
 ## Next Steps
 
