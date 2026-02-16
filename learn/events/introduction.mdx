@@ -27,14 +27,14 @@ For a full reference of event types and their webhook payloads, see [Webhook Eve
 
 If you need to track down what happened to a particular message, enter the recipient's email address in the search field and hit Search. Lettr will return all events associated with emails sent to that address within your selected date range. From there, click **View Details** on the relevant row to see the full timeline of that message, including delivery status, any bounces or deferrals, and engagement like opens and clicks.
 
-You can also retrieve event data programmatically using the emails API:
+You can also retrieve sent emails programmatically using the emails API:
 
 ```bash
 curl -X GET "https://app.lettr.com/api/emails?recipients=customer@example.com" \
   -H "Authorization: Bearer lttr_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 ```
 
-This returns the same data the dashboard queries, filtered to the specified recipient. See [Email History](/learn/sending/email-history) for full details on the API response structure and query parameters.
+This returns a list of emails sent to the specified recipient, filtered to injection events only. It does not include the full event history (deliveries, opens, clicks, bounces, etc.) that the Events dashboard shows. See [Email History](/learn/sending/email-history) for full details on the API response structure and query parameters.
 
 ## Next Steps
 

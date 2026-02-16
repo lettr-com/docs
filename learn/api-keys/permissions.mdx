@@ -3,22 +3,23 @@ title: Permissions
 description: "Configure API key permissions to control access to Lettr API resources"
 ---
 
-Control what each API key can access by assigning the appropriate permission level. Lettr uses a simple yet effective permission model that allows you to follow the principle of least privilege.
+When creating an API key, you can assign a permission level to indicate the intended scope of access. Lettr supports two permission levels: **Full Access** and **Sending Only**.
+
+<Info>
+  Permission-level enforcement is currently in development. At this time, both permission levels grant the same access to all API endpoints. We recommend selecting **Full Access** for now. You can change the permission level on any key at any time, so once enforcement is rolled out your keys will automatically respect the assigned level.
+</Info>
 
 ## Permission Levels
 
-Lettr API keys support two permission levels:
-
 ### Full Access
 
-Full Access keys have complete access to all API endpoints and operations:
+Full Access keys are intended for complete access to all API endpoints and operations:
 
 - Send emails via API
 - List and retrieve sent email details
 - Access and manage email templates
 - Create, verify, and delete sending domains
 - Configure and manage webhooks
-- View analytics and delivery reports
 
 **Use Full Access keys for:**
 - Backend services that need complete platform control
@@ -28,37 +29,12 @@ Full Access keys have complete access to all API endpoints and operations:
 
 ### Sending Only
 
-Sending Only keys are restricted to email sending operations:
-
-- Send emails via API (`POST /api/emails`)
-- Access templates for sending (read-only)
-
-**Sending Only keys cannot:**
-- List or retrieve sent email details
-- Manage domains
-- Configure webhooks
-- Access analytics
+Once enforcement is implemented, Sending Only keys will be restricted to email sending operations only.
 
 **Use Sending Only keys for:**
 - Production applications that only send transactional emails
 - Third-party integrations that don't need administrative access
 - Services where you want to limit the blast radius of a potential key compromise
-
-<Tip>
-  When in doubt, start with a **Sending Only** key. You can always create a new **Full Access** key if you need additional capabilities.
-</Tip>
-
-## Choosing the Right Permission Level
-
-| Scenario | Recommended Permission |
-|----------|----------------------|
-| Sending transactional emails from your web app | Sending Only |
-| Sending marketing campaigns | Sending Only |
-| Building an admin dashboard | Full Access |
-| Automating domain verification | Full Access |
-| Webhook management scripts | Full Access |
-| CI/CD pipeline for template deployment | Full Access |
-| Third-party email service integration | Sending Only |
 
 ## Creating Keys with Specific Permissions
 
@@ -68,23 +44,14 @@ Sending Only keys are restricted to email sending operations:
 2. Click **Create API Key**
 3. Enter a descriptive name
 4. Select the permission level:
-   - **Full Access** - Complete access to all endpoints
-   - **Sending Only** - Limited to email sending
+   - **Full Access** - Complete access to all endpoints (recommended for now)
+   - **Sending Only** - Intended for email sending only (enforcement coming soon)
 5. Configure optional IP restrictions
 6. Click **Create**
 
-### Permission Selection
-
-When creating an API key, you'll see two clear options:
-
-| Option | Description |
-|--------|-------------|
-| **Full access** | Read, write, and delete operations on all resources |
-| **Sending only** | Limited to email sending operations |
-
 ## IP Restrictions
 
-In addition to permission levels, you can further secure your API keys by restricting them to specific IP addresses. This provides defense in depth—even if a key is compromised, it cannot be used from unauthorized locations.
+In addition to permission levels, you can further secure your API keys by restricting them to specific IP addresses. This provides defense in depth — even if a key is compromised, it cannot be used from unauthorized locations.
 
 ### Configuring IP Restrictions
 
@@ -129,7 +96,7 @@ When a request is made from a non-whitelisted IP:
 
 ## Updating Key Permissions
 
-You can change the permission level of an existing API key:
+You can change the permission level of an existing API key at any time:
 
 1. Navigate to **Settings** > **API Keys**
 2. Click the actions menu (three dots) next to the key
@@ -137,72 +104,25 @@ You can change the permission level of an existing API key:
 4. Update the permission level
 5. Click **Save**
 
-<Warning>
-  Changing a key from **Full Access** to **Sending Only** will immediately restrict its capabilities. Ensure your applications don't rely on the additional permissions before making this change.
-</Warning>
-
-## Permission Errors
-
-When an API key attempts an operation outside its permission scope, you'll receive an error:
-
-### Insufficient Permissions
-
-```json
-{
-  "message": "API key lacks required permission for this operation."
-}
-```
-
-**HTTP Status**: `403 Forbidden`
-
-This occurs when a **Sending Only** key attempts to:
-- List sent emails (`GET /api/emails`)
-- Manage domains (`POST /api/domains`, `DELETE /api/domains/{domain}`)
-- Access webhooks (`GET /api/webhooks`)
-
-## API Endpoint Permission Matrix
-
-The following table shows which endpoints are accessible with each permission level:
-
-| Endpoint | Method | Full Access | Sending Only |
-|----------|--------|-------------|--------------|
-| `/api/emails` | POST | Yes | Yes |
-| `/api/emails` | GET | Yes | No |
-| `/api/emails/{requestId}` | GET | Yes | No |
-| `/api/templates` | GET | Yes | Read-only |
-| `/api/templates` | POST | Yes | No |
-| `/api/templates/{slug}` | GET | Yes | Read-only |
-| `/api/templates/{slug}` | PUT | Yes | No |
-| `/api/templates/{slug}` | DELETE | Yes | No |
-| `/api/templates/{slug}/merge-tags` | GET | Yes | Read-only |
-| `/api/templates/html` | GET | Yes | Yes |
-| `/api/projects` | GET | Yes | No |
-| `/api/domains` | GET | Yes | No |
-| `/api/domains` | POST | Yes | No |
-| `/api/domains/{domain}` | GET | Yes | No |
-| `/api/domains/{domain}/verify` | POST | Yes | No |
-| `/api/domains/{domain}` | DELETE | Yes | No |
-| `/api/webhooks` | GET | Yes | No |
-| `/api/webhooks/{webhookId}` | GET | Yes | No |
+<Note>
+  Since permission enforcement is not yet active, changing the permission level has no immediate effect on API access. However, we recommend setting the intended permission level now so your keys are correctly configured when enforcement is enabled.
+</Note>
 
 ## Security Recommendations
 
 <AccordionGroup>
-  <Accordion title="Use Sending Only keys by default">
-    For most applications that only send emails, a **Sending Only** key is sufficient. This limits exposure if the key is compromised.
-  </Accordion>
   <Accordion title="Create separate keys for different environments">
     Use different API keys for development, staging, and production environments. This allows you to revoke keys independently and track usage per environment.
 
     ```
     Production Web Server - Full Access
     Staging Environment - Full Access
-    Development - Sending Only
+    Development - Full Access
     CI/CD Pipeline - Full Access
     ```
   </Accordion>
-  <Accordion title="Combine permissions with IP restrictions">
-    For maximum security, use both appropriate permission levels and IP restrictions. A **Sending Only** key restricted to your production server IPs provides two layers of protection.
+  <Accordion title="Use IP restrictions for production keys">
+    For maximum security, restrict production API keys to your server's IP addresses or IP ranges. This adds a layer of protection even if a key is compromised.
   </Accordion>
   <Accordion title="Audit key usage regularly">
     Review which keys are being used and their access patterns. Revoke any keys that are no longer needed or show suspicious activity.
@@ -216,13 +136,13 @@ The following table shows which endpoints are accessible with each permission le
 
 For larger organizations or complex deployments, consider creating separate keys for:
 
-| Purpose | Permission | IP Restrictions |
-|---------|------------|-----------------|
-| Production email sending | Sending Only | Production server IPs |
-| Admin dashboard | Full Access | Office IP range |
-| CI/CD pipeline | Full Access | CI service IPs |
-| Monitoring service | Full Access | Monitoring service IPs |
-| Development testing | Sending Only | None (or developer IPs) |
+| Purpose | IP Restrictions |
+|---------|-----------------|
+| Production email sending | Production server IPs |
+| Admin dashboard | Office IP range |
+| CI/CD pipeline | CI service IPs |
+| Monitoring service | Monitoring service IPs |
+| Development testing | None (or developer IPs) |
 
 This approach provides:
 - **Isolation**: Compromise of one key doesn't affect others
