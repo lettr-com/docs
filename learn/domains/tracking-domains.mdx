@@ -56,38 +56,9 @@ https://links.yourcompany.com/c/abc123
   </Step>
 </Steps>
 
-### Via API
-
-Create a tracking domain:
-
-```bash
-curl -X POST https://app.lettr.com/api/domains/tracking \
-  -H "Authorization: Bearer lttr_xxxxxxxxxxxx" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "domain": "links.example.com"
-  }'
-```
-
-Response:
-
-```json
-{
-  "message": "Success.",
-  "data": {
-    "domain": "links.example.com",
-    "status": "pending_ssl",
-    "cname_status": "unverified",
-    "ssl_status": "pending",
-    "ssl_txt_name": "_acme-challenge.links.example.com",
-    "ssl_txt_value": "abc123xyz...",
-    "ownership_txt_name": "_cf-custom-hostname.links.example.com",
-    "ownership_txt_value": "def456...",
-    "cname_target": "proxy.lettr-tracking.io",
-    "created_at": "2024-01-15T10:30:00Z"
-  }
-}
-```
+<Note>
+  Tracking domains are managed through the Lettr dashboard. API endpoints for tracking domains are not currently available.
+</Note>
 
 ## DNS Configuration
 
@@ -101,7 +72,7 @@ Points your subdomain to Lettr's tracking servers:
 |-------|-------|
 | Type | CNAME |
 | Name | `links` (your chosen subdomain) |
-| Value | `proxy.lettr-tracking.io` |
+| Value | `proxy.lettr-tracking.com` |
 
 ### SSL Validation TXT Record
 
@@ -166,29 +137,6 @@ SSL provisioning typically completes within a few minutes after DNS verification
 2. Find your domain and click **Verify**
 3. Wait for both CNAME and SSL verification to complete
 
-### Via API
-
-```bash
-curl -X POST https://app.lettr.com/api/domains/tracking/links.example.com/verify \
-  -H "Authorization: Bearer lttr_xxxxxxxxxxxx"
-```
-
-Response:
-
-```json
-{
-  "message": "Success.",
-  "data": {
-    "domain": "links.example.com",
-    "status": "active",
-    "cname_status": "valid",
-    "cname_verified": true,
-    "ssl_status": "active",
-    "ssl_verified": true
-  }
-}
-```
-
 ## Tracking Domain Status
 
 | Status | Description | CNAME | SSL |
@@ -206,17 +154,6 @@ Associate your tracking domain with a sending domain so all emails from that dom
 1. Go to **Domains** → **Sending**
 2. Select your sending domain
 3. Choose your tracking domain from the dropdown
-
-### Via API
-
-```bash
-curl -X PATCH https://app.lettr.com/api/domains/example.com \
-  -H "Authorization: Bearer lttr_xxxxxxxxxxxx" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "tracking_domain": "links.example.com"
-  }'
-```
 
 ## SSL and Deliverability
 
@@ -276,62 +213,6 @@ curl -X POST https://app.lettr.com/api/emails \
   }'
 ```
 
-## Check Tracking Domain Status
-
-### Via API
-
-```bash
-curl https://app.lettr.com/api/domains/tracking/links.example.com \
-  -H "Authorization: Bearer lttr_xxxxxxxxxxxx"
-```
-
-```json
-{
-  "message": "Success.",
-  "data": {
-    "domain": "links.example.com",
-    "status": "active",
-    "cname_status": "valid",
-    "ssl_status": "active",
-    "ssl_txt_name": "_acme-challenge.links.example.com",
-    "ssl_txt_value": "abc123xyz...",
-    "ownership_txt_name": "_cf-custom-hostname.links.example.com",
-    "ownership_txt_value": "def456...",
-    "cname_target": "proxy.lettr-tracking.io",
-    "created_at": "2024-01-15T10:30:00Z"
-  }
-}
-```
-
-## List All Tracking Domains
-
-```bash
-curl https://app.lettr.com/api/domains/tracking \
-  -H "Authorization: Bearer lttr_xxxxxxxxxxxx"
-```
-
-```json
-{
-  "message": "Success.",
-  "data": {
-    "domains": [
-      {
-        "domain": "links.example.com",
-        "status": "active",
-        "cname_status": "valid",
-        "ssl_status": "active"
-      },
-      {
-        "domain": "track.othersite.com",
-        "status": "pending_ssl",
-        "cname_status": "valid",
-        "ssl_status": "pending"
-      }
-    ]
-  }
-}
-```
-
 ## Delete a Tracking Domain
 
 <Warning>
@@ -344,18 +225,11 @@ curl https://app.lettr.com/api/domains/tracking \
 2. Find the domain and click **Delete**
 3. Confirm deletion
 
-### Via API
-
-```bash
-curl -X DELETE https://app.lettr.com/api/domains/tracking/links.example.com \
-  -H "Authorization: Bearer lttr_xxxxxxxxxxxx"
-```
-
 ## Troubleshooting
 
 <AccordionGroup>
   <Accordion title="CNAME not verified">
-    - Verify the CNAME record is pointing to `proxy.lettr-tracking.io`
+    - Verify the CNAME record is pointing to `proxy.lettr-tracking.com`
     - Check that you added the record to the correct subdomain
     - DNS propagation can take up to 48 hours, though usually completes in minutes
     - Some DNS providers require the full domain in the name field (e.g., `links.example.com` instead of `links`)

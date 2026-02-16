@@ -58,38 +58,9 @@ Storage domains serve content from Lettr's cloud storage:
   </Step>
 </Steps>
 
-### Via API
-
-Connect a custom storage domain:
-
-```bash
-curl -X POST https://app.lettr.com/api/domains/storage \
-  -H "Authorization: Bearer lttr_xxxxxxxxxxxx" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "domain": "assets.example.com"
-  }'
-```
-
-Response:
-
-```json
-{
-  "message": "Success.",
-  "data": {
-    "id": "stor_abc123",
-    "domain": "assets.example.com",
-    "status": "pending",
-    "ssl_status": "pending",
-    "verification_txt_name": "_cf-custom-hostname.assets.example.com",
-    "verification_txt_value": "abc123...",
-    "ownership_txt_name": "_ownership.assets.example.com",
-    "ownership_txt_value": "def456...",
-    "cname_target": "r2-proxy.uselettr.com",
-    "created_at": "2024-01-15T10:30:00Z"
-  }
-}
-```
+<Note>
+  Storage domains are managed through the Lettr dashboard. API endpoints for storage domains are not currently available.
+</Note>
 
 ## DNS Configuration
 
@@ -155,6 +126,7 @@ Lettr automatically provisions SSL certificates for your storage domain. All con
 |--------|-------------|
 | `active` | SSL certificate active, domain ready to use |
 | `pending` | Certificate being provisioned |
+| `pending_validation` | Waiting for TXT record validation |
 | `initializing` | Initial setup in progress |
 
 Certificate provisioning completes within a few minutes after DNS verification.
@@ -166,32 +138,6 @@ Certificate provisioning completes within a few minutes after DNS verification.
 1. Go to **Domains** → **Storage**
 2. Find your domain and click **Verify**
 3. Wait for CNAME and SSL verification to complete
-
-### Via API
-
-```bash
-curl -X POST https://app.lettr.com/api/domains/storage/stor_abc123/verify \
-  -H "Authorization: Bearer lttr_xxxxxxxxxxxx"
-```
-
-Response:
-
-```json
-{
-  "message": "Success.",
-  "data": {
-    "id": "stor_abc123",
-    "domain": "assets.example.com",
-    "status": "active",
-    "verified": true,
-    "enabled": true,
-    "ssl_status": "active",
-    "cname_verified": true,
-    "ssl_txt_verified": true,
-    "ownership_txt_verified": true
-  }
-}
-```
 
 ## Storage Domain Status
 
@@ -209,13 +155,6 @@ If you have multiple storage domains, set one as the default for new uploads:
 
 1. Go to **Domains** → **Storage**
 2. Find the domain and click **Set as Default**
-
-### Via API
-
-```bash
-curl -X PATCH https://app.lettr.com/api/domains/storage/stor_abc123/default \
-  -H "Authorization: Bearer lttr_xxxxxxxxxxxx"
-```
 
 The first verified storage domain is automatically set as the default.
 
@@ -255,43 +194,6 @@ https://assets.example.com/emails/abc123.html
 
 When you verify a storage domain, existing templates can be updated to use the new domain. This happens automatically for the default storage domain.
 
-## Check Storage Domain Status
-
-### Via API
-
-```bash
-curl https://app.lettr.com/api/domains/storage \
-  -H "Authorization: Bearer lttr_xxxxxxxxxxxx"
-```
-
-```json
-{
-  "message": "Success.",
-  "data": {
-    "domains": [
-      {
-        "id": "stor_abc123",
-        "domain": "assets.example.com",
-        "status": "active",
-        "ssl_status": "active",
-        "is_default": true,
-        "verified": true,
-        "enabled": true
-      },
-      {
-        "id": "stor_def456",
-        "domain": "cdn.other-brand.com",
-        "status": "pending",
-        "ssl_status": "pending",
-        "is_default": false,
-        "verified": false,
-        "enabled": false
-      }
-    ]
-  }
-}
-```
-
 ## Delete a Storage Domain
 
 <Warning>
@@ -303,13 +205,6 @@ curl https://app.lettr.com/api/domains/storage \
 1. Go to **Domains** → **Storage**
 2. Find the domain and click **Delete**
 3. Confirm deletion
-
-### Via API
-
-```bash
-curl -X DELETE https://app.lettr.com/api/domains/storage/stor_abc123 \
-  -H "Authorization: Bearer lttr_xxxxxxxxxxxx"
-```
 
 ## Troubleshooting
 

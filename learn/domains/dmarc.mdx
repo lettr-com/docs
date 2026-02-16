@@ -196,8 +196,7 @@ curl https://app.lettr.com/api/domains/example.com \
   "message": "Domain retrieved successfully.",
   "data": {
     "domain": "example.com",
-    "dmarc_status": "valid",
-    "dmarc_policy": "quarantine"
+    "dmarc_status": "valid"
   }
 }
 ```
@@ -207,9 +206,10 @@ curl https://app.lettr.com/api/domains/example.com \
 | Status | Description |
 |--------|-------------|
 | `valid` | DMARC record found and valid |
-| `missing` | No DMARC record found |
+| `unverified` | Record not yet detected |
 | `invalid` | DMARC record has syntax errors |
-| `unverified` | DNS lookup error |
+| `missing` | No DMARC record found |
+| `not_applicable` | DMARC check not required for this domain type |
 
 ## DMARC Reports
 
