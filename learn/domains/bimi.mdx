@@ -54,32 +54,20 @@ BIMI requires several components to be in place:
 
 ## How BIMI Works
 
-```
-┌──────────────┐         ┌──────────────┐         ┌──────────────┐
-│   Email      │ ──────▶ │  Recipient   │ ──────▶ │ BIMI Lookup  │
-│   Sent       │         │   Server     │         │ (DNS TXT)    │
-└──────────────┘         └──────────────┘         └──────┬───────┘
-                                                         │
-                               ┌─────────────────────────┘
-                               ▼
-                         ┌───────────────┐
-                         │ Fetch Logo    │
-                         │ (& VMC if     │
-                         │   required)   │
-                         └───────┬───────┘
-                                 │
-                                 ▼
-                         ┌───────────────┐
-                         │ Display Logo  │
-                         │ in Email      │
-                         │ Client        │
-                         └───────────────┘
-```
-
-1. Email is received and passes DMARC authentication
-2. Receiving server looks up your BIMI record in DNS
-3. Server fetches your logo (and verifies VMC if required)
-4. Logo is displayed next to your email in the recipient's inbox
+<Steps>
+  <Step title="Email is sent and authenticated">
+    Your email is sent from your domain and arrives at the recipient's mail server. The server performs SPF, DKIM, and DMARC authentication checks. DMARC must pass with a policy of `quarantine` or `reject`.
+  </Step>
+  <Step title="BIMI DNS lookup">
+    After DMARC passes, the receiving server queries your domain's DNS for a BIMI TXT record at `default._bimi.yourdomain.com`. This record contains the URL to your logo and optionally a VMC certificate.
+  </Step>
+  <Step title="Logo and VMC retrieval">
+    The server fetches your SVG logo from the HTTPS URL specified in the BIMI record. If the mailbox provider requires a Verified Mark Certificate (VMC), it also retrieves and validates the certificate to confirm logo ownership.
+  </Step>
+  <Step title="Logo displayed in inbox">
+    Once verified, the recipient's email client displays your brand logo next to your message in the inbox, replacing the default avatar or initials.
+  </Step>
+</Steps>
 
 ## Logo Requirements
 
