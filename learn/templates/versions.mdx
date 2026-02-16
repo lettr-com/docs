@@ -174,9 +174,9 @@ You can delete inactive versions to clean up old iterations:
 2. Find the version to delete
 3. Click **Delete**
 
-<Warning>
-  You cannot delete the active version. To delete it, first activate a different version.
-</Warning>
+<Note>
+  The delete option is disabled for the active version. Activate a different version first if you need to remove it.
+</Note>
 
 ## Version Workflow
 
@@ -217,7 +217,7 @@ When using templates via API, version behavior follows these rules:
 | No version specified | Active version |
 | `template_version: 2` | Version 2 (if exists) |
 | Version doesn't exist | Error returned |
-| All versions inactive | Error returned |
+| All versions inactive | Error returned (generic "template not found") |
 
 ```javascript
 // Get template details

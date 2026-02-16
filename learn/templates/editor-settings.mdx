@@ -5,54 +5,101 @@ description: "Configure the visual editor's defaults — custom fonts, colors, m
 
 Editor Settings let you configure the default behavior and appearance of the visual email editor across your team. These settings apply to all templates and control available fonts, color palettes, merge tag groups, font sizes, and test email addresses.
 
-To access Editor Settings, go to **Templates** → **Editor Settings** in the sidebar.
+To access Editor Settings, go to **Emails** → **Editor Settings** in the sidebar.
 
-## Color Palettes
+The settings page is organized into three tabs: **Appearance**, **Custom Fonts**, and **Merge Tags**.
+
+---
+
+## Appearance Tab
+
+### Language
+
+Configure the default language for the editor interface. This controls the language of the editor's UI elements, not the language of your email content.
+
+The following 20 languages are supported:
+
+| Language | Code | Language | Code |
+|----------|------|----------|------|
+| English | `en` | Swedish | `sv` |
+| French | `fr` | Dutch | `nl` |
+| Portuguese | `pt` | Italian | `it` |
+| Spanish | `es` | Romanian | `ro` |
+| Japanese | `ja` | Czech | `cs` |
+| Chinese | `zh` | Polish | `pl` |
+| Russian | `ru` | Korean | `ko` |
+| Turkish | `tr` | Vietnamese | `vi` |
+| German | `de` | Hebrew | `he` |
+| Arabic | `ar` | Finnish | `fi` |
+
+### Custom Colors
 
 Define a custom color palette that appears in the editor's color pickers. When team members design templates, they'll see your brand colors as quick-select options, ensuring consistency across all emails.
 
-To configure colors:
-
-1. Open **Editor Settings**
-2. In the **Appearance** tab, find the **Colors** section
-3. Add hex color values for your brand palette
-4. Click **Save**
+1. Open the **Appearance** tab
+2. In the **Custom Colors** section, add hex color values (e.g. `#6366F1`)
+3. Click **Save**
 
 <Tip>
   Add your primary brand colors, secondary accent colors, and common text colors. This saves time and prevents team members from guessing hex values.
 </Tip>
 
-## Custom Fonts
+### Test Email Addresses
 
-The editor comes with a set of email-safe system fonts enabled by default. You can enable or disable individual system fonts and add custom web fonts.
+Configure a list of email addresses used for sending test emails from the editor. When a team member clicks "Send Test" in the editor, these addresses are pre-populated.
 
-### System Fonts
+1. In the **Appearance** tab, find the **Testing Emails** section
+2. Add email addresses
+3. Click **Save**
 
-System fonts are pre-loaded and widely supported across email clients. Toggle individual fonts on or off to control which ones appear in the editor's font picker.
+<Tip>
+  Add email addresses for different email clients (Gmail, Outlook, Apple Mail) to verify rendering across platforms when sending test emails.
+</Tip>
+
+---
+
+## Custom Fonts Tab
+
+### Font Sizes
+
+Configure the available font sizes in the editor's size picker. This lets you define a consistent type scale for your team.
+
+The default font sizes are: `8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 20, 22, 24, 26, 48`.
+
+1. In the **Custom Fonts** tab, find the **Font Sizes** section
+2. Edit the comma-separated list of pixel values (minimum 1px, maximum 200px)
+3. Click **Save**
+
+Duplicate values are automatically removed and sizes are sorted in ascending order. Use the **Reset to default** link to restore the original set.
+
+### System Default Fonts
+
+The editor includes 15 built-in fonts displayed as a toggleable card grid. You can enable or disable individual fonts to control which ones appear in the editor's font picker. System fonts cannot be removed.
+
+**Web-safe fonts** (no external loading required):
+- Arial, Georgia, Helvetica, Verdana
+
+**Google Fonts** (loaded from Google Fonts CDN):
+- Bitter, Cabin, Lato, Merriweather, Open Sans, Oswald, Poppins, PT Sans, PT Serif, Roboto, Ubuntu
 
 ### Adding Custom Fonts
 
-Add custom web fonts by providing the font URL, label, and style:
+Add custom web fonts through a two-step process:
 
-1. Open **Editor Settings** → **Fonts** tab
-2. Click **Add Custom Font**
-3. Enter the font URL (Google Fonts or other web font provider)
-4. Set a display label and style
-5. Click **Save**
+1. In the **Custom Fonts** tab, click **Add Custom Font**
+2. **Step 1** — Enter the font URL (e.g. a Google Fonts CSS URL) and a display label
+3. **Step 2** — Select a font family from the list of families detected from your URL
+4. Click **Save**
+
+After adding a custom font, you can enable or disable it using the checkbox on its card without removing it entirely.
 
 <Warning>
   Custom web fonts may not render in all email clients. Most email clients fall back to system fonts. Use custom fonts for decorative text where fallback behavior is acceptable, not for critical content.
 </Warning>
 
-## Font Sizes
+---
 
-Configure the available font sizes in the editor's size picker. This lets you define a consistent type scale for your team.
-
-1. Open **Editor Settings** → **Fonts** tab
-2. In the **Font Sizes** section, add or remove size values
-3. Click **Save**
-
-## Merge Tags
+## Merge Tags Tab
 
 Merge tags are dynamic placeholders that get replaced with real data at send time. Editor Settings lets you define merge tag groups that appear in the editor's merge tag dropdown, making it easy for template designers to insert the right variables.
 
@@ -60,10 +107,12 @@ Merge tags are dynamic placeholders that get replaced with real data at send tim
 
 Merge tags are organized into **groups** for easy navigation:
 
-1. Open **Editor Settings** → **Merge Tags** tab
+1. Open the **Merge Tags** tab
 2. Create groups (e.g., "Customer", "Order", "Company")
-3. Add merge tags to each group with their tag names
+3. Add merge tags to each group with a **text** (display name), **label**, and **value**
 4. Click **Save**
+
+The merge tag **value** is auto-generated from the text field — converted to uppercase with spaces replaced by underscores. Values are wrapped in `{{ }}` brackets in the editor (e.g., text "First Name" becomes value `{{ FIRST_NAME }}`).
 
 Once configured, merge tags appear in the editor's text formatting toolbar as a dropdown organized by group.
 
@@ -71,21 +120,19 @@ Once configured, merge tags appear in the editor's text formatting toolbar as a 
   Create merge tag groups that match your data model. For example, a "Customer" group might contain `first_name`, `last_name`, and `email`, while an "Order" group contains `order_id`, `total`, and `tracking_url`.
 </Tip>
 
-## Test Email Addresses
+### Loop Tags
 
-Configure a list of email addresses used for sending test emails from the editor. When a team member clicks "Send Test" in the editor, these addresses are pre-populated.
+For merge tags that represent a list of items (e.g., order line items), enable the **Is Loop Tag** toggle on a merge tag item. This adds support for **child properties** — nested merge tags that repeat for each item in the list.
 
-1. Open **Editor Settings**
-2. In the **Testing Emails** section, add email addresses
-3. Click **Save**
+Each child property has:
+- **Text** — The display name in the editor
+- **Label** — A descriptive label
+- **Value** — The placeholder variable name
+- **Type** — The content type: `text`, `image`, `button`, or `number`
 
-<Tip>
-  Add email addresses for different email clients (Gmail, Outlook, Apple Mail) to verify rendering across platforms when sending test emails.
-</Tip>
+For example, an "Order Items" loop tag might have child properties for `PRODUCT_NAME` (text), `PRODUCT_IMAGE` (image), `QUANTITY` (number), and `PRICE` (text).
 
-## Language
-
-Configure the default language for the editor interface. This controls the language of the editor's UI elements, not the language of your email content.
+---
 
 ## Related Topics
 
