@@ -21,28 +21,10 @@ Addresses can be suppressed for several reasons:
 
 When you send an email through Lettr, the suppression system is involved at multiple stages:
 
-```
-  You call the API           Lettr checks           Email is sent         Recipient action
-  to send an email     ──►   suppression list   ──►  to provider     ──►  triggers event
-        │                         │                       │                      │
-        │                    ┌────▼─────┐                 │              ┌───────▼────────┐
-        │                    │ Address  │                  │              │ Hard bounce    │
-        │                    │ blocked? │                  │              │ Spam complaint │
-        │                    └────┬─────┘                  │              │ Unsubscribe    │
-        │                    Yes │ No                      │              └───────┬────────┘
-        │                     │   │                        │                      │
-        │              ┌──────▼┐  └──────►                 │               ┌──────▼───────┐
-        │              │Reject │        Send               │               │ Auto-suppress│
-        │              │(email │                           │               │ address for  │
-        │              │ not   │                           │               │ future sends │
-        │              │ sent) │                           │               └──────────────┘
-        │              └───────┘                           │
-```
-
-1. **Pre-send check** — Before sending, Lettr checks the recipient against your suppression list. If the address is suppressed, the API rejects the request and the email is never sent.
-2. **Delivery attempt** — If the address is not suppressed, Lettr sends the email to the recipient's mail server.
-3. **Post-delivery event** — If the email bounces, the recipient reports spam, or they unsubscribe, Lettr automatically adds the address to your suppression list.
-4. **Future sends blocked** — Any subsequent API calls targeting that address are rejected, preventing further damage to your sender reputation.
+1. **API call** — You call the Lettr API to send an email. Lettr forwards the request to the delivery infrastructure, which checks the recipient against the suppression list. If the address is suppressed, the recipient is rejected and included in the `rejected` count of the API response. The email is never sent.
+2. **Delivery attempt** — If the address is not suppressed, the email is sent to the recipient's mail server.
+3. **Post-delivery event** — If the email hard bounces, the recipient reports spam, or they unsubscribe, the address is automatically added to the suppression list. You receive a webhook notification for the event.
+4. **Future sends blocked** — Any subsequent sends targeting that address are rejected at the suppression check stage, preventing further damage to your sender reputation.
 
 ## Why Suppressions Matter
 
@@ -83,64 +65,71 @@ Lettr automatically suppresses addresses when certain events occur:
 | **Link unsubscribe** | Address is permanently suppressed |
 
 <Note>
-  Soft bounces (temporary failures like mailbox full) do not result in immediate suppression. Lettr retries delivery automatically and only suppresses after repeated failures.
+  Soft bounces (temporary failures like mailbox full) do not result in immediate suppression. Delivery is retried automatically and the address is only suppressed after repeated failures.
 </Note>
 
 ## Monitoring Suppressions
 
-You can track suppression events using webhooks. When an address is suppressed due to a bounce, complaint, or unsubscribe, you'll receive a webhook event that you can use to update your own systems.
+You can track suppression events using webhooks. When an address is suppressed due to a bounce, complaint, or unsubscribe, you receive a webhook event that you can use to update your own systems.
+
+Webhook payloads arrive as an array of events in SparkPost format. Each event is wrapped in an `msys` object containing the event category and data. See [Handling Webhooks](/learn/webhooks/handling) for full details on the payload structure.
 
 ### Bounce Events
 
 ```javascript
-// Handle bounce events in your webhook endpoint
-app.post('/webhooks/lettr', (req, res) => {
-  const event = req.body;
+app.post('/webhooks/lettr', express.json(), async (req, res) => {
+  res.sendStatus(200);
 
-  if (event.type === 'email.bounced') {
-    const { to, bounceType, bounceCategory, message } = event.data;
+  for (const event of req.body) {
+    const eventType = Object.keys(event.msys)[0];
+    const data = event.msys[eventType];
 
-    if (bounceType === 'hard') {
-      // Update your database to prevent future sends
-      await db.subscribers.update(to, {
-        status: 'invalid',
-        bounceReason: bounceCategory
+    if (data.type === 'bounce' && parseInt(data.bounce_class) === 10) {
+      // bounce_class 10 = Invalid Recipient (hard bounce)
+      await db.subscribers.update({
+        where: { email: data.rcpt_to },
+        data: {
+          status: 'invalid',
+          bounceReason: data.raw_reason
+        }
       });
     }
   }
-
-  res.sendStatus(200);
 });
 ```
 
 ### Complaint Events
 
 ```javascript
-if (event.type === 'email.complained') {
-  const { to } = event.data;
-
+// Inside your event processing loop
+if (data.type === 'spam_complaint') {
   // Mark as complained in your system
-  await db.subscribers.update(to, {
-    status: 'complained',
-    canEmail: false
+  await db.subscribers.update({
+    where: { email: data.rcpt_to },
+    data: {
+      status: 'complained',
+      canEmail: false
+    }
   });
 
   // Alert your team about the complaint
-  await alertTeam(`Spam complaint received from ${to}`);
+  await alertTeam(`Spam complaint received from ${data.rcpt_to}`);
 }
 ```
 
 ### Unsubscribe Events
 
 ```javascript
-if (event.type === 'email.unsubscribed') {
-  const { to, method } = event.data;
-
+// Inside your event processing loop
+if (data.type === 'list_unsubscribe' || data.type === 'link_unsubscribe') {
   // Update subscription status
-  await db.subscribers.update(to, {
-    status: 'unsubscribed',
-    unsubscribedAt: new Date(),
-    unsubscribeMethod: method // 'list_unsubscribe' or 'link_unsubscribe'
+  await db.subscribers.update({
+    where: { email: data.rcpt_to },
+    data: {
+      status: 'unsubscribed',
+      unsubscribedAt: new Date(),
+      unsubscribeMethod: data.type // 'list_unsubscribe' or 'link_unsubscribe'
+    }
   });
 }
 ```

@@ -17,22 +17,27 @@ Hard bounces are permanent delivery failures. The recipient's mail server has de
 - Recipient has blocked the sender
 - Mailbox has been deactivated
 
+When a hard bounce occurs, you receive a `message.bounce` webhook event. Hard bounces use bounce classes in the 10–30 and 100 ranges:
+
 ```json
-{
-  "id": "evt_abc123",
-  "type": "email.bounced",
-  "createdAt": "2024-01-15T10:30:05Z",
-  "data": {
-    "emailId": "email_123",
-    "requestId": "req_456",
-    "to": "invalid@nonexistent.com",
-    "bounceType": "hard",
-    "bounceCategory": "invalid_address",
-    "bounceCode": "550",
-    "message": "550 5.1.1 The email account that you tried to reach does not exist",
-    "bouncedAt": "2024-01-15T10:30:05Z"
+[{
+  "msys": {
+    "message_event": {
+      "type": "bounce",
+      "timestamp": "1705312205",
+      "transmission_id": "12345678",
+      "message_id": "abcd-1234-efgh",
+      "rcpt_to": "invalid@nonexistent.com",
+      "bounce_class": "10",
+      "error_code": "550",
+      "reason": "User Unknown",
+      "raw_reason": "550 5.1.1 The email account that you tried to reach does not exist",
+      "friendly_from": "you@example.com",
+      "subject": "Your Order Confirmation",
+      "sending_ip": "192.168.1.1"
+    }
   }
-}
+}]
 ```
 
 <Warning>
@@ -49,22 +54,27 @@ Soft bounces are temporary delivery failures. The email might be deliverable if 
 - Message is too large
 - Rate limiting by the recipient server
 
+Soft bounces use bounce classes in the 20–70 ranges:
+
 ```json
-{
-  "id": "evt_def456",
-  "type": "email.bounced",
-  "createdAt": "2024-01-15T10:30:05Z",
-  "data": {
-    "emailId": "email_456",
-    "requestId": "req_789",
-    "to": "full@example.com",
-    "bounceType": "soft",
-    "bounceCategory": "mailbox_full",
-    "bounceCode": "452",
-    "message": "452 4.2.2 Mailbox full",
-    "bouncedAt": "2024-01-15T10:30:05Z"
+[{
+  "msys": {
+    "message_event": {
+      "type": "bounce",
+      "timestamp": "1705312205",
+      "transmission_id": "12345678",
+      "message_id": "abcd-5678-efgh",
+      "rcpt_to": "full@example.com",
+      "bounce_class": "22",
+      "error_code": "452",
+      "reason": "Mailbox Full",
+      "raw_reason": "452 4.2.2 Mailbox full",
+      "friendly_from": "you@example.com",
+      "subject": "Your Weekly Update",
+      "sending_ip": "192.168.1.1"
+    }
   }
-}
+}]
 ```
 
 Lettr automatically retries soft bounces with exponential backoff. If delivery continues to fail, the address may eventually be suppressed.
@@ -81,112 +91,127 @@ Lettr automatically handles bounces for you:
     Hard-bounced addresses are automatically added to your suppression list.
   </Step>
   <Step title="Retries Soft Bounces">
-    Soft bounces are automatically retried up to 3 times with exponential backoff.
+    Soft bounces are automatically retried with exponential backoff.
   </Step>
   <Step title="Sends Webhooks">
     Bounce events are sent to your configured webhook endpoints in real-time.
   </Step>
 </Steps>
 
-## Bounce Categories
+## Bounce Classes
 
-| Category | Type | Description | Recommended Action |
-|----------|------|-------------|-------------------|
-| `invalid_address` | Hard | Email address doesn't exist | Remove from list |
-| `domain_not_found` | Hard | Domain doesn't exist or has no mail server | Remove from list |
-| `mailbox_full` | Soft | Recipient's mailbox is over quota | Wait and retry |
-| `blocked` | Hard | Recipient or their server blocked delivery | Investigate and remove |
-| `spam_related` | Hard | Rejected due to spam detection | Review content |
-| `policy_related` | Hard | Rejected due to server policy | Contact recipient |
-| `server_error` | Soft | Temporary server-side issue | Automatic retry |
-| `protocol_error` | Soft | Technical delivery problem | Automatic retry |
-| `unknown` | Varies | Unclassified bounce | Review manually |
+Lettr uses numeric bounce classes to categorize bounces. These correspond to the `bounce_class` field in webhook events:
+
+| Bounce Class | Category | Type | Description | Recommended Action |
+|---|---|---|---|---|
+| `1` | Undetermined | Varies | Bounce could not be classified | Review manually |
+| `10` | Invalid Recipient | Hard | Email address does not exist | Remove from list |
+| `20` | Soft Bounce | Soft | General temporary failure | Automatic retry |
+| `21` | DNS Failure | Soft | Domain DNS lookup failed temporarily | Automatic retry |
+| `22` | Mailbox Full | Soft | Recipient's mailbox is over quota | Wait and retry |
+| `25` | Admin Failure | Soft | Mailbox admin-related issue | Review and retry |
+| `30` | Generic Bounce (no RCPT) | Hard | Rejected without valid recipient | Remove from list |
+| `40` | Generic Bounce | Soft | Temporary generic failure | Automatic retry |
+| `50` | Mail Block (General) | Soft | Blocked by receiving server | Investigate |
+| `51` | Mail Block (Spam Related) | Soft | Blocked as spam by receiving server | Review content |
+| `52` | Mail Block (Content) | Soft | Blocked due to content filtering | Review content |
+| `60` | Auto-Reply | N/A | Automatic reply (vacation, etc.) | No action needed |
+| `70` | Transient Failure | Soft | Temporary infrastructure issue | Automatic retry |
+| `100` | Relay Denied | Hard | Relay not permitted | Remove from list |
+
+<Note>
+  Hard bounce classes (10, 30, 100) result in automatic suppression. Soft bounce classes may lead to suppression if delivery continues to fail after retries.
+</Note>
 
 ## Handling Bounces
 
 ### Webhook Integration
 
-The most reliable way to handle bounces is through webhooks. Set up a webhook endpoint to receive `email.bounced` events:
+The most reliable way to handle bounces is through webhooks. Set up a webhook endpoint to receive `message.bounce` events:
 
 ```javascript
-app.post('/webhooks/lettr', async (req, res) => {
-  const event = req.body;
+app.post('/webhooks/lettr', express.json(), async (req, res) => {
+  res.sendStatus(200);
 
-  if (event.type === 'email.bounced') {
-    const {
-      to,
-      bounceType,
-      bounceCategory,
-      bounceCode,
-      message
-    } = event.data;
+  for (const event of req.body) {
+    const eventType = Object.keys(event.msys)[0];
+    const data = event.msys[eventType];
 
-    // Log the bounce for analysis
-    await logBounce({
-      email: to,
-      type: bounceType,
-      category: bounceCategory,
-      code: bounceCode,
-      message: message,
-      timestamp: new Date()
-    });
+    if (data.type === 'bounce') {
+      const bounceClass = parseInt(data.bounce_class);
 
-    if (bounceType === 'hard') {
-      // Remove from mailing list immediately
-      await db.subscribers.update({
-        where: { email: to },
-        data: {
-          status: 'bounced',
-          bounceType: bounceCategory,
-          lastBounceAt: new Date()
-        }
+      // Log the bounce for analysis
+      await logBounce({
+        email: data.rcpt_to,
+        bounceClass: bounceClass,
+        errorCode: data.error_code,
+        reason: data.raw_reason,
+        timestamp: new Date(parseInt(data.timestamp) * 1000)
       });
 
-      // Notify relevant team members
-      if (bounceCategory === 'blocked' || bounceCategory === 'spam_related') {
-        await notifyTeam({
-          type: 'reputation_concern',
-          email: to,
-          reason: message
+      // Hard bounce classes: 10 (invalid recipient), 30 (no RCPT), 100 (relay denied)
+      if ([10, 30, 100].includes(bounceClass)) {
+        // Remove from mailing list immediately
+        await db.subscribers.update({
+          where: { email: data.rcpt_to },
+          data: {
+            status: 'bounced',
+            bounceClass: bounceClass,
+            lastBounceAt: new Date()
+          }
         });
+
+        // Notify relevant team members for spam-related blocks
+        if ([50, 51, 52].includes(bounceClass)) {
+          await notifyTeam({
+            type: 'reputation_concern',
+            email: data.rcpt_to,
+            reason: data.raw_reason
+          });
+        }
       }
     }
   }
-
-  res.sendStatus(200);
 });
 ```
 
 ### Querying Email Events
 
-You can retrieve bounce events for specific emails using the API:
+You can retrieve events for specific emails using the API:
 
 ```bash
-curl "https://app.lettr.com/api/emails/req_456" \
-  -H "Authorization: Bearer YOUR_API_KEY"
+curl "https://app.lettr.com/api/emails/12345678" \
+  -H "Authorization: Bearer lttr_YOUR_API_KEY"
 ```
 
-Response includes all events for that email, including bounces:
+The response includes all events for that email, including bounces:
 
 ```json
 {
+  "message": "Email retrieved successfully.",
   "data": {
-    "requestId": "req_456",
-    "events": [
+    "results": [
       {
+        "event_id": "evt-abc-123",
         "type": "injection",
-        "timestamp": "2024-01-15T10:30:00Z",
-        "rcpt_to": "recipient@example.com"
+        "timestamp": "2024-01-15T10:30:00.000Z",
+        "request_id": "12345678",
+        "rcpt_to": "recipient@example.com",
+        "subject": "Your Order Confirmation",
+        "friendly_from": "you@example.com"
       },
       {
+        "event_id": "evt-def-456",
         "type": "bounce",
-        "timestamp": "2024-01-15T10:30:05Z",
+        "timestamp": "2024-01-15T10:30:05.000Z",
+        "request_id": "12345678",
         "rcpt_to": "recipient@example.com",
-        "reason": "550 5.1.1 User unknown",
+        "reason": "User Unknown",
         "raw_reason": "550 5.1.1 The email account that you tried to reach does not exist",
         "error_code": "550"
       }
-    ]
+    ],
+    "total_count": 2
   }
 }
 ```
@@ -225,49 +250,54 @@ Monitor your bounce rates to maintain good deliverability:
   </Accordion>
 </AccordionGroup>
 
-## Deferred Delivery
+## Delayed Delivery
 
-Sometimes emails are temporarily delayed rather than bounced. Lettr tracks these as `email.deferred` events:
+Sometimes emails are temporarily delayed rather than bounced. These are tracked as `message.delay` events:
 
 ```json
-{
-  "id": "evt_jkl012",
-  "type": "email.deferred",
-  "createdAt": "2024-01-15T10:30:05Z",
-  "data": {
-    "emailId": "email_123",
-    "requestId": "req_456",
-    "to": "recipient@example.com",
-    "reason": "421 Server temporarily unavailable",
-    "retryCount": 1,
-    "nextRetryAt": "2024-01-15T10:45:00Z",
-    "deferredAt": "2024-01-15T10:30:05Z"
+[{
+  "msys": {
+    "message_event": {
+      "type": "delay",
+      "timestamp": "1705312205",
+      "transmission_id": "12345678",
+      "message_id": "abcd-1234-efgh",
+      "rcpt_to": "recipient@example.com",
+      "reason": "421 Server temporarily unavailable",
+      "friendly_from": "you@example.com",
+      "subject": "Your Order Confirmation",
+      "sending_ip": "192.168.1.1",
+      "num_retries": "1"
+    }
   }
-}
+}]
 ```
 
-Deferred emails are automatically retried. You don't need to take action unless deferrals persist, which may indicate a delivery issue.
+Delayed emails are automatically retried. You don't need to take action unless delays persist, which may indicate a delivery issue.
 
 ## Out-of-Band Bounces
 
-Some bounces arrive asynchronously after the initial delivery attempt appears successful. These are called out-of-band (OOB) bounces:
+Some bounces arrive asynchronously after the initial delivery attempt appears successful. These are called out-of-band (OOB) bounces and are tracked as `message.out_of_band` events:
 
 ```json
-{
-  "id": "evt_oob789",
-  "type": "email.out_of_band",
-  "createdAt": "2024-01-15T11:00:00Z",
-  "data": {
-    "emailId": "email_123",
-    "requestId": "req_456",
-    "to": "recipient@example.com",
-    "reason": "552 5.2.2 Mailbox full",
-    "bouncedAt": "2024-01-15T11:00:00Z"
+[{
+  "msys": {
+    "message_event": {
+      "type": "out_of_band",
+      "timestamp": "1705314000",
+      "transmission_id": "12345678",
+      "message_id": "abcd-1234-efgh",
+      "rcpt_to": "recipient@example.com",
+      "bounce_class": "22",
+      "reason": "Mailbox Full",
+      "raw_reason": "552 5.2.2 Mailbox full",
+      "error_code": "552"
+    }
   }
-}
+}]
 ```
 
-Handle OOB bounces the same way as regular bounces—update your records and suppress hard bounces.
+Handle OOB bounces the same way as regular bounces — update your records and suppress hard bounces.
 
 ## Related Topics
 
