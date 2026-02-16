@@ -11,33 +11,36 @@ A spam complaint occurs when a recipient clicks "Report Spam" or "Mark as Junk" 
 
 ### Understanding Complaints
 
-When a recipient complains, their email provider sends a feedback report to Lettr. The address is automatically suppressed and you receive a webhook notification.
+When a recipient complains, their email provider sends a feedback report to Lettr. The address is automatically suppressed and you receive a `message.spam_complaint` webhook event.
 
 ```json
-{
-  "id": "evt_stu901",
-  "type": "email.complained",
-  "createdAt": "2024-01-15T12:00:00Z",
-  "data": {
-    "emailId": "email_123",
-    "requestId": "req_456",
-    "to": "recipient@example.com",
-    "complainedAt": "2024-01-15T12:00:00Z",
-    "feedbackType": "abuse",
-    "metadata": {
-      "userId": "user_789"
+[{
+  "msys": {
+    "message_event": {
+      "type": "spam_complaint",
+      "timestamp": "1705320000",
+      "transmission_id": "12345678",
+      "message_id": "abcd-1234-efgh",
+      "rcpt_to": "recipient@example.com",
+      "fbtype": "abuse",
+      "friendly_from": "you@example.com",
+      "subject": "Your Weekly Newsletter",
+      "sending_ip": "192.168.1.1",
+      "rcpt_meta": {
+        "userId": "user_789"
+      }
     }
   }
-}
+}]
 ```
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `emailId` | string | Unique identifier for the email |
-| `to` | string | Recipient who complained |
-| `complainedAt` | string | ISO 8601 timestamp of the complaint |
-| `feedbackType` | string | Type of feedback (typically `abuse`) |
-| `metadata` | object | Custom metadata from the original send |
+| `message_id` | string | Unique identifier for the email |
+| `rcpt_to` | string | Recipient who complained |
+| `timestamp` | string | Unix timestamp of the complaint |
+| `fbtype` | string | Type of feedback (typically `abuse`) |
+| `rcpt_meta` | object | Custom metadata from the original send |
 
 ### Complaint Rate Guidelines
 
@@ -54,40 +57,41 @@ When a recipient complains, their email provider sends a feedback report to Lett
 ### Handling Complaints
 
 ```javascript
-app.post('/webhooks/lettr', async (req, res) => {
-  const event = req.body;
-
-  if (event.type === 'email.complained') {
-    const { to, emailId, metadata } = event.data;
-
-    // Immediately suppress in your system
-    await db.subscribers.update({
-      where: { email: to },
-      data: {
-        status: 'complained',
-        canEmail: false,
-        complainedAt: new Date()
-      }
-    });
-
-    // Log for analysis
-    await logComplaint({
-      email: to,
-      emailId: emailId,
-      userId: metadata?.userId,
-      timestamp: new Date()
-    });
-
-    // Alert team - complaints are serious
-    await alertTeam({
-      type: 'spam_complaint',
-      email: to,
-      emailId: emailId,
-      severity: 'high'
-    });
-  }
-
+app.post('/webhooks/lettr', express.json(), async (req, res) => {
   res.sendStatus(200);
+
+  for (const event of req.body) {
+    const eventType = Object.keys(event.msys)[0];
+    const data = event.msys[eventType];
+
+    if (data.type === 'spam_complaint') {
+      // Immediately suppress in your system
+      await db.subscribers.update({
+        where: { email: data.rcpt_to },
+        data: {
+          status: 'complained',
+          canEmail: false,
+          complainedAt: new Date(parseInt(data.timestamp) * 1000)
+        }
+      });
+
+      // Log for analysis
+      await logComplaint({
+        email: data.rcpt_to,
+        messageId: data.message_id,
+        userId: data.rcpt_meta?.userId,
+        timestamp: new Date(parseInt(data.timestamp) * 1000)
+      });
+
+      // Alert team - complaints are serious
+      await alertTeam({
+        type: 'spam_complaint',
+        email: data.rcpt_to,
+        messageId: data.message_id,
+        severity: 'high'
+      });
+    }
+  }
 });
 ```
 
@@ -113,89 +117,92 @@ app.post('/webhooks/lettr', async (req, res) => {
 
 ## Unsubscribes
 
-Unsubscribes occur when recipients opt out of receiving your emails. Lettr supports two unsubscribe methods:
+Unsubscribes occur when recipients opt out of receiving your emails. Lettr supports two unsubscribe methods, each with its own event type.
 
 ### List-Unsubscribe
 
-Modern email clients show an "Unsubscribe" button in their interface. When clicked, this triggers a List-Unsubscribe request directly to Lettr.
+Modern email clients show an "Unsubscribe" button in their interface. When clicked, this triggers a List-Unsubscribe request directly to Lettr, which generates an `unsubscribe.list_unsubscribe` event.
 
 ```json
-{
-  "id": "evt_vwx234",
-  "type": "email.unsubscribed",
-  "createdAt": "2024-01-15T12:00:00Z",
-  "data": {
-    "emailId": "email_123",
-    "requestId": "req_456",
-    "to": "recipient@example.com",
-    "unsubscribedAt": "2024-01-15T12:00:00Z",
-    "method": "list_unsubscribe",
-    "metadata": {
-      "userId": "user_789"
+[{
+  "msys": {
+    "unsubscribe_event": {
+      "type": "list_unsubscribe",
+      "timestamp": "1705320000",
+      "transmission_id": "12345678",
+      "message_id": "abcd-1234-efgh",
+      "rcpt_to": "recipient@example.com",
+      "friendly_from": "you@example.com",
+      "subject": "Your Weekly Newsletter",
+      "rcpt_meta": {
+        "userId": "user_789"
+      }
     }
   }
-}
+}]
 ```
 
 ### Link Unsubscribe
 
-When a recipient clicks an unsubscribe link in your email body, this triggers a link unsubscribe event.
+When a recipient clicks an unsubscribe link in your email body, this triggers an `unsubscribe.link_unsubscribe` event.
 
 ```json
-{
-  "id": "evt_abc567",
-  "type": "email.unsubscribed",
-  "createdAt": "2024-01-15T12:00:00Z",
-  "data": {
-    "emailId": "email_123",
-    "requestId": "req_456",
-    "to": "recipient@example.com",
-    "unsubscribedAt": "2024-01-15T12:00:00Z",
-    "method": "link_unsubscribe",
-    "metadata": {
-      "userId": "user_789"
+[{
+  "msys": {
+    "unsubscribe_event": {
+      "type": "link_unsubscribe",
+      "timestamp": "1705320000",
+      "transmission_id": "12345678",
+      "message_id": "abcd-1234-efgh",
+      "rcpt_to": "recipient@example.com",
+      "friendly_from": "you@example.com",
+      "subject": "Your Weekly Newsletter",
+      "rcpt_meta": {
+        "userId": "user_789"
+      }
     }
   }
-}
+}]
 ```
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `emailId` | string | Unique identifier for the email |
-| `to` | string | Recipient who unsubscribed |
-| `unsubscribedAt` | string | ISO 8601 timestamp |
-| `method` | string | `list_unsubscribe` or `link_unsubscribe` |
-| `metadata` | object | Custom metadata from the original send |
+| `message_id` | string | Unique identifier for the email |
+| `rcpt_to` | string | Recipient who unsubscribed |
+| `timestamp` | string | Unix timestamp of the unsubscribe |
+| `type` | string | `list_unsubscribe` or `link_unsubscribe` |
+| `rcpt_meta` | object | Custom metadata from the original send |
 
 ### Handling Unsubscribes
 
 ```javascript
-app.post('/webhooks/lettr', async (req, res) => {
-  const event = req.body;
-
-  if (event.type === 'email.unsubscribed') {
-    const { to, method, metadata } = event.data;
-
-    // Update subscription status
-    await db.subscribers.update({
-      where: { email: to },
-      data: {
-        status: 'unsubscribed',
-        canEmail: false,
-        unsubscribedAt: new Date(),
-        unsubscribeMethod: method
-      }
-    });
-
-    // Log for analytics
-    await analytics.track('unsubscribe', {
-      email: to,
-      method: method,
-      userId: metadata?.userId
-    });
-  }
-
+app.post('/webhooks/lettr', express.json(), async (req, res) => {
   res.sendStatus(200);
+
+  for (const event of req.body) {
+    const eventType = Object.keys(event.msys)[0];
+    const data = event.msys[eventType];
+
+    if (data.type === 'list_unsubscribe' || data.type === 'link_unsubscribe') {
+      // Update subscription status
+      await db.subscribers.update({
+        where: { email: data.rcpt_to },
+        data: {
+          status: 'unsubscribed',
+          canEmail: false,
+          unsubscribedAt: new Date(parseInt(data.timestamp) * 1000),
+          unsubscribeMethod: data.type
+        }
+      });
+
+      // Log for analytics
+      await analytics.track('unsubscribe', {
+        email: data.rcpt_to,
+        method: data.type,
+        userId: data.rcpt_meta?.userId
+      });
+    }
+  }
 });
 ```
 
@@ -233,9 +240,9 @@ While Lettr automatically suppresses addresses that bounce, complain, or unsubsc
 const suppressionSchema = {
   email: String,           // The suppressed email address
   type: String,            // 'bounce', 'complaint', or 'unsubscribe'
-  reason: String,          // Detailed reason (e.g., 'invalid_address')
+  reason: String,          // Detailed reason (e.g., bounce_class or method)
   source: String,          // Where suppression originated
-  emailId: String,         // Related email ID if applicable
+  messageId: String,       // Related message ID if applicable
   createdAt: Date,         // When suppression was added
   metadata: Object         // Additional context
 };
@@ -247,37 +254,39 @@ async function canSendTo(email) {
 }
 
 // Add suppression from webhook
-async function addSuppression(event) {
+async function addSuppression(data) {
   let type, reason;
 
-  switch (event.type) {
-    case 'email.bounced':
-      if (event.data.bounceType !== 'hard') return; // Only suppress hard bounces
+  switch (data.type) {
+    case 'bounce':
+      const bounceClass = parseInt(data.bounce_class);
+      if (![10, 30, 100].includes(bounceClass)) return; // Only suppress hard bounces
       type = 'bounce';
-      reason = event.data.bounceCategory;
+      reason = `bounce_class_${data.bounce_class}`;
       break;
-    case 'email.complained':
+    case 'spam_complaint':
       type = 'complaint';
-      reason = event.data.feedbackType;
+      reason = data.fbtype || 'abuse';
       break;
-    case 'email.unsubscribed':
+    case 'list_unsubscribe':
+    case 'link_unsubscribe':
       type = 'unsubscribe';
-      reason = event.data.method;
+      reason = data.type;
       break;
     default:
       return;
   }
 
   await db.suppressions.upsert({
-    where: { email: event.data.to },
+    where: { email: data.rcpt_to },
     create: {
-      email: event.data.to,
+      email: data.rcpt_to,
       type,
       reason,
       source: 'lettr_webhook',
-      emailId: event.data.emailId,
+      messageId: data.message_id,
       createdAt: new Date(),
-      metadata: event.data.metadata
+      metadata: data.rcpt_meta
     },
     update: {
       type,
@@ -325,24 +334,23 @@ async function sendEmail(to, subject, html) {
 
 Subscribe to these events to track all suppression-related activity:
 
-| Event | Trigger | Suppression Type |
-|-------|---------|------------------|
-| `email.bounced` (hard) | Permanent delivery failure | Automatic |
-| `email.complained` | Spam complaint | Automatic |
-| `email.unsubscribed` | List-Unsubscribe or link | Automatic |
+| Event Type | Trigger | Suppression |
+|------------|---------|-------------|
+| `message.bounce` (hard) | Permanent delivery failure | Automatic |
+| `message.spam_complaint` | Spam complaint | Automatic |
+| `unsubscribe.list_unsubscribe` | List-Unsubscribe header | Automatic |
+| `unsubscribe.link_unsubscribe` | Unsubscribe link click | Automatic |
 
 Configure your webhook to receive these events:
 
 ```javascript
 // When creating a webhook, include these event types
-const webhookConfig = {
-  url: 'https://your-app.com/webhooks/lettr',
-  events: [
-    'email.bounced',
-    'email.complained',
-    'email.unsubscribed'
-  ]
-};
+const webhookEvents = [
+  'message.bounce',
+  'message.spam_complaint',
+  'unsubscribe.list_unsubscribe',
+  'unsubscribe.link_unsubscribe'
+];
 ```
 
 ## Related Topics
