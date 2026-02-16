@@ -160,13 +160,12 @@ app.post('/webhooks/lettr', async (req, res) => {
 
 ### Webhook Status
 
-Each webhook has a status that reflects its health:
+Each webhook exposes two status fields via the API:
 
-| Status | Description |
-|--------|-------------|
-| `active` | Webhook is enabled and deliveries are succeeding |
-| `failing` | Recent deliveries have failed; retries in progress |
-| `disabled` | Webhook is disabled (manually or due to 410 response) |
+| Field | Values | Description |
+|-------|--------|-------------|
+| `enabled` | `true` / `false` | Whether the webhook is currently enabled (can be toggled manually or auto-disabled after sustained failures) |
+| `last_status` | `"success"` / `"failure"` / `null` | The result of the most recent delivery attempt (`null` if no attempts yet) |
 
 ### Check Webhook Status via API
 
@@ -181,34 +180,29 @@ The response includes status information:
 
 ```json
 {
-  "id": "webhook-abc123",
-  "name": "Order Notifications",
-  "url": "https://example.com/webhook",
-  "enabled": true,
-  "event_types": ["message.delivery", "message.bounce"],
-  "auth_type": "basic",
-  "has_auth_credentials": true,
-  "last_successful_at": "2024-01-15T10:30:00+00:00",
-  "last_failure_at": null,
-  "last_status": "success"
+  "message": "Webhook retrieved successfully.",
+  "data": {
+    "id": "webhook-abc123",
+    "name": "Order Notifications",
+    "url": "https://example.com/webhook",
+    "enabled": true,
+    "event_types": ["message.delivery", "message.bounce"],
+    "auth_type": "basic",
+    "has_auth_credentials": true,
+    "last_successful_at": "2024-01-15T10:30:00+00:00",
+    "last_failure_at": null,
+    "last_status": "success"
+  }
 }
 ```
 
 ### Dashboard Monitoring
 
-The Lettr dashboard provides detailed visibility into webhook delivery:
+The Lettr dashboard provides visibility into webhook delivery:
 
-1. Navigate to **Settings** → **Webhooks**
-2. Select a webhook to view its delivery history
-3. See recent attempts, response codes, and failure reasons
-
-## Viewing Delivery History
-
-You can view delivery history for each webhook in the Lettr dashboard:
-
-1. Navigate to **Settings** -> **Webhooks**
-2. Select a webhook
-3. View the delivery log showing recent attempts, response codes, and failure reasons
+1. Navigate to **Webhooks** in the sidebar
+2. Select a webhook to view its details
+3. See last attempt time, last status, and enabled state
 
 ## Automatic Disabling
 
@@ -218,7 +212,7 @@ Webhooks are automatically disabled after sustained failures to protect both sys
 - Reduces load on your failing endpoint
 - Alerts you to investigate the issue
 
-When a webhook is auto-disabled, you'll see it in the dashboard and can re-enable it after fixing the issue. Navigate to **Settings** -> **Webhooks**, select the disabled webhook, and toggle it back on.
+When a webhook is auto-disabled, you'll see it in the dashboard and can re-enable it after fixing the issue. Navigate to **Webhooks** in the sidebar, select the disabled webhook, and toggle it back on.
 
 <Warning>
   Before re-enabling, ensure the underlying issue is resolved. Re-enabling without fixing the problem will lead to immediate failures and potentially another auto-disable.
@@ -401,7 +395,7 @@ async function handleEmailStatus(event) {
     Best practices for processing webhooks reliably
   </Card>
   <Card title="Authorization" icon="lock" href="/learn/webhooks/authorization">
-    Secure your endpoints with signature verification
+    Secure your endpoints with authentication
   </Card>
   <Card title="Event Types" icon="list" href="/learn/webhooks/event-types">
     Complete reference of all webhook events

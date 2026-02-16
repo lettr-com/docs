@@ -199,16 +199,19 @@ The response includes the auth type and whether credentials are configured:
 
 ```json
 {
-  "id": "webhook-abc123",
-  "name": "Order Notifications",
-  "url": "https://example.com/webhook",
-  "enabled": true,
-  "event_types": ["message.delivery", "message.bounce"],
-  "auth_type": "basic",
-  "has_auth_credentials": true,
-  "last_successful_at": "2024-01-15T10:30:00+00:00",
-  "last_failure_at": null,
-  "last_status": "success"
+  "message": "Webhook retrieved successfully.",
+  "data": {
+    "id": "webhook-abc123",
+    "name": "Order Notifications",
+    "url": "https://example.com/webhook",
+    "enabled": true,
+    "event_types": ["message.delivery", "message.bounce"],
+    "auth_type": "basic",
+    "has_auth_credentials": true,
+    "last_successful_at": "2024-01-15T10:30:00+00:00",
+    "last_failure_at": null,
+    "last_status": "success"
+  }
 }
 ```
 
