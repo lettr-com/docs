@@ -7,24 +7,20 @@ DKIM is an email authentication method that allows the recipient to verify that 
 
 ## How DKIM Works
 
-1. Lettr signs your outgoing emails with a private key
-2. The signature is added to the email header as `DKIM-Signature`
-3. You publish the corresponding public key in your domain's DNS
-4. Recipient servers use the public key to verify the signature
-5. If verification passes, the email is confirmed as authentic and unmodified
-
-```
-┌──────────────┐     Signs with      ┌──────────────┐
-│    Email     │ ─────────────────▶  │   Signed     │
-│   Content    │   Private Key       │    Email     │
-└──────────────┘                     └──────┬───────┘
-                                            │
-                                            ▼
-┌──────────────┐     Verifies with   ┌──────────────┐
-│   DNS TXT    │ ◀───────────────── │  Recipient   │
-│  Public Key  │                     │   Server     │
-└──────────────┘                     └──────────────┘
-```
+<Steps>
+  <Step title="Email is signed">
+    When you send an email through Lettr, it signs the message content and selected headers using a private key. The resulting cryptographic signature is added to the email as a `DKIM-Signature` header.
+  </Step>
+  <Step title="Public key is published in DNS">
+    You publish the corresponding public key as a DNS TXT record on your domain (e.g., `scph0722._domainkey.yourdomain.com`). This allows any receiving server to look up the key.
+  </Step>
+  <Step title="Recipient server verifies the signature">
+    The recipient's mail server extracts the `DKIM-Signature` header, queries your domain's DNS for the public key, and uses it to verify the signature.
+  </Step>
+  <Step title="Authenticity confirmed">
+    If verification passes, the email is confirmed as authentic and unmodified in transit. A failed verification signals the message may have been tampered with or is not from your domain.
+  </Step>
+</Steps>
 
 ## DKIM Record Explained
 
