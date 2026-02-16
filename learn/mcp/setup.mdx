@@ -163,6 +163,26 @@ For sending emails, your AI assistant can use `send_email` to compose and send m
 | `send_email` | Send an email with specified recipients, subject, and content |
 | `send_template_email` | Send an email using a pre-built template with merge tags |
 
+### Template Management
+
+Your AI assistant can work with email templates—listing, viewing, creating, and updating them.
+
+| Action | Description |
+|--------|-------------|
+| `list_templates` | List all email templates with metadata and merge tags |
+| `get_template` | View a template's HTML content and configuration |
+| `create_template` | Create a new Custom HTML email template |
+| `update_template` | Update template content and create a new version |
+
+### Analytics
+
+For insights into email performance, the AI can pull aggregate delivery metrics or per-template statistics.
+
+| Action | Description |
+|--------|-------------|
+| `get_analytics` | View aggregate delivery analytics with daily breakdown |
+| `list_template_stats` | View per-template delivery statistics by campaign |
+
 ### Event Monitoring
 
 To track what happens after emails are sent, the AI can use `browse_email_events` to view delivery events including deliveries, opens, clicks, and bounces. For debugging API integrations, `browse_api_logs` provides access to request history and response data.
@@ -258,8 +278,8 @@ To revoke an AI client's access to your Lettr account, sign in to the Lettr dash
 MCP requests follow the same rate limits as the REST API:
 
 - **Sending** — Standard API rate limits apply to emails sent through AI assistants
-- **Event queries** — Up to 25 results per request
-- **API log queries** — Up to 20 results per request
+- **Event queries** — 25 results per request by default (configurable: 10, 25, 50, or 100)
+- **API log queries** — 20 results per request by default (configurable: 1, 20, 50, or 100)
 - **Pagination** — Both support cursor-based pagination for accessing larger result sets
 
 See [Rate Limits](/learn/sending/rate-limits) for detailed information.

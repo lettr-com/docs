@@ -3,7 +3,7 @@ title: MCP Tools Reference
 description: "Detailed reference for all Lettr MCP tools available in Claude and other AI assistants"
 ---
 
-The Lettr MCP server provides 10 tools organized into three categories: email sending, configuration management, and monitoring. This reference documents each tool's parameters and behavior.
+The Lettr MCP server provides 16 tools organized into five categories: email sending, template management, configuration, analytics, and monitoring. This reference documents each tool's parameters and behavior.
 
 For setup instructions, see [MCP Setup](/learn/mcp/setup).
 
@@ -51,6 +51,75 @@ Send an email using a pre-defined template specified by its slug.
 
 ---
 
+## Template Management
+
+### list_templates
+
+Lists all email templates for your team with metadata including name, slug, editor type, version count, and merge tags.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `project_id` | integer | No | Filter templates by project. Returns templates from all projects if omitted. |
+
+**Example prompt:** "List all my email templates" or "What templates are in project 3?"
+
+---
+
+### get_template
+
+Gets detailed information about a specific template, including its HTML content and merge tags.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `template_id` | integer | No | The numeric ID of the template. |
+| `template_slug` | string | No | The slug of the template (e.g., `welcome-email`). |
+| `project_id` | integer | No | Project ID to narrow the search when using a slug. |
+
+<Note>
+  Provide either `template_id` or `template_slug` to identify the template.
+</Note>
+
+**Example prompt:** "Show me the HTML content of the welcome-email template"
+
+---
+
+### create_template
+
+Creates a new Custom HTML email template.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `name` | string | Yes | Display name for the template. |
+| `folder_id` | integer | Yes | The folder ID where the template will be created. |
+| `slug` | string | No | URL-friendly identifier. Auto-generated from name if omitted. |
+| `project_id` | integer | No | Project ID. Uses default project if omitted. |
+| `html` | string | No | Initial HTML content for the template. |
+| `subject` | string | No | Default subject line for the template. |
+
+**Example prompt:** "Create a new template called 'Invoice Reminder' in folder 1 with a basic HTML layout"
+
+---
+
+### update_template
+
+Updates a template's content and creates a new active version. Supports both Custom HTML and Topol editor templates.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `template_id` | integer | No | The numeric ID of the template. |
+| `template_slug` | string | No | The slug of the template. |
+| `project_id` | integer | No | Project ID to narrow the search when using a slug. |
+| `html` | string | No | Updated HTML content (for Custom HTML templates). |
+| `json` | string | No | Updated Topol editor JSON (for Topol templates). |
+
+<Note>
+  Provide either `template_id` or `template_slug` to identify the template. Each update creates a new version automatically.
+</Note>
+
+**Example prompt:** "Update the welcome-email template with new HTML content"
+
+---
+
 ## Configuration Management
 
 ### list_sending_domains
@@ -91,7 +160,7 @@ Lists all email storage domains configured for your team. Storage domains serve 
 
 ### list_api_keys
 
-Lists all API keys for your team, showing each key's name, prefix, permissions level, and IP whitelist configuration.
+Lists all API keys for your team, showing each key's name, key ID, prefix, permissions level, and IP whitelist configuration.
 
 **Parameters:** None
 
@@ -101,9 +170,38 @@ Lists all API keys for your team, showing each key's name, prefix, permissions l
 
 ### list_webhooks
 
-Lists all webhooks configured for your team, including target URL, enabled status, event types, and authentication type.
+Lists all webhooks configured for your team, including target URL, enabled status, event types, authentication type, and delivery health indicators (last status, last success, and last failure timestamps).
 
 **Parameters:** None
+
+---
+
+## Analytics
+
+### get_analytics
+
+Returns aggregate email delivery analytics with a daily breakdown, including targeted, accepted, bounced, and opened counts.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `from` | string | No | Start date in ISO 8601 format. Default: 7 days ago. Max 90 days back. |
+| `to` | string | No | End date in ISO 8601 format. Default: now. |
+
+**Example prompt:** "Show me my email delivery stats for the last 30 days"
+
+---
+
+### list_template_stats
+
+Lists templates with delivery statistics broken down by campaign, including sent, delivered, opened, and bounced counts.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `project_id` | integer | No | Filter by project. Returns stats for all projects if omitted. |
+| `from` | string | No | Start date in ISO 8601 format. Default: 30 days ago. |
+| `to` | string | No | End date in ISO 8601 format. Default: now. |
+
+**Example prompt:** "Which of my templates has the best open rate this month?"
 
 ---
 
@@ -149,7 +247,9 @@ Browse API request logs with optional filtering and pagination.
 | Category | Tools | Description |
 |----------|-------|-------------|
 | **Sending** | `send_email`, `send_template_email` | Send emails directly or via templates |
+| **Templates** | `list_templates`, `get_template`, `create_template`, `update_template` | List, view, create, and update email templates |
 | **Configuration** | `list_sending_domains`, `list_tracking_domains`, `list_inbound_domains`, `list_storage_domains`, `list_api_keys`, `list_webhooks` | View your team's setup and configuration |
+| **Analytics** | `get_analytics`, `list_template_stats` | View delivery metrics and per-template statistics |
 | **Monitoring** | `browse_email_events`, `browse_api_logs` | Investigate delivery issues and API usage |
 
 ## Related Topics
