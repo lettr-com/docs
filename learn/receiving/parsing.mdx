@@ -7,93 +7,113 @@ When Lettr receives an email on your inbound domain, it automatically parses the
 
 ## Parsed Email Structure
 
-Lettr extracts and structures the following from each incoming email:
+Inbound emails are delivered as `relay.relay_delivery` webhook events. Each event contains a relay message with parsed email content:
 
 ```json
-{
-  "type": "email.received",
-  "data": {
-    "id": "inbound_abc123",
-    "from": "sender@example.com",
-    "fromName": "John Doe",
-    "to": ["support@mail.example.com"],
-    "cc": ["team@mail.example.com"],
-    "bcc": [],
-    "replyTo": "john.doe@example.com",
-    "subject": "Question about my order",
-    "text": "Plain text content of the email...",
-    "html": "<html><body><p>HTML content...</p></body></html>",
-    "attachments": [...],
-    "headers": {
-      "message-id": "<unique-id@example.com>",
-      "date": "Mon, 15 Jan 2024 10:30:00 +0000",
-      "in-reply-to": "<previous-id@example.com>",
-      "references": "<original-id@example.com>",
-      "content-type": "multipart/mixed"
-    },
-    "receivedAt": "2024-01-15T10:30:15Z",
-    "spamScore": 0.5,
-    "domain": "mail.example.com"
+[
+  {
+    "msys": {
+      "relay_message": {
+        "msg_from": "sender@example.com",
+        "rcpt_to": "support@mail.example.com",
+        "friendly_from": "John Doe <sender@example.com>",
+        "customer_id": "1234",
+        "webhook_id": "wh_abc123",
+        "content": {
+          "html": "<html><body><p>HTML content...</p></body></html>",
+          "text": "Plain text content of the email...",
+          "subject": "Question about my order",
+          "headers": [
+            { "Message-ID": "<unique-id@example.com>" },
+            { "Date": "Mon, 15 Jan 2024 10:30:00 +0000" },
+            { "In-Reply-To": "<previous-id@example.com>" },
+            { "References": "<original-id@example.com>" },
+            { "Content-Type": "multipart/mixed" },
+            { "To": ["support@mail.example.com"] },
+            { "CC": ["team@mail.example.com"] }
+          ],
+          "to": ["support@mail.example.com"],
+          "email_rfc822": "...raw RFC 822 MIME content..."
+        }
+      }
+    }
   }
-}
+]
 ```
+
+<Note>
+  Webhook payloads are delivered as a JSON array of events. A single delivery may contain one or more events.
+</Note>
 
 ## Sender Information
 
 ### From Address
 
-The `from` field contains the sender's email address, extracted from the `From` header:
+The relay message provides two sender fields:
+
+- `msg_from` — the envelope sender (SMTP MAIL FROM), always a bare email address
+- `friendly_from` — the display name and address from the `From` header
 
 ```javascript
-const { from, fromName } = email.data;
+const relay = event.msys.relay_message;
 
-console.log(from);     // "sender@example.com"
-console.log(fromName); // "John Doe" (may be null)
+console.log(relay.msg_from);      // "sender@example.com"
+console.log(relay.friendly_from); // "John Doe <sender@example.com>"
 ```
 
-The `fromName` is the display name portion, which is optional:
+To extract just the email address or display name from `friendly_from`:
 
-| From Header | Parsed `from` | Parsed `fromName` |
-|-------------|---------------|-------------------|
-| `John Doe <john@example.com>` | `john@example.com` | `John Doe` |
-| `john@example.com` | `john@example.com` | `null` |
-| `"John Doe" <john@example.com>` | `john@example.com` | `John Doe` |
+```javascript
+function parseFriendlyFrom(friendlyFrom) {
+  const match = friendlyFrom.match(/^(.+?)\s*<([^>]+)>$/);
+  if (match) {
+    return { name: match[1].trim(), email: match[2] };
+  }
+  return { name: null, email: friendlyFrom };
+}
+```
 
 ### Reply-To Address
 
-The `replyTo` field contains the address where replies should be sent:
+The Reply-To address is available in the `content.headers` array:
 
 ```javascript
-const replyAddress = email.data.replyTo || email.data.from;
+const replyToHeader = relay.content.headers.find(h => h['Reply-To']);
+const replyAddress = replyToHeader?.['Reply-To'] || relay.msg_from;
 ```
 
 ## Recipients
 
-### To, CC, and BCC
+### Recipients
 
-Recipients are parsed as arrays:
+The relay message provides:
+
+- `rcpt_to` — the envelope recipient (the address on your inbound domain that received the email)
+- `content.to` — the `To` header addresses from the email
+- CC and BCC addresses are available in the `content.headers` array
 
 ```javascript
-const { to, cc, bcc } = email.data;
+const relay = event.msys.relay_message;
 
-// to: ["support@mail.example.com", "help@mail.example.com"]
-// cc: ["team@mail.example.com"]
-// bcc: [] (usually empty for inbound)
+// Envelope recipient (your inbound address)
+const recipient = relay.rcpt_to; // "support@mail.example.com"
 
-// Process all recipients
-const allRecipients = [...to, ...cc, ...bcc];
+// Header recipients
+const toAddresses = relay.content.to; // ["support@mail.example.com"]
+const ccHeader = relay.content.headers.find(h => h['CC']);
+const ccAddresses = ccHeader?.['CC'] || [];
 ```
 
 <Note>
-  BCC recipients are typically not visible in received emails since they're stripped by the sending server. You'll usually only see BCC recipients if they're on your inbound domain.
+  BCC recipients are typically not visible in received emails since they're stripped by the sending server.
 </Note>
 
 ## Subject Line
 
-The subject is decoded from any MIME encoding:
+The subject is available in the `content` object, decoded from any MIME encoding:
 
 ```javascript
-const { subject } = email.data;
+const { subject } = relay.content;
 
 // Handles encoded subjects like:
 // "=?UTF-8?B?SGVsbG8gV29ybGQ=?=" → "Hello World"
@@ -103,17 +123,17 @@ const { subject } = email.data;
 ### Handling Missing Subjects
 
 ```javascript
-const subject = email.data.subject || '(No Subject)';
+const subject = relay.content.subject || '(No Subject)';
 ```
 
 ## Email Body
 
 ### Plain Text and HTML
 
-Emails can contain plain text, HTML, or both:
+Emails can contain plain text, HTML, or both. These are available in the `content` object:
 
 ```javascript
-const { text, html } = email.data;
+const { text, html } = relay.content;
 
 // Use HTML if available, fall back to plain text
 const displayContent = html || `<pre>${escapeHtml(text)}</pre>`;
@@ -169,68 +189,64 @@ function stripQuotedContent(text) {
   return newContent.join('\n').trim();
 }
 
-const newReplyContent = stripQuotedContent(email.data.text);
+const newReplyContent = stripQuotedContent(relay.content.text);
 ```
 
 ## Email Headers
 
 ### Standard Headers
 
-Common headers available in the `headers` object:
+Headers are available in `content.headers` as an array of single-key objects:
 
 | Header | Description |
 |--------|-------------|
-| `message-id` | Unique identifier for this email |
-| `date` | When the email was sent |
-| `in-reply-to` | Message-ID of the email being replied to |
-| `references` | Chain of Message-IDs in the conversation |
-| `content-type` | MIME type of the email body |
-| `x-mailer` | Email client used to send |
-| `x-priority` | Email priority (1=High, 3=Normal, 5=Low) |
+| `Message-ID` | Unique identifier for this email |
+| `Date` | When the email was sent |
+| `In-Reply-To` | Message-ID of the email being replied to |
+| `References` | Chain of Message-IDs in the conversation |
+| `Content-Type` | MIME type of the email body |
+| `X-Mailer` | Email client used to send |
+| `X-Priority` | Email priority (1=High, 3=Normal, 5=Low) |
 
 ```javascript
-const { headers } = email.data;
+const { headers } = relay.content;
+
+// Helper to find a header value
+function getHeader(headers, name) {
+  const header = headers.find(h => h[name] !== undefined);
+  return header ? header[name] : null;
+}
 
 // Get the message thread
-const messageId = headers['message-id'];
-const inReplyTo = headers['in-reply-to'];
-const references = headers['references']?.split(/\s+/) || [];
+const messageId = getHeader(headers, 'Message-ID');
+const inReplyTo = getHeader(headers, 'In-Reply-To');
+const references = getHeader(headers, 'References')?.split(/\s+/) || [];
 
 // Check priority
-const priority = headers['x-priority'];
+const priority = getHeader(headers, 'X-Priority');
 const isHighPriority = priority === '1' || priority === '2';
 ```
 
 ### Custom Headers
 
-Access any header by its lowercase name:
+Access any header using the helper:
 
 ```javascript
 // Custom headers set by the sender
-const customHeader = headers['x-custom-header'];
-const mailingList = headers['list-id'];
-const unsubscribeUrl = headers['list-unsubscribe'];
+const customHeader = getHeader(headers, 'X-Custom-Header');
+const mailingList = getHeader(headers, 'List-Id');
+const unsubscribeUrl = getHeader(headers, 'List-Unsubscribe');
 ```
 
 ## Date and Time
 
-### Received Timestamp
-
-The `receivedAt` field indicates when Lettr received the email:
-
-```javascript
-const receivedAt = new Date(email.data.receivedAt);
-```
-
 ### Sent Timestamp
 
-The original send time is in the `date` header:
+The original send time is in the `Date` header:
 
 ```javascript
-const sentAt = new Date(email.data.headers.date);
-
-// Calculate delivery delay
-const deliveryDelay = receivedAt - sentAt; // milliseconds
+const dateHeader = getHeader(relay.content.headers, 'Date');
+const sentAt = new Date(dateHeader);
 ```
 
 ## Character Encoding
@@ -244,7 +260,7 @@ Lettr automatically handles character encoding conversion:
 // - Base64 encoded UTF-8
 // - Quoted-Printable encoded content
 
-const { text, subject } = email.data;
+const { text, subject } = relay.content;
 // Both are UTF-8 strings regardless of original encoding
 ```
 
@@ -254,34 +270,33 @@ Emails with multiple parts (text + HTML + attachments) are automatically parsed:
 
 ```javascript
 // A multipart email:
-// - text/plain part → email.data.text
-// - text/html part → email.data.html
-// - application/pdf attachment → email.data.attachments[0]
-// - image/png attachment → email.data.attachments[1]
+// - text/plain part → relay.content.text
+// - text/html part → relay.content.html
+// - Full raw MIME → relay.content.email_rfc822
 
-const hasRichContent = email.data.html && email.data.text;
-const hasAttachments = email.data.attachments.length > 0;
+const hasRichContent = relay.content.html && relay.content.text;
 ```
 
-## Inline Images
+The `email_rfc822` field contains the complete raw MIME message, which you can parse with a MIME library if you need access to attachments or other parts not extracted into the structured fields.
 
-Images embedded in HTML (CID references) are extracted as attachments:
+## Raw MIME Parsing
+
+For advanced use cases like extracting inline images, embedded attachments, or handling complex MIME structures, parse the raw `email_rfc822` content with a MIME library:
 
 ```javascript
-const { html, attachments } = email.data;
+import { simpleParser } from 'mailparser';
 
-// Original HTML might reference: <img src="cid:image001">
-// The image is in attachments with a cid property
+async function parseRawEmail(relay) {
+  const parsed = await simpleParser(relay.content.email_rfc822);
 
-for (const attachment of attachments) {
-  if (attachment.cid) {
-    // This is an inline image
-    // Replace CID reference with the attachment URL
-    html = html.replace(
-      `cid:${attachment.cid}`,
-      attachment.url
-    );
-  }
+  return {
+    from: parsed.from?.value,
+    to: parsed.to?.value,
+    subject: parsed.subject,
+    text: parsed.text,
+    html: parsed.html,
+    attachments: parsed.attachments // includes inline images with cid
+  };
 }
 ```
 
@@ -320,8 +335,8 @@ function extractSignature(text) {
 
 ```javascript
 function detectEmailClient(headers) {
-  const mailer = headers['x-mailer'] || headers['user-agent'] || '';
-  const received = headers['received'] || '';
+  const mailer = getHeader(headers, 'X-Mailer') || getHeader(headers, 'User-Agent') || '';
+  const received = getHeader(headers, 'Received') || '';
 
   if (mailer.includes('Microsoft Outlook')) return 'Outlook';
   if (mailer.includes('Apple Mail')) return 'Apple Mail';

@@ -13,29 +13,39 @@ Don't block webhook responses with long-running processing:
 
 ```javascript
 // Good: Respond immediately, process asynchronously
-app.post('/webhooks/inbound', async (req, res) => {
+app.post('/webhooks/inbound', express.json(), async (req, res) => {
   // Acknowledge receipt immediately
   res.sendStatus(200);
 
-  // Queue for async processing
-  await emailQueue.add('process-inbound', req.body.data);
+  // Queue each event for async processing
+  for (const event of req.body) {
+    const relay = event.msys?.relay_message;
+    if (relay) {
+      await emailQueue.add('process-inbound', relay);
+    }
+  }
 });
 
 // Process in background
 emailQueue.process('process-inbound', async (job) => {
-  const email = job.data;
-  await processEmail(email);
+  const relay = job.data;
+  await processEmail(relay);
 });
 ```
 
 ```javascript
 // Bad: Blocking the webhook response
-app.post('/webhooks/inbound', async (req, res) => {
-  // This might timeout
-  await downloadAllAttachments(req.body.data);
-  await processEmail(req.body.data);
-  await sendNotifications(req.body.data);
-  await updateDatabase(req.body.data);
+app.post('/webhooks/inbound', express.json(), async (req, res) => {
+  for (const event of req.body) {
+    const relay = event.msys?.relay_message;
+    if (!relay) continue;
+
+    // This might timeout
+    await downloadAllAttachments(relay);
+    await processEmail(relay);
+    await sendNotifications(relay);
+    await updateDatabase(relay);
+  }
 
   res.sendStatus(200);
 });
@@ -79,7 +89,7 @@ function routeToQueue(email) {
   if (isVipCustomer(email.from)) {
     return highPriorityQueue;
   }
-  if (email.spamScore > 3) {
+  if (analyzeForSpam(email).score > 3) {
     return lowPriorityQueue;
   }
   return normalQueue;
@@ -98,25 +108,27 @@ lowPriorityQueue.process(2, processEmail);
 Save the raw email before any processing:
 
 ```javascript
-app.post('/webhooks/inbound', async (req, res) => {
-  const email = req.body.data;
-
-  // Store raw email first
-  await storeRawEmail({
-    id: email.id,
+app.post('/webhooks/inbound', express.json(), async (req, res) => {
+  // Store raw payload first
+  await storeRawPayload({
     payload: req.body,
     receivedAt: new Date()
   });
 
   res.sendStatus(200);
 
-  // Then process (can be retried from stored data if it fails)
-  try {
-    await processEmail(email);
-    await markAsProcessed(email.id);
-  } catch (error) {
-    await markAsFailed(email.id, error);
-    await scheduleRetry(email.id);
+  // Then process each event (can be retried from stored data if it fails)
+  for (const event of req.body) {
+    const relay = event.msys?.relay_message;
+    if (!relay) continue;
+
+    try {
+      await processEmail(relay);
+      await markAsProcessed(relay.rcpt_to, relay.msg_from);
+    } catch (error) {
+      await markAsFailed(relay, error);
+      await scheduleRetry(relay);
+    }
   }
 });
 ```
@@ -164,13 +176,20 @@ class EmailProcessor {
 Download attachments promptly before URLs expire:
 
 ```javascript
-app.post('/webhooks/inbound', async (req, res) => {
-  const email = req.body.data;
+app.post('/webhooks/inbound', express.json(), async (req, res) => {
   res.sendStatus(200);
 
-  // Download attachments immediately (URLs expire in 24 hours)
-  const savedAttachments = await Promise.all(
-    email.attachments.map(async (attachment) => {
+  for (const event of req.body) {
+    const relay = event.msys?.relay_message;
+    if (!relay) continue;
+
+    // Parse raw MIME to extract attachments
+    const parsed = await simpleParser(relay.content.email_rfc822);
+    const attachments = parsed.attachments || [];
+
+    // Download attachments immediately (URLs expire in 24 hours)
+    const savedAttachments = await Promise.all(
+      attachments.map(async (attachment) => {
       try {
         const response = await fetch(attachment.url);
         const buffer = await response.arrayBuffer();
@@ -188,8 +207,9 @@ app.post('/webhooks/inbound', async (req, res) => {
     })
   );
 
-  // Process with saved attachments
-  await processEmail({ ...email, attachments: savedAttachments });
+    // Process with saved attachments
+    await processEmail({ relay, attachments: savedAttachments });
+  }
 });
 ```
 
@@ -359,7 +379,7 @@ async function processEmail(email) {
 // Alert on high spam rate
 async function checkSpamRate() {
   const recent = await getRecentEmails(100);
-  const spamCount = recent.filter(e => e.spamScore > 5).length;
+  const spamCount = recent.filter(e => e.isSpam).length;
   const spamRate = spamCount / recent.length;
 
   if (spamRate > 0.3) { // 30% spam
@@ -395,35 +415,41 @@ import request from 'supertest';
 import app from './app';
 
 describe('Inbound Webhook', () => {
-  it('should process valid email', async () => {
-    const payload = {
-      type: 'email.received',
-      data: {
-        id: 'test_123',
-        from: 'sender@example.com',
-        to: ['support@mail.example.com'],
-        subject: 'Test email',
-        text: 'Test content'
-      }
-    };
+  const validCredentials = Buffer.from('webhook_user:webhook_pass').toString('base64');
 
-    const signature = generateTestSignature(payload);
+  it('should process valid relay event', async () => {
+    const payload = [{
+      msys: {
+        relay_message: {
+          msg_from: 'sender@example.com',
+          rcpt_to: 'support@mail.example.com',
+          friendly_from: 'Sender <sender@example.com>',
+          content: {
+            subject: 'Test email',
+            text: 'Test content',
+            headers: [
+              { 'Message-ID': '<test-123@example.com>' }
+            ],
+            to: ['support@mail.example.com']
+          }
+        }
+      }
+    }];
 
     const response = await request(app)
       .post('/webhooks/inbound')
-      .set('Lettr-Signature', signature)
+      .set('Authorization', `Basic ${validCredentials}`)
       .send(payload);
 
     expect(response.status).toBe(200);
   });
 
-  it('should reject invalid signature', async () => {
+  it('should reject missing credentials', async () => {
     const response = await request(app)
       .post('/webhooks/inbound')
-      .set('Lettr-Signature', 'invalid')
-      .send({ type: 'email.received' });
+      .send([]);
 
-    expect(response.status).toBe(400);
+    expect(response.status).toBe(401);
   });
 });
 ```
@@ -464,7 +490,7 @@ describe('Email Processing', () => {
 <AccordionGroup>
   <Accordion title="Setup">
     - [ ] Configure inbound domain with MX records
-    - [ ] Set up webhook endpoint with signature verification
+    - [ ] Set up webhook endpoint with credential verification
     - [ ] Configure spam filtering sensitivity
     - [ ] Set up monitoring and alerting
   </Accordion>
@@ -478,7 +504,7 @@ describe('Email Processing', () => {
   </Accordion>
 
   <Accordion title="Security">
-    - [ ] Verify webhook signatures
+    - [ ] Verify webhook credentials
     - [ ] Validate and sanitize all inputs
     - [ ] Validate attachment types from content
     - [ ] Implement rate limiting

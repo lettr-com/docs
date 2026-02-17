@@ -3,24 +3,11 @@ title: Spam Filtering
 description: "Filter and manage spam in incoming emails"
 ---
 
-Lettr automatically analyzes incoming emails for spam characteristics and provides a spam score with each inbound email. You can use this score to filter, quarantine, or reject suspicious messages.
+Lettr analyzes incoming emails for spam characteristics. You can implement your own spam filtering logic in your webhook handler based on content analysis, sender reputation, and other signals.
 
-## Spam Score
+## Spam Detection
 
-Every inbound email includes a `spamScore` field:
-
-```json
-{
-  "type": "email.received",
-  "data": {
-    "id": "inbound_123",
-    "from": "sender@example.com",
-    "subject": "Important message",
-    "spamScore": 0.8,
-    // ... other fields
-  }
-}
-```
+You can analyze incoming emails for spam characteristics by examining the email content and headers delivered in the relay webhook payload. Implement your own scoring based on patterns, sender reputation, and content analysis.
 
 | Score Range | Interpretation |
 |-------------|----------------|
@@ -35,25 +22,32 @@ Every inbound email includes a `spamScore` field:
 Implement basic spam filtering based on the score:
 
 ```javascript
-app.post('/webhooks/inbound', async (req, res) => {
-  const { from, subject, text, spamScore } = req.body.data;
+app.post('/webhooks/inbound', express.json(), async (req, res) => {
+  for (const event of req.body) {
+    const relay = event.msys?.relay_message;
+    if (!relay) continue;
 
-  // Reject obvious spam
-  if (spamScore >= 8) {
-    console.log(`Rejected spam from ${from}: score ${spamScore}`);
-    await logRejectedSpam(req.body.data);
-    return res.sendStatus(200);
+    const { msg_from, content } = relay;
+    const spamScore = analyzeForSpam({ from: msg_from, subject: content.subject, text: content.text, html: content.html });
+
+    // Reject obvious spam
+    if (spamScore >= 8) {
+      console.log(`Rejected spam from ${msg_from}: score ${spamScore}`);
+      await logRejectedSpam(relay);
+      continue;
+    }
+
+    // Quarantine suspicious emails
+    if (spamScore >= 5) {
+      console.log(`Quarantined suspicious email from ${msg_from}: score ${spamScore}`);
+      await quarantineEmail(relay);
+      continue;
+    }
+
+    // Process legitimate emails
+    await processEmail(relay);
   }
 
-  // Quarantine suspicious emails
-  if (spamScore >= 5) {
-    console.log(`Quarantined suspicious email from ${from}: score ${spamScore}`);
-    await quarantineEmail(req.body.data);
-    return res.sendStatus(200);
-  }
-
-  // Process legitimate emails
-  await processEmail(req.body.data);
   res.sendStatus(200);
 });
 ```
@@ -63,7 +57,7 @@ app.post('/webhooks/inbound', async (req, res) => {
 You can configure spam filtering sensitivity for your inbound domain through the Lettr dashboard under **Domains** → **Inbound**, then selecting your domain.
 
 <Note>
-  Regardless of your server-side filtering configuration, you always receive the `spamScore` field with each inbound email and can implement your own filtering logic in your webhook handler.
+  Regardless of your dashboard filtering configuration, you can always implement your own filtering logic in your webhook handler.
 </Note>
 
 ## Advanced Spam Detection
@@ -73,10 +67,10 @@ Combine spam score with additional checks:
 ```javascript
 function analyzeForSpam(email) {
   const signals = [];
-  let score = email.spamScore;
+  let score = 0;
 
   // Check for common spam patterns
-  const subject = email.subject.toLowerCase();
+  const subject = (email.subject || '').toLowerCase();
   const body = (email.text || email.html || '').toLowerCase();
 
   // Suspicious subject patterns
@@ -120,8 +114,7 @@ function analyzeForSpam(email) {
   }
 
   return {
-    originalScore: email.spamScore,
-    adjustedScore: Math.min(score, 10),
+    score: Math.min(score, 10),
     signals,
     isSpam: score >= 6
   };
@@ -165,29 +158,36 @@ function checkLists(email) {
   return { action: 'check', reason: 'Not in lists' };
 }
 
-app.post('/webhooks/inbound', async (req, res) => {
-  const email = req.body.data;
+app.post('/webhooks/inbound', express.json(), async (req, res) => {
+  for (const event of req.body) {
+    const relay = event.msys?.relay_message;
+    if (!relay) continue;
 
-  // Check allowlist/blocklist first
-  const listResult = checkLists(email);
+    const email = { from: relay.msg_from, subject: relay.content.subject, text: relay.content.text, html: relay.content.html };
 
-  if (listResult.action === 'block') {
-    await logBlockedEmail(email, listResult.reason);
-    return res.sendStatus(200);
+    // Check allowlist/blocklist first
+    const listResult = checkLists(email);
+
+    if (listResult.action === 'block') {
+      await logBlockedEmail(email, listResult.reason);
+      continue;
+    }
+
+    if (listResult.action === 'allow') {
+      await processEmail(relay);
+      continue;
+    }
+
+    // Apply spam filtering for unlisted senders
+    const spamScore = analyzeForSpam(email);
+    if (spamScore >= 6) {
+      await quarantineEmail(relay);
+      continue;
+    }
+
+    await processEmail(relay);
   }
 
-  if (listResult.action === 'allow') {
-    await processEmail(email);
-    return res.sendStatus(200);
-  }
-
-  // Apply spam filtering for unlisted senders
-  if (email.spamScore >= 6) {
-    await quarantineEmail(email);
-    return res.sendStatus(200);
-  }
-
-  await processEmail(email);
   res.sendStatus(200);
 });
 ```
@@ -209,8 +209,8 @@ const domainLimiter = new RateLimiterMemory({
   duration: 60 // per minute
 });
 
-async function checkRateLimits(email) {
-  const from = email.from.toLowerCase();
+async function checkRateLimits(sender) {
+  const from = sender.toLowerCase();
   const domain = from.split('@')[1];
 
   try {
@@ -226,18 +226,22 @@ async function checkRateLimits(email) {
   }
 }
 
-app.post('/webhooks/inbound', async (req, res) => {
-  const email = req.body.data;
+app.post('/webhooks/inbound', express.json(), async (req, res) => {
+  for (const event of req.body) {
+    const relay = event.msys?.relay_message;
+    if (!relay) continue;
 
-  const rateCheck = await checkRateLimits(email);
-  if (!rateCheck.allowed) {
-    console.warn(`Rate limited: ${email.from}`);
-    await logRateLimited(email);
-    return res.sendStatus(200);
+    const rateCheck = await checkRateLimits(relay.msg_from);
+    if (!rateCheck.allowed) {
+      console.warn(`Rate limited: ${relay.msg_from}`);
+      await logRateLimited(relay);
+      continue;
+    }
+
+    // Continue with spam checking and processing
+    await processEmail(relay);
   }
 
-  // Continue with spam checking and processing
-  await processEmail(email);
   res.sendStatus(200);
 });
 ```
@@ -282,15 +286,22 @@ class EmailQuarantine {
 
 const quarantine = new EmailQuarantine(quarantineStorage);
 
-app.post('/webhooks/inbound', async (req, res) => {
-  const email = req.body.data;
+app.post('/webhooks/inbound', express.json(), async (req, res) => {
+  for (const event of req.body) {
+    const relay = event.msys?.relay_message;
+    if (!relay) continue;
 
-  if (email.spamScore >= 5) {
-    await quarantine.quarantine(email, `Spam score: ${email.spamScore}`);
-    return res.sendStatus(200);
+    const email = { from: relay.msg_from, subject: relay.content.subject, text: relay.content.text };
+    const spamScore = analyzeForSpam(email);
+
+    if (spamScore >= 5) {
+      await quarantine.quarantine(relay, `Spam score: ${spamScore}`);
+      continue;
+    }
+
+    await processEmail(relay);
   }
 
-  await processEmail(email);
   res.sendStatus(200);
 });
 

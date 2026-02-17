@@ -55,11 +55,11 @@ Add the provided MX records to your domain:
 
 | Type | Priority | Value |
 |------|----------|-------|
-| MX | 5 | `rx1.sparkpostmail.com` |
+| MX | 10 | `rx1.sparkpostmail.com` |
 | MX | 10 | `rx2.sparkpostmail.com` |
-| MX | 20 | `rx3.sparkpostmail.com` |
+| MX | 10 | `rx3.sparkpostmail.com` |
 
-Multiple MX records with different priorities ensure failover — if the primary server is unavailable, email is delivered to the next priority. See the [Setup Guide](/learn/receiving/setup) for DNS propagation details.
+Multiple MX records with equal priority provide load balancing — sending servers distribute email across all three servers. If one is unavailable, the others handle delivery. See the [Setup Guide](/learn/receiving/setup) for DNS propagation details.
 
 ### 3. Handle Incoming Emails
 
@@ -67,27 +67,40 @@ Set up a webhook endpoint to receive parsed emails:
 
 ```javascript
 import express from 'express';
-import { verifyWebhook } from 'lettr';
 
 const app = express();
 
-app.post('/webhooks/inbound', express.raw({ type: 'application/json' }), async (req, res) => {
-  // Verify the webhook signature
-  const event = verifyWebhook(
-    req.body,
-    req.headers['lettr-signature'],
-    process.env.LETTR_WEBHOOK_SECRET
-  );
+app.post('/webhooks/inbound', (req, res, next) => {
+  // Verify webhook credentials (Basic Auth configured in Lettr dashboard)
+  const authHeader = req.headers.authorization;
 
-  if (event.type === 'email.received') {
-    const { from, subject, text, html, attachments } = event.data;
+  if (!authHeader || !authHeader.startsWith('Basic ')) {
+    return res.sendStatus(401);
+  }
 
-    // Process the email
+  const credentials = Buffer.from(authHeader.slice(6), 'base64').toString();
+  const [username, password] = credentials.split(':');
+
+  if (username !== process.env.WEBHOOK_USERNAME || password !== process.env.WEBHOOK_PASSWORD) {
+    return res.sendStatus(401);
+  }
+
+  next();
+}, express.json(), async (req, res) => {
+  const events = req.body;
+
+  for (const event of events) {
+    const relayMessage = event.msys?.relay_message;
+    if (!relayMessage) continue;
+
+    const { msg_from, rcpt_to, content } = relayMessage;
+
     await processIncomingEmail({
-      sender: from,
-      subject,
-      body: text || html,
-      attachments
+      sender: msg_from,
+      recipient: rcpt_to,
+      subject: content.subject,
+      body: content.text || content.html,
+      headers: content.headers
     });
   }
 
@@ -96,49 +109,42 @@ app.post('/webhooks/inbound', express.raw({ type: 'application/json' }), async (
 ```
 
 <Warning>
-  Always [verify the webhook signature](/learn/receiving/security) before processing incoming emails to ensure requests are genuinely from Lettr.
+  Always [verify webhook credentials](/learn/receiving/security) before processing incoming emails to ensure requests are genuinely from Lettr. Configure Basic Auth or OAuth 2.0 authentication when creating your webhook in the dashboard.
 </Warning>
 
 ## Webhook Payload
 
-When an email is received, Lettr sends a webhook with fully parsed data:
+When an email is received, Lettr sends a `relay.relay_delivery` webhook event. The payload is delivered as a JSON array of event objects, each containing a relay message with the parsed email:
 
 ```json
-{
-  "id": "evt_abc123",
-  "type": "email.received",
-  "createdAt": "2024-01-15T10:30:15Z",
-  "data": {
-    "id": "inbound_123abc",
-    "from": "sender@example.com",
-    "fromName": "John Sender",
-    "to": ["support@mail.example.com"],
-    "cc": ["team@example.com"],
-    "replyTo": "sender@example.com",
-    "subject": "Help with my order",
-    "text": "Plain text content of the email...",
-    "html": "<p>HTML content of the email...</p>",
-    "attachments": [
-      {
-        "filename": "receipt.pdf",
-        "contentType": "application/pdf",
-        "size": 12345,
-        "url": "https://inbound.lettr.com/attachments/abc123"
+[
+  {
+    "msys": {
+      "relay_message": {
+        "msg_from": "sender@example.com",
+        "rcpt_to": "support@mail.example.com",
+        "friendly_from": "John Sender <sender@example.com>",
+        "customer_id": "1234",
+        "webhook_id": "wh_abc123",
+        "content": {
+          "html": "<p>HTML content of the email...</p>",
+          "text": "Plain text content of the email...",
+          "subject": "Help with my order",
+          "headers": [
+            { "Message-ID": "<abc123@example.com>" },
+            { "Date": "Mon, 15 Jan 2024 10:30:00 +0000" },
+            { "In-Reply-To": "<original@example.com>" }
+          ],
+          "to": ["support@mail.example.com"],
+          "email_rfc822": "...raw MIME content..."
+        }
       }
-    ],
-    "headers": {
-      "message-id": "<abc123@example.com>",
-      "date": "Mon, 15 Jan 2024 10:30:00 +0000",
-      "in-reply-to": "<original@example.com>"
-    },
-    "receivedAt": "2024-01-15T10:30:15Z",
-    "spamScore": 0.5,
-    "domain": "mail.example.com"
+    }
   }
-}
+]
 ```
 
-Lettr automatically handles MIME decoding, character encoding (converting to UTF-8), and multipart message extraction. For a complete breakdown of each field and how to work with them, see [Email Parsing](/learn/receiving/parsing).
+Lettr automatically handles MIME parsing and delivers both the structured content fields and the raw RFC 822 message. For a complete breakdown of each field and how to work with them, see [Email Parsing](/learn/receiving/parsing).
 
 ## Key Capabilities
 
@@ -147,17 +153,22 @@ Lettr automatically handles MIME decoding, character encoding (converting to UTF
 Route incoming emails to different handlers based on recipient, content, or custom rules:
 
 ```javascript
-app.post('/webhooks/inbound', async (req, res) => {
-  const { to, from, subject, text } = req.body.data;
-  const recipient = to[0].toLowerCase();
+app.post('/webhooks/inbound', express.json(), async (req, res) => {
+  for (const event of req.body) {
+    const relay = event.msys?.relay_message;
+    if (!relay) continue;
 
-  if (recipient.startsWith('support@')) {
-    await createSupportTicket({ from, subject, body: text });
-  } else if (recipient.startsWith('sales@')) {
-    await notifySalesTeam({ from, subject, body: text });
-  } else if (recipient.match(/^reply\+/)) {
-    const ticketId = recipient.match(/^reply\+([^@]+)@/)[1];
-    await addReplyToTicket(ticketId, { from, body: text });
+    const recipient = relay.rcpt_to.toLowerCase();
+    const { msg_from, content } = relay;
+
+    if (recipient.startsWith('support@')) {
+      await createSupportTicket({ from: msg_from, subject: content.subject, body: content.text });
+    } else if (recipient.startsWith('sales@')) {
+      await notifySalesTeam({ from: msg_from, subject: content.subject, body: content.text });
+    } else if (recipient.match(/^reply\+/)) {
+      const ticketId = recipient.match(/^reply\+([^@]+)@/)[1];
+      await addReplyToTicket(ticketId, { from: msg_from, body: content.text });
+    }
   }
 
   res.sendStatus(200);
@@ -171,19 +182,14 @@ The `reply+` pattern above is called variable addressing (or plus addressing). I
 Every email includes a spam score, and you can configure automatic filtering:
 
 ```javascript
-// Filter based on spam score
-if (email.spamScore >= 6) {
+// Filter based on spam score from your own analysis
+if (spamScore >= 6) {
   await quarantineAsSpam(email);
   return;
 }
-
-// Or configure domain-level filtering
-await lettr.domains.update('mail.example.com', {
-  spamFilter: 'aggressive' // 'off', 'moderate', 'aggressive'
-});
 ```
 
-Spam scores range from 0 to 10 — lower is better. Scores below 3 are generally safe, 3–6 are suspicious, and above 6 are likely spam. See [Spam Filtering](/learn/receiving/spam-filtering) for advanced detection patterns and allowlist/blocklist management.
+You can also configure spam filtering sensitivity for your inbound domain through the dashboard under **Domains** → **Inbound**. Regardless of dashboard settings, you can implement your own filtering logic in your webhook handler. See [Spam Filtering](/learn/receiving/spam-filtering) for advanced detection patterns and allowlist/blocklist management.
 
 ### Attachment Handling
 
@@ -201,7 +207,7 @@ for (const attachment of email.attachments) {
   Attachment URLs expire after 24 hours. Download and store attachments promptly if you need them longer.
 </Warning>
 
-Each attachment includes `filename`, `contentType`, `size` (in bytes), and a download `url`. Limits are 25 MB per file, 100 MB per email, and up to 50 attachments per email. See [Attachments](/learn/receiving/attachments) for storage examples (S3, GCS) and security best practices including file type verification and malware scanning.
+Each attachment includes `filename`, `contentType`, `size` (in bytes), and a download `url`. See [Attachments](/learn/receiving/attachments) for storage examples (S3, GCS) and security best practices including file type verification and malware scanning.
 
 ### Reply Tracking
 
@@ -234,40 +240,44 @@ For more advanced threading, use email headers like `Message-ID`, `In-Reply-To`,
 Create support tickets from incoming emails and track the conversation thread:
 
 ```javascript
-app.post('/webhooks/inbound', async (req, res) => {
-  const email = req.body.data;
-  const recipient = email.to[0].toLowerCase();
+app.post('/webhooks/inbound', express.json(), async (req, res) => {
+  for (const event of req.body) {
+    const relay = event.msys?.relay_message;
+    if (!relay) continue;
 
-  // Check if this is a reply to an existing ticket
-  const replyMatch = recipient.match(/^reply\+ticket_([^@]+)@/);
+    const recipient = relay.rcpt_to.toLowerCase();
+    const { msg_from, friendly_from, content } = relay;
 
-  if (replyMatch) {
-    // Add reply to existing ticket
-    const ticketId = replyMatch[1];
-    await db.ticketReplies.create({
-      ticketId,
-      from: email.from,
-      body: email.text,
-      receivedAt: email.receivedAt
-    });
-  } else {
-    // Create new ticket
-    const ticket = await db.tickets.create({
-      from: email.from,
-      fromName: email.fromName,
-      subject: email.subject,
-      body: email.text,
-      status: 'open'
-    });
+    // Check if this is a reply to an existing ticket
+    const replyMatch = recipient.match(/^reply\+ticket_([^@]+)@/);
 
-    // Send acknowledgment with reply-to address for threading
-    await lettr.emails.send({
-      from: 'support@example.com',
-      to: [email.from],
-      subject: `Re: ${email.subject}`,
-      html: '<p>We received your request and will respond shortly.</p>',
-      reply_to: `reply+ticket_${ticket.id}@mail.example.com`
-    });
+    if (replyMatch) {
+      // Add reply to existing ticket
+      const ticketId = replyMatch[1];
+      await db.ticketReplies.create({
+        ticketId,
+        from: msg_from,
+        body: content.text
+      });
+    } else {
+      // Create new ticket
+      const ticket = await db.tickets.create({
+        from: msg_from,
+        fromName: friendly_from,
+        subject: content.subject,
+        body: content.text,
+        status: 'open'
+      });
+
+      // Send acknowledgment with reply-to address for threading
+      await lettr.emails.send({
+        from: 'support@example.com',
+        to: [msg_from],
+        subject: `Re: ${content.subject}`,
+        html: '<p>We received your request and will respond shortly.</p>',
+        reply_to: `reply+ticket_${ticket.id}@mail.example.com`
+      });
+    }
   }
 
   res.sendStatus(200);
@@ -279,27 +289,28 @@ app.post('/webhooks/inbound', async (req, res) => {
 Parse incoming emails to create tasks in your project management system:
 
 ```javascript
-app.post('/webhooks/inbound', async (req, res) => {
-  const { from, subject, text, attachments } = req.body.data;
+app.post('/webhooks/inbound', express.json(), async (req, res) => {
+  for (const event of req.body) {
+    const relay = event.msys?.relay_message;
+    if (!relay) continue;
 
-  // Create task from email
-  const task = await projectManager.createTask({
-    title: subject,
-    description: text,
-    reporter: from,
-    attachments: attachments.map(a => ({
-      name: a.filename,
-      url: a.url  // Download within 24 hours
-    }))
-  });
+    const { msg_from, content } = relay;
 
-  // Confirm task creation
-  await lettr.emails.send({
-    from: 'tasks@example.com',
-    to: [from],
-    subject: `Task created: ${subject}`,
-    html: `<p>Task <strong>${task.id}</strong> has been created from your email.</p>`
-  });
+    // Create task from email
+    const task = await projectManager.createTask({
+      title: content.subject,
+      description: content.text,
+      reporter: msg_from
+    });
+
+    // Confirm task creation
+    await lettr.emails.send({
+      from: 'tasks@example.com',
+      to: [msg_from],
+      subject: `Task created: ${content.subject}`,
+      html: `<p>Task <strong>${task.id}</strong> has been created from your email.</p>`
+    });
+  }
 
   res.sendStatus(200);
 });

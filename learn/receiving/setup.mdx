@@ -49,9 +49,9 @@ Add these MX records to your domain's DNS settings:
 
 | Type | Host/Name | Priority | Value |
 |------|-----------|----------|-------|
-| MX | `@` or subdomain | 5 | `rx1.sparkpostmail.com` |
+| MX | `@` or subdomain | 10 | `rx1.sparkpostmail.com` |
 | MX | `@` or subdomain | 10 | `rx2.sparkpostmail.com` |
-| MX | `@` or subdomain | 20 | `rx3.sparkpostmail.com` |
+| MX | `@` or subdomain | 10 | `rx3.sparkpostmail.com` |
 
 <Note>
   If you're using a subdomain like `mail.example.com`, set the Host/Name field to `mail` instead of `@`.
@@ -59,15 +59,15 @@ Add these MX records to your domain's DNS settings:
 
 ### Understanding MX Priority
 
-MX priority determines the order email servers attempt delivery:
+All three MX records use the same priority (10), which provides load balancing:
 
 | Priority | Server | Purpose |
 |----------|--------|---------|
-| 5 (highest) | `rx1.sparkpostmail.com` | Primary mail server |
-| 10 | `rx2.sparkpostmail.com` | Secondary fallback |
-| 20 (lowest) | `rx3.sparkpostmail.com` | Tertiary fallback |
+| 10 | `rx1.sparkpostmail.com` | Mail server |
+| 10 | `rx2.sparkpostmail.com` | Mail server |
+| 10 | `rx3.sparkpostmail.com` | Mail server |
 
-Lower numbers indicate higher priority. If the primary server is unavailable, sending servers automatically try the next server in order.
+With equal priority, sending servers distribute email across all three servers. If one is unavailable, the others handle delivery automatically.
 
 ## Verifying Your Domain
 
