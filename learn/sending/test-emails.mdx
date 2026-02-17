@@ -7,12 +7,14 @@ Before sending emails to real recipients, you should verify that your templates 
 
 ## Send a Test Email
 
-You can send test emails from the Lettr dashboard or via API. Test emails use the same rendering pipeline as production sends, so what you see in your inbox is exactly what your recipients will receive:
+You can send test emails from the Lettr dashboard or via the regular send API. Test emails use the same rendering pipeline as production sends, so what you see in your inbox is exactly what your recipients will receive:
 
 ```javascript
-await lettr.emails.sendTest({
-  template_slug: 'welcome-email',
+await lettr.emails.send({
+  from: 'you@yourdomain.com',
   to: ['developer@example.com'],
+  subject: 'Welcome to Acme',
+  template_slug: 'welcome-email',
   substitution_data: {
     name: 'Test User',
     company: 'Acme Inc'
@@ -25,7 +27,8 @@ await lettr.emails.sendTest({
 Test custom HTML content without using a template:
 
 ```javascript
-await lettr.emails.sendTest({
+await lettr.emails.send({
+  from: 'you@yourdomain.com',
   to: ['developer@example.com'],
   subject: 'Test Email',
   html: '<h1>Testing</h1><p>This is a test email with {{name}}.</p>',
@@ -40,13 +43,15 @@ await lettr.emails.sendTest({
 When reviewing a template as a team, send the test to multiple recipients at once — developers, designers, and QA engineers can each verify the email in their preferred email client:
 
 ```javascript
-await lettr.emails.sendTest({
-  template_slug: 'order-confirmation',
+await lettr.emails.send({
+  from: 'you@yourdomain.com',
   to: [
     'developer@example.com',
     'designer@example.com',
     'qa@example.com'
   ],
+  subject: 'Order Confirmation Test',
+  template_slug: 'order-confirmation',
   substitution_data: {
     order_id: 'TEST-12345',
     customer_name: 'Test Customer',
@@ -61,18 +66,22 @@ Templates often contain conditional blocks that display different content based 
 
 ```javascript
 // Test with minimal data
-await lettr.emails.sendTest({
-  template_slug: 'welcome-email',
+await lettr.emails.send({
+  from: 'you@yourdomain.com',
   to: ['developer@example.com'],
+  subject: 'Welcome',
+  template_slug: 'welcome-email',
   substitution_data: {
     name: 'User'
   }
 });
 
 // Test with full data
-await lettr.emails.sendTest({
-  template_slug: 'welcome-email',
+await lettr.emails.send({
+  from: 'you@yourdomain.com',
   to: ['developer@example.com'],
+  subject: 'Welcome',
+  template_slug: 'welcome-email',
   substitution_data: {
     name: 'John Smith',
     company: 'Acme Corporation',

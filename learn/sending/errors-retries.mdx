@@ -25,11 +25,11 @@ All API errors return a JSON object with a consistent structure. The `error_code
 | Error Code | HTTP Status | Description |
 |------------|-------------|-------------|
 | `validation_error` | 422 | Invalid request parameters |
-| `invalid_domain` | 422 | Sender domain not verified |
-| `unconfigured_domain` | 422 | Domain not ready for sending |
+| `invalid_domain` | 400 | Sender domain not verified |
+| `unconfigured_domain` | 400 | Domain not ready for sending |
 | `template_not_found` | 404 | Template slug not found |
 | `send_error` | 500 | Email sending error |
-| `transmission_failed` | 500 | Email delivery failed |
+| `transmission_failed` | 502 | Email delivery to upstream provider failed |
 
 ## Validation Errors
 
@@ -237,7 +237,7 @@ Beyond handling errors in your send logic, set up webhook-based monitoring to ca
 app.post('/webhooks/lettr', (req, res) => {
   const event = req.body;
 
-  if (event.type === 'email.failed' || event.type === 'email.bounced') {
+  if (event.type === 'generation.generation_failure' || event.type === 'message.bounce') {
     // Alert your team
     alertTeam({
       type: event.type,

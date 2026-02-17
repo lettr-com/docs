@@ -53,6 +53,9 @@ curl -X POST https://app.lettr.com/api/emails \
 | `tag` | string | No | Tag for analytics grouping (max 64 chars) |
 | `metadata` | object | No | Custom metadata (available in webhooks) |
 | `substitution_data` | object | No | Variables for template substitution |
+| `template_slug` | string | No | Template slug to use for email content |
+| `template_version` | integer | No | Specific template version to use |
+| `project_id` | integer | No | Project to associate with this email |
 
 *At least one of `html`, `text`, or `template_slug` is required.
 
@@ -183,37 +186,16 @@ await lettr.emails.send({
 
 Metadata is included in [webhook payloads](/learn/webhooks/introduction), allowing you to correlate delivery events with your application data.
 
-### Scheduling for Later
-
-Send emails at a future date and time using the `scheduledAt` parameter:
-
-```javascript
-await lettr.emails.send({
-  from: 'reminders@example.com',
-  to: ['user@example.com'],
-  subject: 'Your appointment is tomorrow',
-  html: '<p>This is a reminder that your appointment is scheduled for tomorrow at 10:00 AM.</p>',
-  scheduledAt: '2025-03-15T09:00:00Z'
-});
-```
-
-Scheduled emails can be cancelled or rescheduled before delivery. See [Scheduling](/learn/sending/scheduling) for details, including timezone handling and scheduling limits.
-
 ### Sending to Multiple Recipients
 
-Send to up to 50 recipients per API call with optional per-recipient personalization:
+Send to up to 50 recipients per API call. Use `substitution_data` to personalize content with merge tags that apply to all recipients:
 
 ```javascript
 await lettr.emails.send({
   from: 'team@example.com',
   to: ['alice@example.com', 'bob@example.com', 'carol@example.com'],
-  subject: 'Your monthly report, {{name}}',
-  html: '<p>Hi {{name}}, here is your report for {{month}}.</p>',
-  recipientVariables: {
-    'alice@example.com': { name: 'Alice', month: 'January' },
-    'bob@example.com': { name: 'Bob', month: 'January' },
-    'carol@example.com': { name: 'Carol', month: 'January' }
-  }
+  subject: 'Team Update',
+  html: '<p>Here is the latest update for the team.</p>'
 });
 ```
 
