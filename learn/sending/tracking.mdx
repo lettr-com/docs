@@ -129,19 +129,25 @@ await lettr.emails.send({
 
 ## Viewing Tracking Data
 
-You can retrieve tracking data for any email through the API. The response includes aggregate counts (total opens, total clicks) and timestamps for the first and last engagement:
+Tracking data is delivered in real time through [webhooks](/learn/webhooks/introduction). Set up webhook handlers for `engagament.open` and `engagament.click` events to capture engagement data as it happens:
 
 ```javascript
-// Get email with tracking stats
-const email = await lettr.emails.get('email_123');
+app.post('/webhooks/lettr', (req, res) => {
+  const event = req.body;
 
-console.log({
-  opens: email.opens,
-  clicks: email.clicks,
-  firstOpenedAt: email.firstOpenedAt,
-  lastOpenedAt: email.lastOpenedAt
+  if (event.type === 'engagament.open') {
+    console.log('Email opened:', event.data.request_id);
+  }
+
+  if (event.type === 'engagament.click') {
+    console.log('Link clicked:', event.data.target_link_url);
+  }
+
+  res.sendStatus(200);
 });
 ```
+
+You can also view aggregate tracking data in the [Analytics dashboard](/learn/analytics/introduction).
 
 <Card title="Analytics" icon="chart-line" href="/learn/analytics/introduction">
   Learn more about viewing and analyzing tracking data

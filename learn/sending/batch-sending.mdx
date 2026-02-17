@@ -23,20 +23,18 @@ await lettr.emails.send({
 });
 ```
 
-## Per-Recipient Personalization
+## Personalization with Substitution Data
 
-Use `recipientVariables` to provide different merge tag values for each recipient. Each recipient receives a personalized version of the email while you make only a single API call:
+Use `substitution_data` to provide merge tag values that apply to all recipients in a batch. This is useful for shared variables like campaign names or dates:
 
 ```javascript
 await lettr.emails.send({
   from: 'you@example.com',
   to: ['john@example.com', 'jane@example.com', 'bob@example.com'],
-  subject: 'Your monthly report, {{name}}',
-  html: '<p>Hi {{name}}, here is your report for {{month}}.</p>',
-  recipientVariables: {
-    'john@example.com': { name: 'John', month: 'January' },
-    'jane@example.com': { name: 'Jane', month: 'January' },
-    'bob@example.com': { name: 'Bob', month: 'January' }
+  subject: 'Your monthly report',
+  html: '<p>Here is the report for {{month}}.</p>',
+  substitution_data: {
+    month: 'January'
   }
 });
 ```
@@ -125,7 +123,7 @@ The response indicates how many recipients were accepted or rejected:
     Run email addresses through basic format validation and check them against your local suppression list before including them in a batch. Each rejected address in a batch send still counts against your rate limit, and high rejection rates can signal list quality issues to Lettr.
   </Accordion>
   <Accordion title="Use Personalization">
-    Personalized emails (using the recipient's name, relevant data, or tailored content) achieve significantly higher open and click rates than generic messages. Use `recipientVariables` to customize merge tags per recipient without making separate API calls.
+    Personalized emails (using the recipient's name, relevant data, or tailored content) achieve significantly higher open and click rates than generic messages. Use `substitution_data` to customize merge tags without making separate API calls.
   </Accordion>
   <Accordion title="Respect Rate Limits">
     Add a delay between batches proportional to your API rate limit. If your limit is 300 requests per 5 minutes, spacing batches 1 second apart lets you send to 15,000 recipients per 5-minute window (300 batches × 50 recipients) without hitting limits.
@@ -134,7 +132,7 @@ The response indicates how many recipients were accepted or rejected:
     A batch send can partially succeed — some recipients are accepted while others are rejected (due to suppression or validation). Always check the `accepted` and `rejected` counts in the response and log rejected addresses for investigation rather than silently dropping them.
   </Accordion>
   <Accordion title="Use Webhooks for Delivery Status">
-    With batch sends, polling the API for each email's delivery status is impractical. Set up webhooks to receive `email.delivered`, `email.bounced`, and `email.opened` events, which let you track outcomes for every recipient asynchronously.
+    With batch sends, polling the API for each email's delivery status is impractical. Set up webhooks to receive `message.delivery`, `message.bounce`, and `engagament.open` events, which let you track outcomes for every recipient asynchronously.
   </Accordion>
 </AccordionGroup>
 
@@ -158,10 +156,4 @@ await lettr.emails.send({
 });
 ```
 
-Query emails by batch:
-
-```javascript
-const batchEmails = await lettr.emails.list({
-  metadata: { batch_id: 'batch_1234567890' }
-});
-```
+You can then use the `request_id` returned from each batch send to look up emails via the [Email History](/learn/sending/email-history) API. Metadata is also included in [webhook payloads](/learn/webhooks/introduction), allowing you to correlate delivery events with your batch data.

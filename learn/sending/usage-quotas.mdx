@@ -12,7 +12,7 @@ Email quotas and API rate limits are two independent systems that serve differen
 | | Email Quotas | API Rate Limits |
 |---|---|---|
 | **What it limits** | Number of emails sent per month | Number of API requests per time window |
-| **Scope** | Per team, monthly | Per account, 5-minute window |
+| **Scope** | Per team, monthly | Per team, per second |
 | **Error code** | Quota exceeded error | `429 Too Many Requests` |
 | **Reset** | At the start of your billing cycle | Sliding window (continuous) |
 | **Solution** | Upgrade plan or wait for reset | Slow down request rate |

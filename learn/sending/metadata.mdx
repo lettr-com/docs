@@ -3,7 +3,7 @@ title: Metadata
 description: "Add custom metadata to track and organize emails"
 ---
 
-Metadata lets you attach arbitrary key-value pairs to any email you send through Lettr. These pairs travel with the email through the entire delivery lifecycle — appearing in webhook payloads, API query results, and the dashboard — so you can correlate emails with your application's data model. Common uses include linking emails to orders, customers, support tickets, or internal request IDs for debugging.
+Metadata lets you attach arbitrary key-value pairs to any email you send through Lettr. These pairs travel with the email through the entire delivery lifecycle — appearing in webhook payloads and the dashboard — so you can correlate emails with your application's data model. Common uses include linking emails to orders, customers, support tickets, or internal request IDs for debugging.
 
 ## Adding Metadata
 
@@ -30,9 +30,9 @@ When Lettr delivers a webhook event for an email that carries metadata, the full
 
 ```json
 {
-  "type": "email.delivered",
+  "type": "message.delivery",
   "data": {
-    "emailId": "email_abc123",
+    "request_id": "7582751837467401763",
     "to": "recipient@example.com",
     "metadata": {
       "orderId": "order_12345",
@@ -42,18 +42,6 @@ When Lettr delivers a webhook event for an email that carries metadata, the full
     }
   }
 }
-```
-
-## Query by Metadata
-
-You can filter your email history by metadata values, which is useful for finding all emails related to a specific order, customer, or campaign. Pass a `metadata` object to the list endpoint and Lettr returns only emails whose metadata matches:
-
-```javascript
-const emails = await lettr.emails.list({
-  metadata: {
-    orderId: 'order_12345'
-  }
-});
 ```
 
 ## Use Cases
@@ -81,7 +69,7 @@ Lettr supports both metadata and [tags](/learn/sending/tags) on emails. They ser
 |---------|----------|-----|
 | Structure | Key-value pairs | Single string (max 64 chars) |
 | Values | Strings only | Plain string |
-| Where it appears | Webhooks, API queries, dashboard | Analytics dashboard filters and breakdowns |
+| Where it appears | Webhooks, dashboard | Analytics dashboard filters and breakdowns |
 | Best for | Detailed tracking data (order IDs, customer IDs) | Grouping emails for analytics (e.g., `welcome-series`) |
 
 ## Example: Full Tracking Setup

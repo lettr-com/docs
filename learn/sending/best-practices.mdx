@@ -81,7 +81,7 @@ When an email hard-bounces, the address is permanently invalid. Continuing to se
 app.post('/webhooks/lettr', (req, res) => {
   const event = req.body;
 
-  if (event.type === 'email.bounced') {
+  if (event.type === 'message.bounce') {
     const { to, bounceType } = event.data;
 
     if (bounceType === 'hard') {
@@ -141,22 +141,24 @@ Building a reliable email integration means handling failures gracefully, avoidi
 
 ### Implement Idempotency
 
-Network failures and retries can cause the same email to be sent more than once. Use metadata-based idempotency keys to check whether an email has already been sent before calling the API:
+Network failures and retries can cause the same email to be sent more than once. Use a database flag or distributed cache to track whether an email has already been sent for a given business event before calling the API:
 
 ```javascript
 async function sendOnce(emailData, idempotencyKey) {
-  const existing = await lettr.emails.list({
-    metadata: { idempotency_key: idempotencyKey }
-  });
-
-  if (existing.data.length > 0) {
-    return existing.data[0];
+  // Check local database or cache
+  const alreadySent = await cache.get(idempotencyKey);
+  if (alreadySent) {
+    return { alreadySent: true, request_id: alreadySent };
   }
 
-  return lettr.emails.send({
+  const response = await lettr.emails.send({
     ...emailData,
     metadata: { ...emailData.metadata, idempotency_key: idempotencyKey }
   });
+
+  // Record the send
+  await cache.set(idempotencyKey, response.data.request_id, { ttl: 86400 });
+  return response;
 }
 ```
 
@@ -165,18 +167,9 @@ async function sendOnce(emailData, idempotencyKey) {
 Polling the API for delivery status wastes rate limit budget and introduces latency. Webhooks push events to your server the moment they occur, giving you real-time updates without any polling:
 
 ```javascript
-// Instead of polling for delivery status
-// Bad:
-while (status !== 'delivered') {
-  const email = await lettr.emails.get(emailId);
-  status = email.status;
-  await sleep(1000);
-}
-
-// Use webhooks
-// Good:
+// Use webhooks for real-time delivery updates
 app.post('/webhooks/lettr', (req, res) => {
-  if (req.body.type === 'email.delivered') {
+  if (req.body.type === 'message.delivery') {
     updateDeliveryStatus(req.body.data);
   }
   res.sendStatus(200);

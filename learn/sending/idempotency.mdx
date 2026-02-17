@@ -3,7 +3,7 @@ title: Idempotency
 description: "Prevent duplicate emails with request tracking"
 ---
 
-Duplicate emails damage user trust — nobody wants to receive the same order confirmation twice. Network failures, retries, and concurrent requests can all cause a single email to be sent more than once unless your integration is designed to prevent it. This page covers how to use Lettr's request IDs and metadata-based idempotency keys to ensure each email is sent exactly once, even when failures and retries occur.
+Duplicate emails damage user trust — nobody wants to receive the same order confirmation twice. Network failures, retries, and concurrent requests can all cause a single email to be sent more than once unless your integration is designed to prevent it. This page covers how to use Lettr's request IDs and application-level idempotency patterns to ensure each email is sent exactly once, even when failures and retries occur.
 
 ## Request IDs
 
@@ -68,34 +68,36 @@ async function sendOrderConfirmation(order) {
 }
 ```
 
-## Idempotency with Metadata
+## Distributed Idempotency
 
-For cases where a local database flag isn't sufficient — such as distributed systems where multiple workers might process the same event — you can use Lettr's metadata query to check whether an email with a specific idempotency key has already been sent:
+For distributed systems where multiple workers might process the same event, use a shared cache or database lock to coordinate. Store a unique idempotency key derived from the business event and check it before sending:
 
 ```javascript
-// Before sending, check if already sent
-const existingEmails = await lettr.emails.list({
-  metadata: {
-    idempotency_key: `password-reset-${userId}-${resetToken}`
-  }
-});
+async function sendPasswordReset(userId, resetToken, userEmail) {
+  const idempotencyKey = `password-reset-${userId}-${resetToken}`;
 
-if (existingEmails.data.length > 0) {
-  console.log('Password reset email already sent');
-  return existingEmails.data[0];
+  // Use a distributed lock or cache to check if already sent
+  const alreadySent = await cache.get(idempotencyKey);
+  if (alreadySent) {
+    console.log('Password reset email already sent');
+    return;
+  }
+
+  const response = await lettr.emails.send({
+    from: 'security@example.com',
+    to: [userEmail],
+    subject: 'Password Reset Request',
+    template_slug: 'password-reset',
+    metadata: {
+      idempotency_key: idempotencyKey,
+      user_id: userId
+    }
+  });
+
+  // Mark as sent
+  await cache.set(idempotencyKey, response.data.request_id, { ttl: 86400 });
+  return response;
 }
-
-// Send the email
-const response = await lettr.emails.send({
-  from: 'security@example.com',
-  to: [userEmail],
-  subject: 'Password Reset Request',
-  template_slug: 'password-reset',
-  metadata: {
-    idempotency_key: `password-reset-${userId}-${resetToken}`,
-    user_id: userId
-  }
-});
 ```
 
 ## Safe Retry Pattern
@@ -135,7 +137,7 @@ Every webhook event includes the `request_id` from the original send. This lets 
 
 ```json
 {
-  "type": "email.delivered",
+  "type": "message.delivery",
   "data": {
     "request_id": "7582751837467401763",
     "message_id": "msg_abc123",
@@ -166,22 +168,24 @@ Every webhook event includes the `request_id` from the original send. This lets 
 
 ## Timeout Handling
 
-A timeout (`ETIMEDOUT`) or connection reset (`ECONNRESET`) means your client didn't receive a response, but Lettr may have already accepted and queued the email. Before retrying, check whether the email was already sent by querying your idempotency key in metadata:
+A timeout (`ETIMEDOUT`) or connection reset (`ECONNRESET`) means your client didn't receive a response, but Lettr may have already accepted and queued the email. Before retrying, check your local idempotency records (database flag or cache) to see if the send was already recorded. If it wasn't, you can safely retry — but be aware the email may have been sent despite the timeout:
 
 ```javascript
-async function safeSend(emailData) {
+async function safeSend(emailData, idempotencyKey) {
   try {
-    return await lettr.emails.send(emailData);
+    const response = await lettr.emails.send(emailData);
+    await cache.set(idempotencyKey, response.data.request_id, { ttl: 86400 });
+    return response;
   } catch (error) {
     if (error.code === 'ETIMEDOUT' || error.code === 'ECONNRESET') {
-      // Check if email was sent using metadata
-      const sent = await lettr.emails.list({
-        metadata: { idempotency_key: emailData.metadata.idempotency_key }
-      });
-
-      if (sent.data.length > 0) {
-        return { data: sent.data[0], alreadySent: true };
+      // Check local cache to see if we already recorded a successful send
+      const existingRequestId = await cache.get(idempotencyKey);
+      if (existingRequestId) {
+        return { data: { request_id: existingRequestId }, alreadySent: true };
       }
+      // If not in cache, the send may or may not have succeeded.
+      // Log the ambiguity and consider retrying with caution.
+      console.warn('Timeout occurred, send status unknown for:', idempotencyKey);
     }
     throw error;
   }

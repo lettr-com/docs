@@ -170,8 +170,6 @@
                   "learn/sending/tracking",
                   "learn/sending/tags",
                   "learn/sending/metadata",
-                  "learn/sending/custom-headers",
-                  "learn/sending/scheduling",
                   "learn/sending/batch-sending",
                   "learn/sending/test-emails",
                   "learn/sending/idempotency",
