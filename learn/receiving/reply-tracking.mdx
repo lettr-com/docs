@@ -38,22 +38,28 @@ await lettr.emails.send({
 });
 ```
 
-When the customer replies, you receive:
+When the customer replies, you receive a `relay.relay_delivery` webhook event:
 
 ```json
-{
-  "type": "email.received",
-  "data": {
-    "to": ["reply+ticket_TKT-1234@mail.example.com"],
-    "from": "customer@example.com",
-    "subject": "Re: Your support request",
-    "text": "Thanks, that fixed my issue!",
-    "headers": {
-      "in-reply-to": "<original-message-id@example.com>",
-      "references": "<original-message-id@example.com>"
+[
+  {
+    "msys": {
+      "relay_message": {
+        "rcpt_to": "reply+ticket_TKT-1234@mail.example.com",
+        "msg_from": "customer@example.com",
+        "friendly_from": "Customer Name <customer@example.com>",
+        "content": {
+          "subject": "Re: Your support request",
+          "text": "Thanks, that fixed my issue!",
+          "headers": [
+            { "In-Reply-To": "<original-message-id@example.com>" },
+            { "References": "<original-message-id@example.com>" }
+          ]
+        }
+      }
     }
   }
-}
+]
 ```
 
 ## Processing Replies
@@ -61,28 +67,39 @@ When the customer replies, you receive:
 Extract the conversation ID and match to the original:
 
 ```javascript
-app.post('/webhooks/inbound', async (req, res) => {
-  const { to, from, subject, text, html, headers } = req.body.data;
-  const recipient = to[0];
+// Helper to find a header value from the headers array
+function getHeader(headers, name) {
+  const header = headers.find(h => h[name] !== undefined);
+  return header ? header[name] : null;
+}
 
-  // Extract ticket ID from reply address
-  const match = recipient.match(/^reply\+ticket_([^@]+)@/);
+app.post('/webhooks/inbound', express.json(), async (req, res) => {
+  for (const event of req.body) {
+    const relay = event.msys?.relay_message;
+    if (!relay) continue;
 
-  if (match) {
-    const ticketId = match[1];
+    const recipient = relay.rcpt_to;
+    const { msg_from, content } = relay;
 
-    // Add reply to the ticket
-    await addReplyToTicket(ticketId, {
-      from,
-      subject,
-      body: text || stripHtml(html),
-      messageId: headers['message-id'],
-      inReplyTo: headers['in-reply-to'],
-      receivedAt: new Date()
-    });
+    // Extract ticket ID from reply address
+    const match = recipient.match(/^reply\+ticket_([^@]+)@/);
 
-    // Optionally notify the support agent
-    await notifyAgent(ticketId, { from, subject });
+    if (match) {
+      const ticketId = match[1];
+
+      // Add reply to the ticket
+      await addReplyToTicket(ticketId, {
+        from: msg_from,
+        subject: content.subject,
+        body: content.text || stripHtml(content.html),
+        messageId: getHeader(content.headers, 'Message-ID'),
+        inReplyTo: getHeader(content.headers, 'In-Reply-To'),
+        receivedAt: new Date()
+      });
+
+      // Optionally notify the support agent
+      await notifyAgent(ticketId, { from: msg_from, subject: content.subject });
+    }
   }
 
   res.sendStatus(200);
@@ -100,34 +117,39 @@ Standard email headers help track conversation threads:
 | `References` | Chain of Message-IDs in the thread |
 
 ```javascript
-app.post('/webhooks/inbound', async (req, res) => {
-  const { from, subject, text, headers } = req.body.data;
+app.post('/webhooks/inbound', express.json(), async (req, res) => {
+  for (const event of req.body) {
+    const relay = event.msys?.relay_message;
+    if (!relay) continue;
 
-  // Try to find the original message using headers
-  const inReplyTo = headers['in-reply-to'];
-  const references = headers['references'];
+    const { msg_from, content } = relay;
 
-  let thread = null;
+    // Try to find the original message using headers
+    const inReplyTo = getHeader(content.headers, 'In-Reply-To');
+    const references = getHeader(content.headers, 'References');
 
-  if (inReplyTo) {
-    // Find by direct reply
-    thread = await findThreadByMessageId(inReplyTo);
-  }
+    let thread = null;
 
-  if (!thread && references) {
-    // Find by any message in the reference chain
-    const refIds = references.split(/\s+/);
-    for (const refId of refIds) {
-      thread = await findThreadByMessageId(refId);
-      if (thread) break;
+    if (inReplyTo) {
+      // Find by direct reply
+      thread = await findThreadByMessageId(inReplyTo);
     }
-  }
 
-  if (thread) {
-    await addMessageToThread(thread.id, { from, subject, body: text });
-  } else {
-    // Start a new thread
-    await createNewThread({ from, subject, body: text });
+    if (!thread && references) {
+      // Find by any message in the reference chain
+      const refIds = references.split(/\s+/);
+      for (const refId of refIds) {
+        thread = await findThreadByMessageId(refId);
+        if (thread) break;
+      }
+    }
+
+    if (thread) {
+      await addMessageToThread(thread.id, { from: msg_from, subject: content.subject, body: content.text });
+    } else {
+      // Start a new thread
+      await createNewThread({ from: msg_from, subject: content.subject, body: content.text });
+    }
   }
 
   res.sendStatus(200);
@@ -179,10 +201,10 @@ const thread = await getOrCreateThread(ticketId);
 
 // When receiving a reply
 thread.addMessage({
-  from: email.from,
-  body: email.text,
+  from: relay.msg_from,
+  body: relay.content.text,
   direction: 'inbound',
-  messageId: email.headers['message-id']
+  messageId: getHeader(relay.content.headers, 'Message-ID')
 });
 
 // When sending a response
@@ -201,20 +223,21 @@ await saveThread(thread);
 Detect and handle auto-replies (out-of-office, delivery receipts):
 
 ```javascript
-function isAutoReply(email) {
-  const headers = email.headers || {};
-  const subject = (email.subject || '').toLowerCase();
+function isAutoReply(relay) {
+  const { content } = relay;
+  const subject = (content.subject || '').toLowerCase();
 
   // Check standard auto-reply headers
-  if (headers['auto-submitted'] && headers['auto-submitted'] !== 'no') {
+  const autoSubmitted = getHeader(content.headers, 'Auto-Submitted');
+  if (autoSubmitted && autoSubmitted !== 'no') {
     return true;
   }
 
-  if (headers['x-auto-response-suppress']) {
+  if (getHeader(content.headers, 'X-Auto-Response-Suppress')) {
     return true;
   }
 
-  if (headers['precedence'] === 'auto_reply') {
+  if (getHeader(content.headers, 'Precedence') === 'auto_reply') {
     return true;
   }
 
@@ -240,17 +263,21 @@ function isAutoReply(email) {
   return false;
 }
 
-app.post('/webhooks/inbound', async (req, res) => {
-  const email = req.body.data;
+app.post('/webhooks/inbound', express.json(), async (req, res) => {
+  for (const event of req.body) {
+    const relay = event.msys?.relay_message;
+    if (!relay) continue;
 
-  if (isAutoReply(email)) {
-    // Log but don't create a ticket or notify
-    await logAutoReply(email);
-    return res.sendStatus(200);
+    if (isAutoReply(relay)) {
+      // Log but don't create a ticket or notify
+      await logAutoReply(relay);
+      continue;
+    }
+
+    // Process as a normal reply
+    await processReply(relay);
   }
 
-  // Process as a normal reply
-  await processReply(email);
   res.sendStatus(200);
 });
 ```
@@ -312,7 +339,7 @@ await storeMessageId(conversationId, result.messageId);
 
 // Match replies using In-Reply-To header
 const originalConversation = await findByMessageId(
-  email.headers['in-reply-to']
+  getHeader(relay.content.headers, 'In-Reply-To')
 );
 ```
 
@@ -321,34 +348,39 @@ const originalConversation = await findByMessageId(
 When multiple people are involved in a thread:
 
 ```javascript
-app.post('/webhooks/inbound', async (req, res) => {
-  const { to, cc, from, subject, text, headers } = req.body.data;
+app.post('/webhooks/inbound', express.json(), async (req, res) => {
+  for (const event of req.body) {
+    const relay = event.msys?.relay_message;
+    if (!relay) continue;
 
-  // Find the conversation
-  const conversationId = extractConversationId(to[0]);
-  const conversation = await getConversation(conversationId);
+    const { rcpt_to, msg_from, content } = relay;
 
-  if (!conversation) {
-    return res.sendStatus(200);
-  }
+    // Find the conversation
+    const conversationId = extractConversationId(rcpt_to);
+    const conversation = await getConversation(conversationId);
 
-  // Add the new message
-  await addMessage(conversationId, {
-    from,
-    body: text,
-    inReplyTo: headers['in-reply-to']
-  });
+    if (!conversation) continue;
 
-  // Track all participants
-  const allRecipients = [...to, ...(cc || [])];
-  for (const recipient of allRecipients) {
-    if (!recipient.includes('@mail.example.com')) {
-      await addParticipant(conversationId, recipient);
+    // Add the new message
+    await addMessage(conversationId, {
+      from: msg_from,
+      body: content.text,
+      inReplyTo: getHeader(content.headers, 'In-Reply-To')
+    });
+
+    // Track all participants from To and CC headers
+    const toAddresses = content.to || [];
+    const ccHeader = getHeader(content.headers, 'CC');
+    const allRecipients = [...toAddresses, ...(ccHeader ? [].concat(ccHeader) : [])];
+    for (const recipient of allRecipients) {
+      if (!recipient.includes('@mail.example.com')) {
+        await addParticipant(conversationId, recipient);
+      }
     }
-  }
 
-  // Notify internal team members
-  await notifyTeam(conversation, { from, subject, body: text });
+    // Notify internal team members
+    await notifyTeam(conversation, { from: msg_from, subject: content.subject, body: content.text });
+  }
 
   res.sendStatus(200);
 });
@@ -396,68 +428,67 @@ async function sendTicketResponse(ticket, responseText) {
 
 // Handle incoming replies
 app.post('/webhooks/inbound', express.json(), async (req, res) => {
-  const { to, from, subject, text, html, headers, spamScore } = req.body.data;
+  for (const event of req.body) {
+    const relay = event.msys?.relay_message;
+    if (!relay) continue;
 
-  // Spam check
-  if (spamScore > 6) {
-    return res.sendStatus(200);
-  }
+    const { rcpt_to, msg_from, content } = relay;
 
-  // Extract ticket ID
-  const match = to[0].match(/^reply\+([^@]+)@/);
+    // Skip auto-replies
+    if (isAutoReply(relay)) {
+      continue;
+    }
 
-  if (!match) {
-    // Not a reply to a ticket - create new ticket
-    const ticket = await createTicket({
-      customerEmail: from,
-      subject,
-      body: text || stripHtml(html)
+    // Extract ticket ID
+    const match = rcpt_to.match(/^reply\+([^@]+)@/);
+
+    if (!match) {
+      // Not a reply to a ticket - create new ticket
+      const ticket = await createTicket({
+        customerEmail: msg_from,
+        subject: content.subject,
+        body: content.text || stripHtml(content.html)
+      });
+
+      // Send acknowledgment
+      await sendTicketResponse(ticket,
+        'Thank you for contacting us. We\'ve received your request and will respond shortly.'
+      );
+
+      continue;
+    }
+
+    const ticketId = match[1];
+    const ticket = await getTicket(ticketId);
+
+    if (!ticket) {
+      console.warn(`Ticket not found: ${ticketId}`);
+      continue;
+    }
+
+    // Add customer reply to ticket
+    await addTicketMessage(ticketId, {
+      from: msg_from,
+      body: content.text || stripHtml(content.html),
+      direction: 'inbound',
+      messageId: getHeader(content.headers, 'Message-ID'),
+      inReplyTo: getHeader(content.headers, 'In-Reply-To')
     });
 
-    // Send acknowledgment
-    await sendTicketResponse(ticket,
-      'Thank you for contacting us. We\'ve received your request and will respond shortly.'
-    );
-
-    return res.sendStatus(200);
-  }
-
-  const ticketId = match[1];
-  const ticket = await getTicket(ticketId);
-
-  if (!ticket) {
-    console.warn(`Ticket not found: ${ticketId}`);
-    return res.sendStatus(200);
-  }
-
-  // Skip auto-replies
-  if (isAutoReply({ subject, headers })) {
-    await logAutoReply(ticket.id, { from, subject });
-    return res.sendStatus(200);
-  }
-
-  // Add customer reply to ticket
-  await addTicketMessage(ticketId, {
-    from,
-    body: text || stripHtml(html),
-    direction: 'inbound',
-    messageId: headers['message-id'],
-    inReplyTo: headers['in-reply-to']
-  });
-
-  // Update ticket status
-  await updateTicket(ticketId, {
-    status: 'awaiting_response',
-    lastCustomerReply: new Date()
-  });
-
-  // Notify assigned agent
-  if (ticket.assignedTo) {
-    await notifyAgent(ticket.assignedTo, {
-      ticketId,
-      customerEmail: from,
-      preview: (text || '').substring(0, 100)
+    // Update ticket status
+    await updateTicket(ticketId, {
+      status: 'awaiting_response',
+      lastCustomerReply: new Date()
     });
+
+    // Notify assigned agent
+    if (ticket.assignedTo) {
+      await notifyAgent(ticket.assignedTo, {
+        ticketId,
+        customerEmail: msg_from,
+        preview: (content.text || '').substring(0, 100)
+      });
+    }
   }
 
   res.sendStatus(200);

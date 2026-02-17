@@ -7,86 +7,65 @@ Receiving emails from external sources introduces security considerations. This 
 
 ## Webhook Security
 
-### Verify Webhook Signatures
+### Verify Webhook Credentials
 
-Always verify that webhooks come from Lettr, not malicious actors:
-
-```javascript
-import crypto from 'crypto';
-
-function verifyWebhookSignature(payload, signature, secret) {
-  const elements = signature.split(',');
-  const timestamp = elements.find(e => e.startsWith('t=')).slice(2);
-  const expectedSignature = elements.find(e => e.startsWith('v1=')).slice(3);
-
-  // Reject old timestamps (replay attack protection)
-  const now = Math.floor(Date.now() / 1000);
-  if (Math.abs(now - parseInt(timestamp)) > 300) {
-    throw new Error('Webhook timestamp too old');
-  }
-
-  // Compute expected signature
-  const signedPayload = `${timestamp}.${payload}`;
-  const computedSignature = crypto
-    .createHmac('sha256', secret)
-    .update(signedPayload)
-    .digest('hex');
-
-  // Timing-safe comparison
-  if (!crypto.timingSafeEqual(
-    Buffer.from(expectedSignature),
-    Buffer.from(computedSignature)
-  )) {
-    throw new Error('Invalid webhook signature');
-  }
-
-  return JSON.parse(payload);
-}
-
-app.post('/webhooks/inbound', express.raw({ type: 'application/json' }), (req, res) => {
-  try {
-    const event = verifyWebhookSignature(
-      req.body.toString(),
-      req.headers['lettr-signature'],
-      process.env.LETTR_WEBHOOK_SECRET
-    );
-
-    await processEmail(event);
-    res.sendStatus(200);
-  } catch (err) {
-    console.error('Webhook verification failed:', err.message);
-    res.sendStatus(400);
-  }
-});
-```
-
-### IP Allowlisting
-
-Optionally restrict webhook access to Lettr's IP addresses:
+Always verify that webhooks come from Lettr, not malicious actors. Lettr supports Basic Auth and OAuth 2.0 for webhook authentication — configure your preferred method when creating the webhook in the dashboard.
 
 ```javascript
-const LETTR_IPS = [
-  '203.0.113.10',
-  '203.0.113.11',
-  '203.0.113.12'
-];
+app.post('/webhooks/inbound', (req, res, next) => {
+  const authHeader = req.headers.authorization;
 
-function ipAllowlist(req, res, next) {
-  const clientIP = req.ip || req.connection.remoteAddress;
+  if (!authHeader || !authHeader.startsWith('Basic ')) {
+    return res.sendStatus(401);
+  }
 
-  if (!LETTR_IPS.includes(clientIP)) {
-    console.warn(`Rejected webhook from unauthorized IP: ${clientIP}`);
-    return res.sendStatus(403);
+  const credentials = Buffer.from(authHeader.slice(6), 'base64').toString();
+  const [username, password] = credentials.split(':');
+
+  if (username !== process.env.WEBHOOK_USERNAME || password !== process.env.WEBHOOK_PASSWORD) {
+    return res.sendStatus(401);
   }
 
   next();
+}, express.json(), async (req, res) => {
+  for (const event of req.body) {
+    const relay = event.msys?.relay_message;
+    if (!relay) continue;
+
+    await processEmail(relay);
+  }
+
+  res.sendStatus(200);
+});
+```
+
+See [Webhook Authorization](/learn/webhooks/authorization) for details on configuring Basic Auth and OAuth 2.0.
+
+### IP Allowlisting
+
+You can optionally restrict webhook access to known IP addresses as an additional layer of defense:
+
+```javascript
+function ipAllowlist(allowedIPs) {
+  return (req, res, next) => {
+    const clientIP = req.ip || req.connection.remoteAddress;
+
+    if (!allowedIPs.includes(clientIP)) {
+      console.warn(`Rejected webhook from unauthorized IP: ${clientIP}`);
+      return res.sendStatus(403);
+    }
+
+    next();
+  };
 }
 
-app.post('/webhooks/inbound', ipAllowlist, webhookHandler);
+// Configure with your known webhook source IPs
+const allowedIPs = process.env.WEBHOOK_ALLOWED_IPS?.split(',') || [];
+app.post('/webhooks/inbound', ipAllowlist(allowedIPs), webhookHandler);
 ```
 
 <Note>
-  Contact Lettr support for the current list of webhook source IP addresses, as they may change over time.
+  IP allowlisting should be used as a supplementary security measure alongside credential verification, not as a replacement.
 </Note>
 
 ## Input Validation
@@ -144,14 +123,20 @@ function sanitizeHtml(html) {
   });
 }
 
-app.post('/webhooks/inbound', async (req, res) => {
-  const { html, text } = req.body.data;
+app.post('/webhooks/inbound', express.json(), async (req, res) => {
+  for (const event of req.body) {
+    const relay = event.msys?.relay_message;
+    if (!relay) continue;
 
-  // Sanitize before storing
-  const safeHtml = html ? sanitizeHtml(html) : null;
-  const safeText = text ? escapeHtml(text) : null;
+    const { html, text } = relay.content;
 
-  await storeEmail({ html: safeHtml, text: safeText });
+    // Sanitize before storing
+    const safeHtml = html ? sanitizeHtml(html) : null;
+    const safeText = text ? escapeHtml(text) : null;
+
+    await storeEmail({ html: safeHtml, text: safeText });
+  }
+
   res.sendStatus(200);
 });
 ```
@@ -438,7 +423,6 @@ async function logInboundEmail(email, result) {
     to: email.to,
     subject: email.subject?.substring(0, 100),
     attachmentCount: email.attachments?.length || 0,
-    spamScore: email.spamScore,
     result: result.status,
     processingTime: result.duration,
     timestamp: new Date()
@@ -493,10 +477,10 @@ class AnomalyDetector {
 
 <AccordionGroup>
   <Accordion title="Webhook Security">
-    - [ ] Verify webhook signatures on every request
-    - [ ] Reject requests with old timestamps (> 5 minutes)
-    - [ ] Use timing-safe string comparison
-    - [ ] Consider IP allowlisting
+    - [ ] Verify webhook credentials (Basic Auth or OAuth 2.0) on every request
+    - [ ] Store credentials securely in environment variables
+    - [ ] Use HTTPS for your webhook endpoint
+    - [ ] Consider IP allowlisting as additional protection
   </Accordion>
 
   <Accordion title="Input Validation">
