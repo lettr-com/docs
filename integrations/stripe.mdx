@@ -1,0 +1,71 @@
+---
+title: Stripe
+description: "Send emails and templates to customers directly from Stripe"
+---
+
+The [Lettr Stripe App](https://marketplace.stripe.com/apps/lettr) lets you send emails and templates to your customers directly from the Stripe dashboard — without leaving Stripe or writing any code.
+
+## Prerequisites
+
+Before you begin, make sure you have:
+
+<CardGroup cols={2}>
+  <Card title="API Key" icon="key" href="https://app.lettr.com/api-keys">
+    Create an API key in the Lettr dashboard
+  </Card>
+  <Card title="Verified Domain" icon="globe" href="/learn/domains/sending-domains">
+    Add and verify your sending domain
+  </Card>
+</CardGroup>
+
+You'll also need:
+
+- A [Stripe](https://stripe.com) account
+- A sender address on your verified domain (e.g. `billing@yourdomain.com`)
+
+## Install the Lettr App
+
+<Steps>
+  <Step title="Install from the Stripe Marketplace">
+    Go to the [Lettr app on the Stripe Marketplace](https://marketplace.stripe.com/apps/lettr) and click **Install**. Follow the prompts to authorize the app for your Stripe account.
+  </Step>
+
+  <Step title="Connect your Lettr account">
+    Enter your Lettr API key when prompted. The app uses this to send emails on your behalf.
+
+    <Warning>
+      Use an API key with sending permissions. Never share your API key publicly. See [API Key Permissions](/learn/api-keys/permissions) for details.
+    </Warning>
+  </Step>
+</Steps>
+
+## Send Emails from Stripe
+
+Once installed, the Lettr app appears in the sidebar when viewing a customer in Stripe. You can:
+
+- **Send one-off emails** — Compose and send an email to any customer directly from their Stripe profile
+- **Use Lettr templates** — Select from your saved Lettr templates and send them without leaving Stripe
+- **Personalize content** — Customer details from Stripe are available to personalize your emails
+
+No webhook setup, no code, no context switching. Open a customer in Stripe, pick a template or write a message, and send.
+
+<Tip>
+  Create reusable templates in the [Lettr dashboard](https://app.lettr.com/templates) for common scenarios like payment reminders, onboarding sequences, or account updates. They'll be available to select directly in Stripe.
+</Tip>
+
+## What's Next
+
+<CardGroup cols={2}>
+  <Card title="Templates" icon="paintbrush" href="/learn/templates/introduction">
+    Create reusable email templates
+  </Card>
+  <Card title="Sending Domains" icon="globe" href="/learn/domains/sending-domains">
+    Verify your sending domain
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference/emails/send-email">
+    Send emails programmatically via the API
+  </Card>
+  <Card title="Deliverability" icon="chart-line" href="/knowledge-base/best-practices/deliverability">
+    Improve email deliverability
+  </Card>
+</CardGroup>
