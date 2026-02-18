@@ -20,20 +20,14 @@ To create a sending domain in Lettr:
 4. Enter your desired sending subdomain (e.g. `mailing.company.com`)
 5. Click **Create Domain**
 
-<img src="/images/lettr-create-sending-domain.png" alt="Create Sending Domain button in Lettr" />
 
 <Tip>
   Use a subdomain (e.g. `mailing.company.com`) instead of the root domain (`company.com`). A subdomain provides proper
   reputation segmentation and is required if you also plan to receive emails with Lettr.
 </Tip>
 
-Click your new domain in the Sending Domains list.
+Click your new domain in the Sending Domains list. This will display a list of DNS records that need to be configured. Keep this page open — you will need these values soon.
 
-<img src="/images/lettr-sending-list.png" alt="Sending domain listed in Lettr Sending Domains list" />
-
-This will display a list of DNS records that need to be configured. Keep this page open — you will need these values soon.
-
-<img src="/images/lettr-mailing-config.png" alt="DNS records displayed in Lettr after creating a sending domain" />
 
 ### Configure Route 53 DNS
 
@@ -78,7 +72,6 @@ Copy the CNAME values from Lettr to Route 53:
 Omit your domain suffix from the Hostname when pasting into Route 53. For example, instead of `mailing.lettr-demo.com`, paste only `mailing`. Route 53 displays the hosted zone domain as a greyed-out suffix next to the Record name field.
 </Info>
 
-<img src="/images/lettr-mailing-1.png" alt="CNAME record Hostname and Value in Lettr" />
 <img src="/images/route-sending-1.png" alt="Adding CNAME record in AWS Route 53" />
 
 ### Add TXT Record (DKIM)
@@ -103,7 +96,6 @@ Route 53 requires TXT record values to be enclosed in double quotes. If you past
 Omit your domain suffix from the Hostname when pasting into Route 53. For example, instead of `scph0126._domainkey.mailing.lettr-demo.com`, paste only `scph0126._domainkey.mailing`.
 </Info>
 
-<img src="/images/lettr-mailing-2.png" alt="DKIM TXT record Hostname and Value in Lettr" />
 <img src="/images/route-sending-2.png" alt="Adding DKIM TXT record in AWS Route 53" />
 
 ### Add TXT Record (DMARC)
@@ -124,14 +116,12 @@ Copy the TXT values from Lettr to Route 53:
 Omit your domain suffix from the Hostname when pasting into Route 53. For example, instead of `_dmarc.mailing.lettr-demo.com`, paste only `_dmarc.mailing`.
 </Info>
 
-<img src="/images/lettr-mailing-3.png" alt="DMARC TXT record Hostname and Value in Lettr" />
 <img src="/images/route-sending-3.png" alt="Adding DMARC TXT record in AWS Route 53" />
 
 ### Verify Your Sending Domain
 
 After adding all three DNS records, go back to Lettr and click **Verify DNS Records**. DNS propagation can take up to 24–48 hours, though it typically completes within a few minutes.
 
-<img src="/images/lettr-verified.png" alt="Sending domain verified successfully in Lettr" />
 
 ---
 
@@ -148,15 +138,9 @@ To create an Inbound domain in Lettr:
 4. Enter your desired inbound subdomain (e.g. `inbound.company.com`)
 5. Click **Create Domain**
 
-<img src="/images/lettr-inbound-new.png" alt="Creating a new inbound domain in Lettr" />
 
-Click on your new domain in the Inbound Domains list.
+Click on your new domain in the Inbound Domains list. This will display the MX records that need to be configured. Keep this page open — you will need these values in the next steps.
 
-<img src="/images/lettr-inbound-list.png" alt="Inbound domain listed in Lettr Inbound Domains list" />
-
-This will display the MX records that need to be configured. Keep this page open — you will need these values in the next steps.
-
-<img src="/images/lettr-inbound-config.png" alt="MX record configuration displayed in Lettr for inbound domain" />
 
 ### Add MX Records
 
@@ -185,14 +169,12 @@ Route 53 combines all MX records for the same name into a single record set. Ent
 Omit your domain suffix from the Hostname when pasting into Route 53. For example, instead of `inbound.lettr-demo.com`, paste only `inbound`.
 </Info>
 
-<img src="/images/lettr-inbound-1.png" alt="MX record values in Lettr for inbound domain" />
 <img src="/images/route-inbound-1.png" alt="Adding MX records in AWS Route 53" />
 
 ### Verify Your Inbound Domain
 
 After adding the MX records, go back to Lettr and click **Verify DNS Records**. DNS propagation can take up to 24–48 hours, though it typically completes within a few minutes.
 
-<img src="/images/lettr-inbound-verified.png" alt="Inbound domain verified successfully in Lettr" />
 
 ---
 
@@ -204,15 +186,9 @@ A tracking domain allows Lettr to track email opens and link clicks using your o
 
 In the Lettr dashboard, select **Domains** in the navigation panel, then select **Tracking Domains** and click **Create Tracking Domain**. Enter your desired tracking subdomain (e.g. `track.company.com`) and click **Create Tracking Domain**.
 
-<img src="/images/lettr-add-tracking.png" alt="Creating a new tracking domain in Lettr" />
 
-Click on the name of your new tracking domain in the Tracking Domains list.
+Click on the name of your new tracking domain in the Tracking Domains list. This will display the CNAME records that need to be configured. Keep this page open — you will need these values in the next steps.
 
-<img src="/images/lettr-tracking-list.png" alt="Tracking domain listed in Lettr Tracking Domains list" />
-
-This will display the CNAME records that need to be configured. Keep this page open — you will need these values in the next steps.
-
-<img src="/images/lettr-tracking-config.png" alt="CNAME records displayed in Lettr for tracking domain configuration" />
 
 ### Add SSL Certificate CNAME Record
 
@@ -232,7 +208,6 @@ Add the record in Route 53:
 Omit your domain suffix from the Hostname when pasting into Route 53. For example, instead of `track.lettr-demo.com`, paste only `track`.
 </Info>
 
-<img src="/images/lettr-tracking-1.png" alt="SSL Certificate CNAME record values in Lettr for tracking domain" />
 <img src="/images/route-tracking-1.png" alt="Adding SSL Certificate CNAME record in AWS Route 53" />
 
 ### Add Traffic CNAME Record
@@ -253,14 +228,12 @@ Add the record in Route 53:
 Omit your domain suffix from the Hostname when pasting into Route 53. For example, instead of `track.lettr-demo.com`, paste only `track`.
 </Info>
 
-<img src="/images/lettr-tracking-2.png" alt="Traffic CNAME record values in Lettr for tracking domain" />
 <img src="/images/route-tracking-2.png" alt="Adding Traffic CNAME record in AWS Route 53" />
 
 ### Verify Your Tracking Domain
 
 After adding both CNAME records, go back to Lettr and click **Verify DNS Records**.
 
-<img src="/images/lettr-tracking-verified.png" alt="Tracking domain verified successfully in Lettr" />
 
 ---
 
@@ -272,15 +245,9 @@ A storage domain lets you serve email assets (images, attachments) from your own
 
 In the Lettr dashboard, select **Domains** in the navigation panel, then select **Storage Domains** and click **Create Storage Domain**. Enter your desired storage subdomain (e.g. `assets.company.com`) and click **Create Storage Domain**.
 
-<img src="/images/lettr-storage-new.png" alt="Creating a new storage domain in Lettr" />
 
-Click on your new domain in the Storage Domains list.
+Click on your new domain in the Storage Domains list. This will display the TXT and CNAME records that need to be configured. Keep this page open — you will need these values in the next steps.
 
-<img src="/images/lettr-storage-list.png" alt="Storage domain listed in Lettr Storage Domains list" />
-
-This will display the TXT and CNAME records that need to be configured. Keep this page open — you will need these values in the next steps.
-
-<img src="/images/lettr-storage-config.png" alt="TXT and CNAME records displayed in Lettr for storage domain configuration" />
 
 ### Add TXT Record (Certificate Validation)
 
@@ -300,7 +267,6 @@ Add the record in Route 53:
 Omit your domain suffix from the Hostname when pasting into Route 53. For example, instead of `assets.lettr-demo.com`, paste only `assets`.
 </Info>
 
-<img src="/images/lettr-storage-1.png" alt="Certificate Validation TXT record values in Lettr for storage domain" />
 <img src="/images/route-storage-1.png" alt="Adding Certificate Validation TXT record in AWS Route 53" />
 
 ### Add TXT Record (Hostname Pre-validation)
@@ -325,7 +291,6 @@ If the Record name is the same as the Certificate Validation TXT record above, R
 Omit your domain suffix from the Hostname when pasting into Route 53. For example, instead of `assets.lettr-demo.com`, paste only `assets`.
 </Info>
 
-<img src="/images/lettr-storage-2.png" alt="Hostname Pre-validation TXT record values in Lettr for storage domain" />
 <img src="/images/route-storage-2.png" alt="Adding Hostname Pre-validation TXT record in AWS Route 53" />
 
 ### Add CNAME Record (Domain Routing)
@@ -346,14 +311,12 @@ Add the record in Route 53:
 Omit your domain suffix from the Hostname when pasting into Route 53. For example, instead of `assets.lettr-demo.com`, paste only `assets`.
 </Info>
 
-<img src="/images/lettr-storage-3.png" alt="Domain Routing CNAME record values in Lettr for storage domain" />
 <img src="/images/route-storage-3.png" alt="Adding Domain Routing CNAME record in AWS Route 53" />
 
 ### Verify Your Storage Domain
 
 After adding all three records, go back to Lettr and click **Verify DNS Records**.
 
-<img src="/images/lettr-storage-verified.png" alt="Storage domain verified successfully in Lettr" />
 
 ---
 
