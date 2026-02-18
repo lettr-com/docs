@@ -87,7 +87,8 @@
                 "pages": [
                   "quickstart/smtp/introduction",
                   "quickstart/smtp/laravel",
-                  "quickstart/smtp/phpmailer"
+                  "quickstart/smtp/phpmailer",
+                  "quickstart/smtp/supabase"
                 ]
               },
               {
