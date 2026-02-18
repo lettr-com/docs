@@ -328,6 +328,21 @@
         ]
       },
       {
+        "tab": "Integrations",
+        "groups": [
+          {
+            "group": "Integrations",
+            "pages": ["integrations/introduction"]
+          },
+          {
+            "group": "Platforms",
+            "pages": [
+              "integrations/supabase"
+            ]
+          }
+        ]
+      },
+      {
         "tab": "Knowledge Base",
         "groups": [
           {

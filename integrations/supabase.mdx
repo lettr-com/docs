@@ -1,0 +1,275 @@
+---
+title: Supabase
+description: "Send and track emails from Supabase using Lettr"
+---
+
+Integrate [Supabase](https://supabase.com) with Lettr to send transactional emails from your Supabase project. This guide covers two approaches:
+
+- **SMTP** — Configure Supabase Auth to send confirmation, password reset, and magic link emails through Lettr
+- **Edge Functions** — Send emails programmatically from Supabase Edge Functions using Lettr's HTTP API
+
+## Prerequisites
+
+Before you begin, make sure you have:
+
+<CardGroup cols={2}>
+  <Card title="API Key" icon="key" href="https://app.lettr.com/api-keys">
+    Create an API key in the Lettr dashboard
+  </Card>
+  <Card title="Verified Domain" icon="globe" href="/learn/domains/sending-domains">
+    Add and verify your sending domain
+  </Card>
+</CardGroup>
+
+You'll also need:
+
+- A [Supabase](https://supabase.com) project
+- A sender address on your verified domain (e.g. `noreply@yourdomain.com`)
+
+## Send Auth Emails via SMTP
+
+Supabase Auth sends emails for user confirmations, password resets, magic links, and invitations. By default these go through Supabase's built-in email service, which has strict rate limits. Connecting Lettr via SMTP removes those limits and gives you full delivery visibility.
+
+### SMTP Credentials
+
+| Setting  | Value                                |
+|----------|--------------------------------------|
+| Host     | `smtp.lettr.com`                     |
+| Port     | `465`                                |
+| Username | `lettr`                              |
+| Password | Your API key (starts with `lttr_`)   |
+
+### Configure Supabase Auth
+
+<Steps>
+  <Step title="Open SMTP settings">
+    1. Go to your [Supabase project dashboard](https://supabase.com/dashboard)
+    2. Click **Authentication** in the left sidebar
+    3. Click **SMTP Settings** under the **Email** provider section
+    4. Toggle **Enable Custom SMTP** on
+  </Step>
+
+  <Step title="Set sender details">
+    Fill in your sender information:
+
+    - **Sender email**: Your verified sending address (e.g. `noreply@yourdomain.com`)
+    - **Sender name**: Your application name (e.g. `My App`)
+
+    <Warning>
+      The sender email must use a domain you've verified in the [Lettr dashboard](https://app.lettr.com/domains). Emails from unverified domains will be rejected.
+    </Warning>
+  </Step>
+
+  <Step title="Enter SMTP credentials">
+    - **Host**: `smtp.lettr.com`
+    - **Port number**: `465`
+    - **Username**: `lettr`
+    - **Password**: Your Lettr API key (starts with `lttr_`)
+  </Step>
+
+  <Step title="Save">
+    Click **Save**. All Supabase Auth emails will now be sent through Lettr.
+  </Step>
+</Steps>
+
+### Customize Auth Email Templates
+
+Supabase lets you customize the HTML for each auth email type:
+
+1. Go to **Authentication** → **Email Templates** in your Supabase dashboard
+2. Select the template type (Confirm signup, Invite user, Magic Link, Reset password)
+3. Edit the HTML and save
+
+<Info>
+  Supabase email templates use Go template syntax with variables like `{{ .ConfirmationURL }}`. These are processed by Supabase before the email is handed off to Lettr for delivery.
+</Info>
+
+## Send Emails from Edge Functions
+
+For transactional emails beyond auth (order confirmations, notifications, etc.), use Supabase Edge Functions with Lettr's HTTP API.
+
+### Set Up Your API Key
+
+Store your Lettr API key as a Supabase secret:
+
+```bash
+supabase secrets set LETTR_API_KEY=lttr_your_api_key_here
+```
+
+### Create an Edge Function
+
+```bash
+supabase functions new send-email
+```
+
+Replace the contents of `supabase/functions/send-email/index.ts` with:
+
+```typescript
+Deno.serve(async (req) => {
+  const { to, subject, html } = await req.json();
+
+  const res = await fetch("https://app.lettr.com/api/emails", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${Deno.env.get("LETTR_API_KEY")}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: "noreply@yourdomain.com",
+      to: [to],
+      subject,
+      html,
+    }),
+  });
+
+  const data = await res.json();
+
+  return new Response(JSON.stringify(data), {
+    status: res.status,
+    headers: { "Content-Type": "application/json" },
+  });
+});
+```
+
+### Deploy and Test
+
+Deploy the function:
+
+```bash
+supabase functions deploy send-email
+```
+
+Send a test email:
+
+```bash
+curl -i --request POST \
+  'https://<your-project-ref>.supabase.co/functions/v1/send-email' \
+  --header 'Authorization: Bearer <your-anon-key>' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "to": "recipient@example.com",
+    "subject": "Hello from Supabase + Lettr",
+    "html": "<h1>It works!</h1><p>This email was sent from a Supabase Edge Function using Lettr.</p>"
+  }'
+```
+
+### Call from Your App
+
+Invoke the Edge Function from your client-side Supabase code:
+
+```typescript
+import { createClient } from "@supabase/supabase-js";
+
+const supabase = createClient(
+  "https://<your-project-ref>.supabase.co",
+  "<your-anon-key>"
+);
+
+const { data, error } = await supabase.functions.invoke("send-email", {
+  body: {
+    to: "recipient@example.com",
+    subject: "Order Confirmation",
+    html: "<h1>Thanks for your order!</h1>",
+  },
+});
+```
+
+### Trigger from Database Webhooks
+
+You can also trigger emails automatically when database rows change. Create a Database Webhook in Supabase that calls your Edge Function when a row is inserted into a table (e.g. `orders`):
+
+1. Go to **Database** → **Webhooks** in your Supabase dashboard
+2. Create a new webhook pointing to your `send-email` Edge Function
+3. Set the trigger event (e.g. INSERT on the `orders` table)
+
+```typescript
+Deno.serve(async (req) => {
+  const payload = await req.json();
+  const record = payload.record;
+
+  const res = await fetch("https://app.lettr.com/api/emails", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${Deno.env.get("LETTR_API_KEY")}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: "orders@yourdomain.com",
+      to: [record.customer_email],
+      subject: `Order #${record.id} confirmed`,
+      html: `<h1>Order Confirmed</h1><p>Thanks for your order, ${record.customer_name}!</p>`,
+    }),
+  });
+
+  const data = await res.json();
+
+  return new Response(JSON.stringify(data), {
+    status: res.status,
+    headers: { "Content-Type": "application/json" },
+  });
+});
+```
+
+## Verify It Works
+
+Check that emails are being delivered:
+
+1. Trigger a test email (auth action or Edge Function call)
+2. Verify delivery in the [Lettr logs](https://app.lettr.com/logs)
+3. Check the recipient's inbox
+
+<Tip>
+  Every email sent through Lettr appears in your [logs](https://app.lettr.com/logs) with full delivery status, so you can diagnose issues without guessing.
+</Tip>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Auth emails not sending after enabling SMTP">
+    - Verify the sender email uses a domain verified in Lettr
+    - Double-check that the host is `smtp.lettr.com` and the port is `465`
+    - Ensure your API key is correct and starts with `lttr_`
+    - Confirm the username is exactly `lettr` (lowercase)
+  </Accordion>
+
+  <Accordion title="Edge Function returns 401 Unauthorized">
+    - Verify the `LETTR_API_KEY` secret is set: `supabase secrets list`
+    - Ensure the API key starts with `lttr_` and hasn't been revoked
+    - Redeploy the function after setting secrets: `supabase functions deploy send-email`
+  </Accordion>
+
+  <Accordion title="Supabase rate limit exceeded">
+    Supabase applies its own rate limits on auth emails (e.g. one confirmation per 60 seconds per address). These are separate from Lettr's rate limits. Check your Supabase [Auth settings](https://supabase.com/dashboard) under **Rate Limits**.
+  </Accordion>
+
+  <Accordion title="Emails landing in spam">
+    Make sure your sending domain has proper DNS records:
+
+    - [SPF](/learn/domains/spf) — Authorizes Lettr to send on your behalf
+    - [DKIM](/learn/domains/dkim) — Cryptographically signs your emails
+    - [DMARC](/learn/domains/dmarc) — Tells receivers how to handle unauthenticated mail
+
+    See [Deliverability Best Practices](/knowledge-base/best-practices/deliverability) for more tips.
+  </Accordion>
+
+  <Accordion title="Using port 587 instead of 465">
+    If port 465 doesn't work in your environment, use port 587 with STARTTLS instead. Both are secure.
+  </Accordion>
+</AccordionGroup>
+
+## What's Next
+
+<CardGroup cols={2}>
+  <Card title="API Reference" icon="code" href="/api-reference/emails/send-email">
+    Full API documentation for sending emails
+  </Card>
+  <Card title="Sending Domains" icon="globe" href="/learn/domains/sending-domains">
+    Verify your sending domain
+  </Card>
+  <Card title="Webhooks" icon="webhook" href="/learn/webhooks/introduction">
+    Track delivery events in real-time
+  </Card>
+  <Card title="Templates" icon="paintbrush" href="/learn/templates/introduction">
+    Create reusable email templates
+  </Card>
+</CardGroup>
