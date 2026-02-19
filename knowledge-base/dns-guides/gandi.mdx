@@ -3,7 +3,7 @@ title: "Gandi"
 description: "Step-by-step guide to configuring DNS records for Lettr on Gandi."
 ---
 
-This guide walks you through adding the required DNS records for Lettr using Gandi's DNS management. Gandi is a domain registrar and hosting provider that offers DNS hosting for domains managed through its [Gandi LiveDNS interface](https://www.gandi.net).
+This guide walks you through adding the required DNS records for Lettr using Gandi's DNS management. Gandi is a domain registrar that offers DNS hosting through its [LiveDNS interface](https://admin.gandi.net).
 
 You will configure a **sending domain** (CNAME, DKIM TXT, and DMARC TXT records) and, optionally, an **inbound domain** (MX records), **tracking domain** (two CNAME records), and **storage domain** (CNAME and two TXT records).
 
@@ -20,45 +20,32 @@ To create a sending domain in Lettr:
 4. Enter your desired sending subdomain (e.g. `mailing.company.com`)
 5. Click **Create Domain**
 
-
 <Tip>
   Use a subdomain (e.g. `mailing.company.com`) instead of the root domain (`company.com`). A subdomain provides proper
   reputation segmentation and is required if you also plan to receive emails with Lettr.
 </Tip>
 
-Click your new domain in the Sending Domains list.
-
-
-This will display a list of DNS records that need to be configured. Keep this page open — you will need these values soon.
-
+Click your new domain in the Sending Domains list. This will display a list of DNS records that need to be configured. Keep this page open — you will need these values soon.
 
 ### Configure Gandi DNS
 
-Log in to your [Gandi account](https://www.gandi.net) and navigate to your domain's **DNS** settings. If your domain uses Gandi LiveDNS, you can manage records directly in the LiveDNS interface.
-
-{/* TODO: Add screenshot of Gandi DNS zone editor */}
-
-<Info>
-  Gandi requires trailing periods (`.`) on CNAME and MX target values. When pasting values from Lettr, ensure each target
-  ends with a period (e.g. `sparkpostmail.com.`). If Lettr provides the value without a trailing period, add one manually.
-</Info>
+Log in to your [Gandi account](https://admin.gandi.net) and click **Domain** in the left sidebar. Select the domain you want to configure, then click the **DNS Records** tab at the top of the domain settings page.
 
 <Tip>
-  If your domain was purchased through Gandi or your nameservers already point to Gandi, skip nameserver
-  configuration entirely. Your domain is already using Gandi's nameservers by default — proceed directly to adding the
-  DNS records below.
+  If your domain was registered through Gandi or your nameservers already point to Gandi LiveDNS, skip nameserver
+  configuration entirely — proceed directly to adding the DNS records below.
 </Tip>
 
 <AccordionGroup>
   <Accordion title="Domain registered with a different registrar?">
     If you registered your domain elsewhere but want to manage DNS on Gandi, you must first **update the nameservers**
-    at your registrar to Gandi's nameservers shown in your domain configuration.
+    at your registrar to Gandi's LiveDNS nameservers. Gandi assigns unique LiveDNS nameservers per domain in the format
+    `ns-{numbers}-{letters}.gandi.net`. You can find your domain's specific nameservers under the **Nameservers** tab
+    in your Gandi domain settings.
 
-    <Warning>Until the nameservers are updated, any records you add in Gandi will not resolve.</Warning>
+    <Warning>Until the nameservers are updated at your registrar, any records you add in Gandi will not resolve.</Warning>
   </Accordion>
 </AccordionGroup>
-
-{/* TODO: Add screenshot of Gandi nameserver configuration inside the accordion above */}
 
 ### Add CNAME Record
 
@@ -66,15 +53,18 @@ The CNAME record verifies domain ownership with Lettr's email infrastructure.
 
 Copy the CNAME values from Lettr to Gandi:
 
-1. Click **Add a record** in the DNS zone editor.
-2. Set **Name** to the **Hostname** value from Lettr (without your domain suffix). For example, paste only `mailing`.
-3. Set **Type** to **CNAME**.
-4. Set **Value** to the **Value** from Lettr, ensuring it ends with a trailing period (e.g. `sparkpostmail.com.`).
-5. Leave **TTL** at the default or set to **10800**.
-6. Click **Save**.
+1. Click the green **Add** button above the DNS records table.
+2. Set **Type** to **CNAME**.
+3. Set **Name** to the **Hostname** value from Lettr (without your domain suffix). For example, paste only `mailing`.
+4. Set **Hostname** to the **Value** from Lettr, ensuring it ends with a trailing period (e.g. `sparkpostmail.com.`).
+5. Leave **TTL** at the default (**10800**).
+6. Click **Create**.
 
-
-{/* TODO: Add screenshot of gandi-sending-1.png */}
+<Info>
+  Gandi requires a trailing period on CNAME target values. When pasting the value from Lettr into the **Hostname**
+  field, ensure it ends with a period (e.g. `sparkpostmail.com.`). Without it, Gandi will append your domain to the
+  target, producing an incorrect address.
+</Info>
 
 ### Add TXT Record (DKIM)
 
@@ -82,19 +72,17 @@ The DKIM record adds a cryptographic signature to your outgoing emails, allowing
 
 Copy the TXT values from Lettr to Gandi:
 
-1. Click **Add a record** in the DNS zone editor.
-2. Set **Name** to the **Hostname** value from Lettr (without your domain suffix). For example, paste only `scph0126._domainkey.mailing`.
-3. Set **Type** to **TXT**.
-4. Set **Value** to the **Value** from Lettr, enclosed in double quotes (e.g. `"v=DKIM1; ..."`).
-5. Leave **TTL** at the default or set to **10800**.
-6. Click **Save**.
-
-
-{/* TODO: Add screenshot of gandi-sending-2.png */}
+1. Click the green **Add** button above the DNS records table.
+2. Set **Type** to **TXT**.
+3. Set **Name** to the **Hostname** value from Lettr (without your domain suffix). For example, paste only `scph0126._domainkey.mailing`.
+4. Set **Text Value** to the **Value** from Lettr.
+5. Leave **TTL** at the default (**10800**).
+6. Click **Create**.
 
 <Info>
-  Gandi requires TXT record values to be enclosed in double quotes. If the value from Lettr is not already quoted, wrap it
-  in double quotes before saving.
+  The DKIM value is a long string that may exceed 255 characters. Gandi's interface accepts the value as a single
+  string for standard records. If the interface requires chunking for very long values, split the value into 255-character
+  segments and wrap each in double quotes adjacent to one another: `"first255chars""next255chars"`.
 </Info>
 
 ### Add TXT Record (DMARC)
@@ -103,20 +91,16 @@ The DMARC record tells receiving mail servers how to handle emails that fail aut
 
 Copy the TXT values from Lettr to Gandi:
 
-1. Click **Add a record** in the DNS zone editor.
-2. Set **Name** to the **Hostname** value from Lettr (without your domain suffix). For example, paste only `_dmarc.mailing`.
-3. Set **Type** to **TXT**.
-4. Set **Value** to the **Value** from Lettr, enclosed in double quotes (e.g. `"v=DMARC1;p=none;"`).
-5. Leave **TTL** at the default or set to **10800**.
-6. Click **Save**.
-
-
-{/* TODO: Add screenshot of gandi-sending-3.png */}
+1. Click the green **Add** button above the DNS records table.
+2. Set **Type** to **TXT**.
+3. Set **Name** to the **Hostname** value from Lettr (without your domain suffix). For example, paste only `_dmarc.mailing`.
+4. Set **Text Value** to the **Value** from Lettr (e.g. `v=DMARC1; p=none;`).
+5. Leave **TTL** at the default (**10800**).
+6. Click **Create**.
 
 ### Verify Your Sending Domain
 
-After adding all three DNS records, go back to Lettr and click **Verify DNS Records**. DNS propagation can take up to 24–48 hours, though it typically completes within a few minutes.
-
+After adding all three DNS records, go back to Lettr and click **Verify DNS Records**. DNS propagation can take up to 24–48 hours, though it typically completes within a few hours with Gandi LiveDNS.
 
 ---
 
@@ -133,12 +117,7 @@ To create an Inbound domain in Lettr:
 4. Enter your desired inbound subdomain (e.g. `inbound.company.com`)
 5. Click **Create Domain**.
 
-
-Click on your new domain in the Inbound Domains list.
-
-
-This will display the MX records that need to be configured.
-
+Click on your new domain in the Inbound Domains list. This will display the MX records that need to be configured.
 
 ### Add MX Records
 
@@ -146,16 +125,19 @@ MX records tell other mail servers where to deliver emails addressed to your dom
 
 Copy the MX values from Lettr to Gandi:
 
-1. Click **Add a record** in the DNS zone editor.
-2. Set **Name** to the **Hostname** value from Lettr (without your domain suffix). For example, paste only `inbound`.
-3. Set **Type** to **MX**.
-4. Set **Value** to `10 rx1.sparkpostmail.com.` (priority followed by the MX target with a trailing period).
-5. Add additional lines for `10 rx2.sparkpostmail.com.` and `10 rx3.sparkpostmail.com.`.
-6. Leave **TTL** at the default or set to **10800**.
-7. Click **Save**.
+1. Click the green **Add** button above the DNS records table.
+2. Set **Type** to **MX**.
+3. Set **Name** to the **Hostname** value from Lettr (without your domain suffix). For example, paste only `inbound`.
+4. Set **Hostname** to `rx1.sparkpostmail.com.` (with a trailing period).
+5. Set **Priority** to `10`.
+6. Leave **TTL** at the default (**10800**).
+7. Click **Create**.
+8. Repeat this process for the second (`rx2.sparkpostmail.com.`) and third (`rx3.sparkpostmail.com.`) MX records, each with priority `10`.
 
-
-{/* TODO: Add screenshot of gandi-inbound-1.png */}
+<Info>
+  Gandi requires a trailing period on MX target hostnames. Enter each mail server address with a trailing period
+  (e.g. `rx1.sparkpostmail.com.`) to ensure the record resolves correctly.
+</Info>
 
 <Warning>
   Adding MX records to a domain or subdomain will route all incoming email for that address to Lettr. Use a dedicated
@@ -164,8 +146,7 @@ Copy the MX values from Lettr to Gandi:
 
 ### Verify Your Inbound Domain
 
-After adding all three MX records, go back to Lettr and click **Verify DNS Records**. DNS propagation can take up to 24–48 hours, though it typically completes within a few minutes.
-
+After adding all three MX records, go back to Lettr and click **Verify DNS Records**. DNS propagation can take up to 24–48 hours, though it typically completes within a few hours.
 
 ---
 
@@ -182,12 +163,7 @@ To create a Tracking domain in Lettr:
 4. Enter your desired tracking subdomain (e.g. `tracking.company.com`)
 5. Click **Create Domain**
 
-
-Click on your new domain in the Tracking Domains list.
-
-
-This will display the CNAME records that need to be configured.
-
+Click on your new domain in the Tracking Domains list. This will display the CNAME records that need to be configured.
 
 ### Add SSL Certificate CNAME Record
 
@@ -195,14 +171,12 @@ The SSL Certificate CNAME record provisions an SSL certificate for your custom t
 
 Add the record in Gandi:
 
-1. Click **Add a record** in the DNS zone editor.
-2. Set **Name** to the **Hostname** from Lettr (without your domain suffix).
-3. Set **Type** to **CNAME**.
-4. Set **Value** to the **Value** from Lettr, ensuring it ends with a trailing period.
-5. Click **Save**.
-
-
-{/* TODO: Add screenshot of gandi-tracking-1.png */}
+1. Click the green **Add** button above the DNS records table.
+2. Set **Type** to **CNAME**.
+3. Set **Name** to the **Hostname** from Lettr (without your domain suffix).
+4. Set **Hostname** to the **Value** from Lettr, ensuring it ends with a trailing period.
+5. Leave **TTL** at the default (**10800**).
+6. Click **Create**.
 
 ### Add Traffic CNAME Record
 
@@ -210,19 +184,16 @@ The Traffic CNAME record routes click and open tracking requests from your custo
 
 Add the record in Gandi:
 
-1. Click **Add a record** in the DNS zone editor.
-2. Set **Name** to the **Hostname** from Lettr (without your domain suffix).
-3. Set **Type** to **CNAME**.
-4. Set **Value** to the **Value** from Lettr, ensuring it ends with a trailing period.
-5. Click **Save**.
-
-
-{/* TODO: Add screenshot of gandi-tracking-2.png */}
+1. Click the green **Add** button above the DNS records table.
+2. Set **Type** to **CNAME**.
+3. Set **Name** to the **Hostname** from Lettr (without your domain suffix).
+4. Set **Hostname** to the **Value** from Lettr, ensuring it ends with a trailing period.
+5. Leave **TTL** at the default (**10800**).
+6. Click **Create**.
 
 ### Verify Your Tracking Domain
 
 After adding both CNAME records, go back to Lettr and click **Verify DNS Records**.
-
 
 ---
 
@@ -239,12 +210,7 @@ To create a Storage domain in Lettr:
 4. Enter your desired storage subdomain (e.g. `assets.company.com`)
 5. Click **Create Domain**
 
-
-Click on your new domain in the Storage Domains list.
-
-
-This will display the TXT and CNAME records that need to be configured.
-
+Click on your new domain in the Storage Domains list. This will display the TXT and CNAME records that need to be configured.
 
 ### Add TXT Record (Certificate Validation)
 
@@ -252,14 +218,12 @@ The Certificate Validation TXT record provisions an SSL certificate for your cus
 
 Add the record in Gandi:
 
-1. Click **Add a record** in the DNS zone editor.
-2. Set **Name** to the **Hostname** from Lettr (without your domain suffix).
-3. Set **Type** to **TXT**.
-4. Set **Value** to the **Value** from Lettr, enclosed in double quotes.
-5. Click **Save**.
-
-
-{/* TODO: Add screenshot of gandi-storage-1.png */}
+1. Click the green **Add** button above the DNS records table.
+2. Set **Type** to **TXT**.
+3. Set **Name** to the **Hostname** from Lettr (without your domain suffix).
+4. Set **Text Value** to the **Value** from Lettr.
+5. Leave **TTL** at the default (**10800**).
+6. Click **Create**.
 
 ### Add TXT Record (Hostname Pre-validation)
 
@@ -267,14 +231,12 @@ The Hostname Pre-validation TXT record verifies ownership of the storage domain 
 
 Add the record in Gandi:
 
-1. Click **Add a record** in the DNS zone editor.
-2. Set **Name** to the **Hostname** from Lettr (without your domain suffix).
-3. Set **Type** to **TXT**.
-4. Set **Value** to the **Value** from Lettr, enclosed in double quotes.
-5. Click **Save**.
-
-
-{/* TODO: Add screenshot of gandi-storage-2.png */}
+1. Click the green **Add** button above the DNS records table.
+2. Set **Type** to **TXT**.
+3. Set **Name** to the **Hostname** from Lettr (without your domain suffix).
+4. Set **Text Value** to the **Value** from Lettr.
+5. Leave **TTL** at the default (**10800**).
+6. Click **Create**.
 
 ### Add CNAME Record (Domain Routing)
 
@@ -282,34 +244,43 @@ The Domain Routing CNAME record routes asset requests from your custom domain to
 
 Add the record in Gandi:
 
-1. Click **Add a record** in the DNS zone editor.
-2. Set **Name** to the **Hostname** from Lettr (without your domain suffix).
-3. Set **Type** to **CNAME**.
-4. Set **Value** to the **Value** from Lettr, ensuring it ends with a trailing period.
-5. Click **Save**.
-
-
-{/* TODO: Add screenshot of gandi-storage-3.png */}
+1. Click the green **Add** button above the DNS records table.
+2. Set **Type** to **CNAME**.
+3. Set **Name** to the **Hostname** from Lettr (without your domain suffix).
+4. Set **Hostname** to the **Value** from Lettr, ensuring it ends with a trailing period.
+5. Leave **TTL** at the default (**10800**).
+6. Click **Create**.
 
 ### Verify Your Storage Domain
 
 After adding all three records, go back to Lettr and click **Verify DNS Records**.
-
 
 ---
 
 ## Troubleshooting
 
 <AccordionGroup>
-  <Accordion title="Missing Trailing Period">
-    Gandi requires trailing periods on CNAME and MX target values. If your records are not resolving, check that each CNAME
-    and MX target ends with a period (e.g. `sparkpostmail.com.` not `sparkpostmail.com`). Edit the record and add the trailing
-    period if it is missing.
+  <Accordion title="Missing Trailing Period on CNAME or MX Target">
+    The most common mistake when adding records in Gandi is omitting the trailing period from CNAME and MX target
+    values. Without it, Gandi appends your domain name to the target, resulting in an incorrect address (e.g.
+    `sparkpostmail.com.company.com` instead of `sparkpostmail.com`).
+
+    Always ensure the **Hostname** field for CNAME and MX records ends with a period:
+    - Sending verification CNAME: `sparkpostmail.com.`
+    - Inbound MX records: `rx1.sparkpostmail.com.`, `rx2.sparkpostmail.com.`, `rx3.sparkpostmail.com.`
+    - Tracking and storage CNAME targets: append `.` to the end of the value from Lettr
+
+    To fix an existing record, click the **pencil icon** to the right of the record, correct the **Hostname** field,
+    and click **Update**.
   </Accordion>
   <Accordion title="Records Not Propagating">
-    Gandi DNS propagation can take several hours. If verification fails after adding records, check the following:
+    Gandi LiveDNS applies changes within milliseconds to its own servers, but external resolvers that have cached
+    previous records can take longer to refresh. Propagation typically completes within a few hours but can take up
+    to 72 hours in some regions.
 
-    - **Wait at least 2–3 hours** before your first verification attempt.
+    If verification fails after adding records, check the following:
+
+    - **Wait at least 1–2 hours** before your first verification attempt.
     - **Confirm the records exist** using command-line tools:
 
     ```bash
@@ -332,14 +303,36 @@ After adding all three records, go back to Lettr and click **Verify DNS Records*
     dig CNAME assets.yourdomain.com +short
     ```
 
-    - **Use a web tool** like [WhatsMyDNS](https://www.whatsmydns.net) or [dnschecker.org](https://dnschecker.org) to verify propagation across multiple DNS servers worldwide.
+    - **Use a web tool** like [WhatsMyDNS](https://www.whatsmydns.net) or [dnschecker.org](https://dnschecker.org)
+    to verify propagation across multiple DNS servers worldwide.
   </Accordion>
-  <Accordion title="TXT Values Not Quoted">
-    Gandi requires TXT record values to be wrapped in double quotes. If your DKIM or DMARC records are not resolving, edit
-    them and ensure the value is enclosed in double quotes (e.g. `"v=DMARC1;p=none;"`).
+  <Accordion title="Nameservers Not Pointing to Gandi">
+    If your records are saved in Gandi but not resolving, confirm that your domain registrar is pointing to Gandi's
+    LiveDNS nameservers. You can check this with:
+
+    ```bash
+    dig NS yourdomain.com +short
+    ```
+
+    The output should include Gandi's LiveDNS nameservers (in the format `ns-{numbers}-{letters}.gandi.net`). You
+    can find your domain's exact assigned nameservers under the **Nameservers** tab in your Gandi domain settings.
+
+    If the output shows a different provider's nameservers, update them at your domain registrar. Nameserver changes
+    can take 4–72 hours to propagate globally.
+  </Accordion>
+  <Accordion title="CNAME at Root Domain Not Supported">
+    Gandi does not support CNAME records at the apex of a domain (e.g. `company.com`). The **Name** field does not
+    accept `@` for CNAME records — only subdomains work. This is a DNS protocol constraint: CNAME records cannot
+    coexist with other record types (like SOA or NS) that are required at the root.
+
+    Always use a subdomain for your sending, tracking, and storage domains (e.g. `mailing.company.com`). If you need
+    to point your bare domain to another hostname, Gandi offers an **ALIAS** record type for that purpose.
+
+    If Gandi shows a conflict error when adding a CNAME, check whether an existing A or CNAME record is already
+    present for that subdomain and remove it first.
   </Accordion>
   <Accordion title="Wrong Record Type">
-    A common mistake is selecting the wrong record type:
+    A common mistake is selecting the wrong type from the **Type** dropdown when clicking **Add**:
 
     | Record | Correct Type |
     |--------|-------------|
@@ -353,14 +346,19 @@ After adding all three records, go back to Lettr and click **Verify DNS Records*
     | Storage hostname pre-validation | TXT |
     | Storage domain routing | CNAME |
   </Accordion>
-  <Accordion title="DKIM Value Truncated">
-    The DKIM TXT value is a long string. After saving the record, re-open it in the DNS zone editor to confirm the full
-    value was stored. If it appears truncated, delete and re-add the record, pasting the full value carefully.
+  <Accordion title="DKIM Value Truncated or Chunked">
+    The DKIM TXT value is a long string that often exceeds 255 characters. After saving the record, click the
+    **pencil icon** to re-open it and confirm the full value was stored. If it appears truncated, delete the record
+    and re-add it.
+
+    If Gandi's interface requires chunking for values longer than 255 characters, split the DKIM value into
+    255-character segments and wrap each in double quotes directly adjacent: `"first255chars""next255chars"`. Paste
+    this combined string into the **Text Value** field.
   </Accordion>
   <Accordion title="When to Contact Support">
-    If your DNS records are correctly configured (confirmed with `dig` or dnschecker.org) and verification still fails after
-    48 hours, contact Lettr support at **support@lettr.com** or through the in-app chat. Include your domain name and the
-    output of the `dig` commands above.
+    If your DNS records are correctly configured (confirmed with `dig` or dnschecker.org) and verification still
+    fails after 48 hours, contact Lettr support at **support@lettr.com** or through the in-app chat. Include your
+    domain name and the output of the `dig` commands above.
   </Accordion>
 </AccordionGroup>
 
