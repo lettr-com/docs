@@ -338,7 +338,8 @@
             "group": "Platforms",
             "pages": [
               "integrations/stripe",
-              "integrations/supabase"
+              "integrations/supabase",
+              "integrations/wordpress"
             ]
           }
         ]

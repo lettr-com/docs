@@ -1,0 +1,111 @@
+---
+title: WordPress
+description: "Send all WordPress emails through Lettr with a single plugin"
+---
+
+The [Lettr WordPress plugin](https://github.com/lettr-com/lettr-wordpress) replaces the default `wp_mail()` function with Lettr's email API. Once activated, every outgoing email from your WordPress site — including emails from WooCommerce, contact form plugins, and any other plugin that uses `wp_mail()` — is sent through Lettr automatically.
+
+No SMTP configuration needed. Just enter your API key and you're ready to go.
+
+## Prerequisites
+
+Before you begin, make sure you have:
+
+<CardGroup cols={2}>
+  <Card title="API Key" icon="key" href="https://app.lettr.com/api-keys">
+    Create an API key in the Lettr dashboard
+  </Card>
+  <Card title="Verified Domain" icon="globe" href="/learn/domains/sending-domains">
+    Add and verify your sending domain
+  </Card>
+</CardGroup>
+
+You'll also need:
+
+- WordPress 5.8 or higher
+- PHP 7.2 or higher
+
+## Install the Plugin
+
+<Steps>
+  <Step title="Download the plugin">
+    Download the latest release as a ZIP from the [GitHub repository](https://github.com/lettr-com/lettr-wordpress).
+  </Step>
+
+  <Step title="Upload and activate">
+    In your WordPress admin panel, go to **Plugins → Add Plugin → Upload Plugin**, upload the ZIP file, click **Install**, and activate the plugin.
+
+    Alternatively, clone or extract the plugin into `/wp-content/plugins/lettr` and activate it from the **Plugins** page.
+  </Step>
+
+  <Step title="Configure your API key">
+    After activation, you're redirected to the plugin's setup page. Enter your Lettr API key (starts with `lttr_`) and configure your sender name and email address.
+
+    <Warning>
+      The sender email must use a domain you've verified in the [Lettr dashboard](https://app.lettr.com/domains). Emails from unverified domains will be rejected.
+    </Warning>
+  </Step>
+
+  <Step title="Send a test email">
+    Use the built-in test email feature to confirm everything is working. Check the [Lettr logs](https://app.lettr.com/logs) to verify delivery.
+  </Step>
+</Steps>
+
+## How It Works
+
+The plugin overrides WordPress's built-in `wp_mail()` function and routes all emails through the [Lettr Send Email API](/api-reference/emails/send-email). This means:
+
+- **All plugins are covered** — WooCommerce order confirmations, Contact Form 7 submissions, password resets, user notifications, and anything else that calls `wp_mail()`.
+- **Attachments are supported** — File attachments are automatically encoded and sent via the API.
+- **HTML and plain text** — The plugin detects the content type and sends the appropriate format.
+- **Delivery tracking** — Every email appears in your [Lettr logs](https://app.lettr.com/logs) with full delivery status, opens, clicks, and bounces.
+
+<Tip>
+  Since the plugin uses the Lettr HTTP API (not SMTP), there's no need to open any ports or configure SMTP settings on your server.
+</Tip>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Emails not sending after activation">
+    - Verify your API key is correct and starts with `lttr_`
+    - Ensure the sender email uses a domain verified in Lettr
+    - Check the [Lettr logs](https://app.lettr.com/logs) for error details
+    - Confirm another plugin hasn't already overridden `wp_mail()` — the Lettr plugin shows an admin notice if this conflict is detected
+  </Accordion>
+
+  <Accordion title="wp_mail conflict with another plugin">
+    The Lettr plugin replaces the `wp_mail()` function. If another plugin (e.g. another email delivery plugin) has already declared `wp_mail()`, the Lettr plugin cannot override it and will display a notice in the admin panel. Deactivate the conflicting plugin to resolve this.
+  </Accordion>
+
+  <Accordion title="Emails landing in spam">
+    Make sure your sending domain has proper DNS records:
+
+    - [SPF](/learn/domains/spf) — Authorizes Lettr to send on your behalf
+    - [DKIM](/learn/domains/dkim) — Cryptographically signs your emails
+    - [DMARC](/learn/domains/dmarc) — Tells receivers how to handle unauthenticated mail
+
+    See [Deliverability Best Practices](/knowledge-base/best-practices/deliverability) for more tips.
+  </Accordion>
+
+  <Accordion title="Attachments not arriving">
+    The plugin reads attachments from the local filesystem. Ensure the file paths passed to `wp_mail()` are readable by PHP. Temporary files that are deleted before the API request completes will fail silently.
+  </Accordion>
+</AccordionGroup>
+
+## What's Next
+
+<CardGroup cols={2}>
+  <Card title="Sending Domains" icon="globe" href="/learn/domains/sending-domains">
+    Verify your sending domain
+  </Card>
+  <Card title="Templates" icon="paintbrush" href="/learn/templates/introduction">
+    Create reusable email templates
+  </Card>
+  <Card title="Webhooks" icon="webhook" href="/learn/webhooks/introduction">
+    Track delivery events in real-time
+  </Card>
+  <Card title="Deliverability" icon="chart-line" href="/knowledge-base/best-practices/deliverability">
+    Improve email deliverability
+  </Card>
+</CardGroup>
