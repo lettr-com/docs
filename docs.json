@@ -258,6 +258,7 @@
                 "pages": [
                   "learn/mcp/introduction",
                   "learn/mcp/setup",
+                  "learn/mcp/local-setup",
                   "learn/mcp/tools-reference"
                 ]
               },

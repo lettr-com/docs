@@ -1,17 +1,51 @@
 ---
-title: MCP Tools Reference
-description: "Detailed reference for all Lettr MCP tools available in Claude and other AI assistants"
+title: Tools Reference
+description: "Complete reference for all Lettr MCP tools across remote and local servers"
 ---
 
-The Lettr MCP server provides 16 tools organized into five categories: email sending, template management, configuration, analytics, and monitoring. This reference documents each tool's parameters and behavior.
+This reference documents every tool available through Lettr's MCP servers. Some tools are available on both the [remote](/learn/mcp/setup) and [local](/learn/mcp/local-setup) servers, while others are exclusive to one.
 
-For setup instructions, see [MCP Setup](/learn/mcp/setup).
+<Note>
+  The remote server uses underscores in tool names (e.g., `send_email`) while the local server uses hyphens (e.g., `send-email`). The functionality is equivalent.
+</Note>
+
+## Tool Availability
+
+| Category | Tool | Remote | Local |
+|----------|------|--------|-------|
+| **Sending** | send_email | Yes | Yes |
+| **Sending** | send_template_email | Yes | — |
+| **Templates** | list_templates | Yes | Yes |
+| **Templates** | get_template | Yes | Yes |
+| **Templates** | create_template | Yes | Yes |
+| **Templates** | update_template | Yes | Yes |
+| **Templates** | delete_template | — | Yes |
+| **Templates** | get_merge_tags | — | Yes |
+| **Domains** | list_sending_domains / list_domains | Yes | Yes |
+| **Domains** | list_tracking_domains | Yes | — |
+| **Domains** | list_inbound_domains | Yes | — |
+| **Domains** | list_storage_domains | Yes | — |
+| **Domains** | create_domain | — | Yes |
+| **Domains** | get_domain | — | Yes |
+| **Domains** | delete_domain | — | Yes |
+| **Domains** | verify_domain | — | Yes |
+| **Configuration** | list_api_keys | Yes | — |
+| **Configuration** | list_webhooks | Yes | Yes |
+| **Configuration** | get_webhook | — | Yes |
+| **Analytics** | get_analytics | Yes | — |
+| **Analytics** | list_template_stats | Yes | — |
+| **Monitoring** | browse_email_events | Yes | — |
+| **Monitoring** | browse_api_logs | Yes | — |
+
+---
 
 ## Email Sending
 
 ### send_email
 
 Send an email with plain text, HTML, or AMP HTML content. Supports merge tags for variable substitution.
+
+**Available on:** Remote, Local
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
@@ -35,6 +69,8 @@ Send an email with plain text, HTML, or AMP HTML content. Supports merge tags fo
 
 Send an email using a pre-defined template specified by its slug.
 
+**Available on:** Remote only
+
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `from` | string | Yes | Sender email address. Must be from a verified sending domain. |
@@ -49,6 +85,10 @@ Send an email using a pre-defined template specified by its slug.
 
 **Example prompt:** "Send the order-confirmation template to customer@example.com with order_id 12345"
 
+<Tip>
+  On the local server, the `send-email` tool supports template-based sending directly via a `template_slug` parameter.
+</Tip>
+
 ---
 
 ## Template Management
@@ -56,6 +96,8 @@ Send an email using a pre-defined template specified by its slug.
 ### list_templates
 
 Lists all email templates for your team with metadata including name, slug, editor type, version count, and merge tags.
+
+**Available on:** Remote, Local
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
@@ -68,6 +110,8 @@ Lists all email templates for your team with metadata including name, slug, edit
 ### get_template
 
 Gets detailed information about a specific template, including its HTML content and merge tags.
+
+**Available on:** Remote, Local
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
@@ -87,6 +131,8 @@ Gets detailed information about a specific template, including its HTML content 
 
 Creates a new Custom HTML email template.
 
+**Available on:** Remote, Local
+
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `name` | string | Yes | Display name for the template. |
@@ -104,6 +150,8 @@ Creates a new Custom HTML email template.
 
 Updates a template's content and creates a new active version. Supports both Custom HTML and Topol editor templates.
 
+**Available on:** Remote, Local
+
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `template_id` | integer | No | The numeric ID of the template. |
@@ -120,11 +168,45 @@ Updates a template's content and creates a new active version. Supports both Cus
 
 ---
 
-## Configuration Management
+### delete_template
 
-### list_sending_domains
+Permanently deletes a template and all its versions.
+
+**Available on:** Local only
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `template_id` | integer | No | The numeric ID of the template. |
+| `template_slug` | string | No | The slug of the template. |
+| `project_id` | integer | No | Project ID to narrow the search when using a slug. |
+
+**Example prompt:** "Delete the old-welcome-email template"
+
+---
+
+### get_merge_tags
+
+Retrieves the merge tag variables that a template expects, so you know which substitution data to provide when sending.
+
+**Available on:** Local only
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `template_id` | integer | No | The numeric ID of the template. |
+| `template_slug` | string | No | The slug of the template. |
+| `project_id` | integer | No | Project ID to narrow the search when using a slug. |
+
+**Example prompt:** "What merge tags does the order-confirmation template expect?"
+
+---
+
+## Domain Management
+
+### list_sending_domains / list_domains
 
 Lists all sending domains configured for your team with verification status, DNS configuration status, and whether they can be used for sending.
+
+**Available on:** Remote (`list_sending_domains`), Local (`list-domains`)
 
 **Parameters:** None
 
@@ -136,6 +218,8 @@ Lists all sending domains configured for your team with verification status, DNS
 
 Lists all tracking domains configured for your team. Tracking domains are used to track email opens and clicks with your own branded domain.
 
+**Available on:** Remote only
+
 **Parameters:** None
 
 **Example prompt:** "What tracking domains do I have set up?"
@@ -146,6 +230,8 @@ Lists all tracking domains configured for your team. Tracking domains are used t
 
 Lists all inbound domains configured for your team. Inbound domains receive emails via MX records.
 
+**Available on:** Remote only
+
 **Parameters:** None
 
 ---
@@ -154,13 +240,75 @@ Lists all inbound domains configured for your team. Inbound domains receive emai
 
 Lists all email storage domains configured for your team. Storage domains serve email assets (images, files) from your branded domain.
 
+**Available on:** Remote only
+
 **Parameters:** None
 
 ---
 
+### create_domain
+
+Registers a new sending domain.
+
+**Available on:** Local only
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `domain` | string | Yes | The domain name to register (e.g., `notifications.example.com`). |
+
+**Example prompt:** "Add notifications.example.com as a sending domain"
+
+---
+
+### get_domain
+
+Gets detailed information about a sending domain, including its DNS records for SPF, DKIM, and DMARC setup.
+
+**Available on:** Local only
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `domain_id` | string | Yes | The ID of the domain to retrieve. |
+
+**Example prompt:** "Show me the DNS records for my sending domain"
+
+---
+
+### delete_domain
+
+Removes a sending domain from your account.
+
+**Available on:** Local only
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `domain_id` | string | Yes | The ID of the domain to delete. |
+
+**Example prompt:** "Remove the old.example.com sending domain"
+
+---
+
+### verify_domain
+
+Triggers DNS verification for a sending domain to check if SPF and DKIM records are properly configured.
+
+**Available on:** Local only
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `domain_id` | string | Yes | The ID of the domain to verify. |
+
+**Example prompt:** "Verify the DNS records for my sending domain"
+
+---
+
+## Configuration
+
 ### list_api_keys
 
 Lists all API keys for your team, showing each key's name, key ID, prefix, permissions level, and IP whitelist configuration.
+
+**Available on:** Remote only
 
 **Parameters:** None
 
@@ -170,9 +318,25 @@ Lists all API keys for your team, showing each key's name, key ID, prefix, permi
 
 ### list_webhooks
 
-Lists all webhooks configured for your team, including target URL, enabled status, event types, authentication type, and delivery health indicators (last status, last success, and last failure timestamps).
+Lists all webhooks configured for your team, including target URL, enabled status, event types, authentication type, and delivery health indicators.
+
+**Available on:** Remote, Local
 
 **Parameters:** None
+
+---
+
+### get_webhook
+
+Gets detailed information about a specific webhook, including its delivery status and configuration.
+
+**Available on:** Local only
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `webhook_id` | string | Yes | The ID of the webhook to retrieve. |
+
+**Example prompt:** "Show me the details for my delivery webhook"
 
 ---
 
@@ -181,6 +345,8 @@ Lists all webhooks configured for your team, including target URL, enabled statu
 ### get_analytics
 
 Returns aggregate email delivery analytics with a daily breakdown, including targeted, accepted, bounced, and opened counts.
+
+**Available on:** Remote only
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
@@ -194,6 +360,8 @@ Returns aggregate email delivery analytics with a daily breakdown, including tar
 ### list_template_stats
 
 Lists templates with delivery statistics broken down by campaign, including sent, delivered, opened, and bounced counts.
+
+**Available on:** Remote only
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
@@ -210,6 +378,8 @@ Lists templates with delivery statistics broken down by campaign, including sent
 ### browse_email_events
 
 Browse email delivery events with optional filtering and pagination.
+
+**Available on:** Remote only
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
@@ -228,6 +398,8 @@ Browse email delivery events with optional filtering and pagination.
 
 Browse API request logs with optional filtering and pagination.
 
+**Available on:** Remote only
+
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `limit` | integer | No | Number of log entries (1, 20, 50, or 100). Default: 20. |
@@ -242,23 +414,19 @@ Browse API request logs with optional filtering and pagination.
 
 ---
 
-## Tool Categories Summary
-
-| Category | Tools | Description |
-|----------|-------|-------------|
-| **Sending** | `send_email`, `send_template_email` | Send emails directly or via templates |
-| **Templates** | `list_templates`, `get_template`, `create_template`, `update_template` | List, view, create, and update email templates |
-| **Configuration** | `list_sending_domains`, `list_tracking_domains`, `list_inbound_domains`, `list_storage_domains`, `list_api_keys`, `list_webhooks` | View your team's setup and configuration |
-| **Analytics** | `get_analytics`, `list_template_stats` | View delivery metrics and per-template statistics |
-| **Monitoring** | `browse_email_events`, `browse_api_logs` | Investigate delivery issues and API usage |
-
 ## Related Topics
 
 <CardGroup cols={2}>
-  <Card title="MCP Setup" icon="plug" href="/learn/mcp/setup">
-    How to connect Lettr MCP to Claude and other AI assistants
+  <Card title="Remote Server Setup" icon="cloud" href="/learn/mcp/setup">
+    Connect via OAuth from Claude.ai, ChatGPT, and other AI clients
+  </Card>
+  <Card title="Local Server Setup" icon="terminal" href="/learn/mcp/local-setup">
+    Install the lettr-mcp package for your IDE or CLI
   </Card>
   <Card title="API Reference" icon="code" href="/api-reference/introduction">
     Full REST API documentation
+  </Card>
+  <Card title="Template Language" icon="file-code" href="/learn/templates/template-language">
+    Merge tag syntax and template variables
   </Card>
 </CardGroup>

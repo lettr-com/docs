@@ -1,0 +1,205 @@
+---
+title: Local Server
+description: "Run the Lettr MCP server locally with an API key for Claude Code, Cursor, and Claude Desktop"
+---
+
+The [`lettr-mcp`](https://github.com/lettr-com/lettr-mcp) npm package runs an MCP server on your machine, giving AI coding assistants access to your Lettr email infrastructure. It authenticates with an API key and communicates over stdio — ideal for developer workflows in Claude Code, Cursor, and Claude Desktop.
+
+<Note>
+  Looking for the hosted MCP server that uses OAuth? See [Remote Server Setup](/learn/mcp/setup).
+</Note>
+
+## Prerequisites
+
+Before setting up the local MCP server, you'll need:
+
+- **Node.js** installed on your machine
+- A **Lettr API key** — create one in your [dashboard](https://app.lettr.com) or see [API Keys](/learn/api-keys/introduction)
+- At least one [verified sending domain](/learn/domains/sending-domains) to send emails
+
+## Setup
+
+<Tabs>
+  <Tab title="Claude Code">
+    Run the following command to add Lettr as an MCP server:
+
+    ```bash
+    claude mcp add lettr -e LETTR_API_KEY=lttr_xxxxxxxxx -- npx -y lettr-mcp
+    ```
+
+    Claude Code will automatically start the server when needed.
+  </Tab>
+  <Tab title="Cursor">
+    Open the command palette and choose **Cursor Settings** > **MCP** > **Add new global MCP server**, then add the following configuration:
+
+    ```json
+    {
+      "mcpServers": {
+        "lettr": {
+          "command": "npx",
+          "args": ["-y", "lettr-mcp"],
+          "env": {
+            "LETTR_API_KEY": "lttr_xxxxxxxxx"
+          }
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="Claude Desktop">
+    Open Claude Desktop settings > **Developer** tab > **Edit Config**, then add:
+
+    ```json
+    {
+      "mcpServers": {
+        "lettr": {
+          "command": "npx",
+          "args": ["-y", "lettr-mcp"],
+          "env": {
+            "LETTR_API_KEY": "lttr_xxxxxxxxx"
+          }
+        }
+      }
+    }
+    ```
+
+    Restart Claude Desktop to apply the configuration.
+  </Tab>
+</Tabs>
+
+Replace `lttr_xxxxxxxxx` with your actual API key.
+
+## Configuration Options
+
+You can pass additional arguments to configure default behavior:
+
+```bash
+npx -y lettr-mcp --sender hello@mycompany.com --reply-to support@mycompany.com
+```
+
+| Option | Environment Variable | Description |
+|--------|---------------------|-------------|
+| `--key` | `LETTR_API_KEY` | Your Lettr API key (required) |
+| `--sender` | `SENDER_EMAIL_ADDRESS` | Default sender email address from a [verified domain](/learn/domains/sending-domains) |
+| `--reply-to` | `REPLY_TO_EMAIL_ADDRESS` | Default reply-to email address |
+
+<Tip>
+  Setting a default sender address avoids the MCP server asking for one each time you send an email. Use an address from a verified sending domain.
+</Tip>
+
+For example, in Cursor with all options configured:
+
+```json
+{
+  "mcpServers": {
+    "lettr": {
+      "command": "npx",
+      "args": ["-y", "lettr-mcp", "--sender", "hello@mycompany.com", "--reply-to", "support@mycompany.com"],
+      "env": {
+        "LETTR_API_KEY": "lttr_xxxxxxxxx"
+      }
+    }
+  }
+}
+```
+
+## Verifying the Connection
+
+After setup, ask your AI assistant a simple question to verify the connection:
+
+> "List my sending domains"
+
+The AI should respond with your verified sending domains. If you see domain information, the server is running correctly.
+
+## Available Tools
+
+The local MCP server provides 14 tools for managing your email infrastructure:
+
+### Emails
+
+| Tool | Description |
+|------|-------------|
+| `send-email` | Send a transactional email with HTML, plain text, templates, attachments, tracking, and personalization |
+
+### Templates
+
+| Tool | Description |
+|------|-------------|
+| `list-templates` | List email templates with pagination |
+| `get-template` | Get full template details including HTML content |
+| `create-template` | Create a new template with HTML or visual editor JSON |
+| `update-template` | Update template name and/or content (creates new version) |
+| `delete-template` | Permanently delete a template and all versions |
+| `get-merge-tags` | Discover merge tag variables a template expects |
+
+### Domains
+
+| Tool | Description |
+|------|-------------|
+| `list-domains` | List all sending domains and their verification status |
+| `create-domain` | Register a new sending domain |
+| `get-domain` | Get domain details with DNS records |
+| `delete-domain` | Remove a sending domain |
+| `verify-domain` | Trigger DNS verification for a domain |
+
+### Webhooks
+
+| Tool | Description |
+|------|-------------|
+| `list-webhooks` | List all webhook configurations |
+| `get-webhook` | Get webhook details and delivery status |
+
+For detailed parameter documentation, see the [Tools Reference](/learn/mcp/tools-reference).
+
+## Example Workflows
+
+### Sending an Email from Your IDE
+
+> "Send an email to john@example.com from hello@mycompany.com with the subject 'Deployment Complete' and let them know the release went live"
+
+### Working with Templates
+
+> "List my templates and show me the merge tags for the 'welcome-email' template"
+
+> "Create a new template called 'Password Reset' in folder 1 with a basic HTML layout"
+
+### Managing Domains
+
+> "Add the domain notifications.example.com and show me the DNS records I need to set up"
+
+> "Verify the DNS records for notifications.example.com"
+
+### Inspecting Webhooks
+
+> "List my webhook configurations and show me the details for the first one"
+
+## Security
+
+- **API key storage** — Your API key stays in your local environment configuration and is never transmitted to third parties
+- **Restricted keys** — Use [API key permissions](/learn/api-keys/permissions) to limit what the MCP server can do (e.g., sending only, no domain management)
+- **No network exposure** — The server communicates via stdio, not over the network
+
+<Warning>
+  Never commit API keys to version control. Use environment variables or your AI client's secure configuration to store the key.
+</Warning>
+
+## Source Code
+
+The local MCP server is open source and available on GitHub: [lettr-com/lettr-mcp](https://github.com/lettr-com/lettr-mcp).
+
+## Learn More
+
+<CardGroup cols={2}>
+  <Card title="Remote Server Setup" icon="cloud" href="/learn/mcp/setup">
+    Connect via OAuth from Claude.ai and ChatGPT
+  </Card>
+  <Card title="Tools Reference" icon="wrench" href="/learn/mcp/tools-reference">
+    Full reference for all MCP tools
+  </Card>
+  <Card title="API Keys" icon="key" href="/learn/api-keys/introduction">
+    Create and manage API keys
+  </Card>
+  <Card title="Sending Domains" icon="globe" href="/learn/domains/sending-domains">
+    Set up domains for sending emails
+  </Card>
+</CardGroup>

@@ -555,9 +555,9 @@ See [Transactional vs Marketing](/knowledge-base/best-practices/transactional-vs
 
 ### MCP (Model Context Protocol)
 
-An open protocol for connecting AI assistants (like Claude) to external data sources and tools. Lettr implements an MCP server that exposes email sending, template management, domain configuration, and analytics as tools that AI assistants can invoke on behalf of users. MCP integration enables natural-language email operations and template creation through conversational interfaces.
+An open protocol for connecting AI assistants (like Claude) to external data sources and tools. Lettr provides two MCP servers: a [remote server](/learn/mcp/setup) hosted at `https://app.lettr.com/mcp` with OAuth authentication for chat-based AI clients, and a [local server](/learn/mcp/local-setup) (`lettr-mcp` npm package) with API key authentication for developer tools. Both expose email sending, template management, and domain configuration as tools that AI assistants can invoke on behalf of users.
 
-See [MCP Introduction](/learn/mcp/introduction), [MCP Setup](/learn/mcp/setup), and [MCP Tools Reference](/learn/mcp/tools-reference).
+See [MCP Introduction](/learn/mcp/introduction), [Remote Server](/learn/mcp/setup), [Local Server](/learn/mcp/local-setup), and [Tools Reference](/learn/mcp/tools-reference).
 
 ### Merge Tag
 

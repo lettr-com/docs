@@ -1,13 +1,13 @@
 ---
-title: MCP Introduction
+title: MCP
 description: "Connect AI assistants to Lettr using the Model Context Protocol"
 ---
 
-The Model Context Protocol (MCP) is an open standard that enables AI assistants like Claude, ChatGPT, and Cursor to securely connect with external services. Lettr's MCP server allows AI agents to interact programmatically with your email infrastructure—sending messages, monitoring delivery, inspecting events, and troubleshooting issues—all through natural language conversation.
+The [Model Context Protocol](https://modelcontextprotocol.io/) (MCP) is an open standard that enables AI assistants to securely connect with external services. Lettr provides two MCP servers so AI agents can interact with your email infrastructure — sending messages, managing templates, configuring domains, and monitoring delivery — all through natural language.
 
 ## Why Use MCP?
 
-MCP transforms how you interact with your email infrastructure. Instead of switching between dashboards, writing code, or memorizing API calls, you can simply ask your AI assistant to handle email tasks for you.
+MCP transforms how you interact with your email infrastructure. Instead of switching between dashboards, writing code, or memorizing API calls, you can ask your AI assistant to handle email tasks directly.
 
 | Traditional Workflow | With MCP |
 |---------------------|----------|
@@ -16,126 +16,66 @@ MCP transforms how you interact with your email infrastructure. Instead of switc
 | Query API logs, parse response, identify issues | "Why didn't my email to jane@example.com deliver yesterday?" |
 | Browse events, filter by recipient, analyze patterns | "Show me recent bounces for the last 24 hours" |
 
-## What Can You Do with Lettr MCP?
+## Two Ways to Connect
 
-The Lettr MCP server provides AI assistants with a comprehensive set of tools to manage your email infrastructure.
+Lettr offers two MCP servers for different workflows. Both give AI assistants access to your email infrastructure, but they differ in how they authenticate and where they run.
 
-### Send Emails
+<CardGroup cols={2}>
+  <Card title="Remote Server" icon="cloud" href="/learn/mcp/setup">
+    Hosted at `https://app.lettr.com/mcp`. Authenticates via OAuth — no API key needed. Connect directly from Claude.ai, ChatGPT, Cursor, Claude Desktop, and GitHub Copilot.
+  </Card>
+  <Card title="Local Server" icon="terminal" href="/learn/mcp/local-setup">
+    The `lettr-mcp` npm package runs on your machine. Authenticates with an API key. Ideal for Claude Code, Cursor, and Claude Desktop during development.
+  </Card>
+</CardGroup>
 
-Your AI assistant can compose and send emails through natural language:
+### Comparison
 
-- **Compose directly** — Dictate content, specifying recipients, subject lines, and body text in conversation
-- **Use templates** — Reference pre-built templates and let the AI populate merge tags with personalization data using the `{{variable_name}}` syntax
-- **Full options** — CC, BCC, reply-to addresses, attachments, and tracking settings are all available
+| | Remote Server | Local Server |
+|---|---|---|
+| **How it runs** | Hosted by Lettr | Runs on your machine via `npx` |
+| **Authentication** | OAuth 2.1 (your Lettr session) | API key (`LETTR_API_KEY`) |
+| **Transport** | HTTP/SSE | stdio |
+| **Supported clients** | Claude.ai, ChatGPT, Cursor, Claude Desktop, GitHub Copilot | Claude Code, Cursor, Claude Desktop |
+| **Best for** | Chat-based account management, monitoring, analytics | Developer workflows, coding assistants, CI environments |
+| **Unique tools** | Analytics, email events, API logs | Domain CRUD, template delete, domain verification |
+| **Open source** | No | [Yes](https://github.com/lettr-com/lettr-mcp) |
 
-<Note>
-  AI assistants send emails on your behalf using your verified sending domains. The same domain verification requirements apply as with the REST API.
-</Note>
+### Which Should I Use?
 
-### Monitor Email Events
+**Use the remote server** if you want to manage your Lettr account from a web-based AI chat like Claude.ai or ChatGPT, or if you need analytics and event monitoring tools. The remote server authenticates through OAuth so you don't need to manage API keys.
 
-Once emails are sent, you can ask your AI assistant to track what happens next. The event monitoring tools provide visibility into:
-
-- **Delivery status** — Successful deliveries, bounces, and deferrals
-- **Engagement metrics** — Opens, clicks, and unsubscribes
-- **Compliance events** — Spam complaints
-- **Filtering** — Filter by recipient address, date range, or event type to find exactly what you're looking for
-
-### Inspect API Activity
-
-When debugging integration issues, your AI assistant can review API request logs on your behalf:
-
-- **Request/response payloads** — Examine payloads (truncated for large responses)
-- **Status codes and errors** — HTTP status codes and error messages
-- **Client details** — Client IP addresses and API key prefixes used for each request
-- **Filtering** — Narrow down problems by date range, API key name, client type, or status code
-
-### Manage Templates
-
-Your AI assistant can work with your email templates directly:
-
-- **List templates** — Browse all templates across projects, with metadata and merge tag information
-- **View template content** — Inspect the HTML and configuration of any template
-- **Create templates** — Build new Custom HTML templates with initial content
-- **Update templates** — Modify template content and automatically create new versions
-
-### View Analytics
-
-Get insights into your email performance without leaving the conversation:
-
-- **Delivery analytics** — Aggregate stats including targeted, accepted, bounced, and opened counts with daily breakdowns
-- **Template statistics** — Per-template delivery metrics broken down by campaign to identify your best-performing templates
-
-### Manage Domains
-
-Your AI assistant can check the status of all domain types in your email infrastructure:
-
-- **Sending domains** — DKIM and SPF verification status
-- **Tracking domains** — Branded click and open links
-- **Inbound domains** — Email receiving configuration
-- **Storage domains** — Asset CDN configuration
-
-Ask about specific domains or request an overview of your entire setup.
-
-### View Configuration
-
-Beyond domains, the AI can inspect your broader account configuration:
-
-- **API keys** — List keys showing prefixes only (never full values) for security
-- **Webhook endpoints** — Review endpoints with their enabled event types and delivery health indicators
-
-## Supported AI Clients
-
-Lettr's MCP server works with AI assistants that support the Model Context Protocol:
-
-| Client | Support |
-|--------|---------|
-| Claude (claude.ai) | Supported |
-| ChatGPT | Supported |
-| Cursor IDE | Supported |
-| GitHub Copilot | Supported |
+**Use the local server** if you want email capabilities inside your IDE or CLI during development. The local server is ideal for Claude Code and Cursor workflows where you need to send emails, manage templates, or configure domains as part of your coding process.
 
 <Tip>
-  MCP uses OAuth 2.1 for authentication. When you connect an AI client, you'll authorize it through Lettr's secure OAuth flow—your API keys are never shared with the AI assistant.
+  Cursor and Claude Desktop work with both servers. The remote server uses OAuth (no API key needed), while the local server uses an API key and runs as a local process. You can use both simultaneously.
 </Tip>
 
-## Security Considerations
+## What Can You Do?
 
-The MCP integration is designed with security as a foundational principle:
+Both MCP servers give AI assistants tools to work with your email infrastructure. The exact tools vary — see the [tools reference](/learn/mcp/tools-reference) for the full list.
 
-- **OAuth authentication** — AI clients authenticate through Lettr's OAuth flow rather than using API keys directly, so your credentials are never exposed to the AI assistant
-- **Session-tied access** — Access is tied to your active Lettr session — when you sign out, the AI loses access automatically
-- **Team-scoped permissions** — AI assistants can only access data and perform actions within the boundaries of your existing Lettr permissions
-- **Key masking** — When the AI lists API keys, it only sees prefixes — never full key values — protecting your credentials even within the MCP context
-- **Rate limiting** — All MCP requests follow the same rate limits as the REST API, preventing abuse
-
-<Warning>
-  MCP allows AI assistants to send emails on your behalf. Only connect trusted AI clients and review actions before confirming sensitive operations.
-</Warning>
-
-## How It Works
-
-<Steps>
-  <Step title="Connect Your AI Client">
-    Configure your AI assistant to connect to `https://app.lettr.com/mcp` as an MCP server.
-  </Step>
-  <Step title="Authenticate via OAuth">
-    When prompted, sign in to Lettr and authorize the AI client to access your account.
-  </Step>
-  <Step title="Start Interacting">
-    Ask your AI assistant to perform email tasks using natural language.
-  </Step>
-  <Step title="Review and Confirm">
-    The AI presents its intended actions. Confirm before executing sensitive operations.
-  </Step>
-</Steps>
+| Capability | Remote | Local |
+|---|---|---|
+| Send emails (direct and template-based) | Yes | Yes |
+| List, view, create, and update templates | Yes | Yes |
+| Delete templates and inspect merge tags | No | Yes |
+| List sending domains | Yes | Yes |
+| Create, verify, and delete domains | No | Yes |
+| View analytics and template statistics | Yes | No |
+| Browse email events and API logs | Yes | No |
+| List API keys and webhooks | Yes | Yes |
+| Inspect webhook details | No | Yes |
 
 ## Example Conversations
 
-Once connected, you can interact with your email infrastructure using natural language. Here are some examples:
+Once connected, you can interact with your email infrastructure using natural language:
 
 **Sending emails:**
 > "Send an email to john@example.com from hello@mycompany.com about tomorrow's 3pm meeting"
+
+**Using templates:**
+> "Send the 'order-confirmation' template to buyer@example.com with order_id '12345' and customer_name 'Sarah'"
 
 **Debugging delivery:**
 > "Why didn't my message to jane@example.com deliver yesterday?"
@@ -144,34 +84,32 @@ Once connected, you can interact with your email infrastructure using natural la
 > "Is my domain notifications.example.com verified and ready to send?"
 
 **Reviewing events:**
-> "Show me all bounces from the last week for emails sent from marketing@example.com"
+> "Show me all bounces from the last week"
 
-**Inspecting API usage:**
-> "What API requests failed with 4xx errors today?"
+## Security
 
-## Technical Details
+Both MCP servers are designed with security in mind:
 
-For developers interested in the implementation:
+- **Remote server** — Authenticates through OAuth 2.1. Access is tied to your Lettr session and team permissions. When you sign out, the AI loses access. API keys are never exposed to the AI assistant.
+- **Local server** — Authenticates with an API key stored in your local environment. The key never leaves your machine. Use [restricted API keys](/learn/api-keys/permissions) to limit what the AI can do.
 
-- **Server URL** — `https://app.lettr.com/mcp`
-- **Authentication** — OAuth 2.1 with dynamic client registration
-- **Discovery endpoints** — `/.well-known/oauth-protected-resource` and `/.well-known/oauth-authorization-server`
-- **Pagination** — Cursor-based pagination for large result sets
-- **Rate limits** — Same rate limits as the REST API
+<Warning>
+  MCP allows AI assistants to send emails on your behalf. Only connect trusted AI clients and review actions before confirming sensitive operations.
+</Warning>
 
 ## Next Steps
 
 <CardGroup cols={2}>
-  <Card title="Setup Guide" icon="gear" href="/learn/mcp/setup">
-    Step-by-step instructions for connecting AI clients to Lettr
+  <Card title="Remote Server Setup" icon="cloud" href="/learn/mcp/setup">
+    Connect via OAuth from Claude.ai, ChatGPT, and other AI clients
+  </Card>
+  <Card title="Local Server Setup" icon="terminal" href="/learn/mcp/local-setup">
+    Install the lettr-mcp package for your IDE or CLI
+  </Card>
+  <Card title="Tools Reference" icon="wrench" href="/learn/mcp/tools-reference">
+    Full reference for all MCP tools across both servers
   </Card>
   <Card title="API Keys" icon="key" href="/learn/api-keys/introduction">
-    Understand API authentication for programmatic access
-  </Card>
-  <Card title="Webhooks" icon="webhook" href="/learn/webhooks/introduction">
-    Set up real-time notifications for email events
-  </Card>
-  <Card title="Sending Emails" icon="paper-plane" href="/learn/sending/introduction">
-    Learn about sending emails through the API
+    Create an API key for the local MCP server
   </Card>
 </CardGroup>

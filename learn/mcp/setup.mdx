@@ -1,17 +1,17 @@
 ---
-title: MCP Setup
-description: "Connect your AI assistant to Lettr using the Model Context Protocol"
+title: Remote Server
+description: "Connect AI assistants to Lettr's hosted MCP server using OAuth"
 ---
 
-This guide walks you through connecting your AI assistant to Lettr's MCP server. The setup process varies slightly depending on which AI client you're using, but all follow the same general pattern: configure the MCP server URL, authenticate via OAuth, and start interacting.
+Lettr's remote MCP server is hosted at `https://app.lettr.com/mcp` and authenticates through OAuth 2.1. Connect directly from Claude.ai, ChatGPT, Cursor, Claude Desktop, or GitHub Copilot — no API key required.
+
+<Note>
+  Looking for the local MCP server that runs on your machine with an API key? See [Local Server Setup](/learn/mcp/local-setup).
+</Note>
 
 ## Prerequisites
 
-Before connecting an AI client to Lettr's MCP server, you'll need a Lettr account with at least one [verified sending domain](/learn/domains/sending-domains) and an AI assistant that supports the Model Context Protocol—currently Claude, ChatGPT, Cursor, or GitHub Copilot.
-
-<Note>
-  MCP authentication uses your Lettr session—you don't need to create a separate API key for AI assistant access.
-</Note>
+You'll need a Lettr account with at least one [verified sending domain](/learn/domains/sending-domains) and an AI assistant that supports the Model Context Protocol.
 
 ## Connection Details
 
@@ -287,16 +287,16 @@ See [Rate Limits](/learn/sending/rate-limits) for detailed information.
 ## Learn More
 
 <CardGroup cols={2}>
-  <Card title="MCP Introduction" icon="robot" href="/learn/mcp/introduction">
-    Overview of MCP capabilities and use cases
+  <Card title="Local Server Setup" icon="terminal" href="/learn/mcp/local-setup">
+    Run the MCP server locally with an API key
+  </Card>
+  <Card title="Tools Reference" icon="wrench" href="/learn/mcp/tools-reference">
+    Full reference for all remote server tools
   </Card>
   <Card title="Sending Domains" icon="globe" href="/learn/domains/sending-domains">
     Set up domains for sending emails
   </Card>
   <Card title="Templates" icon="file-code" href="/learn/templates/introduction">
     Create reusable email templates
-  </Card>
-  <Card title="Email Events" icon="chart-line" href="/learn/webhooks/event-types">
-    Understand email delivery events
   </Card>
 </CardGroup>
