@@ -3,7 +3,7 @@ title: "IONOS"
 description: "Step-by-step guide to configuring DNS records for Lettr on IONOS."
 ---
 
-This guide walks you through adding the required DNS records for Lettr using IONOS's DNS management. IONOS is a web hosting and domain provider that offers DNS hosting for domains managed through its [IONOS Control Panel](https://www.ionos.com).
+This guide walks you through adding the required DNS records for Lettr using IONOS's DNS management. IONOS is a web hosting and domain provider that offers DNS hosting for domains managed through its [IONOS Control Panel](https://my.ionos.com).
 
 You will configure a **sending domain** (CNAME, DKIM TXT, and DMARC TXT records) and, optionally, an **inbound domain** (MX records), **tracking domain** (two CNAME records), and **storage domain** (CNAME and two TXT records).
 
@@ -20,7 +20,6 @@ To create a sending domain in Lettr:
 4. Enter your desired sending subdomain (e.g. `mailing.company.com`)
 5. Click **Create Domain**
 
-<img src="/images/lettr-create-sending-domain.png" alt="Create Sending Domain button in Lettr" />
 
 <Tip>
   Use a subdomain (e.g. `mailing.company.com`) instead of the root domain (`company.com`). A subdomain provides proper
@@ -29,15 +28,13 @@ To create a sending domain in Lettr:
 
 Click your new domain in the Sending Domains list.
 
-<img src="/images/lettr-sending-list.png" alt="Sending domain listed in Lettr Sending Domains list" />
 
 This will display a list of DNS records that need to be configured. Keep this page open — you will need these values soon.
 
-<img src="/images/lettr-mailing-config.png" alt="DNS records displayed in Lettr after creating a sending domain" />
 
 ### Configure IONOS DNS
 
-Log in to the [IONOS Control Panel](https://www.ionos.com) and navigate to **Domains** → **DNS**. Select the domain you want to configure and access its DNS settings.
+Log in to the [IONOS Control Panel](https://my.ionos.com) and click the **Domains & SSL** tile on the dashboard. Find the domain you want to configure, click the **three-dot menu** in the Actions column next to it, and select **DNS**.
 
 {/* TODO: Add screenshot of IONOS DNS management page */}
 
@@ -50,7 +47,9 @@ Log in to the [IONOS Control Panel](https://www.ionos.com) and navigate to **Dom
 <AccordionGroup>
   <Accordion title="Domain registered with a different registrar?">
     If you registered your domain elsewhere but want to manage DNS on IONOS, you must first **update the nameservers**
-    at your registrar to IONOS's nameservers shown in your domain configuration.
+    at your registrar to the IONOS nameservers shown in your domain's DNS settings. IONOS assigns four nameservers per
+    account in the format `ns1045.ui-dns.org`, `ns1045.ui-dns.de`, `ns1045.ui-dns.biz`, and `ns1045.ui-dns.com` — the
+    number prefix (e.g. `1045`) varies by account. Use the exact values shown in your IONOS control panel.
 
     <Warning>Until the nameservers are updated, any records you add in IONOS will not resolve.</Warning>
   </Accordion>
@@ -65,19 +64,18 @@ The CNAME record verifies domain ownership with Lettr's email infrastructure.
 Copy the CNAME values from Lettr to IONOS:
 
 1. Click **Add record** in the DNS management page.
-2. Set **Name** to the **Hostname** value from Lettr (without your domain suffix). For example, paste only `mailing`.
-3. Set **Type** to **CNAME**.
-4. Set **Value** to the **Value** from Lettr.
-5. Set **TTL** to **3600**.
+2. Select **CNAME** from the record type dropdown.
+3. Set **Hostname** to the **Hostname** value from Lettr (without your domain suffix). For example, paste only `mailing`.
+4. Set **Point to** to the **Value** from Lettr.
+5. Leave **TTL** at the default (3600).
 6. Click **Save**.
-
-<img src="/images/lettr-mailing-1.png" alt="CNAME record Hostname and Value in Lettr" />
 
 {/* TODO: Add screenshot of CNAME record in IONOS */}
 
 <Info>
-  IONOS automatically appends your domain to the record name. Always paste only the subdomain portion (e.g.
-  `mailing`, not `mailing.company.com`).
+  IONOS automatically appends your domain to the hostname. Always paste only the subdomain portion (e.g.
+  `mailing`, not `mailing.company.com`). If you paste the full hostname, the resulting record will resolve as
+  `mailing.company.com.company.com`, which will fail verification.
 </Info>
 
 ### Add TXT Record (DKIM)
@@ -87,15 +85,18 @@ The DKIM record adds a cryptographic signature to your outgoing emails, allowing
 Copy the TXT values from Lettr to IONOS:
 
 1. Click **Add record** in the DNS management page.
-2. Set **Name** to the **Hostname** value from Lettr (without your domain suffix). For example, paste only `scph0126._domainkey.mailing`.
-3. Set **Type** to **TXT**.
+2. Select **TXT** from the record type dropdown.
+3. Set **Host name** to the **Hostname** value from Lettr (without your domain suffix). For example, paste only `scph0126._domainkey.mailing`.
 4. Set **Value** to the **Value** from Lettr.
-5. Set **TTL** to **3600**.
+5. Leave **TTL** at the default (3600).
 6. Click **Save**.
 
-<img src="/images/lettr-mailing-2.png" alt="DKIM TXT record Hostname and Value in Lettr" />
-
 {/* TODO: Add screenshot of DKIM TXT record in IONOS */}
+
+<Info>
+  IONOS automatically appends your domain to the hostname. Always paste only the subdomain portion (e.g.
+  `scph0126._domainkey.mailing`, not `scph0126._domainkey.mailing.company.com`).
+</Info>
 
 ### Add TXT Record (DMARC)
 
@@ -104,21 +105,23 @@ The DMARC record tells receiving mail servers how to handle emails that fail aut
 Copy the TXT values from Lettr to IONOS:
 
 1. Click **Add record** in the DNS management page.
-2. Set **Name** to the **Hostname** value from Lettr (without your domain suffix). For example, paste only `_dmarc.mailing`.
-3. Set **Type** to **TXT**.
+2. Select **TXT** from the record type dropdown.
+3. Set **Host name** to the **Hostname** value from Lettr (without your domain suffix). For example, paste only `_dmarc.mailing`.
 4. Set **Value** to the **Value** from Lettr (e.g. `v=DMARC1;p=none;`).
-5. Set **TTL** to **3600**.
+5. Leave **TTL** at the default (3600).
 6. Click **Save**.
-
-<img src="/images/lettr-mailing-3.png" alt="DMARC TXT record Hostname and Value in Lettr" />
 
 {/* TODO: Add screenshot of DMARC TXT record in IONOS */}
 
+<Info>
+  IONOS automatically appends your domain to the hostname. Always paste only the subdomain portion (e.g.
+  `_dmarc.mailing`, not `_dmarc.mailing.company.com`).
+</Info>
+
 ### Verify Your Sending Domain
 
-After adding all three DNS records, go back to Lettr and click **Verify DNS Records**. DNS propagation can take up to 24–48 hours, though it typically completes within a few minutes.
+After adding all three DNS records, go back to Lettr and click **Verify DNS Records**. DNS changes on IONOS propagate within about 1 hour in most cases, though external resolvers may take longer.
 
-<img src="/images/lettr-verified.png" alt="Sending domain verified successfully in Lettr" />
 
 ---
 
@@ -135,15 +138,12 @@ To create an Inbound domain in Lettr:
 4. Enter your desired inbound subdomain (e.g. `inbound.company.com`)
 5. Click **Create Domain**.
 
-<img src="/images/lettr-inbound-new.png" alt="Creating a new inbound domain in Lettr" />
 
 Click on your new domain in the Inbound Domains list.
 
-<img src="/images/lettr-inbound-list.png" alt="Inbound domain listed in Lettr Inbound Domains list" />
 
 This will display the MX records that need to be configured.
 
-<img src="/images/lettr-inbound-config.png" alt="MX record configuration displayed in Lettr for inbound domain" />
 
 ### Add MX Records
 
@@ -152,17 +152,20 @@ MX records tell other mail servers where to deliver emails addressed to your dom
 Copy the MX values from Lettr to IONOS:
 
 1. Click **Add record** in the DNS management page.
-2. Set **Name** to the **Hostname** value from Lettr (without your domain suffix). For example, paste only `inbound`.
-3. Set **Type** to **MX**.
-4. Set **Value** to `rx1.sparkpostmail.com`.
+2. Select **MX** from the record type dropdown.
+3. Set **Host name** to the **Hostname** value from Lettr (without your domain suffix). For example, paste only `inbound`.
+4. Set **Points to** to `rx1.sparkpostmail.com`.
 5. Set **Priority** to `10`.
-6. Set **TTL** to **3600**.
+6. Leave **TTL** at the default (3600).
 7. Click **Save**.
 8. Repeat this process for the second (`rx2.sparkpostmail.com`) and third (`rx3.sparkpostmail.com`) MX records, each with priority `10`.
 
-<img src="/images/lettr-inbound-1.png" alt="MX record values in Lettr for inbound domain" />
-
 {/* TODO: Add screenshot of MX records in IONOS */}
+
+<Info>
+  IONOS automatically appends your domain to the hostname. Always paste only the subdomain portion (e.g.
+  `inbound`, not `inbound.company.com`).
+</Info>
 
 <Warning>
   All emails sent to the domain or subdomain where MX records are configured will be routed to Lettr. Use a dedicated
@@ -171,9 +174,8 @@ Copy the MX values from Lettr to IONOS:
 
 ### Verify Your Inbound Domain
 
-After adding all three MX records, go back to Lettr and click **Verify DNS Records**. DNS propagation can take up to 24–48 hours, though it typically completes within a few minutes.
+After adding all three MX records, go back to Lettr and click **Verify DNS Records**. DNS changes on IONOS propagate within about 1 hour in most cases, though external resolvers may take longer.
 
-<img src="/images/lettr-inbound-verified.png" alt="Inbound domain verified successfully in Lettr" />
 
 ---
 
@@ -190,15 +192,12 @@ To create a Tracking domain in Lettr:
 4. Enter your desired tracking subdomain (e.g. `tracking.company.com`)
 5. Click **Create Domain**
 
-<img src="/images/lettr-add-tracking.png" alt="Creating a new tracking domain in Lettr" />
 
 Click on your new domain in the Tracking Domains list.
 
-<img src="/images/lettr-tracking-list.png" alt="Tracking domain listed in Lettr Tracking Domains list" />
 
 This will display the CNAME records that need to be configured.
 
-<img src="/images/lettr-tracking-config.png" alt="CNAME records displayed in Lettr for tracking domain configuration" />
 
 ### Add SSL Certificate CNAME Record
 
@@ -207,15 +206,18 @@ The SSL Certificate CNAME record provisions an SSL certificate for your custom t
 Add the record in IONOS:
 
 1. Click **Add record** in the DNS management page.
-2. Set **Name** to the **Hostname** from Lettr (without your domain suffix).
-3. Set **Type** to **CNAME**.
-4. Set **Value** to the **Value** from Lettr.
-5. Set **TTL** to **3600**.
+2. Select **CNAME** from the record type dropdown.
+3. Set **Hostname** to the **Hostname** from Lettr (without your domain suffix).
+4. Set **Point to** to the **Value** from Lettr.
+5. Leave **TTL** at the default (3600).
 6. Click **Save**.
 
-<img src="/images/lettr-tracking-1.png" alt="SSL Certificate CNAME record values in Lettr for tracking domain" />
-
 {/* TODO: Add screenshot of SSL Certificate CNAME record in IONOS */}
+
+<Info>
+  IONOS automatically appends your domain to the hostname. Always paste only the subdomain portion (e.g.
+  `tracking`, not `tracking.company.com`).
+</Info>
 
 ### Add Traffic CNAME Record
 
@@ -224,21 +226,23 @@ The Traffic CNAME record routes click and open tracking requests from your custo
 Add the record in IONOS:
 
 1. Click **Add record** in the DNS management page.
-2. Set **Name** to the **Hostname** from Lettr (without your domain suffix).
-3. Set **Type** to **CNAME**.
-4. Set **Value** to the **Value** from Lettr.
-5. Set **TTL** to **3600**.
+2. Select **CNAME** from the record type dropdown.
+3. Set **Hostname** to the **Hostname** from Lettr (without your domain suffix).
+4. Set **Point to** to the **Value** from Lettr.
+5. Leave **TTL** at the default (3600).
 6. Click **Save**.
 
-<img src="/images/lettr-tracking-2.png" alt="Traffic CNAME record values in Lettr for tracking domain" />
-
 {/* TODO: Add screenshot of Traffic CNAME record in IONOS */}
+
+<Info>
+  IONOS automatically appends your domain to the hostname. Always paste only the subdomain portion (e.g.
+  `tracking`, not `tracking.company.com`).
+</Info>
 
 ### Verify Your Tracking Domain
 
 After adding both CNAME records, go back to Lettr and click **Verify DNS Records**.
 
-<img src="/images/lettr-tracking-verified.png" alt="Tracking domain verified successfully in Lettr" />
 
 ---
 
@@ -255,15 +259,12 @@ To create a Storage domain in Lettr:
 4. Enter your desired storage subdomain (e.g. `assets.company.com`)
 5. Click **Create Domain**
 
-<img src="/images/lettr-storage-new.png" alt="Creating a new storage domain in Lettr" />
 
 Click on your new domain in the Storage Domains list.
 
-<img src="/images/lettr-storage-list.png" alt="Storage domain listed in Lettr Storage Domains list" />
 
 This will display the TXT and CNAME records that need to be configured.
 
-<img src="/images/lettr-storage-config.png" alt="TXT and CNAME records displayed in Lettr for storage domain configuration" />
 
 ### Add TXT Record (Certificate Validation)
 
@@ -272,15 +273,15 @@ The Certificate Validation TXT record provisions an SSL certificate for your cus
 Add the record in IONOS:
 
 1. Click **Add record** in the DNS management page.
-2. Set **Name** to the **Hostname** from Lettr (without your domain suffix).
-3. Set **Type** to **TXT**.
+2. Select **TXT** from the record type dropdown.
+3. Set **Host name** to the **Hostname** from Lettr (without your domain suffix).
 4. Set **Value** to the **Value** from Lettr.
-5. Set **TTL** to **3600**.
+5. Leave **TTL** at the default (3600).
 6. Click **Save**.
 
-<img src="/images/lettr-storage-1.png" alt="Certificate Validation TXT record values in Lettr for storage domain" />
-
 {/* TODO: Add screenshot of Certificate Validation TXT record in IONOS */}
+
+<Info>IONOS automatically appends your domain to the hostname. Always paste only the subdomain portion, just as with the CNAME record above.</Info>
 
 ### Add TXT Record (Hostname Pre-validation)
 
@@ -289,15 +290,15 @@ The Hostname Pre-validation TXT record verifies ownership of the storage domain 
 Add the record in IONOS:
 
 1. Click **Add record** in the DNS management page.
-2. Set **Name** to the **Hostname** from Lettr (without your domain suffix).
-3. Set **Type** to **TXT**.
+2. Select **TXT** from the record type dropdown.
+3. Set **Host name** to the **Hostname** from Lettr (without your domain suffix).
 4. Set **Value** to the **Value** from Lettr.
-5. Set **TTL** to **3600**.
+5. Leave **TTL** at the default (3600).
 6. Click **Save**.
 
-<img src="/images/lettr-storage-2.png" alt="Hostname Pre-validation TXT record values in Lettr for storage domain" />
-
 {/* TODO: Add screenshot of Hostname Pre-validation TXT record in IONOS */}
+
+<Info>IONOS automatically appends your domain to the hostname. Always paste only the subdomain portion, just as with the CNAME record above.</Info>
 
 ### Add CNAME Record (Domain Routing)
 
@@ -306,32 +307,42 @@ The Domain Routing CNAME record routes asset requests from your custom domain to
 Add the record in IONOS:
 
 1. Click **Add record** in the DNS management page.
-2. Set **Name** to the **Hostname** from Lettr (without your domain suffix).
-3. Set **Type** to **CNAME**.
-4. Set **Value** to the **Value** from Lettr.
-5. Set **TTL** to **3600**.
+2. Select **CNAME** from the record type dropdown.
+3. Set **Hostname** to the **Hostname** from Lettr (without your domain suffix).
+4. Set **Point to** to the **Value** from Lettr.
+5. Leave **TTL** at the default (3600).
 6. Click **Save**.
 
-<img src="/images/lettr-storage-3.png" alt="Domain Routing CNAME record values in Lettr for storage domain" />
-
 {/* TODO: Add screenshot of Domain Routing CNAME record in IONOS */}
+
+<Info>
+  IONOS automatically appends your domain to the hostname. Always paste only the subdomain portion (e.g.
+  `assets`, not `assets.company.com`).
+</Info>
 
 ### Verify Your Storage Domain
 
 After adding all three records, go back to Lettr and click **Verify DNS Records**.
 
-<img src="/images/lettr-storage-verified.png" alt="Storage domain verified successfully in Lettr" />
 
 ---
 
 ## Troubleshooting
 
 <AccordionGroup>
-  <Accordion title="Records Not Propagating">
-    IONOS DNS may take up to 48 hours to propagate in some cases. If verification fails after adding records, check the
-    following:
+  <Accordion title="Domain Suffix Not Omitted">
+    IONOS automatically appends your domain to the **Hostname** / **Host name** field. If you paste the full hostname
+    (e.g. `mailing.company.com`), the resulting record will resolve as `mailing.company.com.company.com`, which will
+    fail verification.
 
-    - **Wait at least 2–4 hours** before your first verification attempt.
+    Always paste only the subdomain portion (e.g. `mailing`, `scph0126._domainkey.mailing`, `_dmarc.mailing`).
+  </Accordion>
+  <Accordion title="Records Not Propagating">
+    IONOS applies DNS changes immediately on their side, but external resolvers may take up to 1 hour to pick up the
+    changes (and in rare cases, ISPs with long cache times may take longer). If verification fails after adding records,
+    check the following:
+
+    - **Wait at least 1 hour** before your first verification attempt.
     - **Confirm the records exist** using command-line tools:
 
     ```bash
@@ -354,7 +365,7 @@ After adding all three records, go back to Lettr and click **Verify DNS Records*
     dig CNAME assets.yourdomain.com +short
     ```
 
-    - **Use a web tool** like [WhatsMyDNS](https://www.whatsmydns.net) or [dnschecker.org](https://dnschecker.org) to verify propagation across multiple DNS servers worldwide.
+    - **Use a web tool** like [dnschecker.org](https://dnschecker.org) to verify propagation across multiple DNS servers worldwide.
   </Accordion>
   <Accordion title="Nameservers Not Pointing to IONOS">
     If your records are saved in IONOS but not resolving, confirm that your domain is using IONOS's nameservers. You can
@@ -364,11 +375,24 @@ After adding all three records, go back to Lettr and click **Verify DNS Records*
     dig NS yourdomain.com +short
     ```
 
-    The output should include IONOS nameservers. If it shows a different provider's nameservers, update them in your domain
-    registrar settings.
+    The output should include IONOS nameservers in the format `ns####.ui-dns.org`, `ns####.ui-dns.de`,
+    `ns####.ui-dns.biz`, and `ns####.ui-dns.com` (where `####` is a number unique to your account). Your exact
+    nameservers are shown in the IONOS Control Panel under **Domains & SSL** → your domain's DNS settings. If the output
+    shows a different provider's nameservers, update them at your domain registrar.
+  </Accordion>
+  <Accordion title="CNAME at Root Domain Not Supported">
+    IONOS does not allow CNAME records at the root of a domain (e.g. `company.com`). You must use a subdomain for your
+    sending domain (e.g. `mailing.company.com`). This is also a DNS protocol limitation — CNAME records cannot coexist
+    with other record types at the same name.
+  </Accordion>
+  <Accordion title="Conflicting Service-Managed Records">
+    If you have IONOS-hosted services active on your domain (e.g. Microsoft 365, IONOS webmail, WordPress hosting),
+    IONOS manages some DNS records automatically. Adding records that conflict with service-managed entries may cause
+    errors or silent overwrites. Check for existing A, CNAME, or MX records on the same hostname before adding new ones,
+    and remove any conflicting entries first.
   </Accordion>
   <Accordion title="Wrong Record Type">
-    A common mistake is selecting the wrong record type:
+    A common mistake is selecting the wrong type from the record type dropdown:
 
     | Record | Correct Type |
     |--------|-------------|
@@ -383,8 +407,12 @@ After adding all three records, go back to Lettr and click **Verify DNS Records*
     | Storage domain routing | CNAME |
   </Accordion>
   <Accordion title="DKIM Value Truncated">
-    The DKIM TXT value is a long string. After saving the record, re-open the DNS management page and confirm the full value
-    is displayed. If it appears truncated, delete the record and re-add it, pasting the full value carefully.
+    The DKIM TXT value is a long string. After saving the record, re-open the DNS management page and confirm the full
+    value is displayed. If it appears truncated, delete the record and re-add it, pasting the full value carefully into
+    the **Value** field.
+
+    If IONOS rejects the value due to length, try splitting the `p=` portion into two quoted strings separated by a
+    space: `"v=DKIM1; k=rsa; p=firsthalf" "secondhalf"`. Paste both quoted strings together into the **Value** field.
   </Accordion>
   <Accordion title="When to Contact Support">
     If your DNS records are correctly configured (confirmed with `dig` or dnschecker.org) and verification still fails after

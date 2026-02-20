@@ -12,6 +12,19 @@ This guide walks you through adding the required DNS records for Lettr using Goo
 
 You will configure a **sending domain** (CNAME, DKIM TXT, and DMARC TXT records) and, optionally, an **inbound domain** (MX records), **tracking domain** (two CNAME records), and **storage domain** (CNAME and two TXT records).
 
+<Info>
+  **Google Cloud DNS requires a trailing period (`.`) on all FQDN values** in the **Canonical name** and **Mail server**
+  fields. For example, enter `sparkpostmail.com.` not `sparkpostmail.com`. The **DNS name** field is different — you
+  enter only the subdomain label (e.g. `mailing`), and the console automatically appends the zone's domain and the
+  trailing period.
+</Info>
+
+<Info>
+  **TXT record values must be enclosed in double quotes** in Google Cloud DNS. Unlike most other DNS providers, Google
+  Cloud DNS does not add quotes automatically. Always wrap the value in double quotes when entering it into the
+  **TXT data** field (e.g. `"v=DMARC1;p=none;"`).
+</Info>
+
 ---
 
 ## Sending Domain Setup
@@ -25,110 +38,140 @@ To create a sending domain in Lettr:
 4. Enter your desired sending subdomain (e.g. `mailing.company.com`)
 5. Click **Create Domain**
 
-<img src="/images/lettr-create-sending-domain.png" alt="Create Sending Domain button in Lettr" />
-
 <Tip>
   Use a subdomain (e.g. `mailing.company.com`) instead of the root domain (`company.com`). A subdomain provides proper
   reputation segmentation and is required if you also plan to receive emails with Lettr.
 </Tip>
 
-Click your new domain in the Sending Domains list.
-
-<img src="/images/lettr-sending-list.png" alt="Sending domain listed in Lettr Sending Domains list" />
-
-This will display a list of DNS records that need to be configured. Keep this page open — you will need these values soon.
-
-<img src="/images/lettr-mailing-config.png" alt="DNS records displayed in Lettr after creating a sending domain" />
+Click your new domain in the Sending Domains list. This will display a list of DNS records that need to be configured. Keep this page open — you will need these values soon.
 
 ### Configure Google Cloud DNS
 
-Log in to the [Google Cloud Console](https://console.cloud.google.com) and navigate to **Cloud DNS** in the left-hand menu. Select the managed zone that corresponds to your domain.
-
-{/* TODO: Add screenshot of Google Cloud DNS managed zones list */}
+Log in to the [Google Cloud Console](https://console.cloud.google.com) and navigate to **Network Services** → **Cloud DNS** in the left-hand menu. Click the name of the managed zone that corresponds to your domain to open the zone details page.
 
 <Tip>
-  If your domain was purchased through Google Cloud or your nameservers already point to Google Cloud DNS, skip nameserver
-  configuration entirely. Your domain is already using Google Cloud DNS's nameservers by default — proceed directly to adding the
-  DNS records below.
+  If your domain was registered through Google Cloud Domains or your nameservers already point to Google Cloud DNS,
+  skip nameserver configuration entirely. Your domain is already using Google Cloud DNS's nameservers by default —
+  proceed directly to adding the DNS records below.
 </Tip>
 
 <AccordionGroup>
   <Accordion title="Domain registered with a different registrar?">
-    If you registered your domain elsewhere but want to manage DNS on Google Cloud DNS, you must first create a managed zone
-    and then **update the nameservers** at your registrar to the nameservers assigned to your managed zone.
+    If you registered your domain elsewhere but want to manage DNS on Google Cloud DNS, you must first create a managed
+    public zone in Google Cloud DNS and then **update the nameservers** at your registrar to the four nameservers
+    assigned to your managed zone.
 
-    <Warning>Until the nameservers are updated, any records you add in Google Cloud DNS will not resolve.</Warning>
+    To find your zone's nameservers, open the zone details page in Cloud DNS. The four nameservers are listed in the
+    **NS record** at the top of the records list. They follow the format:
+
+    ```
+    ns-cloud-a1.googledomains.com
+    ns-cloud-a2.googledomains.com
+    ns-cloud-a3.googledomains.com
+    ns-cloud-a4.googledomains.com
+    ```
+
+    The shard letter (`a`–`e`) is randomly assigned per zone — copy the exact values shown in your zone, not the
+    example above.
+
+    <Warning>
+      Until all four nameservers are updated at your registrar, any records you add in Google Cloud DNS will not
+      resolve. Nameserver propagation can take up to 48 hours.
+    </Warning>
   </Accordion>
 </AccordionGroup>
-
-{/* TODO: Add screenshot of Google Cloud DNS nameserver configuration inside the accordion above */}
 
 ### Add CNAME Record
 
 The CNAME record verifies domain ownership with Lettr's email infrastructure.
 
-Add the record in Google Cloud DNS:
+Copy the CNAME values from Lettr to Google Cloud DNS:
 
-1. Click **Add record set** in your managed zone.
-2. Set **Name** to the **Hostname** from Lettr (without your domain suffix). For example, paste only `mailing`.
-3. Set **Type** to **CNAME**.
-4. Set **TTL** to **300** (or your preferred value).
-5. Set **Canonical name** to the **Value** from Lettr, ensuring it ends with a trailing period (e.g. `sparkpostmail.com.`).
-6. Click **Save**.
-
-<img src="/images/lettr-mailing-1.png" alt="CNAME record Hostname and Value in Lettr" />
-
-{/* TODO: Add screenshot of gcloud-sending-1.png */}
+1. Click **Add standard** on the zone details page.
+2. Set **DNS name** to the **Hostname** from Lettr, omitting your domain suffix. For example, paste only `mailing`.
+3. Set **Resource record type** to **CNAME**.
+4. Set **TTL** to `300` and select **seconds** from the TTL unit dropdown.
+5. Set **Canonical name** to the **Value** from Lettr, with a trailing period. For example, `sparkpostmail.com.`
+6. Click **Create**.
 
 <Info>
-  Google Cloud DNS requires trailing periods on CNAME and MX target values. If the value from Lettr does not end with a
-  period, add one manually (e.g. `sparkpostmail.com.`).
+  Google Cloud DNS automatically appends your zone's domain and a trailing period to the **DNS name** field. Always
+  paste only the subdomain portion (e.g. `mailing`, not `mailing.company.com`). The **Canonical name** target,
+  however, requires a trailing period that you must add manually.
 </Info>
+
+<Warning>
+  Do not add a CNAME record at the root of your domain (e.g. `company.com`). Google Cloud DNS does not support CNAME
+  records at the zone apex — the root already has required SOA and NS records, and a CNAME cannot coexist with any
+  other record type at the same name. Always use a subdomain for your sending domain.
+</Warning>
 
 ### Add TXT Record (DKIM)
 
 The DKIM record adds a cryptographic signature to your outgoing emails, allowing recipients to verify they were sent by an authorized sender.
 
-Add the record in Google Cloud DNS:
+Copy the TXT values from Lettr to Google Cloud DNS:
 
-1. Click **Add record set** in your managed zone.
-2. Set **Name** to the **Hostname** from Lettr (without your domain suffix). For example, paste only `scph0126._domainkey.mailing`.
-3. Set **Type** to **TXT**.
-4. Set **TTL** to **300** (or your preferred value).
-5. Set the **Text data** to the **Value** from Lettr, enclosed in double quotes.
-6. Click **Save**.
-
-<img src="/images/lettr-mailing-2.png" alt="DKIM TXT record Hostname and Value in Lettr" />
-
-{/* TODO: Add screenshot of gcloud-sending-2.png */}
+1. Click **Add standard** on the zone details page.
+2. Set **DNS name** to the **Hostname** from Lettr, omitting your domain suffix. For example, paste only `scph0126._domainkey.mailing`.
+3. Set **Resource record type** to **TXT**.
+4. Set **TTL** to `300` and select **seconds** from the TTL unit dropdown.
+5. Set **TXT data** to the **Value** from Lettr, enclosed in double quotes. For example, `"v=DKIM1;k=rsa;h=sha256;p=MIGfMA0..."`
+6. Click **Create**.
 
 <Info>
-  DKIM values are long strings. Google Cloud DNS supports long TXT values, but if you encounter issues, try splitting the
-  value into multiple quoted strings (e.g. `"part1" "part2"`). Google Cloud DNS will concatenate them automatically.
+  Google Cloud DNS automatically appends your zone's domain to the **DNS name** field. Always paste only the subdomain
+  portion (e.g. `scph0126._domainkey.mailing`, not `scph0126._domainkey.mailing.company.com`).
 </Info>
+
+<Warning>
+  **DKIM keys are longer than 255 characters.** Google Cloud DNS does NOT automatically split long TXT values — it
+  returns an "Invalid record data" error if you paste a single unquoted string over 255 characters. You must manually
+  split the value into 255-character segments, wrapping each segment in double quotes, and enter them as a single
+  string in the **TXT data** field:
+
+  ```
+  "first255characters..." "remainingcharacters..."
+  ```
+
+  Do not add separate **Add item** entries for each segment — all segments must be in one TXT data entry, separated by
+  a space. Google Cloud DNS concatenates the quoted strings automatically when the record is queried.
+</Warning>
+
+<Tip>
+  To split a DKIM key using the `gcloud` CLI, wrap the full value in single outer quotes and use double-quoted
+  segments:
+
+  ```bash
+  gcloud dns record-sets create scph0126._domainkey.mailing.example.com. \
+    --zone="my-zone" \
+    --type="TXT" \
+    --ttl="300" \
+    --rrdatas='"v=DKIM1;k=rsa;h=sha256;p=first255chars..." "remainingchars..."'
+  ```
+</Tip>
 
 ### Add TXT Record (DMARC)
 
 The DMARC record tells receiving mail servers how to handle emails that fail authentication checks, protecting your domain from spoofing.
 
-Add the record in Google Cloud DNS:
+Copy the TXT values from Lettr to Google Cloud DNS:
 
-1. Click **Add record set** in your managed zone.
-2. Set **Name** to the **Hostname** from Lettr (without your domain suffix). For example, paste only `_dmarc.mailing`.
-3. Set **Type** to **TXT**.
-4. Set **TTL** to **300** (or your preferred value).
-5. Set the **Text data** to the **Value** from Lettr, enclosed in double quotes (e.g. `"v=DMARC1;p=none;"`).
-6. Click **Save**.
+1. Click **Add standard** on the zone details page.
+2. Set **DNS name** to the **Hostname** from Lettr, omitting your domain suffix. For example, paste only `_dmarc.mailing`.
+3. Set **Resource record type** to **TXT**.
+4. Set **TTL** to `300` and select **seconds** from the TTL unit dropdown.
+5. Set **TXT data** to the **Value** from Lettr, enclosed in double quotes. For example, `"v=DMARC1;p=none;"`
+6. Click **Create**.
 
-<img src="/images/lettr-mailing-3.png" alt="DMARC TXT record Hostname and Value in Lettr" />
-
-{/* TODO: Add screenshot of gcloud-sending-3.png */}
+<Info>
+  Google Cloud DNS automatically appends your zone's domain to the **DNS name** field. Always paste only the subdomain
+  portion (e.g. `_dmarc.mailing`, not `_dmarc.mailing.company.com`).
+</Info>
 
 ### Verify Your Sending Domain
 
-After adding all three DNS records, go back to Lettr and click **Verify DNS Records**. DNS propagation can take up to 24–48 hours, though it typically completes within a few minutes.
-
-<img src="/images/lettr-verified.png" alt="Sending domain verified successfully in Lettr" />
+After adding all three DNS records, go back to Lettr and click **Verify DNS Records**. With the default 300-second TTL, record changes propagate globally within minutes. Click **Verify DNS Records** in Lettr once propagation is complete.
 
 ---
 
@@ -145,35 +188,28 @@ To create an Inbound domain in Lettr:
 4. Enter your desired inbound subdomain (e.g. `inbound.company.com`)
 5. Click **Create Domain**.
 
-<img src="/images/lettr-inbound-new.png" alt="Creating a new inbound domain in Lettr" />
-
-Click on your new domain in the Inbound Domains list.
-
-<img src="/images/lettr-inbound-list.png" alt="Inbound domain listed in Lettr Inbound Domains list" />
-
-This will display the MX records that need to be configured.
-
-<img src="/images/lettr-inbound-config.png" alt="MX record configuration displayed in Lettr for inbound domain" />
+Click on your new domain in the Inbound Domains list. This will display the MX records that need to be configured.
 
 ### Add MX Records
 
 MX records tell other mail servers where to deliver emails addressed to your domain.
 
-Add the MX record set in Google Cloud DNS:
+Copy the MX values from Lettr to Google Cloud DNS:
 
-1. Click **Add record set** in your managed zone.
-2. Set **Name** to the **Hostname** from Lettr (without your domain suffix). For example, paste only `inbound`.
-3. Set **Type** to **MX**.
-4. Set **TTL** to **300** (or your preferred value).
-5. Add three rows in the **MX data** field:
-   - `10 rx1.sparkpostmail.com.`
-   - `10 rx2.sparkpostmail.com.`
-   - `10 rx3.sparkpostmail.com.`
-6. Click **Save**.
+1. Click **Add standard** on the zone details page.
+2. Set **DNS name** to the **Hostname** from Lettr, omitting your domain suffix. For example, paste only `inbound`.
+3. Set **Resource record type** to **MX**.
+4. Set **TTL** to `300` and select **seconds** from the TTL unit dropdown.
+5. In the first **Priority** field, enter `10`. In the adjacent **Mail server** field, enter `rx1.sparkpostmail.com.` (with trailing period).
+6. Click **Add item** to add a second row. Enter priority `10` and mail server `rx2.sparkpostmail.com.`
+7. Click **Add item** again for a third row. Enter priority `10` and mail server `rx3.sparkpostmail.com.`
+8. Click **Create**.
 
-<img src="/images/lettr-inbound-1.png" alt="MX record values in Lettr for inbound domain" />
-
-{/* TODO: Add screenshot of gcloud-inbound-1.png */}
+<Info>
+  Google Cloud DNS automatically appends your zone's domain to the **DNS name** field. Always paste only the subdomain
+  portion (e.g. `inbound`, not `inbound.company.com`). The **Mail server** values require a trailing period — add it
+  manually (e.g. `rx1.sparkpostmail.com.`).
+</Info>
 
 <Warning>
   Adding MX records to a domain or subdomain will route all incoming email for that address to Lettr. Use a dedicated
@@ -182,9 +218,7 @@ Add the MX record set in Google Cloud DNS:
 
 ### Verify Your Inbound Domain
 
-After adding all three MX records, go back to Lettr and click **Verify DNS Records**. DNS propagation can take up to 24–48 hours, though it typically completes within a few minutes.
-
-<img src="/images/lettr-inbound-verified.png" alt="Inbound domain verified successfully in Lettr" />
+After adding all three MX records, go back to Lettr and click **Verify DNS Records**. With the default 300-second TTL, changes propagate within minutes.
 
 ---
 
@@ -201,15 +235,7 @@ To create a Tracking domain in Lettr:
 4. Enter your desired tracking subdomain (e.g. `tracking.company.com`)
 5. Click **Create Domain**
 
-<img src="/images/lettr-add-tracking.png" alt="Creating a new tracking domain in Lettr" />
-
-Click on your new domain in the Tracking Domains list.
-
-<img src="/images/lettr-tracking-list.png" alt="Tracking domain listed in Lettr Tracking Domains list" />
-
-This will display the CNAME records that need to be configured.
-
-<img src="/images/lettr-tracking-config.png" alt="CNAME records displayed in Lettr for tracking domain configuration" />
+Click on your new domain in the Tracking Domains list. This will display the CNAME records that need to be configured.
 
 ### Add SSL Certificate CNAME Record
 
@@ -217,15 +243,17 @@ The SSL Certificate CNAME record provisions an SSL certificate for your custom t
 
 Add the record in Google Cloud DNS:
 
-1. Click **Add record set** in your managed zone.
-2. Set **Name** to the **Hostname** from Lettr (without your domain suffix).
-3. Set **Type** to **CNAME**.
-4. Set **Canonical name** to the **Value** from Lettr, with a trailing period.
-5. Click **Save**.
+1. Click **Add standard** on the zone details page.
+2. Set **DNS name** to the **Hostname** from Lettr, omitting your domain suffix.
+3. Set **Resource record type** to **CNAME**.
+4. Set **TTL** to `300` and select **seconds** from the TTL unit dropdown.
+5. Set **Canonical name** to the **Value** from Lettr, with a trailing period.
+6. Click **Create**.
 
-<img src="/images/lettr-tracking-1.png" alt="SSL Certificate CNAME record values in Lettr for tracking domain" />
-
-{/* TODO: Add screenshot of gcloud-tracking-1.png */}
+<Info>
+  Google Cloud DNS automatically appends your zone's domain to the **DNS name** field. Always paste only the subdomain
+  portion. The **Canonical name** requires a trailing period — add it manually.
+</Info>
 
 ### Add Traffic CNAME Record
 
@@ -233,21 +261,16 @@ The Traffic CNAME record routes click and open tracking requests from your custo
 
 Add the record in Google Cloud DNS:
 
-1. Click **Add record set** in your managed zone.
-2. Set **Name** to the **Hostname** from Lettr (without your domain suffix).
-3. Set **Type** to **CNAME**.
-4. Set **Canonical name** to the **Value** from Lettr, with a trailing period.
-5. Click **Save**.
-
-<img src="/images/lettr-tracking-2.png" alt="Traffic CNAME record values in Lettr for tracking domain" />
-
-{/* TODO: Add screenshot of gcloud-tracking-2.png */}
+1. Click **Add standard** on the zone details page.
+2. Set **DNS name** to the **Hostname** from Lettr, omitting your domain suffix.
+3. Set **Resource record type** to **CNAME**.
+4. Set **TTL** to `300` and select **seconds** from the TTL unit dropdown.
+5. Set **Canonical name** to the **Value** from Lettr, with a trailing period.
+6. Click **Create**.
 
 ### Verify Your Tracking Domain
 
 After adding both CNAME records, go back to Lettr and click **Verify DNS Records**.
-
-<img src="/images/lettr-tracking-verified.png" alt="Tracking domain verified successfully in Lettr" />
 
 ---
 
@@ -264,15 +287,7 @@ To create a Storage domain in Lettr:
 4. Enter your desired storage subdomain (e.g. `assets.company.com`)
 5. Click **Create Domain**
 
-<img src="/images/lettr-storage-new.png" alt="Creating a new storage domain in Lettr" />
-
-Click on your new domain in the Storage Domains list.
-
-<img src="/images/lettr-storage-list.png" alt="Storage domain listed in Lettr Storage Domains list" />
-
-This will display the TXT and CNAME records that need to be configured.
-
-<img src="/images/lettr-storage-config.png" alt="TXT and CNAME records displayed in Lettr for storage domain configuration" />
+Click on your new domain in the Storage Domains list. This will display the TXT and CNAME records that need to be configured.
 
 ### Add TXT Record (Certificate Validation)
 
@@ -280,15 +295,17 @@ The Certificate Validation TXT record provisions an SSL certificate for your cus
 
 Add the record in Google Cloud DNS:
 
-1. Click **Add record set** in your managed zone.
-2. Set **Name** to the **Hostname** from Lettr (without your domain suffix).
-3. Set **Type** to **TXT**.
-4. Set the **Text data** to the **Value** from Lettr, enclosed in double quotes.
-5. Click **Save**.
+1. Click **Add standard** on the zone details page.
+2. Set **DNS name** to the **Hostname** from Lettr, omitting your domain suffix.
+3. Set **Resource record type** to **TXT**.
+4. Set **TTL** to `300` and select **seconds** from the TTL unit dropdown.
+5. Set **TXT data** to the **Value** from Lettr, enclosed in double quotes.
+6. Click **Create**.
 
-<img src="/images/lettr-storage-1.png" alt="Certificate Validation TXT record values in Lettr for storage domain" />
-
-{/* TODO: Add screenshot of gcloud-storage-1.png */}
+<Info>
+  Google Cloud DNS automatically appends your zone's domain to the **DNS name** field. Always paste only the subdomain
+  portion (e.g. `assets`, not `assets.company.com`). Remember to wrap the value in double quotes.
+</Info>
 
 ### Add TXT Record (Hostname Pre-validation)
 
@@ -296,15 +313,12 @@ The Hostname Pre-validation TXT record verifies ownership of the storage domain 
 
 Add the record in Google Cloud DNS:
 
-1. Click **Add record set** in your managed zone.
-2. Set **Name** to the **Hostname** from Lettr (without your domain suffix).
-3. Set **Type** to **TXT**.
-4. Set the **Text data** to the **Value** from Lettr, enclosed in double quotes.
-5. Click **Save**.
-
-<img src="/images/lettr-storage-2.png" alt="Hostname Pre-validation TXT record values in Lettr for storage domain" />
-
-{/* TODO: Add screenshot of gcloud-storage-2.png */}
+1. Click **Add standard** on the zone details page.
+2. Set **DNS name** to the **Hostname** from Lettr, omitting your domain suffix.
+3. Set **Resource record type** to **TXT**.
+4. Set **TTL** to `300` and select **seconds** from the TTL unit dropdown.
+5. Set **TXT data** to the **Value** from Lettr, enclosed in double quotes.
+6. Click **Create**.
 
 ### Add CNAME Record (Domain Routing)
 
@@ -312,44 +326,51 @@ The Domain Routing CNAME record routes asset requests from your custom domain to
 
 Add the record in Google Cloud DNS:
 
-1. Click **Add record set** in your managed zone.
-2. Set **Name** to the **Hostname** from Lettr (without your domain suffix).
-3. Set **Type** to **CNAME**.
-4. Set **Canonical name** to the **Value** from Lettr, with a trailing period.
-5. Click **Save**.
-
-<img src="/images/lettr-storage-3.png" alt="Domain Routing CNAME record values in Lettr for storage domain" />
-
-{/* TODO: Add screenshot of gcloud-storage-3.png */}
+1. Click **Add standard** on the zone details page.
+2. Set **DNS name** to the **Hostname** from Lettr, omitting your domain suffix.
+3. Set **Resource record type** to **CNAME**.
+4. Set **TTL** to `300` and select **seconds** from the TTL unit dropdown.
+5. Set **Canonical name** to the **Value** from Lettr, with a trailing period.
+6. Click **Create**.
 
 ### Verify Your Storage Domain
 
 After adding all three records, go back to Lettr and click **Verify DNS Records**.
 
-<img src="/images/lettr-storage-verified.png" alt="Storage domain verified successfully in Lettr" />
-
 ---
 
 ## Using gcloud CLI
 
-You can also add records using the gcloud CLI:
+If you prefer the command line, you can add records using the `gcloud` CLI. Replace `my-zone` with your zone name and `example.com` with your domain.
+
+<Tip>
+  CLI management requires the `roles/dns.admin` role on your Google Cloud project or zone. You can grant it in the
+  IAM section of the Google Cloud Console.
+</Tip>
 
 ```bash
-# Add CNAME record for subdomain
+# Add CNAME record for sending domain verification
 gcloud dns record-sets create mailing.example.com. \
   --zone="my-zone" \
   --type="CNAME" \
   --ttl="300" \
   --rrdatas="sparkpostmail.com."
 
-# Add TXT record for DKIM
+# Add TXT record for DKIM (split values at 255 characters)
 gcloud dns record-sets create scph0126._domainkey.mailing.example.com. \
   --zone="my-zone" \
   --type="TXT" \
   --ttl="300" \
-  --rrdatas="\"v=DKIM1;k=rsa;h=sha256;p=MIGf...\""
+  --rrdatas='"v=DKIM1;k=rsa;h=sha256;p=first255chars..." "remainingchars..."'
 
-# Add MX records for inbound
+# Add TXT record for DMARC
+gcloud dns record-sets create _dmarc.mailing.example.com. \
+  --zone="my-zone" \
+  --type="TXT" \
+  --ttl="300" \
+  --rrdatas='"v=DMARC1;p=none;"'
+
+# Add MX records for inbound (all three in one command)
 gcloud dns record-sets create inbound.example.com. \
   --zone="my-zone" \
   --type="MX" \
@@ -362,19 +383,74 @@ gcloud dns record-sets create inbound.example.com. \
 ## Troubleshooting
 
 <AccordionGroup>
-  <Accordion title="Permission Errors">
-    Ensure you have the **DNS Administrator** role or equivalent permissions on the project containing your DNS zone.
-  </Accordion>
   <Accordion title="Missing Trailing Period">
-    Google Cloud DNS requires trailing periods on CNAME and MX target values. If your records are not resolving, check that
-    each CNAME canonical name and MX exchange ends with a period (e.g. `sparkpostmail.com.` not `sparkpostmail.com`). Edit the
-    record set and add the trailing period if it is missing.
+    Google Cloud DNS requires trailing periods on all FQDN values in the **Canonical name** and **Mail server** fields.
+    If a record resolves to the wrong hostname or fails verification, check that each target value ends with a period
+    (e.g. `sparkpostmail.com.` not `sparkpostmail.com`). Open the record set, click **Edit**, and add the trailing
+    period if it is missing.
+
+    The **DNS name** field is different — you enter only the subdomain label (e.g. `mailing`), and the console appends
+    the zone's domain and trailing period automatically. Do not add a trailing period there.
+  </Accordion>
+  <Accordion title="TXT Value Not Quoted Correctly">
+    Google Cloud DNS requires TXT record values to be wrapped in double quotes. Unlike most DNS providers, it does not
+    add quotes automatically.
+
+    - Correct: `"v=DMARC1;p=none;"`
+    - Incorrect: `v=DMARC1;p=none;`
+
+    If you submitted the value without quotes, edit the record set and add double quotes around the value. If the
+    record is not resolving, run `dig TXT _dmarc.yourdomain.com +short` to confirm how the value is stored — a
+    correctly stored TXT record will include the quotes in the output.
+  </Accordion>
+  <Accordion title="DKIM Value Truncated">
+    DKIM public keys are typically 256+ characters long. Google Cloud DNS will return an "Invalid record data" error if
+    you paste the full key as a single unquoted string.
+
+    You must split the key into segments of 255 characters or fewer and wrap each segment in its own double quotes.
+    Enter all quoted segments as a single string in the **TXT data** field, separated by a space:
+
+    ```
+    "first255characters..." "remainingcharacters..."
+    ```
+
+    Do not use **Add item** to create separate entries for each segment — all segments must be in one entry. Google
+    Cloud DNS concatenates them automatically when the record is queried.
+
+    If you use the `gcloud` CLI:
+
+    ```bash
+    gcloud dns record-sets create scph0126._domainkey.mailing.example.com. \
+      --zone="my-zone" \
+      --type="TXT" \
+      --ttl="300" \
+      --rrdatas='"v=DKIM1;k=rsa;h=sha256;p=first255..." "remaining..."'
+    ```
+  </Accordion>
+  <Accordion title="Nameservers Not Pointing to Google Cloud DNS">
+    If your records are saved in Google Cloud DNS but not resolving, confirm that your domain registrar is pointing to
+    the nameservers assigned to your managed zone. You can check this with:
+
+    ```bash
+    dig NS yourdomain.com +short
+    ```
+
+    The output should include the four nameservers shown in your zone's NS record (format:
+    `ns-cloud-{a–e}{1–4}.googledomains.com`). If it shows a different provider's nameservers, log in to your registrar
+    and update the nameservers to match the four shown in your Cloud DNS zone.
+
+    To find your zone's nameservers in the console, open the zone details page — the NS record at the top of the
+    records list contains all four nameservers for your zone. Nameserver changes can take up to 48 hours to propagate
+    globally.
   </Accordion>
   <Accordion title="Records Not Propagating">
-    Google Cloud DNS typically propagates within 5–15 minutes. If verification fails after adding records, check the
-    following:
+    Google Cloud DNS publishes changes within seconds to its global anycast network. With the default TTL of 300
+    seconds, record changes become visible to most resolvers within 5 minutes. However, resolvers that cached the
+    previous record will hold it for its full TTL before refreshing.
 
-    - **Wait at least 30 minutes** before your first verification attempt.
+    If verification fails after adding records:
+
+    - **Wait at least 10–15 minutes** before your first verification attempt.
     - **Confirm the records exist** using command-line tools:
 
     ```bash
@@ -398,25 +474,37 @@ gcloud dns record-sets create inbound.example.com. \
     ```
 
     - **Use a web tool** like [dnschecker.org](https://dnschecker.org) to verify propagation across multiple DNS servers worldwide.
+    - **Verify records in the CLI**: `gcloud dns record-sets list YOUR_ZONE_NAME` to confirm the records are saved correctly.
 
-    Alternatively, you can use the `gcloud` CLI to verify records directly:
-
-    ```bash
-    gcloud dns record-sets list YOUR_ZONE_NAME --filter="name=mailing.yourdomain.com."
-    ```
+    If nameservers were recently changed at your registrar, propagation can take up to 48 hours regardless of TTL.
   </Accordion>
-  <Accordion title="DKIM Value Too Long">
-    The DKIM TXT value is a long string. Google Cloud DNS supports splitting long TXT values into multiple quoted strings.
-    If you encounter an error when saving, try splitting the value:
+  <Accordion title="Insufficient IAM Permissions">
+    If you cannot add or edit records in Google Cloud DNS, your Google account may lack the required permissions on the
+    project or zone.
 
-    ```
-    "first255characters..." "remaining characters..."
-    ```
+    To create, update, or delete DNS records, you need the **`roles/dns.admin`** role, which grants:
+    - `dns.resourceRecordSets.create`
+    - `dns.resourceRecordSets.update`
+    - `dns.resourceRecordSets.delete`
+    - `dns.changes.create`
 
-    Google Cloud DNS will concatenate the strings automatically when the record is queried.
+    Ask a project owner to grant you the **DNS Administrator** (`roles/dns.admin`) role in the IAM section of the
+    Google Cloud Console, scoped to either the project or the specific managed zone.
+
+    There is no separate `roles/dns.resourceRecordSetsEditor` predefined role — `roles/dns.admin` is the correct
+    predefined role for managing records.
+  </Accordion>
+  <Accordion title="CNAME at Root Domain Not Supported">
+    Google Cloud DNS does not support CNAME records at the zone apex (the root domain, e.g. `company.com`). The zone
+    apex is required to hold SOA and NS records, and a CNAME cannot coexist with any other record type at the same
+    name. This is a DNS protocol constraint enforced by Google Cloud DNS.
+
+    Always use a subdomain for your sending, tracking, and storage domains (e.g. `mailing.company.com`,
+    `tracking.company.com`, `assets.company.com`). If you need a root-domain alias (pointing `company.com` to another
+    hostname), Google Cloud DNS supports an **ALIAS** record type at the apex for A/AAAA lookups only.
   </Accordion>
   <Accordion title="Wrong Record Type">
-    A common mistake is selecting the wrong record type:
+    A common mistake is selecting the wrong record type in the **Resource record type** dropdown:
 
     | Record | Correct Type |
     |--------|-------------|
@@ -429,17 +517,6 @@ gcloud dns record-sets create inbound.example.com. \
     | Storage certificate validation | TXT |
     | Storage hostname pre-validation | TXT |
     | Storage domain routing | CNAME |
-  </Accordion>
-  <Accordion title="Nameservers Not Pointing to Google Cloud">
-    If your records are saved in Google Cloud DNS but not resolving, confirm that your domain registrar is pointing to the
-    nameservers assigned to your managed zone. You can check this with:
-
-    ```bash
-    dig NS yourdomain.com +short
-    ```
-
-    The output should include the four nameservers shown in your managed zone overview (e.g. `ns1.google.com`,
-    `ns2.google.com`). If it shows a different provider's nameservers, update them at your domain registrar.
   </Accordion>
   <Accordion title="When to Contact Support">
     If your DNS records are correctly configured (confirmed with `dig` or dnschecker.org) and verification still fails after
