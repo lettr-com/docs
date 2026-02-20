@@ -3,14 +3,9 @@ title: "Strato"
 description: "Step-by-step guide to configuring DNS records for Lettr on Strato."
 ---
 
-This guide walks you through adding the required DNS records for Lettr using Strato's DNS management. Strato is a German web hosting and domain provider that offers DNS hosting for domains managed through its [Strato Control Panel](https://www.strato.de).
+This guide walks you through adding the required DNS records for Lettr using Strato's DNS management. Strato is a German web hosting and domain provider that offers DNS hosting for domains managed through its [Strato Control Panel](https://www.strato.de/apps/CustomerService).
 
 You will configure a **sending domain** (CNAME, DKIM TXT, and DMARC TXT records) and, optionally, an **inbound domain** (MX records), **tracking domain** (two CNAME records), and **storage domain** (CNAME and two TXT records).
-
-<Info>
-  By default, Strato domains use Strato's mail server. For sending domains, you may need to create a subdomain and
-  configure DNS records there to avoid conflicts with Strato's default mail configuration.
-</Info>
 
 ---
 
@@ -25,7 +20,6 @@ To create a sending domain in Lettr:
 4. Enter your desired sending subdomain (e.g. `mailing.company.com`)
 5. Click **Create Domain**
 
-
 <Tip>
   Use a subdomain (e.g. `mailing.company.com`) instead of the root domain (`company.com`). A subdomain provides proper
   reputation segmentation and is required if you also plan to receive emails with Lettr.
@@ -33,15 +27,11 @@ To create a sending domain in Lettr:
 
 Click your new domain in the Sending Domains list.
 
-
 This will display a list of DNS records that need to be configured. Keep this page open — you will need these values soon.
-
 
 ### Configure Strato DNS
 
-Log in to your [Strato Control Panel](https://www.strato.de) and navigate to **Domains** → **Manage Domain**. Select your domain and access its DNS settings. For subdomains, you may need to first create the subdomain in Strato, then navigate to the subdomain's settings and open the **DNS** tab.
-
-{/* TODO: Add screenshot of Strato DNS management page */}
+Log in to the [Strato Control Panel](https://www.strato.de/apps/CustomerService) and navigate to **Domains** → **Domainverwaltung** (Domain Management). Click the gear icon next to your domain and select the **DNS** tab to open the DNS editor.
 
 <Tip>
   If your domain was purchased through Strato or your nameservers already point to Strato, skip nameserver
@@ -52,13 +42,15 @@ Log in to your [Strato Control Panel](https://www.strato.de) and navigate to **D
 <AccordionGroup>
   <Accordion title="Domain registered with a different registrar?">
     If you registered your domain elsewhere but want to manage DNS on Strato, you must first **update the nameservers**
-    at your registrar to Strato's nameservers shown in your domain configuration.
+    at your registrar to Strato's nameservers:
+
+    - `ns1.strato.de`
+    - `ns2.strato.de`
+    - `ns4.strato.de`
 
     <Warning>Until the nameservers are updated, any records you add in Strato will not resolve.</Warning>
   </Accordion>
 </AccordionGroup>
-
-{/* TODO: Add screenshot of Strato nameserver configuration inside the accordion above */}
 
 ### Add CNAME Record
 
@@ -66,17 +58,14 @@ The CNAME record verifies domain ownership with Lettr's email infrastructure.
 
 Copy the CNAME values from Lettr to Strato:
 
-1. In the DNS settings, click **Add record**.
-2. Set **Name** to the **Hostname** value from Lettr (without your domain suffix). For example, paste only `mailing`.
-3. Set **Type** to **CNAME**.
-4. Set **Value** to the **Value** from Lettr.
-5. Click **Save**.
-
-
-{/* TODO: Add screenshot of CNAME record in Strato */}
+1. In the DNS editor, click **+ Weiteren Record erstellen** (Create another record).
+2. Set **Typ** (Type) to **CNAME**.
+3. Copy the **Hostname** from Lettr and paste it into the **Präfix** (Prefix) field — without your domain suffix. For example, paste only `mailing`.
+4. Copy the **Value** from Lettr and paste it into the **Wert** (Value) field.
+5. Click **Einstellungen übernehmen** (Apply settings).
 
 <Info>
-  Strato automatically appends your domain to the record name. Always paste only the subdomain portion (e.g.
+  Strato automatically appends your domain to the Präfix field. Always paste only the subdomain portion (e.g.
   `mailing`, not `mailing.company.com`).
 </Info>
 
@@ -86,17 +75,15 @@ The DKIM record adds a cryptographic signature to your outgoing emails, allowing
 
 Copy the TXT values from Lettr to Strato:
 
-1. In the DNS settings, click **Add record**.
-2. Set **Name** to the **Hostname** value from Lettr (without your domain suffix). For example, paste only `scph0126._domainkey.mailing`.
-3. Set **Type** to **TXT**.
-4. Set **Value** to the **Value** from Lettr.
-5. Click **Save**.
-
-
-{/* TODO: Add screenshot of DKIM TXT record in Strato */}
+1. In the DNS editor, click **+ Weiteren Record erstellen** (Create another record).
+2. Set **Typ** (Type) to **TXT**.
+3. Copy the **Hostname** from Lettr and paste it into the **Präfix** (Prefix) field — without your domain suffix. For example, paste only `scph0126._domainkey.mailing`.
+4. Copy the **Value** from Lettr and paste it into the **Wert** (Value) field.
+5. Click **Einstellungen übernehmen** (Apply settings).
 
 <Info>
-  DKIM records are case-sensitive. Copy the value exactly using the copy icon in your Lettr dashboard.
+  DKIM records are case-sensitive. Copy the value exactly using the copy icon in your Lettr dashboard. Strato supports
+  multiple TXT records on the same hostname, so this record will not conflict with existing TXT records.
 </Info>
 
 ### Add TXT Record (DMARC)
@@ -105,19 +92,15 @@ The DMARC record tells receiving mail servers how to handle emails that fail aut
 
 Copy the TXT values from Lettr to Strato:
 
-1. In the DNS settings, click **Add record**.
-2. Set **Name** to the **Hostname** value from Lettr (without your domain suffix). For example, paste only `_dmarc.mailing`.
-3. Set **Type** to **TXT**.
-4. Set **Value** to the **Value** from Lettr (e.g. `v=DMARC1;p=none;`).
-5. Click **Save**.
-
-
-{/* TODO: Add screenshot of DMARC TXT record in Strato */}
+1. In the DNS editor, click **+ Weiteren Record erstellen** (Create another record).
+2. Set **Typ** (Type) to **TXT**.
+3. Copy the **Hostname** from Lettr and paste it into the **Präfix** (Prefix) field — without your domain suffix. For example, paste only `_dmarc.mailing`.
+4. Copy the **Value** from Lettr and paste it into the **Wert** (Value) field (e.g. `v=DMARC1;p=none;`).
+5. Click **Einstellungen übernehmen** (Apply settings).
 
 ### Verify Your Sending Domain
 
-After adding all three DNS records, go back to Lettr and click **Verify DNS Records**. DNS propagation can take up to 24–48 hours, though it typically completes within a few minutes.
-
+After adding all three DNS records, go back to Lettr and click **Verify DNS Records**. DNS propagation on Strato can take up to 24 hours, though it typically completes within a few minutes to a few hours.
 
 ---
 
@@ -134,46 +117,38 @@ To create an Inbound domain in Lettr:
 4. Enter your desired inbound subdomain (e.g. `inbound.company.com`)
 5. Click **Create Domain**.
 
-
 Click on your new domain in the Inbound Domains list.
 
-
 This will display the MX records that need to be configured.
-
 
 ### Add MX Records
 
 MX records tell other mail servers where to deliver emails addressed to your domain.
 
-For inbound subdomains on Strato, you may need to first create the subdomain, navigate to the subdomain's settings, go to the **DNS** tab, click **manage** on MX records, and select **own mail server** before adding the records.
+Strato uses a dedicated MX configuration dialog. In the DNS tab, click **verwalten** (manage) next to the MX record row, then enable **Eigener Mailserver** (Own mail server) to configure custom MX entries.
 
-Copy the MX values from Lettr to Strato:
+Add the MX records for your inbound subdomain:
 
-1. In the DNS settings, click **Add record**.
-2. Set **Name** to the **Hostname** value from Lettr (without your domain suffix). For example, paste only `inbound`.
-3. Set **Type** to **MX**.
-4. Set **Value** to `rx1.sparkpostmail.com`.
-5. Set **Priority** to `10`.
-6. Click **Save**.
-7. Repeat this process for the second (`rx2.sparkpostmail.com`) and third (`rx3.sparkpostmail.com`) MX records, each with priority `10`.
+1. In the MX configuration dialog, enable **Eigener Mailserver** (Own mail server).
+2. Enter `rx1.sparkpostmail.com.` (with trailing dot) as the mail server hostname.
+3. Set **Priorität** (Priority) to `10`.
+4. Click **+ Weiteren Record erstellen** (Create another record) and repeat for `rx2.sparkpostmail.com.` and `rx3.sparkpostmail.com.`, each with priority `10`.
+5. Click **Einstellungen übernehmen** (Apply settings).
 
 <Info>
-  Strato may require a trailing period on MX values (e.g. `rx1.sparkpostmail.com.`). Try adding it if verification
-  fails.
+  Strato requires a trailing dot on MX record hostnames (e.g. `rx1.sparkpostmail.com.`). Without it, the record may
+  not resolve correctly.
 </Info>
 
-
-{/* TODO: Add screenshot of MX records in Strato */}
-
 <Warning>
-  Adding MX records to a domain or subdomain will route all incoming email for that address to Lettr. Use a dedicated
-  subdomain (e.g. `inbound.company.com`) to avoid affecting your primary email.
+  Adding MX records to a domain or subdomain will route all incoming email for that address to Lettr. Enabling
+  **Eigener Mailserver** disables Strato's mail handling for that subdomain. Use a dedicated subdomain (e.g.
+  `inbound.company.com`) to avoid affecting your primary email.
 </Warning>
 
 ### Verify Your Inbound Domain
 
-After adding all three MX records, go back to Lettr and click **Verify DNS Records**. DNS propagation can take up to 24–48 hours, though it typically completes within a few minutes.
-
+After adding all three MX records, go back to Lettr and click **Verify DNS Records**. DNS propagation on Strato can take up to 24 hours, though it typically completes within a few minutes to a few hours.
 
 ---
 
@@ -190,12 +165,9 @@ To create a Tracking domain in Lettr:
 4. Enter your desired tracking subdomain (e.g. `tracking.company.com`)
 5. Click **Create Domain**
 
-
 Click on your new domain in the Tracking Domains list.
 
-
 This will display the CNAME records that need to be configured.
-
 
 ### Add SSL Certificate CNAME Record
 
@@ -203,14 +175,21 @@ The SSL Certificate CNAME record provisions an SSL certificate for your custom t
 
 Add the record in Strato:
 
-1. In the DNS settings, click **Add record**.
-2. Set **Name** to the **Hostname** from Lettr (without your domain suffix).
-3. Set **Type** to **CNAME**.
-4. Set **Value** to the **Value** from Lettr.
-5. Click **Save**.
+1. In the DNS editor, click **+ Weiteren Record erstellen** (Create another record).
+2. Set **Typ** (Type) to **CNAME**.
+3. Copy the **Hostname** from Lettr and paste it into the **Präfix** (Prefix) field — without your domain suffix.
+4. Copy the **Value** from Lettr and paste it into the **Wert** (Value) field.
+5. Click **Einstellungen übernehmen** (Apply settings).
 
+<Info>
+  Strato automatically appends your domain to the Präfix field. Always paste only the subdomain portion (e.g.
+  `tracking`, not `tracking.company.com`).
+</Info>
 
-{/* TODO: Add screenshot of SSL Certificate CNAME record in Strato */}
+<Warning>
+  Strato does not allow a CNAME record to coexist with other record types (A, MX, TXT) on the same hostname. If the
+  subdomain already has other records, you may need to remove them or use a different subdomain.
+</Warning>
 
 ### Add Traffic CNAME Record
 
@@ -218,19 +197,20 @@ The Traffic CNAME record routes click and open tracking requests from your custo
 
 Add the record in Strato:
 
-1. In the DNS settings, click **Add record**.
-2. Set **Name** to the **Hostname** from Lettr (without your domain suffix).
-3. Set **Type** to **CNAME**.
-4. Set **Value** to the **Value** from Lettr.
-5. Click **Save**.
+1. In the DNS editor, click **+ Weiteren Record erstellen** (Create another record).
+2. Set **Typ** (Type) to **CNAME**.
+3. Copy the **Hostname** from Lettr and paste it into the **Präfix** (Prefix) field — without your domain suffix.
+4. Copy the **Value** from Lettr and paste it into the **Wert** (Value) field.
+5. Click **Einstellungen übernehmen** (Apply settings).
 
-
-{/* TODO: Add screenshot of Traffic CNAME record in Strato */}
+<Info>
+  Strato automatically appends your domain to the Präfix field. Always paste only the subdomain portion (e.g.
+  `tracking`, not `tracking.company.com`).
+</Info>
 
 ### Verify Your Tracking Domain
 
 After adding both CNAME records, go back to Lettr and click **Verify DNS Records**.
-
 
 ---
 
@@ -247,12 +227,9 @@ To create a Storage domain in Lettr:
 4. Enter your desired storage subdomain (e.g. `assets.company.com`)
 5. Click **Create Domain**
 
-
 Click on your new domain in the Storage Domains list.
 
-
 This will display the TXT and CNAME records that need to be configured.
-
 
 ### Add TXT Record (Certificate Validation)
 
@@ -260,14 +237,16 @@ The Certificate Validation TXT record provisions an SSL certificate for your cus
 
 Add the record in Strato:
 
-1. In the DNS settings, click **Add record**.
-2. Set **Name** to the **Hostname** from Lettr (without your domain suffix).
-3. Set **Type** to **TXT**.
-4. Set **Value** to the **Value** from Lettr.
-5. Click **Save**.
+1. In the DNS editor, click **+ Weiteren Record erstellen** (Create another record).
+2. Set **Typ** (Type) to **TXT**.
+3. Copy the **Hostname** from Lettr and paste it into the **Präfix** (Prefix) field — without your domain suffix.
+4. Copy the **Value** from Lettr and paste it into the **Wert** (Value) field.
+5. Click **Einstellungen übernehmen** (Apply settings).
 
-
-{/* TODO: Add screenshot of Certificate Validation TXT record in Strato */}
+<Info>
+  Strato automatically appends your domain to the Präfix field. Always paste only the subdomain portion (e.g.
+  `assets`, not `assets.company.com`).
+</Info>
 
 ### Add TXT Record (Hostname Pre-validation)
 
@@ -275,14 +254,16 @@ The Hostname Pre-validation TXT record verifies ownership of the storage domain 
 
 Add the record in Strato:
 
-1. In the DNS settings, click **Add record**.
-2. Set **Name** to the **Hostname** from Lettr (without your domain suffix).
-3. Set **Type** to **TXT**.
-4. Set **Value** to the **Value** from Lettr.
-5. Click **Save**.
+1. In the DNS editor, click **+ Weiteren Record erstellen** (Create another record).
+2. Set **Typ** (Type) to **TXT**.
+3. Copy the **Hostname** from Lettr and paste it into the **Präfix** (Prefix) field — without your domain suffix.
+4. Copy the **Value** from Lettr and paste it into the **Wert** (Value) field.
+5. Click **Einstellungen übernehmen** (Apply settings).
 
-
-{/* TODO: Add screenshot of Hostname Pre-validation TXT record in Strato */}
+<Info>
+  Strato supports multiple TXT records on the same hostname — add each record separately using the **+ Weiteren Record
+  erstellen** button.
+</Info>
 
 ### Add CNAME Record (Domain Routing)
 
@@ -290,27 +271,35 @@ The Domain Routing CNAME record routes asset requests from your custom domain to
 
 Add the record in Strato:
 
-1. In the DNS settings, click **Add record**.
-2. Set **Name** to the **Hostname** from Lettr (without your domain suffix).
-3. Set **Type** to **CNAME**.
-4. Set **Value** to the **Value** from Lettr.
-5. Click **Save**.
+1. In the DNS editor, click **+ Weiteren Record erstellen** (Create another record).
+2. Set **Typ** (Type) to **CNAME**.
+3. Copy the **Hostname** from Lettr and paste it into the **Präfix** (Prefix) field — without your domain suffix.
+4. Copy the **Value** from Lettr and paste it into the **Wert** (Value) field.
+5. Click **Einstellungen übernehmen** (Apply settings).
 
-
-{/* TODO: Add screenshot of Domain Routing CNAME record in Strato */}
+<Info>
+  Strato automatically appends your domain to the Präfix field. Always paste only the subdomain portion (e.g.
+  `assets`, not `assets.company.com`).
+</Info>
 
 ### Verify Your Storage Domain
 
 After adding all three records, go back to Lettr and click **Verify DNS Records**.
-
 
 ---
 
 ## Troubleshooting
 
 <AccordionGroup>
+  <Accordion title="Domain Suffix Not Omitted">
+    Strato automatically appends your domain to the Präfix (Prefix) field. If you paste the full hostname (e.g.
+    `mailing.company.com`), the resulting record will resolve as `mailing.company.com.company.com`, which will fail
+    verification.
+
+    Always paste only the subdomain portion (e.g. `mailing`, `scph0126._domainkey.mailing`, `_dmarc.mailing`).
+  </Accordion>
   <Accordion title="Records Not Propagating">
-    Strato DNS propagation can take several hours. If verification fails after adding records, check the following:
+    DNS propagation on Strato can take up to 24 hours. If verification fails after adding records, check the following:
 
     - **Wait at least 2–4 hours** before your first verification attempt.
     - **Confirm the records exist** using command-line tools:
@@ -335,7 +324,7 @@ After adding all three records, go back to Lettr and click **Verify DNS Records*
     dig CNAME assets.yourdomain.com +short
     ```
 
-    - **Use a web tool** like [WhatsMyDNS](https://www.whatsmydns.net) or [dnschecker.org](https://dnschecker.org) to verify propagation across multiple DNS servers worldwide.
+    - **Use a web tool** like [dnschecker.org](https://dnschecker.org) to verify propagation across multiple DNS servers worldwide.
   </Accordion>
   <Accordion title="Nameservers Not Pointing to Strato">
     If your records are saved in Strato but not resolving, confirm that your domain is using Strato's nameservers. You can
@@ -345,11 +334,19 @@ After adding all three records, go back to Lettr and click **Verify DNS Records*
     dig NS yourdomain.com +short
     ```
 
-    The output should include Strato nameservers. If it shows a different provider's nameservers, update them in your domain
-    registrar settings.
+    The output should include Strato nameservers (e.g. `ns1.strato.de`, `ns2.strato.de`, `ns4.strato.de`). If it shows a
+    different provider's nameservers, update them at your domain registrar.
+  </Accordion>
+  <Accordion title="CNAME Conflicts with Existing Records">
+    Strato does not allow a CNAME record to coexist with other record types (A, MX, TXT) on the same hostname. Adding
+    a CNAME will deactivate all other DNS settings for that exact subdomain. If you need CNAME records for Lettr on a
+    subdomain that already has other records, use a different subdomain or remove the conflicting records first.
+
+    Additionally, CNAME records are not available at the root domain (e.g. `company.com`) in Strato — you must always
+    use a subdomain.
   </Accordion>
   <Accordion title="Wrong Record Type">
-    A common mistake is selecting the wrong record type:
+    A common mistake is selecting the wrong record type in the **Typ** dropdown:
 
     | Record | Correct Type |
     |--------|-------------|
@@ -363,13 +360,15 @@ After adding all three records, go back to Lettr and click **Verify DNS Records*
     | Storage hostname pre-validation | TXT |
     | Storage domain routing | CNAME |
   </Accordion>
-  <Accordion title="Conflict with Strato Mail Server">
-    Strato domains use Strato's mail server by default. If you encounter conflicts when adding sending or inbound
-    records, create a dedicated subdomain (e.g. `mailing.company.com` or `inbound.company.com`) to avoid interfering
-    with Strato's default mail configuration.
+  <Accordion title="MX Record Not Accepting Custom Values">
+    Strato configures its own mail server for domains by default. To add custom MX records, navigate to the MX
+    configuration dialog (click **verwalten** next to MX records in the DNS tab) and enable **Eigener Mailserver**
+    (Own mail server). Without this step, Strato will not allow custom MX entries.
+
+    Also ensure that mail server hostnames include a trailing dot (e.g. `rx1.sparkpostmail.com.`).
   </Accordion>
   <Accordion title="DKIM Value Truncated">
-    The DKIM TXT value is a long string. After saving the record, re-open the DNS settings and confirm the full value is
+    The DKIM TXT value is a long string. After saving the record, re-open the DNS editor and confirm the full value is
     displayed. If it appears truncated, delete the record and re-add it, pasting the full value carefully.
   </Accordion>
   <Accordion title="When to Contact Support">

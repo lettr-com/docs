@@ -3,7 +3,7 @@ title: "Netlify"
 description: "Step-by-step guide to configuring DNS records for Lettr on Netlify."
 ---
 
-This guide walks you through adding the required DNS records for Lettr using Netlify's DNS management. Netlify is a platform for deploying and hosting web applications that also provides DNS hosting for domains connected to your Netlify sites, managed through the [Netlify dashboard](https://app.netlify.com).
+This guide walks you through adding the required DNS records for Lettr using Netlify's DNS management. Netlify is a platform for deploying and hosting web applications that also provides DNS hosting for domains connected to your Netlify account, managed through the [Netlify dashboard](https://app.netlify.com).
 
 You will configure a **sending domain** (CNAME, DKIM TXT, and DMARC TXT records) and, optionally, an **inbound domain** (MX records), **tracking domain** (two CNAME records), and **storage domain** (CNAME and two TXT records).
 
@@ -34,9 +34,7 @@ This will display a list of DNS records that need to be configured. Keep this pa
 
 ### Configure Netlify DNS
 
-Log in to the [Netlify dashboard](https://app.netlify.com) and navigate to your site's **Domain management** settings. If your domain is managed through Netlify DNS, you can add records directly here.
-
-{/* TODO: Add screenshot of Netlify Domain management page */}
+Netlify DNS is managed at the team level, not per site. Log in to the [Netlify dashboard](https://app.netlify.com) and select **DNS** from the left sidebar in your team dashboard. Select the domain you want to configure to open its DNS records panel.
 
 <Tip>
   If your domain was purchased through Netlify or your nameservers already point to Netlify, skip nameserver
@@ -46,18 +44,19 @@ Log in to the [Netlify dashboard](https://app.netlify.com) and navigate to your 
 
 <AccordionGroup>
   <Accordion title="Domain registered with a different registrar?">
-    If you registered your domain elsewhere but want to manage DNS on Netlify, you must first **update the nameservers**
-    at your registrar to Netlify's nameservers shown in your domain management settings.
+    If you registered your domain elsewhere but want to manage DNS on Netlify, you must first add the domain to Netlify
+    DNS and then **update the nameservers** at your registrar to Netlify's nameservers. Your domain's assigned
+    nameservers are displayed in the **Name servers** panel on the domain's DNS page — they follow the format
+    `dns1.p0X.nsone.net` through `dns4.p0X.nsone.net`, where the partition number is unique to your domain.
 
     <Warning>Until the nameservers are updated, any records you add in Netlify will not resolve.</Warning>
   </Accordion>
 </AccordionGroup>
 
-{/* TODO: Add screenshot of Netlify nameserver configuration inside the accordion above */}
-
 <Warning>
-  If you have existing Netlify sites using subdomains that overlap with the subdomains you are configuring for Lettr (e.g.
-  `mailing.company.com`), you may need to remove or reconfigure those site assignments before adding the DNS records.
+  If you have existing Netlify sites using subdomains that overlap with the subdomains you are configuring for Lettr
+  (e.g. `mailing.company.com`), Netlify may have automatically created NETLIFY records for those subdomains. Remove
+  or reconfigure those site assignments before adding the DNS records below.
 </Warning>
 
 ### Add CNAME Record
@@ -66,14 +65,11 @@ The CNAME record verifies domain ownership with Lettr's email infrastructure.
 
 Copy the CNAME values from Lettr to Netlify:
 
-1. Click **Add a custom record** in the DNS records section.
+1. Click **Add new record** in the DNS records section.
 2. Set **Type** to **CNAME**.
 3. Copy the **Hostname** from Lettr and paste it into the **Name** field (without your domain suffix). For example, paste only `mailing`.
 4. Copy the **Value** from Lettr and paste it into the **Value** field.
-5. Click **Create record**.
-
-
-{/* TODO: Add screenshot of CNAME record in Netlify */}
+5. Click **Save**.
 
 <Info>
   Netlify automatically appends your domain to the record name. Always paste only the subdomain portion (e.g.
@@ -86,14 +82,16 @@ The DKIM record adds a cryptographic signature to your outgoing emails, allowing
 
 Copy the TXT values from Lettr to Netlify:
 
-1. Click **Add a custom record** in the DNS records section.
+1. Click **Add new record** in the DNS records section.
 2. Set **Type** to **TXT**.
 3. Copy the **Hostname** from Lettr and paste it into the **Name** field (without your domain suffix). For example, paste only `scph0126._domainkey.mailing`.
 4. Copy the **Value** from Lettr and paste it into the **Value** field.
-5. Click **Create record**.
+5. Click **Save**.
 
-
-{/* TODO: Add screenshot of DKIM TXT record in Netlify */}
+<Info>
+  Netlify automatically appends your domain to the record name. Always paste only the subdomain portion (e.g.
+  `scph0126._domainkey.mailing`, not `scph0126._domainkey.mailing.company.com`).
+</Info>
 
 ### Add TXT Record (DMARC)
 
@@ -101,18 +99,20 @@ The DMARC record tells receiving mail servers how to handle emails that fail aut
 
 Copy the TXT values from Lettr to Netlify:
 
-1. Click **Add a custom record** in the DNS records section.
+1. Click **Add new record** in the DNS records section.
 2. Set **Type** to **TXT**.
 3. Copy the **Hostname** from Lettr and paste it into the **Name** field (without your domain suffix). For example, paste only `_dmarc.mailing`.
 4. Copy the **Value** from Lettr and paste it into the **Value** field.
-5. Click **Create record**.
+5. Click **Save**.
 
-
-{/* TODO: Add screenshot of DMARC TXT record in Netlify */}
+<Info>
+  Netlify automatically appends your domain to the record name. Always paste only the subdomain portion (e.g.
+  `_dmarc.mailing`, not `_dmarc.mailing.company.com`).
+</Info>
 
 ### Verify Your Sending Domain
 
-After adding all three DNS records, go back to Lettr and click **Verify DNS Records**. DNS propagation can take up to 24–48 hours, though it typically completes within a few minutes.
+After adding all three DNS records, go back to Lettr and click **Verify DNS Records**. DNS propagation can take up to 24–48 hours, though it typically completes within a few hours on Netlify.
 
 
 ---
@@ -143,20 +143,17 @@ MX records tell other mail servers where to deliver emails addressed to your dom
 
 Copy the MX values from Lettr to Netlify:
 
-1. Click **Add a custom record** in the DNS records section.
+1. Click **Add new record** in the DNS records section.
 2. Set **Type** to **MX**.
 3. Copy the **Hostname** from Lettr and paste it into the **Name** field (without your domain suffix). For example, paste only `inbound`.
-4. Copy the first MX record value from Lettr (e.g. `rx1.sparkpostmail.com`) and paste it into the **Value** field.
+4. Copy the first **Required MX Record** value (e.g. `rx1.sparkpostmail.com`) from Lettr and paste it into the **Value** field.
 5. Set **Priority** to `10`.
-6. Click **Create record**.
+6. Click **Save**.
 7. Repeat this process for the second (`rx2.sparkpostmail.com`) and third (`rx3.sparkpostmail.com`) MX records, each with priority `10`.
 
-
-{/* TODO: Add screenshot of MX records in Netlify */}
-
 <Info>
-  Netlify MX records may require the priority in the value field (e.g. `10 rx1.sparkpostmail.com`). If you don't see a
-  separate Priority field, include the priority number before the mail server value.
+  Netlify automatically appends your domain to the record name. Always paste only the subdomain portion (e.g.
+  `inbound`, not `inbound.company.com`).
 </Info>
 
 <Warning>
@@ -166,7 +163,7 @@ Copy the MX values from Lettr to Netlify:
 
 ### Verify Your Inbound Domain
 
-After adding all three MX records, go back to Lettr and click **Verify DNS Records**. DNS propagation can take up to 24–48 hours, though it typically completes within a few minutes.
+After adding all three MX records, go back to Lettr and click **Verify DNS Records**. DNS propagation can take up to 24–48 hours, though it typically completes within a few hours on Netlify.
 
 
 ---
@@ -197,14 +194,16 @@ The SSL Certificate CNAME record provisions an SSL certificate for your custom t
 
 Add the record in Netlify:
 
-1. Click **Add a custom record** in the DNS records section.
+1. Click **Add new record** in the DNS records section.
 2. Set **Type** to **CNAME**.
 3. Copy the **Hostname** from Lettr and paste it into the **Name** field (without your domain suffix).
 4. Copy the **Value** from Lettr and paste it into the **Value** field.
-5. Click **Create record**.
+5. Click **Save**.
 
-
-{/* TODO: Add screenshot of SSL Certificate CNAME record in Netlify */}
+<Info>
+  Netlify automatically appends your domain to the record name. Always paste only the subdomain portion (e.g.
+  `tracking`, not `tracking.company.com`).
+</Info>
 
 ### Add Traffic CNAME Record
 
@@ -212,14 +211,16 @@ The Traffic CNAME record routes click and open tracking requests from your custo
 
 Add the record in Netlify:
 
-1. Click **Add a custom record** in the DNS records section.
+1. Click **Add new record** in the DNS records section.
 2. Set **Type** to **CNAME**.
 3. Copy the **Hostname** from Lettr and paste it into the **Name** field (without your domain suffix).
 4. Copy the **Value** from Lettr and paste it into the **Value** field.
-5. Click **Create record**.
+5. Click **Save**.
 
-
-{/* TODO: Add screenshot of Traffic CNAME record in Netlify */}
+<Info>
+  Netlify automatically appends your domain to the record name. Always paste only the subdomain portion (e.g.
+  `tracking`, not `tracking.company.com`).
+</Info>
 
 ### Verify Your Tracking Domain
 
@@ -254,14 +255,16 @@ The Certificate Validation TXT record provisions an SSL certificate for your cus
 
 Add the record in Netlify:
 
-1. Click **Add a custom record** in the DNS records section.
+1. Click **Add new record** in the DNS records section.
 2. Set **Type** to **TXT**.
 3. Copy the **Hostname** from Lettr and paste it into the **Name** field (without your domain suffix).
 4. Copy the **Value** from Lettr and paste it into the **Value** field.
-5. Click **Create record**.
+5. Click **Save**.
 
-
-{/* TODO: Add screenshot of Certificate Validation TXT record in Netlify */}
+<Info>
+  Netlify automatically appends your domain to the record name. Always paste only the subdomain portion (e.g.
+  `assets`, not `assets.company.com`).
+</Info>
 
 ### Add TXT Record (Hostname Pre-validation)
 
@@ -269,14 +272,16 @@ The Hostname Pre-validation TXT record verifies ownership of the storage domain 
 
 Add the record in Netlify:
 
-1. Click **Add a custom record** in the DNS records section.
+1. Click **Add new record** in the DNS records section.
 2. Set **Type** to **TXT**.
 3. Copy the **Hostname** from Lettr and paste it into the **Name** field (without your domain suffix).
 4. Copy the **Value** from Lettr and paste it into the **Value** field.
-5. Click **Create record**.
+5. Click **Save**.
 
-
-{/* TODO: Add screenshot of Hostname Pre-validation TXT record in Netlify */}
+<Info>
+  Netlify automatically appends your domain to the record name. Always paste only the subdomain portion (e.g.
+  `assets`, not `assets.company.com`).
+</Info>
 
 ### Add CNAME Record (Domain Routing)
 
@@ -284,14 +289,16 @@ The Domain Routing CNAME record routes asset requests from your custom domain to
 
 Add the record in Netlify:
 
-1. Click **Add a custom record** in the DNS records section.
+1. Click **Add new record** in the DNS records section.
 2. Set **Type** to **CNAME**.
 3. Copy the **Hostname** from Lettr and paste it into the **Name** field (without your domain suffix).
 4. Copy the **Value** from Lettr and paste it into the **Value** field.
-5. Click **Create record**.
+5. Click **Save**.
 
-
-{/* TODO: Add screenshot of Domain Routing CNAME record in Netlify */}
+<Info>
+  Netlify automatically appends your domain to the record name. Always paste only the subdomain portion (e.g.
+  `assets`, not `assets.company.com`).
+</Info>
 
 ### Verify Your Storage Domain
 
@@ -303,18 +310,22 @@ After adding all three records, go back to Lettr and click **Verify DNS Records*
 ## Troubleshooting
 
 <AccordionGroup>
-  <Accordion title="Root Domain CNAME Issues">
-    Netlify uses ALIAS records for root domains. CNAME records cannot be added at the root domain. For email sending,
-    use the subdomain approach or TXT SPF verification for root domains.
+  <Accordion title="Domain Suffix Not Omitted">
+    Netlify automatically appends your domain to the record name. If you paste the full hostname (e.g.
+    `mailing.company.com`), the resulting record will resolve as `mailing.company.com.company.com`, which will fail
+    verification.
+
+    Always paste only the subdomain portion (e.g. `mailing`, `scph0126._domainkey.mailing`, `_dmarc.mailing`).
   </Accordion>
   <Accordion title="Subdomain Conflicts with Netlify Site">
-    If a subdomain is already assigned to a Netlify site (e.g. `mailing.company.com` is a deployed site), Netlify may not
-    allow you to add a CNAME record for that subdomain. Remove the site assignment first, or use a different subdomain for
-    your Lettr sending domain.
+    When you assign a domain to a Netlify site, Netlify automatically creates proprietary NETLIFY or NETLIFYv6 records
+    for that subdomain. If a subdomain you want to use for Lettr (e.g. `mailing.company.com`) is already assigned to a
+    Netlify site, you may need to disconnect the site from that domain before adding DNS records for Lettr. Remove the
+    site assignment first, or use a different subdomain.
   </Accordion>
   <Accordion title="Records Not Propagating">
-    DNS propagation on Netlify typically takes 1–15 minutes, but can occasionally take longer. If verification fails after
-    adding records, check the following:
+    DNS propagation on Netlify typically takes a few hours, but can occasionally take longer. If verification fails
+    after adding records, check the following:
 
     - **Wait at least 30 minutes** before your first verification attempt.
     - **Confirm the records exist** using command-line tools:
@@ -357,13 +368,26 @@ After adding all three records, go back to Lettr and click **Verify DNS Records*
     | Storage domain routing | CNAME |
   </Accordion>
   <Accordion title="DKIM Value Truncated">
-    The DKIM TXT value is a long string. After creating the record, click on it in the DNS records list to confirm the full
-    value was stored. If it appears truncated, delete the record and re-add it, pasting the full value carefully.
+    The DKIM TXT value is a long string. After saving the record, click on it in the DNS records list to confirm the
+    full value was stored. If it appears truncated, note that Netlify does not support in-place record editing — add
+    a new record with the correct full value, then delete the old one.
+  </Accordion>
+  <Accordion title="Nameservers Not Pointing to Netlify">
+    If your records are saved in Netlify but not resolving, confirm that your domain registrar is pointing to
+    Netlify's nameservers. You can check this with:
+
+    ```bash
+    dig NS yourdomain.com +short
+    ```
+
+    The output should include Netlify's nameservers in the format `dns1.p0X.nsone.net` through `dns4.p0X.nsone.net`.
+    Your domain's exact nameservers are shown in the **Name servers** panel on the domain's DNS page in the Netlify
+    dashboard. If the output shows a different provider's nameservers, update them at your domain registrar.
   </Accordion>
   <Accordion title="When to Contact Support">
-    If your DNS records are correctly configured (confirmed with `dig` or dnschecker.org) and verification still fails after
-    48 hours, contact Lettr support at **support@lettr.com** or through the in-app chat. Include your domain name and the
-    output of the `dig` commands above.
+    If your DNS records are correctly configured (confirmed with `dig` or dnschecker.org) and verification still fails
+    after 48 hours, contact Lettr support at **support@lettr.com** or through the in-app chat. Include your domain
+    name and the output of the `dig` commands above.
   </Accordion>
 </AccordionGroup>
 

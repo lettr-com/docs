@@ -20,7 +20,6 @@ To create a sending domain in Lettr:
 4. Enter your desired sending subdomain (e.g. `mailing.company.com`)
 5. Click **Create Domain**
 
-
 <Tip>
   Use a subdomain (e.g. `mailing.company.com`) instead of the root domain (`company.com`). A subdomain provides proper
   reputation segmentation and is required if you also plan to receive emails with Lettr.
@@ -28,9 +27,7 @@ To create a sending domain in Lettr:
 
 Click your new domain in the Sending Domains list.
 
-
 This will display a list of DNS records that need to be configured. Keep this page open — you will need these values soon.
-
 
 ### Configure Linode DNS
 
@@ -64,15 +61,15 @@ Copy the CNAME values from Lettr to Linode:
 1. Click **Add a CNAME Record**.
 2. Copy the **Hostname** from Lettr and paste it into the **Hostname** field in Linode (without your domain suffix). For example, paste only `mailing`.
 3. Copy the **Value** from Lettr and paste it into the **Alias to** field in Linode.
-4. Set **TTL** to **Default** (or your preferred value).
+4. Leave **TTL** set to **Default**.
 5. Click **Save**.
-
 
 {/* TODO: Add screenshot of CNAME record in Linode DNS Manager */}
 
 <Info>
   Linode automatically appends your domain to the record name. Always paste only the subdomain portion (e.g.
-  `mailing`, not `mailing.company.com`).
+  `mailing`, not `mailing.company.com`). If you paste the full hostname, the resulting record will resolve as
+  `mailing.company.com.company.com`, which will fail verification.
 </Info>
 
 ### Add TXT Record (DKIM)
@@ -84,14 +81,14 @@ Copy the TXT values from Lettr to Linode:
 1. Click **Add a TXT Record**.
 2. Copy the **Hostname** from Lettr and paste it into the **Hostname** field in Linode (without your domain suffix). For example, paste only `scph0126._domainkey.mailing`.
 3. Copy the **Value** from Lettr and paste it into the **Value** field in Linode.
-4. Click **Save**.
-
+4. Leave **TTL** set to **Default**.
+5. Click **Save**.
 
 {/* TODO: Add screenshot of DKIM TXT record in Linode DNS Manager */}
 
 <Info>
-  DKIM values are long strings. Linode handles long TXT records automatically — enter the complete value without
-  line breaks.
+  Linode automatically appends your domain to the record name. Always paste only the subdomain portion (e.g.
+  `scph0126._domainkey.mailing`, not `scph0126._domainkey.mailing.company.com`).
 </Info>
 
 ### Add TXT Record (DMARC)
@@ -103,15 +100,19 @@ Copy the TXT values from Lettr to Linode:
 1. Click **Add a TXT Record**.
 2. Copy the **Hostname** from Lettr and paste it into the **Hostname** field in Linode (without your domain suffix). For example, paste only `_dmarc.mailing`.
 3. Copy the **Value** from Lettr (e.g. `v=DMARC1;p=none;`) and paste it into the **Value** field in Linode.
-4. Click **Save**.
-
+4. Leave **TTL** set to **Default**.
+5. Click **Save**.
 
 {/* TODO: Add screenshot of DMARC TXT record in Linode DNS Manager */}
+
+<Info>
+  Linode automatically appends your domain to the record name. Always paste only the subdomain portion (e.g.
+  `_dmarc.mailing`, not `_dmarc.mailing.company.com`).
+</Info>
 
 ### Verify Your Sending Domain
 
 After adding all three DNS records, go back to Lettr and click **Verify DNS Records**. DNS propagation can take up to 24–48 hours, though it typically completes within 5–30 minutes for Linode.
-
 
 ---
 
@@ -128,12 +129,9 @@ To create an Inbound domain in Lettr:
 4. Enter your desired inbound subdomain (e.g. `inbound.company.com`)
 5. Click **Create Domain**.
 
-
 Click on your new domain in the Inbound Domains list.
 
-
 This will display the MX records that need to be configured.
-
 
 ### Add MX Records
 
@@ -142,14 +140,19 @@ MX records tell other mail servers where to deliver emails addressed to your dom
 Copy the MX values from Lettr to Linode:
 
 1. Click **Add a MX Record**.
-2. Copy the **Hostname** from Lettr and paste it into the **Hostname** field in Linode (without your domain suffix). For example, paste only `inbound`.
-3. Copy the first **Required MX Record** value (without the priority number) from Lettr and paste it into the **Mail Server** field in Linode.
-4. Set **Preference** to `10`.
-5. Click **Save**.
-6. Repeat this process for the second (`rx2.sparkpostmail.com`) and third (`rx3.sparkpostmail.com`) MX records, each with preference `10`.
-
+2. Copy the first **Required MX Record** value (e.g. `rx1.sparkpostmail.com`) from Lettr and paste it into the **Mail Server** field in Linode.
+3. Set **Preference** to `10`.
+4. Copy the **Hostname** from Lettr and paste it into the **Subdomain** field in Linode (without your domain suffix). For example, paste only `inbound`.
+5. Leave **TTL** set to **Default**.
+6. Click **Save**.
+7. Repeat this process for the second (`rx2.sparkpostmail.com`) and third (`rx3.sparkpostmail.com`) MX records, each with preference `10`.
 
 {/* TODO: Add screenshot of MX records in Linode DNS Manager */}
+
+<Info>
+  Linode automatically appends your domain to the subdomain field. Always paste only the subdomain portion (e.g.
+  `inbound`, not `inbound.company.com`).
+</Info>
 
 <Warning>
   Adding MX records to a domain or subdomain will route all incoming email for that address to Lettr. Use a dedicated
@@ -159,7 +162,6 @@ Copy the MX values from Lettr to Linode:
 ### Verify Your Inbound Domain
 
 After adding all three MX records, go back to Lettr and click **Verify DNS Records**. DNS propagation can take up to 24–48 hours, though it typically completes within 5–30 minutes for Linode.
-
 
 ---
 
@@ -176,12 +178,9 @@ To create a Tracking domain in Lettr:
 4. Enter your desired tracking subdomain (e.g. `tracking.company.com`)
 5. Click **Create Domain**
 
-
 Click on your new domain in the Tracking Domains list.
 
-
 This will display the CNAME records that need to be configured.
-
 
 ### Add SSL Certificate CNAME Record
 
@@ -192,10 +191,15 @@ Add the record in Linode:
 1. Click **Add a CNAME Record**.
 2. Copy the **Hostname** from Lettr and paste it into the **Hostname** field (without your domain suffix).
 3. Copy the **Value** from Lettr and paste it into the **Alias to** field.
-4. Click **Save**.
-
+4. Leave **TTL** set to **Default**.
+5. Click **Save**.
 
 {/* TODO: Add screenshot of SSL Certificate CNAME record in Linode DNS Manager */}
+
+<Info>
+  Linode automatically appends your domain to the record name. Always paste only the subdomain portion (e.g.
+  `tracking`, not `tracking.company.com`).
+</Info>
 
 ### Add Traffic CNAME Record
 
@@ -206,15 +210,19 @@ Add the record in Linode:
 1. Click **Add a CNAME Record**.
 2. Copy the **Hostname** from Lettr and paste it into the **Hostname** field (without your domain suffix).
 3. Copy the **Value** from Lettr and paste it into the **Alias to** field.
-4. Click **Save**.
-
+4. Leave **TTL** set to **Default**.
+5. Click **Save**.
 
 {/* TODO: Add screenshot of Traffic CNAME record in Linode DNS Manager */}
+
+<Info>
+  Linode automatically appends your domain to the record name. Always paste only the subdomain portion (e.g.
+  `tracking`, not `tracking.company.com`).
+</Info>
 
 ### Verify Your Tracking Domain
 
 After adding both CNAME records, go back to Lettr and click **Verify DNS Records**.
-
 
 ---
 
@@ -231,12 +239,9 @@ To create a Storage domain in Lettr:
 4. Enter your desired storage subdomain (e.g. `assets.company.com`)
 5. Click **Create Domain**
 
-
 Click on your new domain in the Storage Domains list.
 
-
 This will display the TXT and CNAME records that need to be configured.
-
 
 ### Add TXT Record (Certificate Validation)
 
@@ -247,10 +252,15 @@ Add the record in Linode:
 1. Click **Add a TXT Record**.
 2. Copy the **Hostname** from Lettr and paste it into the **Hostname** field (without your domain suffix).
 3. Copy the **Value** from Lettr and paste it into the **Value** field.
-4. Click **Save**.
-
+4. Leave **TTL** set to **Default**.
+5. Click **Save**.
 
 {/* TODO: Add screenshot of Certificate Validation TXT record in Linode DNS Manager */}
+
+<Info>
+  Linode automatically appends your domain to the record name. Always paste only the subdomain portion (e.g.
+  `assets`, not `assets.company.com`).
+</Info>
 
 ### Add TXT Record (Hostname Pre-validation)
 
@@ -261,10 +271,15 @@ Add the record in Linode:
 1. Click **Add a TXT Record**.
 2. Copy the **Hostname** from Lettr and paste it into the **Hostname** field (without your domain suffix).
 3. Copy the **Value** from Lettr and paste it into the **Value** field.
-4. Click **Save**.
-
+4. Leave **TTL** set to **Default**.
+5. Click **Save**.
 
 {/* TODO: Add screenshot of Hostname Pre-validation TXT record in Linode DNS Manager */}
+
+<Info>
+  Linode automatically appends your domain to the record name. Always paste only the subdomain portion (e.g.
+  `assets`, not `assets.company.com`).
+</Info>
 
 ### Add CNAME Record (Domain Routing)
 
@@ -275,21 +290,32 @@ Add the record in Linode:
 1. Click **Add a CNAME Record**.
 2. Copy the **Hostname** from Lettr and paste it into the **Hostname** field (without your domain suffix).
 3. Copy the **Value** from Lettr and paste it into the **Alias to** field.
-4. Click **Save**.
-
+4. Leave **TTL** set to **Default**.
+5. Click **Save**.
 
 {/* TODO: Add screenshot of Domain Routing CNAME record in Linode DNS Manager */}
+
+<Info>
+  Linode automatically appends your domain to the record name. Always paste only the subdomain portion (e.g.
+  `assets`, not `assets.company.com`).
+</Info>
 
 ### Verify Your Storage Domain
 
 After adding all three records, go back to Lettr and click **Verify DNS Records**.
-
 
 ---
 
 ## Troubleshooting
 
 <AccordionGroup>
+  <Accordion title="Domain Suffix Not Omitted">
+    Linode automatically appends your domain to the **Hostname** field. If you paste the full hostname (e.g.
+    `mailing.company.com`), the resulting record will resolve as `mailing.company.com.company.com`, which will fail
+    verification.
+
+    Always paste only the subdomain portion (e.g. `mailing`, `scph0126._domainkey.mailing`, `_dmarc.mailing`).
+  </Accordion>
   <Accordion title="Records Not Propagating">
     Linode DNS typically propagates within 5–30 minutes. If verification fails after adding records, check the
     following:
@@ -352,8 +378,9 @@ After adding all three records, go back to Lettr and click **Verify DNS Records*
   </Accordion>
   <Accordion title="DKIM Value Truncated">
     The DKIM TXT value is a long string. After saving the record, re-open it to confirm the full value was stored. If
-    it appears truncated, delete the record and re-add it, pasting the full value carefully. Linode handles long TXT
-    records automatically.
+    it appears truncated, delete the record and re-add it, pasting the full value carefully. Do not wrap the value in
+    quotation marks — Linode handles long TXT records automatically, and manually adding quotes will cause them to be
+    stored as literal characters, breaking the record.
   </Accordion>
   <Accordion title="When to Contact Support">
     If your DNS records are correctly configured (confirmed with `dig` or dnschecker.org) and verification still fails

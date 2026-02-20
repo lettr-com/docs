@@ -3,7 +3,7 @@ title: "Squarespace"
 description: "Step-by-step guide to configuring DNS records for Lettr on Squarespace."
 ---
 
-This guide walks you through adding the required DNS records for Lettr using Squarespace's DNS management. Squarespace is a website builder and hosting platform that also offers DNS hosting for domains managed through its [Squarespace Domains panel](https://www.squarespace.com).
+This guide walks you through adding the required DNS records for Lettr using Squarespace's DNS management. Squarespace is a website builder and hosting platform that also offers DNS hosting for domains managed through its [Squarespace Domains panel](https://account.squarespace.com/domains).
 
 You will configure a **sending domain** (CNAME, DKIM TXT, and DMARC TXT records) and, optionally, an **inbound domain** (MX records), **tracking domain** (two CNAME records), and **storage domain** (CNAME and two TXT records).
 
@@ -34,9 +34,7 @@ This will display a list of DNS records that need to be configured. Keep this pa
 
 ### Configure Squarespace DNS
 
-Log in to your [Squarespace account](https://www.squarespace.com) and navigate to your domain's settings. Go to the **Custom records** section where you can add DNS records.
-
-{/* TODO: Add screenshot of Squarespace Custom records section */}
+Log in to your [Squarespace account](https://account.squarespace.com/domains), click the domain you want to configure, then click **DNS** in the side panel, followed by **DNS Settings**.
 
 <Info>
   Squarespace only allows custom DNS records for domains purchased or managed through Squarespace. If your domain is
@@ -52,13 +50,12 @@ Log in to your [Squarespace account](https://www.squarespace.com) and navigate t
 <AccordionGroup>
   <Accordion title="Domain registered with a different registrar?">
     If you registered your domain elsewhere but want to manage DNS on Squarespace, you must first transfer the domain to
-    Squarespace or **update the nameservers** at your registrar to Squarespace's nameservers.
+    Squarespace or **update the nameservers** at your registrar to Squarespace's nameservers (`ns1.squarespace-dns.com`
+    and `ns2.squarespace-dns.com`).
 
     <Warning>Until the nameservers are updated, any records you add in Squarespace will not resolve.</Warning>
   </Accordion>
 </AccordionGroup>
-
-{/* TODO: Add screenshot of Squarespace nameserver configuration inside the accordion above */}
 
 ### Add CNAME Record
 
@@ -66,17 +63,14 @@ The CNAME record verifies domain ownership with Lettr's email infrastructure.
 
 Copy the CNAME values from Lettr to Squarespace:
 
-1. Click **Add custom record** in the Custom records section.
-2. Set **Record type** to **CNAME**.
-3. Copy the **Hostname** from Lettr and paste it into the **Name** field (without your domain suffix). For example, paste only `mailing`.
-4. Copy the **Value** from Lettr and paste it into the **Value** field.
+1. Click **Add record** in the DNS Settings panel.
+2. Set **Type** to **CNAME**.
+3. Copy the **Hostname** from Lettr and paste it into the **Host** field (without your domain suffix). For example, paste only `mailing`.
+4. Copy the **Value** from Lettr and paste it into the **Alias Data** field.
 5. Click **Save**.
 
-
-{/* TODO: Add screenshot of CNAME record in Squarespace */}
-
 <Info>
-  Squarespace automatically appends your domain to the record name. Always paste only the subdomain portion (e.g.
+  Squarespace automatically appends your domain to the Host field. Always paste only the subdomain portion (e.g.
   `mailing`, not `mailing.company.com`).
 </Info>
 
@@ -86,14 +80,16 @@ The DKIM record adds a cryptographic signature to your outgoing emails, allowing
 
 Copy the TXT values from Lettr to Squarespace:
 
-1. Click **Add custom record** in the Custom records section.
-2. Set **Record type** to **TXT**.
-3. Copy the **Hostname** from Lettr and paste it into the **Name** field (without your domain suffix). For example, paste only `scph0126._domainkey.mailing`.
-4. Copy the **Value** from Lettr and paste it into the **Value** field.
+1. Click **Add record** in the DNS Settings panel.
+2. Set **Type** to **TXT**.
+3. Copy the **Hostname** from Lettr and paste it into the **Host** field (without your domain suffix). For example, paste only `scph0126._domainkey.mailing`.
+4. Copy the **Value** from Lettr and paste it into the **Text** field.
 5. Click **Save**.
 
-
-{/* TODO: Add screenshot of DKIM TXT record in Squarespace */}
+<Info>
+  Squarespace automatically appends your domain to the Host field. Always paste only the subdomain portion (e.g.
+  `scph0126._domainkey.mailing`, not `scph0126._domainkey.mailing.company.com`).
+</Info>
 
 ### Add TXT Record (DMARC)
 
@@ -101,14 +97,16 @@ The DMARC record tells receiving mail servers how to handle emails that fail aut
 
 Copy the TXT values from Lettr to Squarespace:
 
-1. Click **Add custom record** in the Custom records section.
-2. Set **Record type** to **TXT**.
-3. Copy the **Hostname** from Lettr and paste it into the **Name** field (without your domain suffix). For example, paste only `_dmarc.mailing`.
-4. Copy the **Value** from Lettr and paste it into the **Value** field (e.g. `v=DMARC1;p=none;`).
+1. Click **Add record** in the DNS Settings panel.
+2. Set **Type** to **TXT**.
+3. Copy the **Hostname** from Lettr and paste it into the **Host** field (without your domain suffix). For example, paste only `_dmarc.mailing`.
+4. Copy the **Value** from Lettr and paste it into the **Text** field (e.g. `v=DMARC1;p=none;`).
 5. Click **Save**.
 
-
-{/* TODO: Add screenshot of DMARC TXT record in Squarespace */}
+<Info>
+  Squarespace automatically appends your domain to the Host field. Always paste only the subdomain portion (e.g.
+  `_dmarc.mailing`, not `_dmarc.mailing.company.com`).
+</Info>
 
 ### Verify Your Sending Domain
 
@@ -143,16 +141,18 @@ MX records tell other mail servers where to deliver emails addressed to your dom
 
 Copy the MX values from Lettr to Squarespace:
 
-1. Click **Add custom record** in the Custom records section.
-2. Set **Record type** to **MX**.
-3. Copy the **Hostname** from Lettr and paste it into the **Name** field (without your domain suffix). For example, paste only `inbound`.
-4. Copy the first MX record value from Lettr (e.g. `rx1.sparkpostmail.com`) and paste it into the **Value** field.
+1. Click **Add record** in the DNS Settings panel.
+2. Set **Type** to **MX**.
+3. Copy the **Hostname** from Lettr and paste it into the **Host** field (without your domain suffix). For example, paste only `inbound`.
+4. Copy the first MX record value from Lettr (e.g. `rx1.sparkpostmail.com`) and paste it into the **Mail Server** field.
 5. Set **Priority** to `10`.
 6. Click **Save**.
 7. Repeat this process for the second (`rx2.sparkpostmail.com`) and third (`rx3.sparkpostmail.com`) MX records, each with priority `10`.
 
-
-{/* TODO: Add screenshot of MX records in Squarespace */}
+<Info>
+  Squarespace automatically appends your domain to the Host field. Always paste only the subdomain portion (e.g.
+  `inbound`, not `inbound.company.com`).
+</Info>
 
 <Warning>
   Adding MX records to a domain or subdomain will route all incoming email for that address to Lettr. Use a dedicated
@@ -192,14 +192,16 @@ The SSL Certificate CNAME record provisions an SSL certificate for your custom t
 
 Add the record in Squarespace:
 
-1. Click **Add custom record** in the Custom records section.
-2. Set **Record type** to **CNAME**.
-3. Copy the **Hostname** from Lettr and paste it into the **Name** field (without your domain suffix).
-4. Copy the **Value** from Lettr and paste it into the **Value** field.
+1. Click **Add record** in the DNS Settings panel.
+2. Set **Type** to **CNAME**.
+3. Copy the **Hostname** from Lettr and paste it into the **Host** field (without your domain suffix).
+4. Copy the **Value** from Lettr and paste it into the **Alias Data** field.
 5. Click **Save**.
 
-
-{/* TODO: Add screenshot of SSL Certificate CNAME record in Squarespace */}
+<Info>
+  Squarespace automatically appends your domain to the Host field. Always paste only the subdomain portion (e.g.
+  `tracking`, not `tracking.company.com`).
+</Info>
 
 ### Add Traffic CNAME Record
 
@@ -207,14 +209,16 @@ The Traffic CNAME record routes click and open tracking requests from your custo
 
 Add the record in Squarespace:
 
-1. Click **Add custom record** in the Custom records section.
-2. Set **Record type** to **CNAME**.
-3. Copy the **Hostname** from Lettr and paste it into the **Name** field (without your domain suffix).
-4. Copy the **Value** from Lettr and paste it into the **Value** field.
+1. Click **Add record** in the DNS Settings panel.
+2. Set **Type** to **CNAME**.
+3. Copy the **Hostname** from Lettr and paste it into the **Host** field (without your domain suffix).
+4. Copy the **Value** from Lettr and paste it into the **Alias Data** field.
 5. Click **Save**.
 
-
-{/* TODO: Add screenshot of Traffic CNAME record in Squarespace */}
+<Info>
+  Squarespace automatically appends your domain to the Host field. Always paste only the subdomain portion (e.g.
+  `tracking`, not `tracking.company.com`).
+</Info>
 
 ### Verify Your Tracking Domain
 
@@ -249,14 +253,13 @@ The Certificate Validation TXT record provisions an SSL certificate for your cus
 
 Add the record in Squarespace:
 
-1. Click **Add custom record** in the Custom records section.
-2. Set **Record type** to **TXT**.
-3. Copy the **Hostname** from Lettr and paste it into the **Name** field (without your domain suffix).
-4. Copy the **Value** from Lettr and paste it into the **Value** field.
+1. Click **Add record** in the DNS Settings panel.
+2. Set **Type** to **TXT**.
+3. Copy the **Hostname** from Lettr and paste it into the **Host** field (without your domain suffix).
+4. Copy the **Value** from Lettr and paste it into the **Text** field.
 5. Click **Save**.
 
-
-{/* TODO: Add screenshot of Certificate Validation TXT record in Squarespace */}
+<Info>Squarespace automatically appends your domain to the Host field. Always paste only the subdomain portion, just as with the CNAME record above.</Info>
 
 ### Add TXT Record (Hostname Pre-validation)
 
@@ -264,14 +267,13 @@ The Hostname Pre-validation TXT record verifies ownership of the storage domain 
 
 Add the record in Squarespace:
 
-1. Click **Add custom record** in the Custom records section.
-2. Set **Record type** to **TXT**.
-3. Copy the **Hostname** from Lettr and paste it into the **Name** field (without your domain suffix).
-4. Copy the **Value** from Lettr and paste it into the **Value** field.
+1. Click **Add record** in the DNS Settings panel.
+2. Set **Type** to **TXT**.
+3. Copy the **Hostname** from Lettr and paste it into the **Host** field (without your domain suffix).
+4. Copy the **Value** from Lettr and paste it into the **Text** field.
 5. Click **Save**.
 
-
-{/* TODO: Add screenshot of Hostname Pre-validation TXT record in Squarespace */}
+<Info>Squarespace automatically appends your domain to the Host field. Always paste only the subdomain portion, just as with the CNAME record above.</Info>
 
 ### Add CNAME Record (Domain Routing)
 
@@ -279,14 +281,16 @@ The Domain Routing CNAME record routes asset requests from your custom domain to
 
 Add the record in Squarespace:
 
-1. Click **Add custom record** in the Custom records section.
-2. Set **Record type** to **CNAME**.
-3. Copy the **Hostname** from Lettr and paste it into the **Name** field (without your domain suffix).
-4. Copy the **Value** from Lettr and paste it into the **Value** field.
+1. Click **Add record** in the DNS Settings panel.
+2. Set **Type** to **CNAME**.
+3. Copy the **Hostname** from Lettr and paste it into the **Host** field (without your domain suffix).
+4. Copy the **Value** from Lettr and paste it into the **Alias Data** field.
 5. Click **Save**.
 
-
-{/* TODO: Add screenshot of Domain Routing CNAME record in Squarespace */}
+<Info>
+  Squarespace automatically appends your domain to the Host field. Always paste only the subdomain portion (e.g.
+  `assets`, not `assets.company.com`).
+</Info>
 
 ### Verify Your Storage Domain
 
@@ -298,8 +302,13 @@ After adding all three records, go back to Lettr and click **Verify DNS Records*
 ## Troubleshooting
 
 <AccordionGroup>
+  <Accordion title="Domain Suffix Not Omitted">
+    Squarespace automatically appends your domain to the Host field. If you paste the full hostname (e.g. `mailing.company.com`), the resulting record will be `mailing.company.com.company.com`, which will fail verification.
+
+    Always paste only the subdomain portion (e.g. `mailing`, `scph0126._domainkey.mailing`, `_dmarc.mailing`).
+  </Accordion>
   <Accordion title="Records Not Propagating">
-    Squarespace DNS propagation can take up to 72 hours. If verification fails after adding records, check the following:
+    Squarespace DNS propagation can take up to 24–48 hours. If verification fails after adding records, check the following:
 
     - **Wait at least 2–4 hours** before your first verification attempt.
     - **Confirm the records exist** using command-line tools:
@@ -329,7 +338,15 @@ After adding all three records, go back to Lettr and click **Verify DNS Records*
   <Accordion title="Cannot Add Custom Records">
     Squarespace only supports custom DNS records for domains purchased or managed through Squarespace. If you are unable to
     add records, confirm that your domain is managed by Squarespace. If it is registered elsewhere, consider transferring it
-    to Squarespace or using a different DNS provider.
+    to Squarespace or pointing your nameservers to Squarespace before adding records.
+  </Accordion>
+  <Accordion title="Duplicate Host Error on TXT Records">
+    Squarespace will display a **"This host is already in use"** error if you attempt to add a second TXT record with an
+    identical Host value. Each hostname can only hold one TXT record in Squarespace's DNS panel (with the exception of
+    SPF records, which Squarespace merges automatically).
+
+    If you need to add multiple TXT records for the same subdomain, consider managing DNS with a provider that supports
+    multiple TXT records on the same hostname, such as Cloudflare or DigitalOcean.
   </Accordion>
   <Accordion title="Wrong Record Type">
     A common mistake is selecting the wrong record type:
@@ -347,8 +364,19 @@ After adding all three records, go back to Lettr and click **Verify DNS Records*
     | Storage domain routing | CNAME |
   </Accordion>
   <Accordion title="DKIM Value Truncated">
-    The DKIM TXT value is a long string. After saving the record, re-open the custom records section and confirm the full
+    The DKIM TXT value is a long string. After saving the record, re-open the DNS Settings panel and confirm the full
     value is displayed. If it appears truncated, delete the record and re-add it, pasting the full value carefully.
+  </Accordion>
+  <Accordion title="Nameservers Not Pointing to Squarespace">
+    If your records are saved in Squarespace but not resolving, confirm that your domain registrar is pointing to
+    Squarespace's nameservers. You can check this with:
+
+    ```bash
+    dig NS yourdomain.com +short
+    ```
+
+    The output should include Squarespace nameservers (e.g. `ns1.squarespace-dns.com`, `ns2.squarespace-dns.com`). If it
+    shows a different provider's nameservers, update them at your domain registrar.
   </Accordion>
   <Accordion title="When to Contact Support">
     If your DNS records are correctly configured (confirmed with `dig` or dnschecker.org) and verification still fails after

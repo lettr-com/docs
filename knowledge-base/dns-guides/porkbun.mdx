@@ -34,7 +34,7 @@ This will display a list of DNS records that need to be configured. Keep this pa
 
 ### Configure Porkbun DNS
 
-Log in to your [Porkbun dashboard](https://porkbun.com) and navigate to your domain. Click **DNS** to access the DNS record management page.
+Log in to your [Porkbun dashboard](https://porkbun.com) and navigate to **Domain Management**. Hover over your domain name and click the **DNS** link that appears inline to access the DNS record management page.
 
 {/* TODO: Add screenshot of Porkbun DNS management page */}
 
@@ -61,17 +61,17 @@ The CNAME record verifies domain ownership with Lettr's email infrastructure.
 
 Copy the CNAME values from Lettr to Porkbun:
 
-1. In the DNS management page, select **CNAME** from the **Record Type** dropdown.
-2. Copy the **Hostname** from Lettr and paste it into the **Subdomain** field (without your domain suffix). For example, paste only `mailing`.
-3. Copy the **Value** from Lettr and paste it into the **Content** field.
-4. Leave **TTL** at the default or set to **3600**.
-5. Click **Create Record**.
+1. In the DNS management page, select **CNAME** from the **Type** dropdown.
+2. Copy the **Hostname** from Lettr and paste it into the **Host** field (without your domain suffix). For example, paste only `mailing`.
+3. Copy the **Value** from Lettr and paste it into the **Answer** field.
+4. Leave **TTL** at the default.
+5. Click **Save**.
 
 
 {/* TODO: Add screenshot of CNAME record in Porkbun */}
 
 <Info>
-  Porkbun automatically appends your domain to the subdomain field. Always paste only the subdomain portion (e.g.
+  Porkbun automatically appends your domain to the Host field. Always paste only the subdomain portion (e.g.
   `mailing`, not `mailing.company.com`).
 </Info>
 
@@ -81,14 +81,19 @@ The DKIM record adds a cryptographic signature to your outgoing emails, allowing
 
 Copy the TXT values from Lettr to Porkbun:
 
-1. In the DNS management page, select **TXT** from the **Record Type** dropdown.
-2. Copy the **Hostname** from Lettr and paste it into the **Subdomain** field (without your domain suffix). For example, paste only `scph0126._domainkey.mailing`.
-3. Copy the **Value** from Lettr and paste it into the **Content** field.
-4. Leave **TTL** at the default or set to **3600**.
-5. Click **Create Record**.
+1. In the DNS management page, select **TXT** from the **Type** dropdown.
+2. Copy the **Hostname** from Lettr and paste it into the **Host** field (without your domain suffix). For example, paste only `scph0126._domainkey.mailing`.
+3. Copy the **Value** from Lettr and paste it into the **Answer** field.
+4. Leave **TTL** at the default.
+5. Click **Save**.
 
 
 {/* TODO: Add screenshot of DKIM TXT record in Porkbun */}
+
+<Info>
+  Porkbun automatically appends your domain to the Host field. Always paste only the subdomain portion (e.g.
+  `scph0126._domainkey.mailing`, not `scph0126._domainkey.mailing.company.com`).
+</Info>
 
 ### Add TXT Record (DMARC)
 
@@ -96,14 +101,19 @@ The DMARC record tells receiving mail servers how to handle emails that fail aut
 
 Copy the TXT values from Lettr to Porkbun:
 
-1. In the DNS management page, select **TXT** from the **Record Type** dropdown.
-2. Copy the **Hostname** from Lettr and paste it into the **Subdomain** field (without your domain suffix). For example, paste only `_dmarc.mailing`.
-3. Copy the **Value** from Lettr and paste it into the **Content** field.
-4. Leave **TTL** at the default or set to **3600**.
-5. Click **Create Record**.
+1. In the DNS management page, select **TXT** from the **Type** dropdown.
+2. Copy the **Hostname** from Lettr and paste it into the **Host** field (without your domain suffix). For example, paste only `_dmarc.mailing`.
+3. Copy the **Value** from Lettr and paste it into the **Answer** field.
+4. Leave **TTL** at the default.
+5. Click **Save**.
 
 
 {/* TODO: Add screenshot of DMARC TXT record in Porkbun */}
+
+<Info>
+  Porkbun automatically appends your domain to the Host field. Always paste only the subdomain portion (e.g.
+  `_dmarc.mailing`, not `_dmarc.mailing.company.com`).
+</Info>
 
 ### Verify Your Sending Domain
 
@@ -138,16 +148,21 @@ MX records tell other mail servers where to deliver emails addressed to your dom
 
 Copy the MX values from Lettr to Porkbun:
 
-1. In the DNS management page, select **MX** from the **Record Type** dropdown.
-2. Copy the **Hostname** from Lettr and paste it into the **Subdomain** field (without your domain suffix). For example, paste only `inbound`.
-3. Copy the first MX record value from Lettr (e.g. `rx1.sparkpostmail.com`) and paste it into the **Content** field.
+1. In the DNS management page, select **MX** from the **Type** dropdown.
+2. Copy the **Hostname** from Lettr and paste it into the **Host** field (without your domain suffix). For example, paste only `inbound`.
+3. Copy the first **Required MX Record** value (without the priority number) from Lettr (e.g. `rx1.sparkpostmail.com`) and paste it into the **Answer** field.
 4. Set **Priority** to `10`.
-5. Leave **TTL** at the default or set to **3600**.
-6. Click **Create Record**.
+5. Leave **TTL** at the default.
+6. Click **Save**.
 7. Repeat this process for the second (`rx2.sparkpostmail.com`) and third (`rx3.sparkpostmail.com`) MX records, each with priority `10`.
 
 
 {/* TODO: Add screenshot of MX records in Porkbun */}
+
+<Info>
+  Porkbun automatically appends your domain to the Host field. Always paste only the subdomain portion (e.g.
+  `inbound`, not `inbound.company.com`).
+</Info>
 
 <Warning>
   Adding MX records to a domain or subdomain will route all incoming email for that address to Lettr. Use a dedicated
@@ -187,13 +202,19 @@ The SSL Certificate CNAME record provisions an SSL certificate for your custom t
 
 Add the record in Porkbun:
 
-1. In the DNS management page, select **CNAME** from the **Record Type** dropdown.
-2. Copy the **Hostname** from Lettr and paste it into the **Subdomain** field (without your domain suffix).
-3. Copy the **Value** from Lettr and paste it into the **Content** field.
-4. Click **Create Record**.
+1. In the DNS management page, select **CNAME** from the **Type** dropdown.
+2. Copy the **Hostname** from Lettr and paste it into the **Host** field (without your domain suffix).
+3. Copy the **Value** from Lettr and paste it into the **Answer** field.
+4. Leave **TTL** at the default.
+5. Click **Save**.
 
 
 {/* TODO: Add screenshot of SSL Certificate CNAME record in Porkbun */}
+
+<Info>
+  Porkbun automatically appends your domain to the Host field. Always paste only the subdomain portion (e.g.
+  `tracking`, not `tracking.company.com`).
+</Info>
 
 ### Add Traffic CNAME Record
 
@@ -201,13 +222,19 @@ The Traffic CNAME record routes click and open tracking requests from your custo
 
 Add the record in Porkbun:
 
-1. In the DNS management page, select **CNAME** from the **Record Type** dropdown.
-2. Copy the **Hostname** from Lettr and paste it into the **Subdomain** field (without your domain suffix).
-3. Copy the **Value** from Lettr and paste it into the **Content** field.
-4. Click **Create Record**.
+1. In the DNS management page, select **CNAME** from the **Type** dropdown.
+2. Copy the **Hostname** from Lettr and paste it into the **Host** field (without your domain suffix).
+3. Copy the **Value** from Lettr and paste it into the **Answer** field.
+4. Leave **TTL** at the default.
+5. Click **Save**.
 
 
 {/* TODO: Add screenshot of Traffic CNAME record in Porkbun */}
+
+<Info>
+  Porkbun automatically appends your domain to the Host field. Always paste only the subdomain portion (e.g.
+  `tracking`, not `tracking.company.com`).
+</Info>
 
 ### Verify Your Tracking Domain
 
@@ -242,13 +269,19 @@ The Certificate Validation TXT record provisions an SSL certificate for your cus
 
 Add the record in Porkbun:
 
-1. In the DNS management page, select **TXT** from the **Record Type** dropdown.
-2. Copy the **Hostname** from Lettr and paste it into the **Subdomain** field (without your domain suffix).
-3. Copy the **Value** from Lettr and paste it into the **Content** field.
-4. Click **Create Record**.
+1. In the DNS management page, select **TXT** from the **Type** dropdown.
+2. Copy the **Hostname** from Lettr and paste it into the **Host** field (without your domain suffix).
+3. Copy the **Value** from Lettr and paste it into the **Answer** field.
+4. Leave **TTL** at the default.
+5. Click **Save**.
 
 
 {/* TODO: Add screenshot of Certificate Validation TXT record in Porkbun */}
+
+<Info>
+  Porkbun automatically appends your domain to the Host field. Always paste only the subdomain portion (e.g.
+  `assets`, not `assets.company.com`).
+</Info>
 
 ### Add TXT Record (Hostname Pre-validation)
 
@@ -256,13 +289,19 @@ The Hostname Pre-validation TXT record verifies ownership of the storage domain 
 
 Add the record in Porkbun:
 
-1. In the DNS management page, select **TXT** from the **Record Type** dropdown.
-2. Copy the **Hostname** from Lettr and paste it into the **Subdomain** field (without your domain suffix).
-3. Copy the **Value** from Lettr and paste it into the **Content** field.
-4. Click **Create Record**.
+1. In the DNS management page, select **TXT** from the **Type** dropdown.
+2. Copy the **Hostname** from Lettr and paste it into the **Host** field (without your domain suffix).
+3. Copy the **Value** from Lettr and paste it into the **Answer** field.
+4. Leave **TTL** at the default.
+5. Click **Save**.
 
 
 {/* TODO: Add screenshot of Hostname Pre-validation TXT record in Porkbun */}
+
+<Info>
+  Porkbun automatically appends your domain to the Host field. Always paste only the subdomain portion (e.g.
+  `assets`, not `assets.company.com`).
+</Info>
 
 ### Add CNAME Record (Domain Routing)
 
@@ -270,13 +309,19 @@ The Domain Routing CNAME record routes asset requests from your custom domain to
 
 Add the record in Porkbun:
 
-1. In the DNS management page, select **CNAME** from the **Record Type** dropdown.
-2. Copy the **Hostname** from Lettr and paste it into the **Subdomain** field (without your domain suffix).
-3. Copy the **Value** from Lettr and paste it into the **Content** field.
-4. Click **Create Record**.
+1. In the DNS management page, select **CNAME** from the **Type** dropdown.
+2. Copy the **Hostname** from Lettr and paste it into the **Host** field (without your domain suffix).
+3. Copy the **Value** from Lettr and paste it into the **Answer** field.
+4. Leave **TTL** at the default.
+5. Click **Save**.
 
 
 {/* TODO: Add screenshot of Domain Routing CNAME record in Porkbun */}
+
+<Info>
+  Porkbun automatically appends your domain to the Host field. Always paste only the subdomain portion (e.g.
+  `assets`, not `assets.company.com`).
+</Info>
 
 ### Verify Your Storage Domain
 
@@ -288,10 +333,16 @@ After adding all three records, go back to Lettr and click **Verify DNS Records*
 ## Troubleshooting
 
 <AccordionGroup>
-  <Accordion title="Records Not Propagating">
-    Porkbun DNS propagation can take several hours. If verification fails after adding records, check the following:
+  <Accordion title="Host Field Auto-appends Domain">
+    Porkbun automatically appends your domain name to whatever you enter in the **Host** field. If you paste the full hostname (e.g. `mailing.company.com`), the resulting record will be `mailing.company.com.company.com`, which will fail verification.
 
-    - **Wait at least 1–2 hours** before your first verification attempt.
+    Always paste only the subdomain portion (e.g. `mailing`, `scph0126._domainkey.mailing`, `_dmarc.mailing`).
+
+  </Accordion>
+  <Accordion title="Records Not Propagating">
+    Porkbun's DNS is powered by Cloudflare's infrastructure, so records typically propagate within minutes. If verification fails after adding records, check the following:
+
+    - **Wait at least 30 minutes** before your first verification attempt. Most records propagate within 1–2 hours.
     - **Confirm the records exist** using command-line tools:
 
     ```bash
@@ -316,19 +367,8 @@ After adding all three records, go back to Lettr and click **Verify DNS Records*
 
     - **Use a web tool** like [WhatsMyDNS](https://www.whatsmydns.net) or [dnschecker.org](https://dnschecker.org) to verify propagation across multiple DNS servers worldwide.
   </Accordion>
-  <Accordion title="Nameservers Not Pointing to Porkbun">
-    If your records are saved in Porkbun but not resolving, confirm that your domain is using Porkbun's nameservers. You can
-    check this with:
-
-    ```bash
-    dig NS yourdomain.com +short
-    ```
-
-    The output should include Porkbun nameservers. If it shows a different provider's nameservers, update them in your
-    domain registrar settings.
-  </Accordion>
   <Accordion title="Wrong Record Type">
-    A common mistake is selecting the wrong record type from the dropdown:
+    A common mistake is selecting the wrong record type from the **Type** dropdown:
 
     | Record | Correct Type |
     |--------|-------------|
@@ -343,9 +383,24 @@ After adding all three records, go back to Lettr and click **Verify DNS Records*
     | Storage domain routing | CNAME |
   </Accordion>
   <Accordion title="DKIM Value Truncated">
-    The DKIM TXT value is a long string. After saving the record, re-open the DNS management page and confirm the full value
-    is displayed in the Content field. If it appears truncated, delete the record and re-add it, pasting the full value
-    carefully.
+    The DKIM TXT value is a long string. After saving the record, re-open the DNS management page and confirm the full value is displayed in the **Answer** field. If it appears truncated, delete the record and re-add it, pasting the full value carefully.
+
+    If Porkbun rejects the value due to length, you may need to split the DKIM key into two quoted strings within the same TXT record. For example:
+
+    ```
+    "v=DKIM1; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOC..." "AQ8AMIIBCgKCAQEA..."
+    ```
+
+    Each quoted segment must be 255 characters or fewer. Paste both quoted strings as a single value in the **Answer** field.
+  </Accordion>
+  <Accordion title="Nameservers Not Pointing to Porkbun">
+    If your records are saved in Porkbun but not resolving, confirm that your domain is using Porkbun's nameservers. You can check this with:
+
+    ```bash
+    dig NS yourdomain.com +short
+    ```
+
+    The output should include Porkbun nameservers. If it shows a different provider's nameservers, update them in your domain registrar settings.
   </Accordion>
   <Accordion title="When to Contact Support">
     If your DNS records are correctly configured (confirmed with `dig` or dnschecker.org) and verification still fails after
