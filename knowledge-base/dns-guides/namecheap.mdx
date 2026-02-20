@@ -20,8 +20,6 @@ To create a sending domain in Lettr:
 4. Enter your desired sending subdomain (e.g. `mailing.company.com`)
 5. Click **Create Domain**
 
-<img src="/images/lettr-create-sending-domain.png" alt="Create Sending Domain button in Lettr" />
-
 <Tip>
   Use a subdomain (e.g. `mailing.company.com`) instead of the root domain (`company.com`). A subdomain provides proper
   reputation segmentation and is required if you also plan to receive emails with Lettr.
@@ -29,17 +27,11 @@ To create a sending domain in Lettr:
 
 Click your new domain in the Sending Domains list.
 
-<img src="/images/lettr-sending-list.png" alt="Sending domain listed in Lettr Sending Domains list" />
-
 This will display a list of DNS records that need to be configured. Keep this page open — you will need these values soon.
-
-<img src="/images/lettr-mailing-config.png" alt="DNS records displayed in Lettr after creating a sending domain" />
 
 ### Configure Namecheap DNS
 
 Log in to your [Namecheap Account Panel](https://www.namecheap.com) and navigate to **Domain List**. Click **Manage** next to your domain, then select the **Advanced DNS** tab.
-
-{/* TODO: Add screenshot of Namecheap Advanced DNS page */}
 
 <Tip>
   If your domain was purchased through Namecheap or your nameservers already point to Namecheap, skip nameserver
@@ -55,8 +47,6 @@ Log in to your [Namecheap Account Panel](https://www.namecheap.com) and navigate
     <Warning>Until the nameservers are updated, any records you add in Namecheap will not resolve.</Warning>
   </Accordion>
 </AccordionGroup>
-
-{/* TODO: Add screenshot of Namecheap nameserver configuration inside the accordion above */}
 
 <Info>
   Namecheap automatically appends your domain to the host value. When entering hostnames, paste only the subdomain portion
@@ -77,10 +67,6 @@ Copy the CNAME values from Lettr to Namecheap:
 5. Leave **TTL** set to the default (Automatic).
 6. Click the **checkmark** to save.
 
-<img src="/images/lettr-mailing-1.png" alt="CNAME record Hostname and Value in Lettr" />
-
-{/* TODO: Add screenshot of CNAME record in Namecheap */}
-
 ### Add TXT Record (DKIM)
 
 The DKIM record adds a cryptographic signature to your outgoing emails, allowing recipients to verify they were sent by an authorized sender.
@@ -93,10 +79,6 @@ Copy the TXT values from Lettr to Namecheap:
 4. Copy the **Value** from Lettr and paste it into the **Value** field.
 5. Leave **TTL** set to the default (Automatic).
 6. Click the **checkmark** to save.
-
-<img src="/images/lettr-mailing-2.png" alt="DKIM TXT record Hostname and Value in Lettr" />
-
-{/* TODO: Add screenshot of DKIM TXT record in Namecheap */}
 
 ### Add TXT Record (DMARC)
 
@@ -111,15 +93,9 @@ Copy the TXT values from Lettr to Namecheap:
 5. Leave **TTL** set to the default (Automatic).
 6. Click the **checkmark** to save.
 
-<img src="/images/lettr-mailing-3.png" alt="DMARC TXT record Hostname and Value in Lettr" />
-
-{/* TODO: Add screenshot of DMARC TXT record in Namecheap */}
-
 ### Verify Your Sending Domain
 
 After adding all three DNS records, go back to Lettr and click **Verify DNS Records**. DNS propagation can take up to 24–48 hours, though it typically completes within a few minutes.
-
-<img src="/images/lettr-verified.png" alt="Sending domain verified successfully in Lettr" />
 
 ---
 
@@ -136,21 +112,15 @@ To create an Inbound domain in Lettr:
 4. Enter your desired inbound subdomain (e.g. `inbound.company.com`)
 5. Click **Create Domain**.
 
-<img src="/images/lettr-inbound-new.png" alt="Creating a new inbound domain in Lettr" />
-
 Click on your new domain in the Inbound Domains list.
 
-<img src="/images/lettr-inbound-list.png" alt="Inbound domain listed in Lettr Inbound Domains list" />
-
 This will display the MX records that need to be configured.
-
-<img src="/images/lettr-inbound-config.png" alt="MX record configuration displayed in Lettr for inbound domain" />
 
 ### Add MX Records
 
 MX records tell other mail servers where to deliver emails addressed to your domain.
 
-Before adding MX records, ensure that Namecheap's **Mail Settings** for your domain are set to **Custom MX**. Otherwise, Namecheap's default MX records will take precedence.
+Before adding MX records, ensure that Namecheap's mail settings are configured correctly. In the **Advanced DNS** tab, scroll down to the **MAIL SETTINGS** section. Open the **Email Forwarding** drop-down and select **Custom MX** — otherwise Namecheap's default mail settings will take precedence over any custom MX records you add.
 
 Copy the MX values from Lettr to Namecheap:
 
@@ -163,20 +133,14 @@ Copy the MX values from Lettr to Namecheap:
 7. Click the **checkmark** to save.
 8. Repeat this process for the second (`rx2.sparkpostmail.com`) and third (`rx3.sparkpostmail.com`) MX records, each with priority `10`.
 
-<img src="/images/lettr-inbound-1.png" alt="MX record values in Lettr for inbound domain" />
-
-{/* TODO: Add screenshot of MX records in Namecheap */}
-
 <Warning>
-  Adding MX records to a domain or subdomain will route all incoming email for that address to Lettr. Use a dedicated
+  All emails sent to the domain or subdomain where MX records are configured will be routed to Lettr. Use a dedicated
   subdomain (e.g. `inbound.company.com`) to avoid affecting your primary email.
 </Warning>
 
 ### Verify Your Inbound Domain
 
 After adding all three MX records, go back to Lettr and click **Verify DNS Records**. DNS propagation can take up to 24–48 hours, though it typically completes within a few minutes.
-
-<img src="/images/lettr-inbound-verified.png" alt="Inbound domain verified successfully in Lettr" />
 
 ---
 
@@ -193,15 +157,9 @@ To create a Tracking domain in Lettr:
 4. Enter your desired tracking subdomain (e.g. `tracking.company.com`)
 5. Click **Create Domain**
 
-<img src="/images/lettr-add-tracking.png" alt="Creating a new tracking domain in Lettr" />
-
 Click on your new domain in the Tracking Domains list.
 
-<img src="/images/lettr-tracking-list.png" alt="Tracking domain listed in Lettr Tracking Domains list" />
-
 This will display the CNAME records that need to be configured.
-
-<img src="/images/lettr-tracking-config.png" alt="CNAME records displayed in Lettr for tracking domain configuration" />
 
 ### Add SSL Certificate CNAME Record
 
@@ -213,11 +171,8 @@ Add the record in Namecheap:
 2. Set **Type** to **CNAME**.
 3. Copy the **Hostname** from Lettr and paste it into the **Host** field (without your domain suffix).
 4. Copy the **Value** from Lettr and paste it into the **Value** field.
-5. Click the **checkmark** to save.
-
-<img src="/images/lettr-tracking-1.png" alt="SSL Certificate CNAME record values in Lettr for tracking domain" />
-
-{/* TODO: Add screenshot of SSL Certificate CNAME record in Namecheap */}
+5. Leave **TTL** set to the default (Automatic).
+6. Click the **checkmark** to save.
 
 ### Add Traffic CNAME Record
 
@@ -229,17 +184,12 @@ Add the record in Namecheap:
 2. Set **Type** to **CNAME**.
 3. Copy the **Hostname** from Lettr and paste it into the **Host** field (without your domain suffix).
 4. Copy the **Value** from Lettr and paste it into the **Value** field.
-5. Click the **checkmark** to save.
-
-<img src="/images/lettr-tracking-2.png" alt="Traffic CNAME record values in Lettr for tracking domain" />
-
-{/* TODO: Add screenshot of Traffic CNAME record in Namecheap */}
+5. Leave **TTL** set to the default (Automatic).
+6. Click the **checkmark** to save.
 
 ### Verify Your Tracking Domain
 
 After adding both CNAME records, go back to Lettr and click **Verify DNS Records**.
-
-<img src="/images/lettr-tracking-verified.png" alt="Tracking domain verified successfully in Lettr" />
 
 ---
 
@@ -256,15 +206,9 @@ To create a Storage domain in Lettr:
 4. Enter your desired storage subdomain (e.g. `assets.company.com`)
 5. Click **Create Domain**
 
-<img src="/images/lettr-storage-new.png" alt="Creating a new storage domain in Lettr" />
-
 Click on your new domain in the Storage Domains list.
 
-<img src="/images/lettr-storage-list.png" alt="Storage domain listed in Lettr Storage Domains list" />
-
 This will display the TXT and CNAME records that need to be configured.
-
-<img src="/images/lettr-storage-config.png" alt="TXT and CNAME records displayed in Lettr for storage domain configuration" />
 
 ### Add TXT Record (Certificate Validation)
 
@@ -276,11 +220,8 @@ Add the record in Namecheap:
 2. Set **Type** to **TXT**.
 3. Copy the **Hostname** from Lettr and paste it into the **Host** field (without your domain suffix).
 4. Copy the **Value** from Lettr and paste it into the **Value** field.
-5. Click the **checkmark** to save.
-
-<img src="/images/lettr-storage-1.png" alt="Certificate Validation TXT record values in Lettr for storage domain" />
-
-{/* TODO: Add screenshot of Certificate Validation TXT record in Namecheap */}
+5. Leave **TTL** set to the default (Automatic).
+6. Click the **checkmark** to save.
 
 ### Add TXT Record (Hostname Pre-validation)
 
@@ -292,11 +233,8 @@ Add the record in Namecheap:
 2. Set **Type** to **TXT**.
 3. Copy the **Hostname** from Lettr and paste it into the **Host** field (without your domain suffix).
 4. Copy the **Value** from Lettr and paste it into the **Value** field.
-5. Click the **checkmark** to save.
-
-<img src="/images/lettr-storage-2.png" alt="Hostname Pre-validation TXT record values in Lettr for storage domain" />
-
-{/* TODO: Add screenshot of Hostname Pre-validation TXT record in Namecheap */}
+5. Leave **TTL** set to the default (Automatic).
+6. Click the **checkmark** to save.
 
 ### Add CNAME Record (Domain Routing)
 
@@ -308,24 +246,19 @@ Add the record in Namecheap:
 2. Set **Type** to **CNAME**.
 3. Copy the **Hostname** from Lettr and paste it into the **Host** field (without your domain suffix).
 4. Copy the **Value** from Lettr and paste it into the **Value** field.
-5. Click the **checkmark** to save.
-
-<img src="/images/lettr-storage-3.png" alt="Domain Routing CNAME record values in Lettr for storage domain" />
-
-{/* TODO: Add screenshot of Domain Routing CNAME record in Namecheap */}
+5. Leave **TTL** set to the default (Automatic).
+6. Click the **checkmark** to save.
 
 ### Verify Your Storage Domain
 
 After adding all three records, go back to Lettr and click **Verify DNS Records**.
-
-<img src="/images/lettr-storage-verified.png" alt="Storage domain verified successfully in Lettr" />
 
 ---
 
 ## Troubleshooting
 
 <AccordionGroup>
-  <Accordion title="Host Values Include Full Domain">
+  <Accordion title="Domain Suffix Not Omitted">
     Namecheap automatically appends your domain to the Host field. If you paste the full hostname (e.g.
     `mailing.company.com`), the resulting record will be `mailing.company.com.company.com`, which will fail verification.
 
@@ -333,9 +266,9 @@ After adding all three records, go back to Lettr and click **Verify DNS Records*
     this mistake, delete the incorrect record and re-add it with only the subdomain.
   </Accordion>
   <Accordion title="MX Records Not Working">
-    If your inbound MX records are not resolving, check that Namecheap's **Mail Settings** for your domain are set to
-    **Custom MX**. Navigate to your domain's **Email** tab and change the mail settings. Default MX records will override
-    any custom MX records you add.
+    If your inbound MX records are not resolving, confirm that Namecheap's mail settings are configured for custom
+    records. In the **Advanced DNS** tab, scroll down to the **MAIL SETTINGS** section. Open the **Email Forwarding**
+    drop-down and select **Custom MX**. The default setting will override any custom MX records you add.
   </Accordion>
   <Accordion title="Records Not Propagating">
     Namecheap DNS propagation typically takes up to 72 hours but is often much faster. If verification fails after adding
@@ -366,6 +299,23 @@ After adding all three records, go back to Lettr and click **Verify DNS Records*
 
     - **Use a web tool** like [dnschecker.org](https://dnschecker.org) to verify propagation across multiple DNS servers worldwide.
   </Accordion>
+  <Accordion title="Nameservers Not Pointing to Namecheap">
+    If your records are saved in Namecheap but not resolving, confirm that your domain registrar is pointing to
+    Namecheap's nameservers. You can check this with:
+
+    ```bash
+    dig NS yourdomain.com +short
+    ```
+
+    The output should include Namecheap's nameservers (e.g. `dns1.registrar-servers.com`, `dns2.registrar-servers.com`).
+    If the output shows a different provider's nameservers, update them at your domain registrar to point to Namecheap.
+  </Accordion>
+  <Accordion title="CNAME at Root Domain Not Supported">
+    Standard CNAME records cannot be used at the root of a domain (e.g. `company.com`). Namecheap does not allow CNAME
+    records at the apex (`@`) — attempting to add one will fail. Always use a subdomain (e.g. `mailing.company.com`) for
+    your sending, tracking, and storage domains. Namecheap does offer ALIAS records at the root as an alternative, but
+    Lettr's verification requires a standard CNAME, so a subdomain is required.
+  </Accordion>
   <Accordion title="Wrong Record Type">
     A common mistake is selecting the wrong type from the dropdown:
 
@@ -381,9 +331,16 @@ After adding all three records, go back to Lettr and click **Verify DNS Records*
     | Storage hostname pre-validation | TXT |
     | Storage domain routing | CNAME |
   </Accordion>
+  <Accordion title="CNAME Conflict">
+    If a CNAME record fails to save or resolve, check whether an existing A or CNAME record already uses the same
+    hostname. Namecheap does not automatically remove conflicting records. Delete any duplicate or conflicting records for
+    the same hostname before adding the new CNAME.
+  </Accordion>
   <Accordion title="DKIM Value Truncated">
-    The DKIM TXT value is a long string. After saving the record, click **Edit** to confirm the full value was stored in the
-    Value field. If it appears truncated, delete the record and re-add it, pasting the full value carefully.
+    The DKIM TXT value is a long string (often 400+ characters). After saving the record, click the **Edit** pencil icon
+    next to it and confirm the full value is present in the **Value** field. If it appears cut off, delete the record and
+    re-add it, pasting the complete value carefully. Namecheap supports up to 2500 characters in the Value field, so the
+    full DKIM key fits without splitting.
   </Accordion>
   <Accordion title="When to Contact Support">
     If your DNS records are correctly configured (confirmed with `dig` or dnschecker.org) and verification still fails after

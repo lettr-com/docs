@@ -20,7 +20,6 @@ To create a sending domain in Lettr:
 4. Enter your desired sending subdomain (e.g. `mailing.company.com`)
 5. Click **Create Domain**
 
-<img src="/images/lettr-create-sending-domain.png" alt="Create Sending Domain button in Lettr" />
 
 <Tip>
   Use a subdomain (e.g. `mailing.company.com`) instead of the root domain (`company.com`). A subdomain provides proper
@@ -29,11 +28,9 @@ To create a sending domain in Lettr:
 
 Click your new domain in the Sending Domains list.
 
-<img src="/images/lettr-sending-list.png" alt="Sending domain listed in Lettr Sending Domains list" />
 
 This will display a list of DNS records that need to be configured. Keep this page open — you will need these values soon.
 
-<img src="/images/lettr-mailing-config.png" alt="DNS records displayed in Lettr after creating a sending domain" />
 
 ### Configure Vercel DNS
 
@@ -77,7 +74,6 @@ Copy the CNAME values from Lettr to Vercel:
   paste only `mailing`.
 </Info>
 
-<img src="/images/lettr-mailing-1.png" alt="CNAME record Hostname and Value in Lettr" />
 
 <img src="/images/vercel-mailing-1.png" alt="Adding CNAME record in Vercel DNS settings" />
 
@@ -98,7 +94,6 @@ Copy the TXT values from Lettr to Vercel:
   `scph0126._domainkey.mailing.lettr-demo.com`, paste only `scph0126._domainkey.mailing`.
 </Info>
 
-<img src="/images/lettr-mailing-2.png" alt="DKIM TXT record Hostname and Value in Lettr" />
 
 <img src="/images/vercel-mailing-2.png" alt="Adding DKIM TXT record in Vercel DNS settings" />
 
@@ -119,7 +114,6 @@ Copy the TXT values from Lettr to Vercel:
   `_dmarc.mailing.lettr-demo.com`, paste only `_dmarc.mailing`.
 </Info>
 
-<img src="/images/lettr-mailing-3.png" alt="DMARC TXT record Hostname and Value in Lettr" />
 
 <img src="/images/vercel-mailing-3.png" alt="Adding DMARC TXT record in Vercel DNS settings" />
 
@@ -127,7 +121,6 @@ Copy the TXT values from Lettr to Vercel:
 
 After adding all three DNS records, go back to Lettr and click **Verify DNS Records**. DNS propagation can take up to 24–48 hours, though it typically completes within a few minutes.
 
-<img src="/images/lettr-verified.png" alt="Sending domain verified successfully in Lettr" />
 
 ---
 
@@ -144,15 +137,12 @@ To create an Inbound domain in Lettr:
 4. Enter your desired inbound subdomain (e.g. `inbound.company.com`)
 5. Click **Create Domain**.
 
-<img src="/images/lettr-inbound-new.png" alt="Creating a new inbound domain in Lettr" />
 
 Click on your new domain in the Inbound Domains list.
 
-<img src="/images/lettr-inbound-list.png" alt="Inbound domain listed in Lettr Inbound Domains list" />
 
 This will display the MX records that need to be configured.
 
-<img src="/images/lettr-inbound-config.png" alt="MX record configuration displayed in Lettr for inbound domain" />
 
 ### Add MX Records
 
@@ -173,7 +163,6 @@ Copy the MX values from Lettr to Vercel:
   paste only `inbound`.
 </Info>
 
-<img src="/images/lettr-inbound-1.png" alt="MX record values in Lettr for inbound domain" />
 
 <img src="/images/vercel-inbound-1.png" alt="Adding MX record in Vercel DNS settings" />
 
@@ -181,7 +170,6 @@ Copy the MX values from Lettr to Vercel:
 
 After adding all three MX records, go back to Lettr and click **Verify DNS Records**. DNS propagation can take up to 24–48 hours, though it typically completes within a few minutes.
 
-<img src="/images/lettr-inbound-verified.png" alt="Inbound domain verified successfully in Lettr" />
 
 ---
 
@@ -198,15 +186,12 @@ To create a Tracking domain in Lettr:
 4. Enter your desired tracking subdomain (e.g. `tracking.company.com`)
 5. Click **Create Domain**
 
-<img src="/images/lettr-add-tracking.png" alt="Creating a new tracking domain in Lettr" />
 
 Click on your new domain in the Tracking Domains list.
 
-<img src="/images/lettr-tracking-list.png" alt="Tracking domain listed in Lettr Tracking Domains list" />
 
 This will display the CNAME records that need to be configured.
 
-<img src="/images/lettr-tracking-config.png" alt="CNAME records displayed in Lettr for tracking domain configuration" />
 
 ### Add SSL Certificate CNAME Record
 
@@ -225,7 +210,6 @@ Add the record in Vercel:
   paste only `track`.
 </Info>
 
-<img src="/images/lettr-tracking-1.png" alt="SSL Certificate CNAME record values in Lettr for tracking domain" />
 <img src="/images/vercel-tracking-1.png" alt="Adding SSL Certificate CNAME record in Vercel DNS settings" />
 
 ### Add Traffic CNAME Record
@@ -245,14 +229,12 @@ Add the record in Vercel:
   paste only `track`.
 </Info>
 
-<img src="/images/lettr-tracking-2.png" alt="Traffic CNAME record values in Lettr for tracking domain" />
 <img src="/images/vercel-tracking-2.png" alt="Adding Traffic CNAME record in Vercel DNS settings" />
 
 ### Verify Your Tracking Domain
 
 After adding both CNAME records, go back to Lettr and click **Verify DNS Records**.
 
-<img src="/images/lettr-tracking-verified.png" alt="Tracking domain verified successfully in Lettr" />
 
 ---
 
@@ -269,15 +251,12 @@ To create a Storage domain in Lettr:
 4. Enter your desired storage subdomain (e.g. `assets.company.com`)
 5. Click **Create Domain**
 
-<img src="/images/lettr-storage-new.png" alt="Creating a new storage domain in Lettr" />
 
 Click on your new domain in the Storage Domains list.
 
-<img src="/images/lettr-storage-list.png" alt="Storage domain listed in Lettr Storage Domains list" />
 
 This will display the TXT and CNAME records that need to be configured.
 
-<img src="/images/lettr-storage-config.png" alt="TXT and CNAME records displayed in Lettr for storage domain configuration" />
 
 ### Add TXT Record (Certificate Validation)
 
@@ -293,7 +272,6 @@ Add the record in Vercel:
 
 <Info>Omit your domain suffix from the Hostname when pasting into Vercel, just as with the CNAME record above.</Info>
 
-<img src="/images/lettr-storage-1.png" alt="Certificate Validation TXT record values in Lettr for storage domain" />
 <img src="/images/vercel-storage-1.png" alt="Adding Certificate Validation TXT record in Vercel DNS settings" />
 
 ### Add TXT Record (Hostname Pre-validation)
@@ -310,7 +288,6 @@ Add the record in Vercel:
 
 <Info>Omit your domain suffix from the Hostname when pasting into Vercel, just as with the CNAME record above.</Info>
 
-<img src="/images/lettr-storage-2.png" alt="Hostname Pre-validation TXT record values in Lettr for storage domain" />
 <img src="/images/vercel-storage-2.png" alt="Adding Hostname Pre-validation TXT record in Vercel DNS settings" />
 
 ### Add CNAME Record (Domain Routing)
@@ -330,14 +307,12 @@ Add the record in Vercel:
   paste only `assets`.
 </Info>
 
-<img src="/images/lettr-storage-3.png" alt="Domain Routing CNAME record values in Lettr for storage domain" />
 <img src="/images/vercel-storage-3.png" alt="Adding Domain Routing CNAME record in Vercel DNS settings" />
 
 ### Verify Your Storage Domain
 
 After adding all three records, go back to Lettr and click **Verify DNS Records**.
 
-<img src="/images/lettr-storage-verified.png" alt="Storage domain verified successfully in Lettr" />
 
 ---
 
