@@ -471,6 +471,12 @@
       }
     ]
   },
+  "redirects": [
+    {
+      "source": "/mcp/introduction",
+      "destination": "/learn/mcp/introduction"
+    }
+  ],
   "footerSocials": {},
   "integrations": {
     "ga4": {
