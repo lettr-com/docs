@@ -3,23 +3,20 @@ title: Permissions
 description: "Configure API key permissions to control access to Lettr API resources"
 ---
 
-When creating an API key, you can assign a permission level to indicate the intended scope of access. Lettr supports two permission levels: **Full Access** and **Sending Only**.
-
-<Info>
-  Permission-level enforcement is currently in development. At this time, both permission levels grant the same access to all API endpoints. We recommend selecting **Full Access** for now. You can change the permission level on any key at any time, so once enforcement is rolled out your keys will automatically respect the assigned level.
-</Info>
+When creating an API key, you assign a permission level that controls which API endpoints the key can access. Lettr supports two permission levels: **Full Access** and **Sending Only**.
 
 ## Permission Levels
 
 ### Full Access
 
-Full Access keys are intended for complete access to all API endpoints and operations:
+Full Access keys provide complete access to all API endpoints and operations:
 
 - Send emails via API
 - List and retrieve sent email details
 - Access and manage email templates
 - Create, verify, and delete sending domains
 - Configure and manage webhooks
+- List projects
 
 **Use Full Access keys for:**
 - Backend services that need complete platform control
@@ -29,7 +26,14 @@ Full Access keys are intended for complete access to all API endpoints and opera
 
 ### Sending Only
 
-Once enforcement is implemented, Sending Only keys will be restricted to email sending operations only.
+Sending Only keys are restricted to email sending operations only. Requests to any other endpoint will be rejected with a `403 Forbidden` response:
+
+```json
+{
+  "message": "Your API key does not have the required permissions for this action.",
+  "error_code": "insufficient_scope"
+}
+```
 
 **Use Sending Only keys for:**
 - Production applications that only send transactional emails
@@ -44,8 +48,8 @@ Once enforcement is implemented, Sending Only keys will be restricted to email s
 2. Click **Create API Key**
 3. Enter a descriptive name
 4. Select the permission level:
-   - **Full Access** - Complete access to all endpoints (recommended for now)
-   - **Sending Only** - Intended for email sending only (enforcement coming soon)
+   - **Full Access** - Complete access to all endpoints
+   - **Sending Only** - Restricted to email sending only
 5. Configure optional IP restrictions
 6. Click **Create**
 
@@ -105,7 +109,7 @@ You can change the permission level of an existing API key at any time:
 5. Click **Save**
 
 <Note>
-  Since permission enforcement is not yet active, changing the permission level has no immediate effect on API access. However, we recommend setting the intended permission level now so your keys are correctly configured when enforcement is enabled.
+  Permission changes take effect immediately. If you downgrade a key from Full Access to Sending Only, any non-sending API requests using that key will be rejected right away.
 </Note>
 
 ## Security Recommendations
