@@ -282,6 +282,15 @@
                 ]
               }
             ]
+          },
+          {
+            "group": "Integrations",
+            "pages": [
+              "integrations/introduction",
+              "integrations/stripe",
+              "integrations/supabase",
+              "integrations/wordpress"
+            ]
           }
         ]
       },
@@ -331,23 +340,6 @@
             "pages": [
               "api-reference/system/health-check",
               "api-reference/system/auth-check"
-            ]
-          }
-        ]
-      },
-      {
-        "tab": "Integrations",
-        "groups": [
-          {
-            "group": "Integrations",
-            "pages": ["integrations/introduction"]
-          },
-          {
-            "group": "Platforms",
-            "pages": [
-              "integrations/stripe",
-              "integrations/supabase",
-              "integrations/wordpress"
             ]
           }
         ]
