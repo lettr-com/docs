@@ -67,11 +67,12 @@ $lettr = new Client(getenv('LETTR_API_KEY'));
 
 ## Permission Levels
 
-When creating an API key, you can choose between two permission levels: **Full Access** and **Sending Only**.
+When creating an API key, you can choose between two permission levels:
 
-<Info>
-  Permission-level enforcement is currently in development. At this time, both permission levels grant the same access to all API endpoints. We recommend selecting **Full Access** for now. You can change the permission level on any key later, so once enforcement is rolled out your keys will automatically respect the assigned level.
-</Info>
+- **Full Access** — grants access to all API endpoints, including sending emails, managing templates, domains, webhooks, and projects.
+- **Sending Only** — restricted to sending operations only (emails, SMS, and WhatsApp). Requests to any other endpoint will be rejected with a `403 Forbidden` response.
+
+Permission levels are fully enforced. Choose the level that matches your use case, and apply the [principle of least privilege](/learn/api-keys/permissions) by using **Sending Only** keys wherever full access isn't needed.
 
 ## IP Restrictions
 
