@@ -4583,30 +4583,72 @@
         }
       },
       "EmailEvent": {
+        "description": "An email event. The `type` field determines which additional fields are present. All event types share common fields defined in `CommonEventProperties`.",
+        "oneOf": [
+          { "$ref": "#/components/schemas/InjectionEvent" },
+          { "$ref": "#/components/schemas/DeliveryEvent" },
+          { "$ref": "#/components/schemas/BounceEvent" },
+          { "$ref": "#/components/schemas/DelayEvent" },
+          { "$ref": "#/components/schemas/OutOfBandEvent" },
+          { "$ref": "#/components/schemas/SpamComplaintEvent" },
+          { "$ref": "#/components/schemas/PolicyRejectionEvent" },
+          { "$ref": "#/components/schemas/ClickEvent" },
+          { "$ref": "#/components/schemas/OpenEvent" },
+          { "$ref": "#/components/schemas/InitialOpenEvent" },
+          { "$ref": "#/components/schemas/AmpClickEvent" },
+          { "$ref": "#/components/schemas/AmpOpenEvent" },
+          { "$ref": "#/components/schemas/AmpInitialOpenEvent" },
+          { "$ref": "#/components/schemas/GenerationFailureEvent" },
+          { "$ref": "#/components/schemas/GenerationRejectionEvent" },
+          { "$ref": "#/components/schemas/ListUnsubscribeEvent" },
+          { "$ref": "#/components/schemas/LinkUnsubscribeEvent" }
+        ],
+        "discriminator": {
+          "propertyName": "type",
+          "mapping": {
+            "injection": "#/components/schemas/InjectionEvent",
+            "delivery": "#/components/schemas/DeliveryEvent",
+            "bounce": "#/components/schemas/BounceEvent",
+            "delay": "#/components/schemas/DelayEvent",
+            "out_of_band": "#/components/schemas/OutOfBandEvent",
+            "spam_complaint": "#/components/schemas/SpamComplaintEvent",
+            "policy_rejection": "#/components/schemas/PolicyRejectionEvent",
+            "click": "#/components/schemas/ClickEvent",
+            "open": "#/components/schemas/OpenEvent",
+            "initial_open": "#/components/schemas/InitialOpenEvent",
+            "amp_click": "#/components/schemas/AmpClickEvent",
+            "amp_open": "#/components/schemas/AmpOpenEvent",
+            "amp_initial_open": "#/components/schemas/AmpInitialOpenEvent",
+            "generation_failure": "#/components/schemas/GenerationFailureEvent",
+            "generation_rejection": "#/components/schemas/GenerationRejectionEvent",
+            "list_unsubscribe": "#/components/schemas/ListUnsubscribeEvent",
+            "link_unsubscribe": "#/components/schemas/LinkUnsubscribeEvent"
+          }
+        }
+      },
+      "CommonEventProperties": {
         "type": "object",
-        "description": "An email event. All events share common fields. Additional fields depend on the event type: delivery events include `queue_time` and `outbound_tls`, bounce events include `bounce_class`, `error_code`, `reason`, and `raw_reason`, click events include `target_link_url`, etc.",
         "required": ["event_id", "type", "timestamp", "request_id", "rcpt_to", "raw_rcpt_to", "recipient_domain", "mailbox_provider", "mailbox_provider_region"],
         "properties": {
           "event_id": {
             "type": "string",
             "description": "Unique identifier for the event",
-            "example": "event-delivery-1"
+            "example": "7609871845907017144"
           },
           "type": {
             "type": "string",
             "description": "The event type",
-            "enum": ["injection", "delivery", "bounce", "delay", "out_of_band", "spam_complaint", "policy_rejection", "click", "open", "initial_open", "amp_click", "amp_open", "amp_initial_open", "generation_failure", "generation_rejection", "list_unsubscribe", "link_unsubscribe"],
-            "example": "delivery"
+            "enum": ["injection", "delivery", "bounce", "delay", "out_of_band", "spam_complaint", "policy_rejection", "click", "open", "initial_open", "amp_click", "amp_open", "amp_initial_open", "generation_failure", "generation_rejection", "list_unsubscribe", "link_unsubscribe"]
           },
           "timestamp": {
             "type": "string",
-            "description": "When the event occurred",
+            "description": "When the event occurred (ISO 8601)",
             "example": "2024-01-15T10:31:00.000Z"
           },
           "request_id": {
             "type": "string",
             "description": "The transmission/request ID that generated this event",
-            "example": "12345678901234567890"
+            "example": "7610639000055488914"
           },
           "rcpt_to": {
             "type": "string",
@@ -4628,17 +4670,17 @@
           "mailbox_provider": {
             "type": "string",
             "description": "Mailbox provider of the recipient",
-            "example": "gmail"
+            "example": "Gmail"
           },
           "mailbox_provider_region": {
             "type": "string",
             "description": "Region of the mailbox provider",
-            "example": "us"
+            "example": "Global"
           },
           "message_id": {
             "type": ["string", "null"],
             "description": "SMTP message ID",
-            "example": "msg-789"
+            "example": "699715cd9e6961853a97"
           },
           "subject": {
             "type": ["string", "null"],
@@ -4658,7 +4700,7 @@
           "sending_ip": {
             "type": ["string", "null"],
             "description": "IP address used to send the email",
-            "example": "192.168.1.1"
+            "example": "168.203.51.91"
           },
           "click_tracking": {
             "type": ["boolean", "null"],
@@ -4675,39 +4717,640 @@
           "msg_size": {
             "type": ["integer", "null"],
             "description": "Message size in bytes",
-            "example": 1024
+            "example": 30823
           },
           "injection_time": {
             "type": ["string", "null"],
-            "description": "When the message was injected into the system",
+            "description": "When the message was injected into the system (ISO 8601)",
             "example": "2024-01-15T10:30:00.000Z"
           },
-          "bounce_class": {
-            "type": ["integer", "null"],
-            "description": "Bounce classification code (present on bounce and out_of_band events)",
-            "example": 10
+          "rcpt_meta": {
+            "type": ["array", "null"],
+            "description": "Recipient metadata"
           },
-          "error_code": {
+          "campaign_id": {
             "type": ["string", "null"],
-            "description": "SMTP error code (present on bounce and delay events)",
-            "example": "550"
+            "description": "Campaign identifier",
+            "example": "welcome-series"
           },
-          "reason": {
+          "template_id": {
             "type": ["string", "null"],
-            "description": "Human-readable bounce/delay reason",
-            "example": "User unknown"
+            "description": "Template identifier",
+            "example": "template_7610639000055488914"
           },
-          "raw_reason": {
+          "template_version": {
             "type": ["string", "null"],
-            "description": "Raw SMTP reason string",
-            "example": "550 5.1.1 User unknown"
+            "description": "Template version",
+            "example": "0"
           },
-          "queue_time": {
-            "type": ["integer", "null"],
-            "description": "Time spent in queue in milliseconds (present on delivery events)",
-            "example": 500
+          "ip_pool": {
+            "type": ["string", "null"],
+            "description": "IP pool used for sending",
+            "example": "default"
+          },
+          "msg_from": {
+            "type": ["string", "null"],
+            "description": "Envelope sender (MAIL FROM)",
+            "example": "msprvs1=abc123=bounces@sparkpostmail1.com"
+          },
+          "rcpt_type": {
+            "type": ["string", "null"],
+            "description": "Recipient type"
+          },
+          "rcpt_tags": {
+            "type": ["array", "null"],
+            "items": { "type": "string" },
+            "description": "Recipient tags"
+          },
+          "amp_enabled": {
+            "type": ["boolean", "null"],
+            "description": "Whether AMP was enabled"
+          },
+          "delv_method": {
+            "type": ["string", "null"],
+            "description": "Delivery method (e.g. esmtp)",
+            "example": "esmtp"
+          },
+          "recv_method": {
+            "type": ["string", "null"],
+            "description": "Reception method (e.g. rest)",
+            "example": "rest"
+          },
+          "routing_domain": {
+            "type": ["string", "null"],
+            "description": "Routing domain",
+            "example": "gmail.com"
+          },
+          "scheduled_time": {
+            "type": ["string", "null"],
+            "description": "Scheduled delivery time if the email was scheduled"
+          },
+          "ab_test_id": {
+            "type": ["string", "null"],
+            "description": "A/B test identifier"
+          },
+          "ab_test_version": {
+            "type": ["string", "null"],
+            "description": "A/B test version"
           }
         }
+      },
+      "UserAgentParsed": {
+        "type": "object",
+        "description": "Parsed user agent information from the open/click event.",
+        "properties": {
+          "agent_family": {
+            "type": ["string", "null"],
+            "description": "Browser or email client family",
+            "example": "Edge"
+          },
+          "device_brand": {
+            "type": ["string", "null"],
+            "description": "Device brand (e.g. Apple, Samsung)"
+          },
+          "device_family": {
+            "type": ["string", "null"],
+            "description": "Device family (e.g. iPhone, Desktop)"
+          },
+          "os_family": {
+            "type": ["string", "null"],
+            "description": "Operating system family",
+            "example": "Windows"
+          },
+          "os_version": {
+            "type": ["string", "null"],
+            "description": "Operating system version",
+            "example": "10"
+          },
+          "is_mobile": {
+            "type": ["boolean", "null"],
+            "description": "Whether the device is mobile"
+          },
+          "is_proxy": {
+            "type": ["boolean", "null"],
+            "description": "Whether the request came through a proxy"
+          },
+          "is_prefetched": {
+            "type": ["boolean", "null"],
+            "description": "Whether the open was prefetched by an email provider (e.g. Gmail Image Proxy, Apple Mail Privacy Protection). If true, this may not represent a real human open."
+          }
+        }
+      },
+      "GeoIp": {
+        "type": "object",
+        "description": "Geolocation data derived from the IP address of the open/click event.",
+        "properties": {
+          "country": {
+            "type": ["string", "null"],
+            "description": "ISO 3166-1 alpha-2 country code",
+            "example": "CZ"
+          },
+          "region": {
+            "type": ["string", "null"],
+            "description": "Region or state code",
+            "example": "10"
+          },
+          "city": {
+            "type": ["string", "null"],
+            "description": "City name",
+            "example": "Prague"
+          },
+          "latitude": {
+            "type": ["number", "null"],
+            "description": "Latitude",
+            "example": 50.0883
+          },
+          "longitude": {
+            "type": ["number", "null"],
+            "description": "Longitude",
+            "example": 14.4124
+          },
+          "zip": {
+            "type": ["string", "null"],
+            "description": "ZIP code",
+            "example": "110"
+          },
+          "postal_code": {
+            "type": ["string", "null"],
+            "description": "Postal code",
+            "example": "110 00"
+          }
+        }
+      },
+      "InjectionEvent": {
+        "description": "Fired when a message is received by the system and queued for delivery.",
+        "allOf": [
+          { "$ref": "#/components/schemas/CommonEventProperties" },
+          {
+            "type": "object",
+            "properties": {
+              "type": { "type": "string", "enum": ["injection"] },
+              "initial_pixel": {
+                "type": ["boolean", "null"],
+                "description": "Whether initial open tracking pixel was included"
+              }
+            }
+          }
+        ]
+      },
+      "DeliveryEvent": {
+        "description": "Fired when a message is successfully delivered to the recipient's mail server.",
+        "allOf": [
+          { "$ref": "#/components/schemas/CommonEventProperties" },
+          {
+            "type": "object",
+            "properties": {
+              "type": { "type": "string", "enum": ["delivery"] },
+              "queue_time": {
+                "type": ["integer", "null"],
+                "description": "Time spent in queue in milliseconds",
+                "example": 1845
+              },
+              "outbound_tls": {
+                "type": ["string", "null"],
+                "description": "Whether TLS was used for outbound delivery (\"1\" = yes)",
+                "example": "1"
+              }
+            }
+          }
+        ]
+      },
+      "BounceEvent": {
+        "description": "Fired when a message is permanently rejected by the recipient's mail server.",
+        "allOf": [
+          { "$ref": "#/components/schemas/CommonEventProperties" },
+          {
+            "type": "object",
+            "properties": {
+              "type": { "type": "string", "enum": ["bounce"] },
+              "bounce_class": {
+                "type": ["integer", "null"],
+                "description": "Bounce classification code (e.g. 10 = Invalid Recipient, 30 = Generic Bounce)",
+                "example": 10
+              },
+              "error_code": {
+                "type": ["string", "null"],
+                "description": "SMTP error code",
+                "example": "550"
+              },
+              "reason": {
+                "type": ["string", "null"],
+                "description": "Human-readable bounce reason",
+                "example": "550 5.1.1 The email account that you tried to reach does not exist."
+              },
+              "raw_reason": {
+                "type": ["string", "null"],
+                "description": "Raw SMTP reason string",
+                "example": "550 5.1.1 User unknown"
+              },
+              "num_retries": {
+                "type": ["integer", "null"],
+                "description": "Number of delivery retries attempted"
+              },
+              "device_token": {
+                "type": ["string", "null"],
+                "description": "Device token if applicable"
+              }
+            }
+          }
+        ]
+      },
+      "DelayEvent": {
+        "description": "Fired when a message delivery is temporarily delayed (will be retried).",
+        "allOf": [
+          { "$ref": "#/components/schemas/CommonEventProperties" },
+          {
+            "type": "object",
+            "properties": {
+              "type": { "type": "string", "enum": ["delay"] },
+              "reason": {
+                "type": ["string", "null"],
+                "description": "Human-readable delay reason"
+              },
+              "raw_reason": {
+                "type": ["string", "null"],
+                "description": "Raw SMTP reason string"
+              },
+              "error_code": {
+                "type": ["string", "null"],
+                "description": "SMTP error code",
+                "example": "421"
+              },
+              "bounce_class": {
+                "type": ["integer", "null"],
+                "description": "Bounce classification code"
+              },
+              "num_retries": {
+                "type": ["integer", "null"],
+                "description": "Number of delivery retries attempted so far"
+              },
+              "queue_time": {
+                "type": ["integer", "null"],
+                "description": "Time spent in queue in milliseconds"
+              },
+              "outbound_tls": {
+                "type": ["string", "null"],
+                "description": "Whether TLS was used for outbound delivery"
+              }
+            }
+          }
+        ]
+      },
+      "OutOfBandEvent": {
+        "description": "Fired when a remote mail server sends an asynchronous bounce after initially accepting the message.",
+        "allOf": [
+          { "$ref": "#/components/schemas/CommonEventProperties" },
+          {
+            "type": "object",
+            "properties": {
+              "type": { "type": "string", "enum": ["out_of_band"] },
+              "bounce_class": {
+                "type": ["integer", "null"],
+                "description": "Bounce classification code"
+              },
+              "error_code": {
+                "type": ["string", "null"],
+                "description": "SMTP error code"
+              },
+              "reason": {
+                "type": ["string", "null"],
+                "description": "Human-readable bounce reason"
+              },
+              "raw_reason": {
+                "type": ["string", "null"],
+                "description": "Raw SMTP reason string"
+              },
+              "device_token": {
+                "type": ["string", "null"],
+                "description": "Device token if applicable"
+              }
+            }
+          }
+        ]
+      },
+      "SpamComplaintEvent": {
+        "description": "Fired when a recipient marks the message as spam via a feedback loop.",
+        "allOf": [
+          { "$ref": "#/components/schemas/CommonEventProperties" },
+          {
+            "type": "object",
+            "properties": {
+              "type": { "type": "string", "enum": ["spam_complaint"] },
+              "fbtype": {
+                "type": ["string", "null"],
+                "description": "Feedback type (e.g. \"abuse\")",
+                "example": "abuse"
+              },
+              "report_by": {
+                "type": ["string", "null"],
+                "description": "Who reported the spam"
+              },
+              "report_to": {
+                "type": ["string", "null"],
+                "description": "Where the spam report was sent"
+              }
+            }
+          }
+        ]
+      },
+      "PolicyRejectionEvent": {
+        "description": "Fired when a message is rejected due to policy (e.g. suppression list, rate limiting).",
+        "allOf": [
+          { "$ref": "#/components/schemas/CommonEventProperties" },
+          {
+            "type": "object",
+            "properties": {
+              "type": { "type": "string", "enum": ["policy_rejection"] },
+              "remote_addr": {
+                "type": ["string", "null"],
+                "description": "Remote IP address"
+              },
+              "reason": {
+                "type": ["string", "null"],
+                "description": "Human-readable rejection reason"
+              },
+              "raw_reason": {
+                "type": ["string", "null"],
+                "description": "Raw rejection reason"
+              },
+              "error_code": {
+                "type": ["string", "null"],
+                "description": "Error code"
+              },
+              "bounce_class": {
+                "type": ["integer", "null"],
+                "description": "Bounce classification code"
+              }
+            }
+          }
+        ]
+      },
+      "ClickEvent": {
+        "description": "Fired when a recipient clicks a tracked link in the email.",
+        "allOf": [
+          { "$ref": "#/components/schemas/CommonEventProperties" },
+          {
+            "type": "object",
+            "properties": {
+              "type": { "type": "string", "enum": ["click"] },
+              "target_link_url": {
+                "type": ["string", "null"],
+                "description": "The URL that was clicked",
+                "example": "https://example.com/reset-password?token=abc123"
+              },
+              "target_link_name": {
+                "type": ["string", "null"],
+                "description": "The name/label of the clicked link"
+              },
+              "user_agent": {
+                "type": ["string", "null"],
+                "description": "Raw user agent string",
+                "example": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
+              },
+              "user_agent_parsed": {
+                "$ref": "#/components/schemas/UserAgentParsed"
+              },
+              "geo_ip": {
+                "$ref": "#/components/schemas/GeoIp"
+              },
+              "ip_address": {
+                "type": ["string", "null"],
+                "description": "IP address of the click",
+                "example": "104.28.114.11"
+              }
+            }
+          }
+        ]
+      },
+      "OpenEvent": {
+        "description": "Fired when a recipient opens the email (subsequent opens after the initial open).",
+        "allOf": [
+          { "$ref": "#/components/schemas/CommonEventProperties" },
+          {
+            "type": "object",
+            "properties": {
+              "type": { "type": "string", "enum": ["open"] },
+              "user_agent": {
+                "type": ["string", "null"],
+                "description": "Raw user agent string",
+                "example": "Mozilla/5.0"
+              },
+              "user_agent_parsed": {
+                "$ref": "#/components/schemas/UserAgentParsed"
+              },
+              "geo_ip": {
+                "$ref": "#/components/schemas/GeoIp"
+              },
+              "ip_address": {
+                "type": ["string", "null"],
+                "description": "IP address of the open",
+                "example": "104.28.114.11"
+              },
+              "initial_pixel": {
+                "type": ["boolean", "null"],
+                "description": "Whether this was triggered by the initial tracking pixel"
+              }
+            }
+          }
+        ]
+      },
+      "InitialOpenEvent": {
+        "description": "Fired the first time a recipient opens the email.",
+        "allOf": [
+          { "$ref": "#/components/schemas/CommonEventProperties" },
+          {
+            "type": "object",
+            "properties": {
+              "type": { "type": "string", "enum": ["initial_open"] },
+              "user_agent": {
+                "type": ["string", "null"],
+                "description": "Raw user agent string",
+                "example": "Mozilla/5.0"
+              },
+              "user_agent_parsed": {
+                "$ref": "#/components/schemas/UserAgentParsed"
+              },
+              "geo_ip": {
+                "$ref": "#/components/schemas/GeoIp"
+              },
+              "ip_address": {
+                "type": ["string", "null"],
+                "description": "IP address of the open",
+                "example": "104.28.114.11"
+              },
+              "initial_pixel": {
+                "type": ["boolean", "null"],
+                "description": "Whether this was triggered by the initial tracking pixel"
+              }
+            }
+          }
+        ]
+      },
+      "AmpClickEvent": {
+        "description": "Fired when a recipient clicks a tracked link in an AMP email.",
+        "allOf": [
+          { "$ref": "#/components/schemas/CommonEventProperties" },
+          {
+            "type": "object",
+            "properties": {
+              "type": { "type": "string", "enum": ["amp_click"] },
+              "target_link_url": {
+                "type": ["string", "null"],
+                "description": "The URL that was clicked"
+              },
+              "target_link_name": {
+                "type": ["string", "null"],
+                "description": "The name/label of the clicked link"
+              },
+              "user_agent": {
+                "type": ["string", "null"],
+                "description": "Raw user agent string"
+              },
+              "user_agent_parsed": {
+                "$ref": "#/components/schemas/UserAgentParsed"
+              },
+              "geo_ip": {
+                "$ref": "#/components/schemas/GeoIp"
+              },
+              "ip_address": {
+                "type": ["string", "null"],
+                "description": "IP address of the click"
+              }
+            }
+          }
+        ]
+      },
+      "AmpOpenEvent": {
+        "description": "Fired when a recipient opens an AMP email (subsequent opens).",
+        "allOf": [
+          { "$ref": "#/components/schemas/CommonEventProperties" },
+          {
+            "type": "object",
+            "properties": {
+              "type": { "type": "string", "enum": ["amp_open"] },
+              "user_agent": {
+                "type": ["string", "null"],
+                "description": "Raw user agent string"
+              },
+              "user_agent_parsed": {
+                "$ref": "#/components/schemas/UserAgentParsed"
+              },
+              "geo_ip": {
+                "$ref": "#/components/schemas/GeoIp"
+              },
+              "ip_address": {
+                "type": ["string", "null"],
+                "description": "IP address of the open"
+              },
+              "initial_pixel": {
+                "type": ["boolean", "null"],
+                "description": "Whether this was triggered by the initial tracking pixel"
+              }
+            }
+          }
+        ]
+      },
+      "AmpInitialOpenEvent": {
+        "description": "Fired the first time a recipient opens an AMP email.",
+        "allOf": [
+          { "$ref": "#/components/schemas/CommonEventProperties" },
+          {
+            "type": "object",
+            "properties": {
+              "type": { "type": "string", "enum": ["amp_initial_open"] },
+              "user_agent": {
+                "type": ["string", "null"],
+                "description": "Raw user agent string"
+              },
+              "user_agent_parsed": {
+                "$ref": "#/components/schemas/UserAgentParsed"
+              },
+              "geo_ip": {
+                "$ref": "#/components/schemas/GeoIp"
+              },
+              "ip_address": {
+                "type": ["string", "null"],
+                "description": "IP address of the open"
+              },
+              "initial_pixel": {
+                "type": ["boolean", "null"],
+                "description": "Whether this was triggered by the initial tracking pixel"
+              }
+            }
+          }
+        ]
+      },
+      "GenerationFailureEvent": {
+        "description": "Fired when the system fails to generate a message (e.g. template rendering error).",
+        "allOf": [
+          { "$ref": "#/components/schemas/CommonEventProperties" },
+          {
+            "type": "object",
+            "properties": {
+              "type": { "type": "string", "enum": ["generation_failure"] },
+              "reason": {
+                "type": ["string", "null"],
+                "description": "Human-readable failure reason"
+              },
+              "raw_reason": {
+                "type": ["string", "null"],
+                "description": "Raw failure reason"
+              },
+              "error_code": {
+                "type": ["string", "null"],
+                "description": "Error code"
+              }
+            }
+          }
+        ]
+      },
+      "GenerationRejectionEvent": {
+        "description": "Fired when the system rejects message generation (e.g. policy violation).",
+        "allOf": [
+          { "$ref": "#/components/schemas/CommonEventProperties" },
+          {
+            "type": "object",
+            "properties": {
+              "type": { "type": "string", "enum": ["generation_rejection"] },
+              "reason": {
+                "type": ["string", "null"],
+                "description": "Human-readable rejection reason"
+              },
+              "raw_reason": {
+                "type": ["string", "null"],
+                "description": "Raw rejection reason"
+              },
+              "error_code": {
+                "type": ["string", "null"],
+                "description": "Error code"
+              }
+            }
+          }
+        ]
+      },
+      "ListUnsubscribeEvent": {
+        "description": "Fired when a recipient uses the List-Unsubscribe header to unsubscribe.",
+        "allOf": [
+          { "$ref": "#/components/schemas/CommonEventProperties" },
+          {
+            "type": "object",
+            "properties": {
+              "type": { "type": "string", "enum": ["list_unsubscribe"] }
+            }
+          }
+        ]
+      },
+      "LinkUnsubscribeEvent": {
+        "description": "Fired when a recipient clicks an unsubscribe link in the email body.",
+        "allOf": [
+          { "$ref": "#/components/schemas/CommonEventProperties" },
+          {
+            "type": "object",
+            "properties": {
+              "type": { "type": "string", "enum": ["link_unsubscribe"] }
+            }
+          }
+        ]
       }
     }
   },
