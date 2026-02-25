@@ -33,15 +33,22 @@
   "appearance": {
     "default": "dark"
   },
-  "topbarLinks": [
-    {
-      "name": "Support",
-      "url": "mailto:support@lettr.com"
+  "navbar": {
+    "links": [
+      {
+        "label": "Status",
+        "href": "https://status.lettr.com/"
+      },
+      {
+        "label": "Support",
+        "href": "https://lettr.com/support"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "Dashboard",
+      "href": "https://app.lettr.com"
     }
-  ],
-  "topbarCtaButton": {
-    "name": "Dashboard",
-    "url": "https://app.lettr.com"
   },
   "navigation": {
     "tabs": [
@@ -275,6 +282,15 @@
                 ]
               }
             ]
+          },
+          {
+            "group": "Integrations",
+            "pages": [
+              "integrations/introduction",
+              "integrations/stripe",
+              "integrations/supabase",
+              "integrations/wordpress"
+            ]
           }
         ]
       },
@@ -324,23 +340,6 @@
             "pages": [
               "api-reference/system/health-check",
               "api-reference/system/auth-check"
-            ]
-          }
-        ]
-      },
-      {
-        "tab": "Integrations",
-        "groups": [
-          {
-            "group": "Integrations",
-            "pages": ["integrations/introduction"]
-          },
-          {
-            "group": "Platforms",
-            "pages": [
-              "integrations/stripe",
-              "integrations/supabase",
-              "integrations/wordpress"
             ]
           }
         ]
@@ -471,13 +470,22 @@
       }
     ]
   },
+  "contextual": {
+    "options": ["copy", "view", "chatgpt", "claude", "perplexity"]
+  },
   "redirects": [
     {
       "source": "/mcp/introduction",
       "destination": "/learn/mcp/introduction"
     }
   ],
-  "footerSocials": {},
+  "footer": {
+    "socials": {
+      "x": "https://x.com/lettr_com",
+      "linkedin": "https://www.linkedin.com/company/lettr-com/",
+      "github": "https://github.com/lettr-com"
+    }
+  },
   "integrations": {
     "ga4": {
       "measurementId": "G-GMH8JTRY9Q"
