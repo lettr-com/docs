@@ -1,0 +1,112 @@
+---
+title: Zapier
+description: "Automate email sending with 8,000+ apps using Lettr and Zapier"
+---
+
+The [Lettr Zapier integration](https://zapier.com/apps/lettr/integrations) lets you automate email sending by connecting Lettr to 8,000+ apps — no code required.
+
+## Prerequisites
+
+Before you begin, make sure you have:
+
+<CardGroup cols={2}>
+  <Card title="API Key" icon="key" href="https://app.lettr.com/api-keys">
+    Create an API key in the Lettr dashboard
+  </Card>
+  <Card title="Verified Domain" icon="globe" href="/learn/domains/sending-domains">
+    Add and verify your sending domain
+  </Card>
+</CardGroup>
+
+You'll also need:
+
+- A [Zapier](https://zapier.com) account (free tier available)
+- A sender address on your verified domain (e.g. `notifications@yourdomain.com`)
+
+## Available Actions
+
+<CardGroup cols={2}>
+  <Card title="Send Email" icon="envelope">
+    Send an email with custom HTML content, subject, sender, and reply-to address.
+  </Card>
+  <Card title="Send Email Template" icon="file-lines">
+    Send an email using a template saved in your Lettr account.
+  </Card>
+</CardGroup>
+
+## Connect Lettr to Zapier
+
+<Steps>
+  <Step title="Create a Zap">
+    Go to [Zapier](https://zapier.com/apps/lettr/integrations) and create a new Zap.
+  </Step>
+
+  <Step title="Choose a Trigger">
+    Select your trigger app — the event that starts the workflow. For example, a new row in Google Sheets, a form submission in Typeform, or a payment in Stripe.
+  </Step>
+
+  <Step title="Add Lettr as the Action">
+    Search for **Lettr** and choose one of the available actions:
+    - **Send Email** — compose an email with custom HTML content
+    - **Send Email Template** — use a template from your Lettr account
+  </Step>
+
+  <Step title="Connect Your Lettr Account">
+    Authenticate with your Lettr API key when prompted.
+
+    <Warning>
+      Use an API key with sending permissions. Never share your API key publicly. See [API Key Permissions](/learn/api-keys/permissions) for details.
+    </Warning>
+  </Step>
+
+  <Step title="Map Fields">
+    Map fields from your trigger to the Lettr action:
+    - **From** (required) — sender address on your verified domain
+    - **Recipient** (required) — the recipient email address
+    - **Subject** (required) — email subject line
+    - **HTML content** (required for Send Email) — the email body
+    - **Reply to** (optional) — reply-to address
+  </Step>
+
+  <Step title="Test and Publish">
+    Test the Zap to verify emails are sent correctly, then turn it on.
+  </Step>
+</Steps>
+
+## Example Use Cases
+
+| Trigger | Action | Use Case |
+|-|-|-|
+| New Typeform submission | Send Email Template | Send a confirmation email to form respondents |
+| New Stripe payment | Send Email | Send a custom payment receipt |
+| New Google Sheets row | Send Email Template | Send onboarding emails to imported contacts |
+| New Calendly event | Send Email | Send meeting confirmation with details |
+
+<Tip>
+  Use **Send Email Template** when you want to maintain consistent branding. Create templates in the [Lettr dashboard](https://app.lettr.com/templates) and reference them in your Zaps.
+</Tip>
+
+## Other Integrations
+
+<CardGroup cols={2}>
+  <Card title="Stripe" icon="stripe" href="/integrations/stripe">
+    Send emails directly from Stripe
+  </Card>
+  <Card title="Supabase" icon="bolt" href="/integrations/supabase">
+    Auth emails and Edge Functions
+  </Card>
+  <Card title="WordPress" icon="wordpress" href="/integrations/wordpress">
+    Replace wp_mail with Lettr
+  </Card>
+</CardGroup>
+
+## What's Next
+
+<CardGroup cols={2}>
+  <Card title="Templates" icon="paintbrush" href="/learn/templates/introduction">
+    Create reusable email templates
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference/emails/send-email">
+    Send emails programmatically via the API
+  </Card>
+</CardGroup>
