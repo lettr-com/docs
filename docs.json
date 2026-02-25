@@ -304,7 +304,11 @@
           {
             "group": "Emails",
             "pages": [
-              "api-reference/emails/send-email"
+              "api-reference/emails/send-email",
+              "api-reference/emails/schedule-email",
+              "api-reference/emails/get-scheduled-email",
+              "api-reference/emails/cancel-scheduled-email",
+              "api-reference/emails/list-email-events"
             ]
           },
           {
@@ -332,7 +336,10 @@
             "group": "Webhooks",
             "pages": [
               "api-reference/webhooks/list-webhooks",
-              "api-reference/webhooks/get-webhook"
+              "api-reference/webhooks/create-webhook",
+              "api-reference/webhooks/get-webhook",
+              "api-reference/webhooks/update-webhook",
+              "api-reference/webhooks/delete-webhook"
             ]
           },
           {
