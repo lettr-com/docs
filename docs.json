@@ -305,6 +305,7 @@
             "group": "Emails",
             "pages": [
               "api-reference/emails/send-email",
+              "api-reference/emails/get-email-detail",
               "api-reference/emails/schedule-email",
               "api-reference/emails/get-scheduled-email",
               "api-reference/emails/cancel-scheduled-email",

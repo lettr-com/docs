@@ -705,6 +705,142 @@
         }
       }
     },
+    "/emails/{requestId}": {
+      "get": {
+        "operationId": "getEmailDetail",
+        "summary": "Get Email Detail",
+        "description": "Retrieve all events for a specific sent email by its request ID. Returns delivery, bounce, open, click, and other events in reverse chronological order. If no `from` date is provided, defaults to the last 10 days.",
+        "tags": ["Emails"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "requestId",
+            "in": "path",
+            "required": true,
+            "description": "The request ID (transmission ID) of the sent email.",
+            "schema": {
+              "type": "string",
+              "example": "7610639000055488914"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "description": "Start date for the event search range. Defaults to 10 days ago if not provided.",
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "example": "2024-01-01"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "description": "End date for the event search range. Defaults to now if not provided.",
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "example": "2024-01-31"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Email detail retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetEmailDetailResponse"
+                },
+                "example": {
+                  "message": "Email retrieved successfully.",
+                  "data": {
+                    "events": {
+                      "data": [
+                        {
+                          "event_id": "event-open-1",
+                          "type": "open",
+                          "timestamp": "2024-01-15T10:32:00.000Z",
+                          "request_id": "7610639000055488914",
+                          "rcpt_to": "recipient@example.com",
+                          "subject": "Welcome to Lettr",
+                          "friendly_from": "sender@example.com"
+                        },
+                        {
+                          "event_id": "event-delivery-1",
+                          "type": "delivery",
+                          "timestamp": "2024-01-15T10:31:00.000Z",
+                          "request_id": "7610639000055488914",
+                          "rcpt_to": "recipient@example.com",
+                          "subject": "Welcome to Lettr",
+                          "friendly_from": "sender@example.com",
+                          "queue_time": 500
+                        },
+                        {
+                          "event_id": "event-injection-1",
+                          "type": "injection",
+                          "timestamp": "2024-01-15T10:30:00.000Z",
+                          "request_id": "7610639000055488914",
+                          "rcpt_to": "recipient@example.com",
+                          "subject": "Welcome to Lettr",
+                          "friendly_from": "sender@example.com"
+                        }
+                      ],
+                      "total_count": 3,
+                      "from": "2024-01-05T00:00:00+00:00",
+                      "to": "2024-01-15T10:35:00+00:00"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "description": "Email not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "Email not found.",
+                  "error_code": "not_found"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                },
+                "example": {
+                  "message": "Validation failed.",
+                  "error_code": "validation_error",
+                  "errors": {
+                    "from": ["The from parameter must be a valid date."]
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
     "/emails/scheduled": {
       "post": {
         "operationId": "scheduleEmail",
@@ -4343,13 +4479,13 @@
           }
         }
       },
-      "ListEmailEventsResponse": {
+      "GetEmailDetailResponse": {
         "type": "object",
         "required": ["message", "data"],
         "properties": {
           "message": {
             "type": "string",
-            "example": "Email events retrieved successfully."
+            "example": "Email retrieved successfully."
           },
           "data": {
             "type": "object",
@@ -4357,19 +4493,19 @@
             "properties": {
               "events": {
                 "type": "object",
-                "required": ["data", "total_count", "from", "to", "pagination"],
+                "required": ["data", "total_count", "from", "to"],
                 "properties": {
                   "data": {
                     "type": "array",
-                    "description": "List of email events. Each event contains common fields plus type-specific fields (e.g. bounce events include bounce_class and reason, click events include target_link_url).",
+                    "description": "List of events for this email. Each event contains common fields plus type-specific fields.",
                     "items": {
                       "$ref": "#/components/schemas/EmailEvent"
                     }
                   },
                   "total_count": {
                     "type": "integer",
-                    "description": "Total number of events matching the query",
-                    "example": 2
+                    "description": "Total number of events for this email",
+                    "example": 3
                   },
                   "from": {
                     "type": "string",
@@ -4380,152 +4516,10 @@
                     "type": "string",
                     "description": "End of the date range used for the query",
                     "example": "2024-01-15T10:35:00+00:00"
-                  },
-                  "pagination": {
-                    "type": "object",
-                    "properties": {
-                      "next_cursor": {
-                        "type": ["string", "null"],
-                        "description": "Cursor for the next page of results. Null if no more pages.",
-                        "example": null
-                      },
-                      "per_page": {
-                        "type": "integer",
-                        "description": "Number of events per page",
-                        "example": 25
-                      }
-                    }
                   }
                 }
               }
             }
-          }
-        }
-      },
-      "EmailEvent": {
-        "type": "object",
-        "description": "An email event. All events share common fields. Additional fields depend on the event type: delivery events include `queue_time` and `outbound_tls`, bounce events include `bounce_class`, `error_code`, `reason`, and `raw_reason`, click events include `target_link_url`, etc.",
-        "required": ["event_id", "type", "timestamp", "request_id", "rcpt_to", "raw_rcpt_to", "recipient_domain", "mailbox_provider", "mailbox_provider_region"],
-        "properties": {
-          "event_id": {
-            "type": "string",
-            "description": "Unique identifier for the event",
-            "example": "event-delivery-1"
-          },
-          "type": {
-            "type": "string",
-            "description": "The event type",
-            "enum": ["injection", "delivery", "bounce", "delay", "out_of_band", "spam_complaint", "policy_rejection", "click", "open", "initial_open", "amp_click", "amp_open", "amp_initial_open", "generation_failure", "generation_rejection", "list_unsubscribe", "link_unsubscribe"],
-            "example": "delivery"
-          },
-          "timestamp": {
-            "type": "string",
-            "description": "When the event occurred",
-            "example": "2024-01-15T10:31:00.000Z"
-          },
-          "request_id": {
-            "type": "string",
-            "description": "The transmission/request ID that generated this event",
-            "example": "12345678901234567890"
-          },
-          "rcpt_to": {
-            "type": "string",
-            "format": "email",
-            "description": "Recipient email address",
-            "example": "recipient@example.com"
-          },
-          "raw_rcpt_to": {
-            "type": "string",
-            "format": "email",
-            "description": "Original recipient email address before any modifications",
-            "example": "recipient@example.com"
-          },
-          "recipient_domain": {
-            "type": "string",
-            "description": "Domain of the recipient",
-            "example": "example.com"
-          },
-          "mailbox_provider": {
-            "type": "string",
-            "description": "Mailbox provider of the recipient",
-            "example": "gmail"
-          },
-          "mailbox_provider_region": {
-            "type": "string",
-            "description": "Region of the mailbox provider",
-            "example": "us"
-          },
-          "message_id": {
-            "type": ["string", "null"],
-            "description": "SMTP message ID",
-            "example": "msg-789"
-          },
-          "subject": {
-            "type": ["string", "null"],
-            "description": "Email subject line",
-            "example": "Welcome to Lettr"
-          },
-          "friendly_from": {
-            "type": ["string", "null"],
-            "description": "Friendly from address",
-            "example": "sender@example.com"
-          },
-          "sending_domain": {
-            "type": ["string", "null"],
-            "description": "The sending domain",
-            "example": "example.com"
-          },
-          "sending_ip": {
-            "type": ["string", "null"],
-            "description": "IP address used to send the email",
-            "example": "192.168.1.1"
-          },
-          "click_tracking": {
-            "type": ["boolean", "null"],
-            "description": "Whether click tracking was enabled"
-          },
-          "open_tracking": {
-            "type": ["boolean", "null"],
-            "description": "Whether open tracking was enabled"
-          },
-          "transactional": {
-            "type": ["boolean", "null"],
-            "description": "Whether this was a transactional message"
-          },
-          "msg_size": {
-            "type": ["integer", "null"],
-            "description": "Message size in bytes",
-            "example": 1024
-          },
-          "injection_time": {
-            "type": ["string", "null"],
-            "description": "When the message was injected into the system",
-            "example": "2024-01-15T10:30:00.000Z"
-          },
-          "bounce_class": {
-            "type": ["integer", "null"],
-            "description": "Bounce classification code (present on bounce and out_of_band events)",
-            "example": 10
-          },
-          "error_code": {
-            "type": ["string", "null"],
-            "description": "SMTP error code (present on bounce and delay events)",
-            "example": "550"
-          },
-          "reason": {
-            "type": ["string", "null"],
-            "description": "Human-readable bounce/delay reason",
-            "example": "User unknown"
-          },
-          "raw_reason": {
-            "type": ["string", "null"],
-            "description": "Raw SMTP reason string",
-            "example": "550 5.1.1 User unknown"
-          },
-          "queue_time": {
-            "type": ["integer", "null"],
-            "description": "Time spent in queue in milliseconds (present on delivery events)",
-            "example": 500
           }
         }
       },
