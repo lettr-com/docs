@@ -3,11 +3,25 @@ title: Rate Limit
 description: "Learn about API rate limits, sending quotas, and the response headers that track your usage"
 ---
 
-Lettr rate limits API requests to ensure fair usage across all customers. In addition to request-level rate limits, the Send Email endpoint returns quota headers that track your daily and monthly email usage.
+Lettr enforces per-team rate limits on API requests to ensure fair usage across all customers and prevent any single integration from overwhelming the service. In addition to request-level rate limits, the Send Email endpoint returns quota headers that track your daily and monthly email usage.
+
+<Note>
+  Rate limits are different from **email quotas**. Rate limits control API request frequency (requests per second), while email quotas control sending volume (emails per month). For details on monthly email quotas, daily sending limits, and how usage is tracked, see [Email Usage & Quotas](/learn/sending/usage-quotas).
+</Note>
 
 ## Rate Limit
 
 The default rate limit is **3 requests per second** per team, shared across all API keys belonging to the same team. If you exceed the limit, subsequent requests return `429 Too Many Requests` until the window resets.
+
+| Limit Type | Value |
+|------------|-------|
+| API requests | 3 requests per second |
+| Authentication failures | 5 failures / 5 minutes (15 min block) |
+| Recipients per request | 50 (combined to, cc, bcc) |
+
+<Warning>
+  If you continue sending requests after receiving a `429` response, the cooldown period may be extended. Always respect the `Retry-After` header before retrying.
+</Warning>
 
 ## Rate Limit Headers
 
@@ -70,3 +84,107 @@ When you exceed a limit, the API returns a `429` response with one of these erro
   "error_code": "quota_exceeded"
 }
 ```
+
+## Handling Rate Limits
+
+When you receive a `429` response, use the `Retry-After` header to determine how long to wait. Implement exponential backoff as a fallback:
+
+```javascript
+async function sendWithBackoff(emailData, maxRetries = 5) {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await lettr.emails.send(emailData);
+    } catch (error) {
+      if (error.status === 429) {
+        const retryAfter = error.retryAfter || Math.pow(2, attempt);
+        console.log(`Rate limited. Retrying in ${retryAfter} seconds...`);
+        await sleep(retryAfter * 1000);
+      } else {
+        throw error;
+      }
+    }
+  }
+  throw new Error('Max retries exceeded');
+}
+```
+
+## Batch Sending with Rate Limiting
+
+When sending to large recipient lists, pace your API calls to stay within rate limits. Adding a short delay between batches prevents bursts that trigger throttling:
+
+```javascript
+const recipients = [...]; // Large list
+const batchSize = 50;
+const delayBetweenBatches = 500; // milliseconds
+
+for (let i = 0; i < recipients.length; i += batchSize) {
+  const batch = recipients.slice(i, i + batchSize);
+
+  await lettr.emails.send({
+    from: 'you@example.com',
+    to: batch,
+    subject: 'Newsletter',
+    html: content
+  });
+
+  // Pace your requests
+  if (i + batchSize < recipients.length) {
+    await sleep(delayBetweenBatches);
+  }
+}
+```
+
+## Monthly Email Quotas
+
+Your monthly email quota depends on your plan:
+
+| Plan | Monthly Emails |
+|------|----------------|
+| Free | 3,000 |
+| Pro 50K | 50,000 |
+| Pro 100K | 100,000 |
+| Pro 200K | 200,000 |
+| Pro 500K | 500,000 |
+| Pro 1M | 1,000,000 |
+| Enterprise | Custom |
+
+<Note>
+  Emails beyond your tier limit are charged at $0.80 per 1,000 emails. See [Billing](/learn/settings/billing) for details.
+</Note>
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Implement Backoff">
+    Always implement exponential backoff for `429` responses. Use the `Retry-After` header from the response when available, and fall back to a `2^attempt` delay otherwise. Without backoff, rapid retries will keep hitting the limit and delay your sends further.
+  </Accordion>
+  <Accordion title="Monitor Rate Limit Headers">
+    Check the `X-RateLimit-Remaining` header on every response. When it approaches zero, slow down your request rate proactively instead of waiting for a `429` response.
+  </Accordion>
+  <Accordion title="Batch Efficiently">
+    Each API request supports up to 50 recipients. Sending to 50 recipients per request instead of one-at-a-time reduces your API call count by 50x, making it far easier to stay within rate limits for large sends.
+  </Accordion>
+  <Accordion title="Monitor Quota Headers">
+    On free tier, check the `X-Daily-Remaining` and `X-Monthly-Remaining` headers to track your quota usage in real time. Set up internal alerts at 80% and 90% of your quota so you can upgrade your plan before hitting the limit.
+  </Accordion>
+  <Accordion title="Queue Large Sends">
+    For campaigns targeting thousands of recipients, use a job queue (such as BullMQ, Laravel Queues, or Celery) to pace sending over minutes or hours. This avoids burst patterns that trigger rate limits and gives you better control over delivery timing.
+  </Accordion>
+  <Accordion title="Use Webhooks">
+    Polling the API to check delivery status consumes rate limit budget. Instead, set up [webhooks](/learn/webhooks/introduction) to receive delivery, bounce, and engagement events asynchronously. This eliminates polling requests entirely and gives you faster, event-driven status updates.
+  </Accordion>
+</AccordionGroup>
+
+## Increasing Your Limits
+
+If your current limits don't match your sending volume, you have several options:
+
+- **Upgrade your plan** — Increases your monthly email quota immediately
+- **Enterprise plans** — Custom rate limits tailored to your traffic patterns — contact sales to discuss your requirements
+- **Batch recipients** — Send up to 50 recipients per request to reduce API call volume
+- **Use webhooks** — Replace polling with event-driven notifications to save rate limit budget
+- **Implement a queue** — Smooth out traffic spikes to avoid burst patterns
+
+<Card title="Contact Sales" icon="envelope" href="mailto:sales@lettr.com">
+  Need higher limits? Contact our sales team for Enterprise options.
+</Card>

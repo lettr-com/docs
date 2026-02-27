@@ -182,7 +182,7 @@
                   "learn/sending/batch-sending",
                   "learn/sending/test-emails",
                   "learn/sending/idempotency",
-                  "learn/sending/rate-limits",
+
                   "learn/sending/errors-retries",
                   "learn/sending/email-history",
                   "learn/sending/usage-quotas",
@@ -492,6 +492,10 @@
     {
       "source": "/mcp/introduction",
       "destination": "/learn/mcp/introduction"
+    },
+    {
+      "source": "/learn/sending/rate-limits",
+      "destination": "/api-reference/rate-limit"
     }
   ],
   "footer": {

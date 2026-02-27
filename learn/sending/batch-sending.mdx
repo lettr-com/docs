@@ -44,11 +44,11 @@ await lettr.emails.send({
 | Limit | Value |
 |-------|-------|
 | Max recipients per request | 50 (combined to, cc, bcc) |
-| Max requests per minute | See [Rate Limits](/learn/sending/rate-limits) |
+| Max requests per minute | See [Rate Limits](/api-reference/rate-limit) |
 
 ## Sending to Large Lists
 
-For recipient lists larger than 50, chunk the list into batches and send each batch with a separate API call. Adding a short delay between batches helps you stay within [rate limits](/learn/sending/rate-limits):
+For recipient lists larger than 50, chunk the list into batches and send each batch with a separate API call. Adding a short delay between batches helps you stay within [rate limits](/api-reference/rate-limit):
 
 ```javascript
 const recipients = [...]; // Array of 500 recipients
