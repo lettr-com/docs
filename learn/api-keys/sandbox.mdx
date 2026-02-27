@@ -3,35 +3,35 @@ title: Sandbox API Keys
 description: "Test your email integration safely with sandbox API keys that redirect all emails to your own inbox"
 ---
 
-Sandbox API keys let you test your email integration without sending real emails to actual recipients. Every email sent with a sandbox key is redirected to the account email of the key's creator — regardless of what you specify in the `to`, `cc`, or `bcc` fields.
+Sandbox API keys let you test your email integration without sending real emails to actual recipients. Every email sent through a sandbox key is automatically redirected to the key creator's account email address, regardless of the `to`, `cc`, or `bcc` fields you specify.
 
 ## How Sandbox Keys Work
 
-When you send an email using a sandbox API key:
+When you send an email using a sandbox API key, five things happen behind the scenes:
 
-1. **Recipients are overridden** — all `to`, `cc`, and `bcc` addresses are replaced with the email address of the user who created the key.
-2. **The sender domain is overridden** — the `from` address domain is rewritten to `dev.uselettr.com`, a pre-verified sandbox domain. The local part (before `@`) is preserved.
-3. **No domain verification required** — you don't need to set up or verify a sending domain to start testing.
-4. **No billing impact** — sandbox sends are free and don't count against your monthly sending quota or daily limits.
-5. **Traffic is isolated** — sandbox emails are sent through a dedicated subaccount, fully separated from your live sending traffic.
+1. **Recipients are overridden** — All `to`, `cc`, and `bcc` addresses are replaced with the email address of the user who created the key.
+2. **The sender domain is overridden** — The `from` address domain is rewritten to `dev.uselettr.com`, a pre-verified sandbox domain. The local part (before `@`) stays the same.
+3. **No domain verification required** — You can start testing immediately without setting up or verifying a sending domain.
+4. **No billing impact** — Sandbox sends are free and do not count toward your monthly sending quota or daily limits.
+5. **Traffic is isolated** — Sandbox emails are sent through a dedicated subaccount, fully separated from your live sending traffic.
 
 <Info>
-  For example, if you send to `customer@example.com` from `noreply@yourdomain.com`, the sandbox key will actually deliver the email to **your account email** from `noreply@dev.uselettr.com`.
+  For example, if you send to `customer@example.com` from `noreply@yourdomain.com`, the sandbox key delivers the email to **your account email** from `noreply@dev.uselettr.com`.
 </Info>
 
 <Tip>
-  You do **not** need a verified sending domain to use sandbox keys. The sandbox domain `dev.uselettr.com` is already verified and ready to use — you can start sending test emails immediately after creating a sandbox key, even on a brand new account with no domains configured.
+  You do **not** need a verified sending domain to use sandbox keys. The sandbox domain `dev.uselettr.com` is already configured and ready to use — you can start sending test emails immediately after creating a sandbox key, even on a brand-new account with no domains set up.
 </Tip>
 
 ## Key Format
 
-Sandbox API keys have a distinct prefix so you can easily identify them:
+Sandbox API keys use a distinct prefix so you can easily tell them apart from live keys:
 
 ```
 lttr_sandbox_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
-Live keys use the standard `lttr_` prefix. This makes it easy to spot if a sandbox key is accidentally used in production.
+Live keys use the standard `lttr_` prefix. This makes it straightforward to spot if a sandbox key is accidentally used in production.
 
 ## Creating a Sandbox Key
 
@@ -43,7 +43,7 @@ Live keys use the standard `lttr_` prefix. This makes it easy to spot if a sandb
 6. Click **Create**
 
 <Warning>
-  Like live keys, the full sandbox API key is only displayed once upon creation. Copy and store it immediately.
+  Like live keys, the full sandbox API key is only displayed once at creation. Copy and store it immediately.
 </Warning>
 
 ## Rate Limits
@@ -55,7 +55,7 @@ Sandbox keys have stricter rate limits than live keys to prevent abuse:
 | Per-minute | 10 requests | 1 minute |
 | Per-day | 100 requests | 24 hours |
 
-Rate limit information is included in response headers:
+Every response from a sandbox key includes rate limit headers so you can track your usage:
 
 ```
 X-Sandbox-RateLimit-Minute-Limit: 10
@@ -64,7 +64,7 @@ X-Sandbox-RateLimit-Day-Limit: 100
 X-Sandbox-RateLimit-Day-Remaining: 99
 ```
 
-When you exceed either limit, the API returns a `429` status code with a `Retry-After` header.
+When you exceed either limit, the API returns a `429` status code with a `Retry-After` header indicating how many seconds to wait.
 
 ## Allowed Endpoints
 
@@ -100,7 +100,7 @@ Sandbox keys can access email sending and read-only endpoints. Write operations 
 - `POST /api/sms` — Send SMS
 - `POST /api/whatsapp` — Send WhatsApp message
 
-When a sandbox key hits a blocked endpoint, you'll receive:
+When a sandbox key hits a blocked endpoint, the API responds with:
 
 ```json
 {
@@ -112,22 +112,20 @@ When a sandbox key hits a blocked endpoint, you'll receive:
 
 ## Data Isolation
 
-Sandbox keys enforce strict data isolation:
+Sandbox keys enforce strict data isolation so that each key only sees its own test data — even when multiple team members create sandbox keys on the same account:
 
-- **Sent email lists** only show emails sent to the key owner's address
+- **Sent email lists** are filtered to only show emails addressed to the key owner
 - **Email event lists** are filtered to the key owner's address
 - **Scheduled email details** are only accessible if the key owner is a recipient
 - **Cancelling scheduled emails** requires the key owner to be a recipient
 
-This means each sandbox key only sees its own test data, even if multiple team members create sandbox keys on the same account.
-
 ## Viewing Sandbox Events in the Dashboard
 
-You can view sandbox email events in the dashboard by toggling the **Sandbox** switch on the **Events** page. This filters the event log to show only sandbox traffic for your account.
+To view sandbox email events in the dashboard, toggle the **Sandbox** switch on the **Events** page. This filters the event log to show only sandbox traffic for your account.
 
 ## Example Usage
 
-Use a sandbox key exactly like a live key. The only difference is the behavior behind the scenes.
+Use a sandbox key exactly like a live key — the only difference is how the email is processed behind the scenes.
 
 ```bash
 curl https://app.lettr.com/api/emails \
