@@ -20,6 +20,13 @@ You can create API keys through the Lettr dashboard:
   The full API key is only displayed once upon creation. Copy and store it securely immediately. You will not be able to view the complete key again.
 </Warning>
 
+## Key Types
+
+Lettr supports two API key types:
+
+- **Live** — for production use. Sends real emails to actual recipients and counts against your billing quota.
+- **Sandbox** — for testing. Redirects all emails to your own inbox, uses a sandbox sending domain, and doesn't affect billing. See the [Sandbox API Keys](/learn/api-keys/sandbox) guide for details.
+
 ## Key Format
 
 Lettr API keys follow this format:
@@ -28,7 +35,14 @@ Lettr API keys follow this format:
 lttr_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
-- `lttr_` prefix identifies it as a Lettr API key
+Sandbox keys have a distinct prefix:
+
+```
+lttr_sandbox_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+- `lttr_` prefix identifies it as a live Lettr API key
+- `lttr_sandbox_` prefix identifies it as a sandbox key
 - Followed by a 64-character cryptographically secure random string
 
 ## Using API Keys
@@ -223,6 +237,9 @@ The following endpoints are available when authenticated with an API key:
 <CardGroup cols={2}>
   <Card title="Permissions" icon="shield-check" href="/learn/api-keys/permissions">
     Learn more about API key permission levels and how to configure them
+  </Card>
+  <Card title="Sandbox API Keys" icon="flask-vial" href="/learn/api-keys/sandbox">
+    Test your integration safely without sending to real recipients
   </Card>
   <Card title="Send Your First Email" icon="paper-plane" href="/quickstart/php/introduction">
     Get started with sending emails using your API key

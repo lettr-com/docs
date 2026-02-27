@@ -1,0 +1,173 @@
+---
+title: Sandbox API Keys
+description: "Test your email integration safely with sandbox API keys that redirect all emails to your own inbox"
+---
+
+Sandbox API keys let you test your email integration without sending real emails to actual recipients. Every email sent with a sandbox key is redirected to the account email of the key's creator — regardless of what you specify in the `to`, `cc`, or `bcc` fields.
+
+## How Sandbox Keys Work
+
+When you send an email using a sandbox API key:
+
+1. **Recipients are overridden** — all `to`, `cc`, and `bcc` addresses are replaced with the email address of the user who created the key.
+2. **The sender domain is overridden** — the `from` address domain is rewritten to `dev.uselettr.com`, a pre-verified sandbox domain. The local part (before `@`) is preserved.
+3. **No domain verification required** — you don't need to set up or verify a sending domain to start testing.
+4. **No billing impact** — sandbox sends are free and don't count against your monthly sending quota or daily limits.
+5. **Traffic is isolated** — sandbox emails are sent through a dedicated subaccount, fully separated from your live sending traffic.
+
+<Info>
+  For example, if you send to `customer@example.com` from `noreply@yourdomain.com`, the sandbox key will actually deliver the email to **your account email** from `noreply@dev.uselettr.com`.
+</Info>
+
+<Tip>
+  You do **not** need a verified sending domain to use sandbox keys. The sandbox domain `dev.uselettr.com` is already verified and ready to use — you can start sending test emails immediately after creating a sandbox key, even on a brand new account with no domains configured.
+</Tip>
+
+## Key Format
+
+Sandbox API keys have a distinct prefix so you can easily identify them:
+
+```
+lttr_sandbox_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+Live keys use the standard `lttr_` prefix. This makes it easy to spot if a sandbox key is accidentally used in production.
+
+## Creating a Sandbox Key
+
+1. Navigate to **Settings** > **API Keys** in your dashboard
+2. Click **Create API Key**
+3. Enter a descriptive name (e.g., "Local Development", "CI Tests")
+4. Select your desired permission level
+5. Set the **Type** to **Sandbox**
+6. Click **Create**
+
+<Warning>
+  Like live keys, the full sandbox API key is only displayed once upon creation. Copy and store it immediately.
+</Warning>
+
+## Rate Limits
+
+Sandbox keys have stricter rate limits than live keys to prevent abuse:
+
+| Limit | Threshold | Window |
+|-|-|-|
+| Per-minute | 10 requests | 1 minute |
+| Per-day | 100 requests | 24 hours |
+
+Rate limit information is included in response headers:
+
+```
+X-Sandbox-RateLimit-Minute-Limit: 10
+X-Sandbox-RateLimit-Minute-Remaining: 9
+X-Sandbox-RateLimit-Day-Limit: 100
+X-Sandbox-RateLimit-Day-Remaining: 99
+```
+
+When you exceed either limit, the API returns a `429` status code with a `Retry-After` header.
+
+## Allowed Endpoints
+
+Sandbox keys can access email sending and read-only endpoints. Write operations on resources like domains, webhooks, and templates are blocked.
+
+**Allowed:**
+- `POST /api/emails` — Send an email
+- `GET /api/emails` — List sent emails
+- `GET /api/emails/{requestId}` — Get email details
+- `GET /api/emails/events` — List email events
+- `POST /api/emails/scheduled` — Schedule an email
+- `GET /api/emails/scheduled/{transmissionId}` — Get scheduled email details
+- `DELETE /api/emails/scheduled/{transmissionId}` — Cancel a scheduled email
+- `GET /api/templates` — List templates
+- `GET /api/templates/{slug}` — Get template details
+- `GET /api/templates/{slug}/merge-tags` — Get template merge tags
+- `GET /api/domains` — List domains
+- `GET /api/domains/{domain}` — Get domain details
+- `GET /api/webhooks` — List webhooks
+- `GET /api/webhooks/{webhookId}` — Get webhook details
+- `GET /api/auth/check` — Verify API key validity
+
+**Blocked (returns `403`):**
+- `POST /api/templates` — Create a template
+- `PUT /api/templates/{slug}` — Update a template
+- `DELETE /api/templates/{slug}` — Delete a template
+- `POST /api/domains` — Create a domain
+- `POST /api/domains/{domain}/verify` — Verify a domain
+- `DELETE /api/domains/{domain}` — Delete a domain
+- `POST /api/webhooks` — Create a webhook
+- `PUT /api/webhooks/{webhookId}` — Update a webhook
+- `DELETE /api/webhooks/{webhookId}` — Delete a webhook
+- `POST /api/sms` — Send SMS
+- `POST /api/whatsapp` — Send WhatsApp message
+
+When a sandbox key hits a blocked endpoint, you'll receive:
+
+```json
+{
+  "status": "error",
+  "error_code": "sandbox_restricted",
+  "message": "Sandbox API keys are restricted to email sending and read-only endpoints."
+}
+```
+
+## Data Isolation
+
+Sandbox keys enforce strict data isolation:
+
+- **Sent email lists** only show emails sent to the key owner's address
+- **Email event lists** are filtered to the key owner's address
+- **Scheduled email details** are only accessible if the key owner is a recipient
+- **Cancelling scheduled emails** requires the key owner to be a recipient
+
+This means each sandbox key only sees its own test data, even if multiple team members create sandbox keys on the same account.
+
+## Viewing Sandbox Events in the Dashboard
+
+You can view sandbox email events in the dashboard by toggling the **Sandbox** switch on the **Events** page. This filters the event log to show only sandbox traffic for your account.
+
+## Example Usage
+
+Use a sandbox key exactly like a live key. The only difference is the behavior behind the scenes.
+
+```bash
+curl https://app.lettr.com/api/emails \
+  -X POST \
+  -H "Authorization: Bearer lttr_sandbox_xxxxxxxxxxxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "from": "noreply@yourdomain.com",
+    "to": ["customer@example.com"],
+    "subject": "Order Confirmation #1234",
+    "html": "<h1>Thank you for your order!</h1>"
+  }'
+```
+
+The email above will be delivered to **your account email address**, not to `customer@example.com`. The `from` address will be rewritten to `noreply@dev.uselettr.com`.
+
+## When to Use Sandbox Keys
+
+<CardGroup cols={2}>
+  <Card title="Local Development" icon="laptop-code">
+    Test your integration locally without affecting real recipients or requiring a verified domain.
+  </Card>
+  <Card title="CI/CD Pipelines" icon="arrows-spin">
+    Run integration tests that verify email sending works without delivering to actual users.
+  </Card>
+  <Card title="Staging Environments" icon="flask">
+    Validate email flows in staging with real API calls while keeping all emails contained.
+  </Card>
+  <Card title="Onboarding & Demos" icon="graduation-cap">
+    Explore the API and test payloads before setting up your production sending domain.
+  </Card>
+</CardGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="API Keys Introduction" icon="key" href="/learn/api-keys/introduction">
+    Learn about API key management and authentication
+  </Card>
+  <Card title="Send Your First Email" icon="paper-plane" href="/quickstart/php/introduction">
+    Get started with sending emails using your API key
+  </Card>
+</CardGroup>

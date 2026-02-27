@@ -22,6 +22,28 @@ The simplest way to test is from the Lettr dashboard:
 
 ---
 
+## Sandbox API Keys
+
+The easiest way to test your API integration is with a **sandbox API key**. Sandbox keys redirect all emails to your own inbox automatically — no domain setup required, no risk of reaching real recipients.
+
+```bash
+curl -X POST https://app.lettr.com/api/emails \
+  -H "Authorization: Bearer lttr_sandbox_xxxxxxxxxxxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "from": "noreply@yourdomain.com",
+    "to": ["customer@example.com"],
+    "subject": "Test Email",
+    "html": "<h1>Hello!</h1>"
+  }'
+```
+
+The email above will be delivered to **your account email**, not to `customer@example.com`. Sandbox sends are free, don't require a verified domain, and don't count against your quota.
+
+Create a sandbox key in **Settings** > **API Keys** by setting the type to **Sandbox**. See the [Sandbox API Keys guide](/learn/api-keys/sandbox) for full details on rate limits, allowed endpoints, and data isolation.
+
+---
+
 ## Test Emails via the API
 
 When integrating with the API, send test emails to addresses you control to verify your code works before going live.

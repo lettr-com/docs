@@ -149,7 +149,8 @@
                 "group": "API Keys",
                 "pages": [
                   "learn/api-keys/introduction",
-                  "learn/api-keys/permissions"
+                  "learn/api-keys/permissions",
+                  "learn/api-keys/sandbox"
                 ]
               },
               {
