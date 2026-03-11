@@ -21,80 +21,7 @@ Team
         └── Template: product-updates
 ```
 
-Every team has a default project created automatically. You can create additional projects as needed.
-
-## Projects
-
-### Creating a Project
-
-Create projects in the dashboard to separate templates by purpose:
-
-<Steps>
-  <Step title="Open Projects">
-    Click your project name in the sidebar, then click **New Project**.
-  </Step>
-  <Step title="Name Your Project">
-    Enter a project name and optionally select an emoji for visual identification.
-  </Step>
-  <Step title="Configure Storage">
-    Optionally select a storage domain for templates in this project.
-  </Step>
-</Steps>
-
-### Project Settings
-
-Each project has the following settings:
-
-| Setting | Description |
-|---------|-------------|
-| Name | Display name for the project |
-| Emoji | Visual identifier (optional) |
-| Storage Domain | Default storage domain for template images |
-| Default | Whether this is the default project for new templates |
-
-### Storage Domain per Project
-
-Associate a storage domain with a project to have all template images served from that domain:
-
-```
-Project: "Brand A"
-Storage Domain: assets.brand-a.com
-
-Project: "Brand B"
-Storage Domain: cdn.brand-b.com
-```
-
-This ensures each brand's emails use their own branded image URLs.
-
-## Folders
-
-Folders help organize templates within a project.
-
-### Creating a Folder
-
-1. Open a project in the Templates view
-2. Click **New Folder**
-3. Enter a folder name
-4. Click **Create**
-
-### Folder Structure
-
-Folders are single-level within a project—you cannot nest folders within folders. This keeps the structure simple and navigable:
-
-```
-Project: "E-commerce"
-├── Folder: "Order Lifecycle"
-│   ├── order-confirmation
-│   ├── shipping-notification
-│   └── delivery-confirmation
-├── Folder: "Account"
-│   ├── welcome
-│   ├── password-reset
-│   └── email-verification
-└── Folder: "Marketing"
-    ├── promotional
-    └── newsletter
-```
+Every team has a default project created automatically. Templates are organized into projects and folders, which you can reference when working with the API.
 
 ## Using Projects in API Calls
 
@@ -150,54 +77,15 @@ Response includes project information:
 }
 ```
 
-## Moving Templates
+You can scope both endpoints to a specific project by adding `?project_id=123`. If omitted, your team's default project is used.
 
-### Move to Another Folder
+## Default Project
 
-Move a template to a different folder within the same project:
+Every team has a default project. This project:
 
-1. Open the template
-2. Click the **More** menu (three dots)
-3. Select **Move to Folder**
-4. Choose the destination folder
-
-### Move to Another Project
-
-Move a template to a different project:
-
-1. Open the template
-2. Click the **More** menu
-3. Select **Move to Project**
-4. Choose the destination project and folder
-
-<Warning>
-  Moving a template to a different project may affect API calls that reference the template by `project_id`. Update your integration to use the new project ID after moving.
-</Warning>
-
-### Copy to Another Project or Team
-
-Duplicate a template while keeping the original:
-
-1. Open the template
-2. Click the **More** menu
-3. Select **Duplicate to Project** or **Duplicate to Team**
-4. Choose the destination project, folder, or team
-
-This creates an independent copy that can be modified without affecting the original.
-
-#### Cross-Team Duplication
-
-If you belong to multiple teams, you can duplicate templates across teams. This is useful for:
-
-- **Sharing designs between teams** — Copy a polished template from one team to another without recreating it
-- **Agency workflows** — Duplicate a base template to multiple client teams
-- **Environment promotion** — Copy templates from a staging team to production
-
-When duplicating to another team, the template is copied with its content but is otherwise independent — it gets its own version history, and changes in one team don't affect the other.
-
-<Note>
-  You must be a member of the destination team to duplicate templates to it.
-</Note>
+- Cannot be deleted
+- Receives templates when no project is specified
+- Is used when API calls don't include a `project_id`
 
 ## Best Practices
 
@@ -233,47 +121,6 @@ Templates (slugs):
 - password-reset
 - weekly-digest-v2
 ```
-
-## Default Project
-
-Every team has a default project. This project:
-
-- Cannot be deleted
-- Receives templates when no project is specified
-- Is used when API calls don't include a `project_id`
-
-To change the default project:
-
-1. Go to project settings
-2. Click **Set as Default**
-
-<Note>
-  You cannot delete the default project. If you want to delete a project, first set a different project as the default.
-</Note>
-
-## Deleting Projects and Folders
-
-### Deleting a Folder
-
-When you delete a folder:
-
-- All templates in the folder are permanently deleted
-- This action cannot be undone
-
-<Warning>
-  Deleting a folder permanently removes all templates inside it. Move important templates to another folder before deleting.
-</Warning>
-
-### Deleting a Project
-
-When you delete a project:
-
-- All templates and folders in the project are permanently deleted
-- This action cannot be undone
-
-<Warning>
-  Deleting a project permanently removes all its templates. Export or move important templates before deleting.
-</Warning>
 
 ## Related Topics
 
