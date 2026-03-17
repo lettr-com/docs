@@ -130,15 +130,6 @@
                   "quickstart/java/quickstart",
                   "quickstart/java/advanced"
                 ]
-              },
-              {
-                "group": "Python",
-                "pages": [
-                  "quickstart/python/quickstart",
-                  "quickstart/python/advanced",
-                  "quickstart/python/send-with-flask",
-                  "quickstart/python/send-with-fastapi"
-                ]
               }
             ]
           },
