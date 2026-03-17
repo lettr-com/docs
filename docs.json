@@ -123,13 +123,6 @@
                   "quickstart/rust/quickstart",
                   "quickstart/rust/advanced"
                 ]
-              },
-              {
-                "group": "Java",
-                "pages": [
-                  "quickstart/java/quickstart",
-                  "quickstart/java/advanced"
-                ]
               }
             ]
           },
