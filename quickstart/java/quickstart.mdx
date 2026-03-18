@@ -78,15 +78,10 @@ Get started in three quick steps: add the dependency, create a client, and send.
 
     public class Main {
         public static void main(String[] args) {
-            Lettr lettr = new Lettr("your-api-key");
+            String apiKey = System.getenv("LETTR_API_KEY");
+            Lettr lettr = new Lettr(apiKey);
 
-            // Verify the client is configured correctly
-            try {
-                var auth = lettr.health().authCheck();
-                System.out.println("Connected to Lettr (Team ID: " + auth.getTeamId() + ")");
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            System.out.println("Lettr client initialized.");
         }
     }
     ```
