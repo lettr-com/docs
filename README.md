@@ -10,60 +10,85 @@ Install the [Mintlify CLI](https://www.npmjs.com/package/mintlify) to preview th
 npm i -g mintlify
 ```
 
-Run the following command at the root of your documentation (where `mint.json` is):
+Run the development server (fetches the OpenAPI spec, then starts Mintlify):
 
 ```bash
-mintlify dev
+npm run dev
 ```
+
+To fetch the OpenAPI spec only:
+
+```bash
+npm run fetch-openapi
+```
+
+## Configuration
+
+- **Config file**: `docs.json` (not `mint.json`)
+- **OpenAPI spec**: Auto-fetched from `https://app.lettr.com/openapi.json` at build time
 
 ## Structure
 
 ```
-docs/
-├── mint.json                    # Mintlify configuration
-├── introduction.mdx             # Main introduction page
-├── quickstart/                  # Quickstart guides
-│   ├── php/                     # PHP guides
-│   ├── smtp/                    # SMTP guides
-│   ├── serverless/              # Serverless guides
-│   └── nodejs/                  # Node.js guides
-├── learn/                       # Learning resources
-│   ├── sending/                 # Email sending guides
-│   ├── receiving/               # Email receiving guides
-│   ├── domains/                 # Domain configuration
-│   ├── api-keys/                # API key management
-│   ├── webhooks/                # Webhook configuration
-│   ├── templates/               # Template guides
-│   ├── suppressions/            # Suppression management
-│   └── settings/                # Account settings
-├── resources/                   # Additional resources
-│   ├── examples.mdx
-│   ├── sdks.mdx
-│   ├── security.mdx
-│   └── integrations.mdx
-├── api-reference/               # API documentation
+lettr-docs/
+├── docs.json                       # Mintlify configuration & navigation
+├── introduction.mdx                # Main introduction page
+├── quickstart/                     # Quickstart guides
+│   ├── laravel/                    # Laravel integration
+│   ├── php/                        # PHP integration
+│   ├── nodejs/                     # Node.js (Next.js, Nuxt)
+│   ├── smtp/                       # SMTP (Laravel, PHPMailer, Supabase)
+│   ├── serverless/                 # AWS Lambda, Vercel, Cloudflare Workers
+│   ├── go/                         # Go quickstart & advanced
+│   ├── rust/                       # Rust quickstart & advanced
+│   └── java/                       # Java quickstart & advanced
+├── learn/                          # Product how-to guides
+│   ├── api-keys/                   # API key management & permissions
+│   ├── domains/                    # Sending, tracking, inbound, storage domains; SPF/DKIM/DMARC/BIMI
+│   ├── sending/                    # Email sending (recipients, attachments, tracking, batch, idempotency, etc.)
+│   ├── receiving/                  # Inbound email (setup, routing, parsing, spam filtering)
+│   ├── suppressions/               # Bounces, complaints & unsubscribes
+│   ├── templates/                  # Topol editor, template language, versions, saved blocks
+│   ├── audience/                   # Contacts, segments, campaigns
+│   ├── webhooks/                   # Event types, handling, authorization, retries
+│   ├── events/                     # Event types & message details
+│   ├── logs/                       # Filtering, searching, status codes
+│   ├── analytics/                  # Dashboard, filtering & breakdowns
+│   ├── mcp/                        # MCP server setup & tools reference
+│   └── settings/                   # Dashboard, onboarding, profile, teams, security, billing, alerts
+├── integrations/                   # Third-party integrations (Stripe, Supabase, WordPress, Zapier)
+├── api-reference/                  # API documentation (OpenAPI-driven)
 │   ├── introduction.mdx
-│   ├── emails/
-│   ├── domains/
-│   ├── api-keys/
-│   └── webhooks/
-└── knowledge-base/              # Help articles
-    ├── introduction.mdx
-    ├── troubleshooting/
-    └── best-practices/
+│   ├── rate-limit.mdx
+│   ├── emails/                     # Send, detail, events, scheduling
+│   ├── domains/                    # CRUD + verify
+│   ├── templates/                  # CRUD + merge tags
+│   ├── webhooks/                   # CRUD
+│   └── system/                     # Health check, auth check
+├── knowledge-base/                 # Help articles & educational content
+│   ├── introduction.mdx
+│   ├── dns-guides/                 # 19 DNS provider guides (Cloudflare, Route 53, GoDaddy, etc.)
+│   ├── concepts/                   # Deliverability, transactional email, feedback loops, ESPs
+│   ├── fundamentals/               # SPF/DKIM/DMARC, bounce codes, SMTP basics, BIMI, etc.
+│   ├── best-practices/             # Deliverability, list hygiene, security, dark mode, accessibility
+│   ├── compliance/                 # Google/Yahoo requirements, CAN-SPAM, GDPR, CASL
+│   ├── troubleshooting/            # Delivery, spam, bounces, auth, rate limits, rendering
+│   ├── use-cases/                  # Password reset, order confirmation, welcome, 2FA, invoices
+│   └── glossary/                   # Email glossary
+└── images/                         # Screenshots and diagrams
 ```
 
 ## Tabs
 
 The documentation is organized into three main tabs:
 
-1. **Documentation** - Main product documentation and guides
-2. **API Reference** - Complete API documentation
-3. **Knowledge Base** - Troubleshooting and best practices
+1. **Documentation** — Product docs, quickstart guides, learning resources, and integrations
+2. **API Reference** — Complete API documentation (auto-generated from OpenAPI spec)
+3. **Knowledge Base** — DNS guides, email fundamentals, best practices, compliance, troubleshooting, and use cases
 
 ## Publishing Changes
 
-Changes to the docs are automatically deployed when pushed to the main branch.
+Changes are automatically deployed when pushed to the `main` branch.
 
 ## Links
 
