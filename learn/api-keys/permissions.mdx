@@ -3,7 +3,7 @@ title: Permissions
 description: "Configure API key permissions to control access to Lettr API resources"
 ---
 
-When creating an API key, you assign a permission level that controls which API endpoints the key can access. Lettr supports three permission levels: **Full Access**, **Sending Only**, and **Custom**.
+When creating an API key, you assign a permission level that controls which API endpoints the key can access. Lettr supports two dashboard permission levels — **Full Access** and **Sending Only** — plus a **Custom** scope system available via the API.
 
 ## Permission Levels
 
@@ -42,7 +42,7 @@ Sending Only keys are restricted to email sending operations only. Requests to a
 
 ### Custom
 
-Custom keys let you select individual scopes for fine-grained access control. Instead of choosing a preset, you pick exactly which operations the key can perform.
+Custom scopes provide fine-grained access control by letting you specify exactly which operations a key can perform. Custom scopes are currently available via the API and DynamoDB — a dashboard UI for selecting individual scopes is coming soon.
 
 #### Available Scopes
 
@@ -82,7 +82,7 @@ Custom keys let you select individual scopes for fine-grained access control. In
 4. Select the permission level:
    - **Full Access** — Complete access to all endpoints
    - **Sending Only** — Restricted to email, SMS, and WhatsApp sending
-   - **Custom** — Select individual scopes from the checklist
+   - ~~**Custom** — Select individual scopes (coming soon to the dashboard; available via API)~~
 5. Configure optional IP restrictions
 6. Click **Create**
 
