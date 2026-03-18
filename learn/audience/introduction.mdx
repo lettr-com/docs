@@ -1,0 +1,57 @@
+---
+title: Audience
+description: "Manage contacts, lists, segments, and campaigns"
+---
+
+Lettr's Audience system lets you manage contacts, organize them into lists, create dynamic segments, and send email campaigns. It works alongside the transactional sending API — transactional emails are triggered by user actions, while campaigns are sent proactively to groups of contacts.
+
+<Note>
+  Audience features require a [Marketing plan](/learn/settings/billing#marketing-plans). All accounts include a free 500-contact tier.
+</Note>
+
+## Core Concepts
+
+<CardGroup cols={2}>
+  <Card title="Contacts" icon="user" href="/learn/audience/contacts">
+    Individual email addresses with custom properties, subscription status, and list memberships.
+  </Card>
+  <Card title="Segments" icon="filter" href="/learn/audience/segments">
+    Dynamic groups of contacts that update automatically based on conditions you define.
+  </Card>
+  <Card title="Campaigns" icon="paper-plane" href="/learn/audience/campaigns">
+    Email campaigns sent to lists, segments, or your entire audience.
+  </Card>
+  <Card title="Billing" icon="credit-card" href="/learn/settings/billing#marketing-plans">
+    Contact-based marketing plans and pricing.
+  </Card>
+</CardGroup>
+
+## Key Features
+
+- **Custom contact properties** — Define string, number, boolean, date, and JSON properties to store any data on your contacts
+- **CSV import and export** — Bulk import contacts from CSV files with column mapping; export contacts to CSV for external use
+- **Double opt-in** — Optional confirmation email flow for GDPR-compliant list building
+- **Subscription topics** — Let contacts subscribe and unsubscribe per topic for granular preference management
+- **AI segment builder** — Describe your target audience in natural language and let AI generate the segment conditions
+- **Campaign analytics** — Track opens, clicks, bounces, and unsubscribes per campaign
+
+## Getting Started
+
+<Steps>
+  <Step title="Subscribe to a Marketing Plan">
+    All accounts include a free 500-contact tier. For larger audiences, upgrade from **Settings** → **Billing**.
+  </Step>
+  <Step title="Add Contacts">
+    Import contacts via CSV or add them through the API. Each contact needs at minimum an email address.
+  </Step>
+  <Step title="Organize Your Audience">
+    Create lists to group contacts manually, or create segments to group contacts dynamically based on conditions.
+  </Step>
+  <Step title="Send a Campaign">
+    Choose your audience, build your email content, preview, and send or schedule your campaign.
+  </Step>
+</Steps>
+
+## API Access
+
+Audience resources are available through the API with the `audience:read` and `audience:write` [scopes](/learn/api-keys/permissions#custom). You can manage contacts, lists, and segments programmatically.

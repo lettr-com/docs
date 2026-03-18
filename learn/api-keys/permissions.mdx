@@ -3,7 +3,7 @@ title: Permissions
 description: "Configure API key permissions to control access to Lettr API resources"
 ---
 
-When creating an API key, you assign a permission level that controls which API endpoints the key can access. Lettr supports two permission levels: **Full Access** and **Sending Only**.
+When creating an API key, you assign a permission level that controls which API endpoints the key can access. Lettr supports three permission levels: **Full Access**, **Sending Only**, and **Custom**.
 
 ## Permission Levels
 
@@ -40,6 +40,38 @@ Sending Only keys are restricted to email sending operations only. Requests to a
 - Third-party integrations that don't need administrative access
 - Services where you want to limit the blast radius of a potential key compromise
 
+### Custom
+
+Custom keys let you select individual scopes for fine-grained access control. Instead of choosing a preset, you pick exactly which operations the key can perform.
+
+#### Available Scopes
+
+| Scope | Description |
+|-|-|
+| `emails:send` | Send emails via API |
+| `emails:read` | List and retrieve sent email details and events |
+| `templates:read` | List and retrieve templates |
+| `templates:write` | Create, update, and delete templates |
+| `domains:read` | List and retrieve domains |
+| `domains:write` | Create, verify, and delete domains |
+| `webhooks:read` | List and retrieve webhooks |
+| `webhooks:write` | Create, update, and delete webhooks |
+| `projects:read` | List projects |
+| `sms:send` | Send SMS messages |
+| `whatsapp:send` | Send WhatsApp messages |
+| `audience:read` | List and retrieve contacts, lists, and segments |
+| `audience:write` | Create, update, and delete contacts, lists, and segments |
+
+<Note>
+  The **Full Access** preset includes all 13 scopes. The **Sending Only** preset includes `emails:send`, `sms:send`, and `whatsapp:send`.
+</Note>
+
+**Use Custom keys for:**
+- Template management services that only need `templates:read` and `templates:write`
+- Webhook automation tools that only need `webhooks:read` and `webhooks:write`
+- Audience management integrations that need `audience:read` and `audience:write` without sending permissions
+- Monitoring dashboards that only need read scopes (`emails:read`, `domains:read`, etc.)
+
 ## Creating Keys with Specific Permissions
 
 ### Via the Dashboard
@@ -48,8 +80,9 @@ Sending Only keys are restricted to email sending operations only. Requests to a
 2. Click **Create API Key**
 3. Enter a descriptive name
 4. Select the permission level:
-   - **Full Access** - Complete access to all endpoints
-   - **Sending Only** - Restricted to email sending only
+   - **Full Access** — Complete access to all endpoints
+   - **Sending Only** — Restricted to email, SMS, and WhatsApp sending
+   - **Custom** — Select individual scopes from the checklist
 5. Configure optional IP restrictions
 6. Click **Create**
 

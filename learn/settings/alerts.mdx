@@ -1,0 +1,85 @@
+---
+title: Monitoring & Alerts
+description: "Set up alerts for API failure rate monitoring"
+---
+
+Lettr monitors your API usage and alerts you when failure rates spike. Alerts help you catch integration issues, misconfigured domains, or unexpected error patterns before they impact your users.
+
+## API Failure Rate Alerts
+
+Lettr runs two automated checks against your API traffic:
+
+### 15-Minute Rolling Window
+
+Detects sudden spikes in error rates. If the failure rate in the last 15 minutes exceeds the threshold, an alert is triggered immediately. This catches acute issues like a broken integration deployment or an expired API key being used in production.
+
+### Daily Low-Volume Check
+
+Detects sustained elevated error rates across lower-traffic periods. Even if individual 15-minute windows don't breach the threshold, a consistently elevated daily failure rate triggers an alert. This catches chronic issues like a misconfigured domain or a gradual increase in invalid recipients.
+
+<Note>
+  Alert cooldowns are asymmetric — a 15-minute alert suppresses the daily alert for the same issue, but not vice versa. This prevents duplicate notifications while ensuring urgent issues are always surfaced.
+</Note>
+
+## Alert Channels
+
+### Email
+
+Email alerts are enabled by default and sent to the team owner's email address. Alert emails are sent through Lettr's own transactional email system.
+
+### Webhook
+
+Configure an HTTPS webhook URL to receive alerts as JSON POST requests. This is useful for integrating with incident management tools like PagerDuty, OpsGenie, or Slack.
+
+<Warning>
+  Webhook URLs must be publicly accessible HTTPS endpoints. Private IP addresses and internal network URLs are blocked for security (SSRF protection).
+</Warning>
+
+#### Testing Your Webhook
+
+After configuring a webhook URL, use the **Test Webhook** button to send a test payload and verify connectivity. The test confirms your endpoint is reachable and returns a success response.
+
+## Configuring Alerts
+
+<Steps>
+  <Step title="Navigate to Alert Settings">
+    Go to **Settings** → **Alerts**.
+  </Step>
+  <Step title="Enable or Disable Alerts">
+    Toggle alerts on or off for each alert type. You can enable the 15-minute check independently from the daily check.
+  </Step>
+  <Step title="Choose Alert Channels">
+    Select which channels should receive alerts — email, webhook, or both.
+  </Step>
+  <Step title="Configure Webhook (Optional)">
+    If using the webhook channel, enter your HTTPS endpoint URL and click **Test Webhook** to verify connectivity.
+  </Step>
+  <Step title="Save">
+    Click **Save** to apply your alert configuration.
+  </Step>
+</Steps>
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Keep alerts enabled">
+    Even if your integration is stable, alerts provide early warning when something changes — a DNS misconfiguration, an expired certificate, or a code deployment that introduces errors.
+  </Accordion>
+  <Accordion title="Use webhook alerts for on-call integration">
+    Route webhook alerts to your incident management system (PagerDuty, OpsGenie, Slack) so the right person is notified immediately.
+  </Accordion>
+  <Accordion title="Review failure patterns in Analytics">
+    When you receive an alert, check the [Analytics dashboard](/learn/analytics/introduction) for error breakdowns to identify the root cause — whether it's a specific domain, API key, or error type.
+  </Accordion>
+</AccordionGroup>
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Analytics" icon="chart-line" href="/learn/analytics/introduction">
+    Monitor sending metrics and error breakdowns
+  </Card>
+  <Card title="Errors & Retries" icon="triangle-exclamation" href="/learn/sending/errors-retries">
+    Understand API error codes and retry patterns
+  </Card>
+</CardGroup>

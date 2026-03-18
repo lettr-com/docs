@@ -1,0 +1,119 @@
+---
+title: Contacts
+description: "Manage your audience contacts, custom properties, and subscription status"
+---
+
+A contact represents an individual email address in your audience. Each contact belongs to a team and has a subscription status, optional custom properties, list memberships, and topic subscriptions.
+
+## Contact Status
+
+Every contact has one of five statuses:
+
+| Status | Description |
+|-|-|
+| `subscribed` | Active contact eligible to receive campaigns |
+| `unsubscribed` | Contact has opted out of receiving campaigns |
+| `bounced` | Email address has hard-bounced and is suppressed |
+| `complained` | Contact marked an email as spam |
+| `unverified` | Contact has not yet confirmed via double opt-in |
+
+<Warning>
+  Contacts with `bounced` or `complained` status are automatically excluded from campaign sends. Sending to these addresses would damage your sender reputation.
+</Warning>
+
+## Custom Properties
+
+Custom properties let you store additional data on each contact beyond the email address and status. You can create properties in the dashboard or via the API.
+
+### Property Types
+
+| Type | Description | Example |
+|-|-|-|
+| `string` | Text values | Name, company, city |
+| `number` | Numeric values | Age, order count, revenue |
+| `boolean` | True/false values | VIP status, newsletter preference |
+| `date` | Date values | Sign-up date, last purchase date |
+| `json` | Structured data | Preferences object, tags array |
+
+Each property can have an optional **fallback value** that is used when the property is not set on a contact. This is useful for providing defaults in segment conditions and template personalization.
+
+### Using Properties in Templates
+
+Custom properties are available as merge tags in campaign emails. If a contact has a property called `first_name`, you can use `{{first_name}}` in your campaign template. See [Template Language](/learn/templates/template-language) for syntax details.
+
+## Lists
+
+Lists are named, static groupings of contacts. A contact can belong to multiple lists. Use lists to organize contacts by purpose — for example, "Newsletter Subscribers", "Beta Users", or "Enterprise Customers".
+
+Lists are managed manually: you add and remove contacts explicitly, either through the dashboard, CSV import, or the API. This is different from [segments](/learn/audience/segments), which are dynamic and update automatically based on conditions.
+
+## Subscription Topics
+
+Topics let contacts manage their subscription preferences at a granular level. Instead of a single subscribe/unsubscribe toggle, contacts can opt in or out of specific topics — for example, "Product Updates", "Weekly Digest", or "Promotions".
+
+Topics can be **public** (visible to contacts in preference centers) or **private** (used internally for segmentation).
+
+## Double Opt-In
+
+Double opt-in adds a confirmation step when a contact is created. Instead of immediately becoming `subscribed`, the contact starts as `unverified` and receives a confirmation email. They become `subscribed` only after clicking the confirmation link.
+
+This is a best practice for GDPR compliance and ensures that only real, engaged email addresses enter your audience.
+
+<Tip>
+  Double opt-in reduces list size but improves deliverability and engagement rates. It's recommended for all public-facing signup forms.
+</Tip>
+
+## Import and Export
+
+### CSV Import
+
+Import contacts in bulk from a CSV file:
+
+<Steps>
+  <Step title="Upload Your CSV">
+    Go to **Audience** → **Import** and upload your CSV file. The file is uploaded directly to secure storage via a presigned URL.
+  </Step>
+  <Step title="Map Columns">
+    Map CSV columns to contact fields (email, status, custom properties). The email column is required.
+  </Step>
+  <Step title="Configure Options">
+    Optionally assign imported contacts to lists and add tags.
+  </Step>
+  <Step title="Start Import">
+    The import processes in the background. You'll receive an email notification when it completes with a summary of created, updated, and skipped contacts.
+  </Step>
+</Steps>
+
+### CSV Export
+
+Export your contacts to a CSV file:
+
+1. Go to **Audience** → **Contacts**
+2. Apply any filters you want (optional)
+3. Click **Export**
+4. The export processes in the background and you'll receive an email with a download link when ready
+
+<Note>
+  Export download links expire after 7 days.
+</Note>
+
+## API Access
+
+The API provides full CRUD access to contacts with the `audience:read` and `audience:write` scopes. You can create, update, list, and delete contacts programmatically.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Segments" icon="filter" href="/learn/audience/segments">
+    Create dynamic groups of contacts based on conditions
+  </Card>
+  <Card title="Campaigns" icon="paper-plane" href="/learn/audience/campaigns">
+    Send email campaigns to your contacts
+  </Card>
+  <Card title="Template Language" icon="brackets-curly" href="/learn/templates/template-language">
+    Personalize campaign emails with merge tags
+  </Card>
+  <Card title="API Key Permissions" icon="key" href="/learn/api-keys/permissions">
+    Configure audience API scopes
+  </Card>
+</CardGroup>

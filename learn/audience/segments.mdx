@@ -1,0 +1,99 @@
+---
+title: Segments
+description: "Create dynamic contact segments with conditions and AI"
+---
+
+Segments are dynamic groups of contacts that update automatically based on conditions you define. Unlike [lists](/learn/audience/contacts#lists) (which are static), segments re-evaluate their membership whenever the underlying contact data changes.
+
+## How Segments Work
+
+A segment is a set of conditions. A contact is included in the segment when it matches all conditions. Segments can be **global** (across all contacts in your team) or **scoped to a specific list**.
+
+Segment contact counts are cached and recalculated asynchronously to keep the dashboard fast even with large audiences.
+
+## Creating a Segment
+
+<Steps>
+  <Step title="Navigate to Segments">
+    Go to **Audience** → **Segments** and click **Create Segment**.
+  </Step>
+  <Step title="Name Your Segment">
+    Give your segment a descriptive name (e.g., "Active customers in Europe").
+  </Step>
+  <Step title="Add Conditions">
+    Build your conditions by selecting a field, an operator, and a value. Add multiple conditions — all must match for a contact to be included (AND logic).
+  </Step>
+  <Step title="Preview and Save">
+    Preview the matching contacts to verify your conditions, then save the segment.
+  </Step>
+</Steps>
+
+## Conditions
+
+Each condition consists of three parts:
+
+1. **Field** — The contact property to evaluate (email, status, a custom property, list membership, or topic subscription)
+2. **Operator** — How to compare the field value
+3. **Value** — The value to compare against
+
+### Operators
+
+| Operator | Description | Field Types |
+|-|-|-|
+| `contains` | Field value contains the string | String |
+| `not_contains` | Field value does not contain the string | String |
+| `equals` | Field value exactly matches | String, Number |
+| `not_equals` | Field value does not match | String, Number |
+| `starts_with` | Field value starts with the string | String |
+| `not_starts_with` | Field value does not start with the string | String |
+| `ends_with` | Field value ends with the string | String |
+| `not_ends_with` | Field value does not end with the string | String |
+| `is_true` | Boolean property is true | Boolean |
+| `is_false` | Boolean property is false | Boolean |
+| `greater_than` | Numeric value is greater than | Number |
+| `greater_than_or_equal` | Numeric value is greater than or equal to | Number |
+| `less_than` | Numeric value is less than | Number |
+| `less_than_or_equal` | Numeric value is less than or equal to | Number |
+| `before` | Date is before the specified date | Date |
+| `after` | Date is after the specified date | Date |
+
+### Example Conditions
+
+- **Email ends with** `@company.com` — target all contacts from a specific domain
+- **Status equals** `subscribed` — only active contacts
+- **Custom property `order_count` greater than** `5` — high-value customers
+- **Custom property `signup_date` after** `2026-01-01` — recent signups
+
+## AI Segment Builder
+
+Instead of manually building conditions, you can describe your target audience in plain English. The AI segment builder converts your description into structured conditions automatically.
+
+For example, type:
+
+> "Subscribed contacts who signed up after January 2026 with more than 3 orders"
+
+The AI generates the corresponding conditions:
+- Status equals `subscribed`
+- `signup_date` after `2026-01-01`
+- `order_count` greater than `3`
+
+You can review and adjust the generated conditions before saving.
+
+<Tip>
+  The AI segment builder works best with clear, specific descriptions that reference your custom property names.
+</Tip>
+
+## Using Segments in Campaigns
+
+When creating a [campaign](/learn/audience/campaigns), you can select a segment as your target audience. The campaign is sent to all contacts that match the segment's conditions at the time of sending.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Contacts" icon="user" href="/learn/audience/contacts">
+    Manage individual contacts and properties
+  </Card>
+  <Card title="Campaigns" icon="paper-plane" href="/learn/audience/campaigns">
+    Send campaigns to your segments
+  </Card>
+</CardGroup>

@@ -40,7 +40,7 @@ curl -X POST https://app.lettr.com/api/emails \
 | `from` | string | Yes | Sender email address (must be from verified domain) |
 | `from_name` | string | No | Friendly sender name |
 | `to` | string[] | Yes | Recipient address(es), max 50 |
-| `subject` | string | Yes | Email subject line (max 998 chars) |
+| `subject` | string | Conditional | Email subject line (max 998 chars). Required unless `template_slug` is provided — when omitted with a template, the template's stored subject is used. |
 | `html` | string | No* | HTML content |
 | `text` | string | No* | Plain text content |
 | `amp_html` | string | No | AMP HTML content |
@@ -159,6 +159,10 @@ await lettr.emails.send({
   }
 });
 ```
+
+<Tip>
+  When using `template_slug`, the `subject` field is optional. If you omit it, Lettr uses the subject stored on the template. If you provide a `subject`, it overrides the template's subject — useful for A/B testing or dynamic subject lines.
+</Tip>
 
 See [Templates](/learn/templates/introduction) for creating and managing email templates with the visual editor.
 
