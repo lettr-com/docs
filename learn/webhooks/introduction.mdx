@@ -249,12 +249,11 @@ curl -X POST "https://app.lettr.com/api/webhooks" \
   -d '{
     "name": "Order Notifications",
     "url": "https://example.com/webhook",
-    "event_types": ["message.delivery", "message.bounce"],
+    "events_mode": "selected",
+    "events": ["message.delivery", "message.bounce"],
     "auth_type": "basic",
-    "auth_credentials": {
-      "username": "lettr",
-      "password": "your-secret"
-    }
+    "auth_username": "lettr",
+    "auth_password": "your-secret"
   }'
 
 # Update a webhook
@@ -263,8 +262,9 @@ curl -X PUT "https://app.lettr.com/api/webhooks/{webhookId}" \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Updated Notifications",
-    "url": "https://example.com/webhook-v2",
-    "event_types": ["message.delivery", "message.bounce", "engagament.click"]
+    "target": "https://example.com/webhook-v2",
+    "events": ["message.delivery", "message.bounce", "engagament.click"],
+    "active": true
   }'
 
 # Delete a webhook
