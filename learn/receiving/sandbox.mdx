@@ -1,0 +1,88 @@
+---
+title: Inbound Sandbox
+description: "Test inbound email processing with a dedicated sandbox inbox"
+---
+
+Each team gets a dedicated sandbox inbox for testing inbound email flows without configuring MX records or setting up a production inbound domain. Emails sent to your sandbox address are stored and viewable in the dashboard.
+
+<Note>
+  This page covers the **inbound sandbox** for testing email reception. For sandbox API keys (testing email sending without real delivery), see [Sandbox API Keys](/learn/api-keys/sandbox).
+</Note>
+
+## Your Sandbox Address
+
+Every team has a unique sandbox email address in the format:
+
+```
+{hash}@sandbox.lettr.com
+```
+
+The `{hash}` is a 12-character identifier unique to your team. Find your sandbox address on the **Sandbox** page in the dashboard.
+
+## How It Works
+
+<Steps>
+  <Step title="Send an Email">
+    Send any email to your sandbox address from any email client or service.
+  </Step>
+  <Step title="Lettr Receives It">
+    The email is received via an inbound relay and stored automatically — the content is saved in secure storage and metadata is indexed for quick retrieval.
+  </Step>
+  <Step title="View in Dashboard">
+    Navigate to the **Sandbox** page to see all received emails with sender, subject, and timestamp.
+  </Step>
+  <Step title="Inspect Details">
+    Click on any email to view the full content including HTML, plain text, headers, and attachments.
+  </Step>
+</Steps>
+
+## Viewing Sandbox Emails
+
+The **Sandbox** page in the dashboard lists all emails received at your sandbox address. For each email, you can see:
+
+- **From** — The sender's email address and name
+- **Subject** — The email subject line
+- **Received at** — When the email arrived
+- **Content** — Full HTML and plain text content, email headers
+
+## Retention
+
+Sandbox emails are automatically deleted after **60 days**. This applies to both the email content and metadata. If you need to keep records longer, download or copy the content before it expires.
+
+## Use Cases
+
+<CardGroup cols={2}>
+  <Card title="Inbound Email Development" icon="code">
+    Test your inbound email parsing logic during development without configuring DNS records.
+  </Card>
+  <Card title="Webhook Testing" icon="webhook">
+    Verify that inbound emails trigger your expected webhook events and payloads.
+  </Card>
+  <Card title="Reply Tracking" icon="reply">
+    Test reply-to flows by sending replies to the sandbox address and inspecting the result.
+  </Card>
+  <Card title="CI/CD Pipelines" icon="arrows-spin">
+    Use the sandbox address in automated tests to verify inbound email handling.
+  </Card>
+</CardGroup>
+
+## Limitations
+
+The inbound sandbox is designed for testing and development:
+
+- Emails expire after 60 days
+- Not suitable for production inbound email processing
+- No forwarding, routing, or webhook triggering from sandbox emails
+
+For production inbound email handling with routing rules, webhooks, and attachments, configure an [inbound domain](/learn/domains/inbound-domains) with proper MX records.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Inbound Domains" icon="globe" href="/learn/domains/inbound-domains">
+    Set up production inbound email processing
+  </Card>
+  <Card title="Receiving Email" icon="inbox" href="/learn/receiving/introduction">
+    Learn about inbound email handling
+  </Card>
+</CardGroup>

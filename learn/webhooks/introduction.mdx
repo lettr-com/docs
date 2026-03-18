@@ -39,7 +39,7 @@ Webhooks enable powerful real-time integrations:
 
 ## Managing Webhooks
 
-Webhooks are created and managed through the Lettr dashboard. The API provides read-only access to list and view your configured webhooks.
+Webhooks can be managed through the Lettr dashboard or the API. The API provides full CRUD access — you can create, list, update, and delete webhooks programmatically.
 
 ### Creating a Webhook
 
@@ -100,7 +100,7 @@ To permanently remove a webhook:
 </Warning>
 
 <Note>
-  You can create up to 5 webhooks per account. Webhook management (create, update, enable/disable, delete) is only available through the dashboard. The API provides read-only access for listing and viewing webhook configurations.
+  You can create up to 5 webhooks per account.
 </Note>
 
 ## Handling Webhooks
@@ -229,9 +229,9 @@ Events for inbound email processing:
 
 When creating a webhook in the dashboard, you choose which events to receive. You can subscribe to all events or select specific event types from the five categories listed above.
 
-## Viewing Webhooks via API
+## Managing Webhooks via API
 
-The API provides read-only access to your webhooks. You can list all webhooks and view details for a specific webhook:
+The API provides full CRUD access to your webhooks. You can list, create, update, and delete webhooks programmatically.
 
 ```bash
 # List all webhooks
@@ -241,9 +241,38 @@ curl -X GET "https://app.lettr.com/api/webhooks" \
 # Get a specific webhook
 curl -X GET "https://app.lettr.com/api/webhooks/{webhookId}" \
   -H "Authorization: Bearer lttr_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+# Create a webhook
+curl -X POST "https://app.lettr.com/api/webhooks" \
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Order Notifications",
+    "url": "https://example.com/webhook",
+    "event_types": ["message.delivery", "message.bounce"],
+    "auth_type": "basic",
+    "auth_credentials": {
+      "username": "lettr",
+      "password": "your-secret"
+    }
+  }'
+
+# Update a webhook
+curl -X PUT "https://app.lettr.com/api/webhooks/{webhookId}" \
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Updated Notifications",
+    "url": "https://example.com/webhook-v2",
+    "event_types": ["message.delivery", "message.bounce", "engagament.click"]
+  }'
+
+# Delete a webhook
+curl -X DELETE "https://app.lettr.com/api/webhooks/{webhookId}" \
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 ```
 
-The response includes the webhook configuration and its current status:
+The response for retrieving a webhook includes the configuration and its current status:
 
 ```json
 {
@@ -263,9 +292,9 @@ The response includes the webhook configuration and its current status:
 }
 ```
 
-<Note>
-  To create, update, enable/disable, or delete webhooks, use the Lettr dashboard. The API is read-only for webhook management.
-</Note>
+<Tip>
+  For complete request and response schemas, see the [Webhooks API Reference](/api-reference/webhooks/list-webhooks).
+</Tip>
 
 ## Best Practices
 

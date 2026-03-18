@@ -191,7 +191,8 @@
                   "learn/receiving/reply-tracking",
                   "learn/receiving/parsing",
                   "learn/receiving/security",
-                  "learn/receiving/best-practices"
+                  "learn/receiving/best-practices",
+                  "learn/receiving/sandbox"
                 ]
               },
               {
@@ -215,6 +216,15 @@
                   "learn/templates/saved-blocks",
                   "learn/templates/loop-blocks",
                   "learn/templates/image-storage"
+                ]
+              },
+              {
+                "group": "Audience",
+                "pages": [
+                  "learn/audience/introduction",
+                  "learn/audience/contacts",
+                  "learn/audience/segments",
+                  "learn/audience/campaigns"
                 ]
               },
               {
@@ -270,7 +280,8 @@
                   "learn/settings/teams",
                   "learn/settings/security",
                   "learn/settings/social-login",
-                  "learn/settings/billing"
+                  "learn/settings/billing",
+                  "learn/settings/alerts"
                 ]
               }
             ]
