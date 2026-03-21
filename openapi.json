@@ -1024,7 +1024,7 @@
       "get": {
         "operationId": "showScheduledEmail",
         "summary": "Get Scheduled Email",
-        "description": "Retrieve details of a scheduled email transmission by its transmission ID.",
+        "description": "Retrieve details of a scheduled email transmission by its transmission ID. If the transmission is still pending, returns the scheduled state. If the transmission has already been processed by SparkPost, automatically falls back to returning delivery events with the same response shape.",
         "tags": ["Emails"],
         "security": [
           {
@@ -1051,17 +1051,61 @@
                 "schema": {
                   "$ref": "#/components/schemas/ShowScheduledTransmissionResponse"
                 },
-                "example": {
-                  "message": "Scheduled transmission retrieved successfully.",
-                  "data": {
-                    "transmission_id": "12345678901234567890",
-                    "state": "submitted",
-                    "scheduled_at": "2024-01-16T10:00:00+00:00",
-                    "from": "sender@example.com",
-                    "from_name": "Sender Name",
-                    "subject": "Scheduled Newsletter",
-                    "recipients": ["recipient@example.com"],
-                    "num_recipients": 1
+
+                "examples": {
+                  "pending": {
+                    "summary": "Still scheduled (pending delivery)",
+                    "value": {
+                      "message": "Scheduled transmission retrieved successfully.",
+                      "data": {
+                        "transmission_id": "12345678901234567890",
+                        "state": "submitted",
+                        "scheduled_at": "2024-01-16T10:00:00+00:00",
+                        "from": "sender@example.com",
+                        "from_name": "Sender Name",
+                        "subject": "Scheduled Newsletter",
+                        "recipients": ["recipient@example.com"],
+                        "num_recipients": 1,
+                        "events": []
+                      }
+                    }
+                  },
+                  "delivered": {
+                    "summary": "Already processed (delivery events returned)",
+                    "value": {
+                      "message": "Scheduled transmission retrieved successfully.",
+                      "data": {
+                        "transmission_id": "12345678901234567890",
+                        "state": "delivered",
+                        "scheduled_at": null,
+                        "from": "sender@example.com",
+                        "from_name": null,
+                        "subject": "Scheduled Newsletter",
+                        "recipients": ["recipient@example.com"],
+                        "num_recipients": 1,
+                        "events": [
+                          {
+                            "event_id": "evt-delivery-1",
+                            "type": "delivery",
+                            "timestamp": "2024-01-16T10:00:02.000Z",
+                            "request_id": "12345678901234567890",
+                            "rcpt_to": "recipient@example.com",
+                            "subject": "Scheduled Newsletter",
+                            "friendly_from": "sender@example.com",
+                            "queue_time": 500
+                          },
+                          {
+                            "event_id": "evt-injection-1",
+                            "type": "injection",
+                            "timestamp": "2024-01-16T10:00:00.000Z",
+                            "request_id": "12345678901234567890",
+                            "rcpt_to": "recipient@example.com",
+                            "subject": "Scheduled Newsletter",
+                            "friendly_from": "sender@example.com"
+                          }
+                        ]
+                      }
+                    }
                   }
                 }
               }
@@ -3155,6 +3199,19 @@
               "campaign": "onboarding"
             }
           },
+          "headers": {
+            "type": "object",
+            "description": "Custom email headers. Up to 10 headers allowed. Standard envelope headers (From, To, Subject, etc.), SparkPost internal headers (X-MSYS-API), and List-Unsubscribe and List-Unsubscribe-Post headers are managed by the system and cannot be set manually.",
+            "maxProperties": 10,
+            "additionalProperties": {
+              "type": "string",
+              "maxLength": 998
+            },
+            "example": {
+              "X-Mailer": "MyApp/1.0",
+              "X-Custom-ID": "abc-123"
+            }
+          },
           "substitution_data": {
             "type": "object",
             "description": "Variables for template substitution in email content",
@@ -4427,7 +4484,7 @@
           },
           "data": {
             "type": "object",
-            "required": ["transmission_id", "state", "from", "subject", "recipients", "num_recipients"],
+            "required": ["transmission_id", "state", "from", "subject", "recipients", "num_recipients", "events"],
             "properties": {
               "transmission_id": {
                 "type": "string",
@@ -4436,13 +4493,14 @@
               },
               "state": {
                 "type": "string",
-                "description": "Current state of the transmission.",
+                "description": "Current state of the transmission. `submitted`/`generating` — still pending in SparkPost. `scheduled` — injected but not yet delivered (has `injection` event only). `delivered` — successfully delivered. `bounced` — rejected by recipient server. `failed` — generation or policy failure.",
+                "enum": ["submitted", "generating", "scheduled", "delivered", "bounced", "failed", "unknown"],
                 "example": "submitted"
               },
               "scheduled_at": {
                 "type": ["string", "null"],
                 "format": "date-time",
-                "description": "The scheduled delivery time in ISO 8601 format.",
+                "description": "The scheduled delivery time in ISO 8601 format. Present when the transmission is still pending. May be `null` when the transmission has already been delivered.",
                 "example": "2024-01-16T10:00:00+00:00"
               },
               "from": {
@@ -4474,6 +4532,13 @@
                 "type": "integer",
                 "description": "Total number of recipients.",
                 "example": 1
+              },
+              "events": {
+                "type": "array",
+                "description": "Delivery events for this transmission. Empty array when the email is still scheduled. Populated with delivery, bounce, open, click, and other events once the email has been processed.",
+                "items": {
+                  "$ref": "#/components/schemas/EmailEvent"
+                }
               }
             }
           }
@@ -4482,6 +4547,7 @@
       "GetEmailDetailResponse": {
         "type": "object",
         "required": ["message", "data"],
+        "description": "Email detail response. Uses the same data shape as the scheduled transmission detail — see `ShowScheduledTransmissionResponse` for field descriptions.",
         "properties": {
           "message": {
             "type": "string",
@@ -4489,34 +4555,60 @@
           },
           "data": {
             "type": "object",
-            "required": ["events"],
+            "required": ["transmission_id", "state", "from", "subject", "recipients", "num_recipients", "events"],
             "properties": {
+              "transmission_id": {
+                "type": "string",
+                "description": "The unique transmission ID (same as the `requestId` returned when the email was sent).",
+                "example": "12345678901234567890"
+              },
+              "state": {
+                "type": "string",
+                "description": "Derived delivery state based on events. `scheduled` — injected but not yet delivered. `delivered` — successfully delivered. `bounced` — rejected by recipient server. `failed` — generation or policy failure.",
+                "enum": ["scheduled", "delivered", "bounced", "failed"],
+                "example": "delivered"
+              },
+              "scheduled_at": {
+                "type": ["string", "null"],
+                "format": "date-time",
+                "description": "The scheduled delivery time, if the email was scheduled. Usually `null` for immediately-sent emails.",
+                "example": null
+              },
+              "from": {
+                "type": "string",
+                "format": "email",
+                "description": "Sender email address.",
+                "example": "sender@example.com"
+              },
+              "from_name": {
+                "type": ["string", "null"],
+                "description": "Sender display name.",
+                "example": null
+              },
+              "subject": {
+                "type": "string",
+                "description": "Email subject line.",
+                "example": "Welcome to Lettr"
+              },
+              "recipients": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "email"
+                },
+                "description": "Unique list of recipient email addresses derived from events.",
+                "example": ["recipient@example.com"]
+              },
+              "num_recipients": {
+                "type": "integer",
+                "description": "Total number of unique recipients.",
+                "example": 1
+              },
               "events": {
-                "type": "object",
-                "required": ["data", "total_count", "from", "to"],
-                "properties": {
-                  "data": {
-                    "type": "array",
-                    "description": "List of events for this email. Each event contains common fields plus type-specific fields.",
-                    "items": {
-                      "$ref": "#/components/schemas/EmailEvent"
-                    }
-                  },
-                  "total_count": {
-                    "type": "integer",
-                    "description": "Total number of events for this email",
-                    "example": 3
-                  },
-                  "from": {
-                    "type": "string",
-                    "description": "Start of the date range used for the query",
-                    "example": "2024-01-05T00:00:00+00:00"
-                  },
-                  "to": {
-                    "type": "string",
-                    "description": "End of the date range used for the query",
-                    "example": "2024-01-15T10:35:00+00:00"
-                  }
+                "type": "array",
+                "description": "Delivery events for this email (injection, delivery, bounce, open, click, etc.).",
+                "items": {
+                  "$ref": "#/components/schemas/EmailEvent"
                 }
               }
             }

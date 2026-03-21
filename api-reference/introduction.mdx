@@ -92,6 +92,55 @@ curl -X POST https://app.lettr.com/api/emails \
 | `daily_quota_exceeded` | 429 | Daily sending quota exceeded (free tier). Try again tomorrow. |
 | `transmission_failed` | 502 | Email transmission to the upstream provider failed. |
 
+## Send Email Reference
+
+### Subject
+
+The `subject` field is conditionally required:
+
+- **Required** when sending with `html` or `text` content directly.
+- **Optional** when `template_slug` is provided — if omitted, Lettr uses the template's stored subject. If the template has no subject set, the template name is used instead.
+- If provided alongside a `template_slug`, the `subject` **overrides** the template's subject. This is useful for A/B testing or dynamic subject lines.
+
+Maximum length: 998 characters.
+
+### Options
+
+The `options` object controls tracking and email classification:
+
+| Option | Type | Default | Description |
+|-|-|-|-|
+| `transactional` | boolean | `true` | Whether this is a transactional email. Set to `false` for marketing emails. |
+| `open_tracking` | boolean | `false` | Track email opens |
+| `click_tracking` | boolean | `false` | Track link clicks |
+
+<Note>
+  Since `transactional` defaults to `true`, you only need to explicitly set it when sending marketing emails (`transactional: false`).
+</Note>
+
+### Custom Headers
+
+The `headers` field lets you add custom email headers to your message. Pass an object where each key is the header name and each value is the header value.
+
+**Limits:**
+- Maximum **10** custom headers per email
+- Maximum **998** characters per header value
+
+```json
+{
+  "headers": {
+    "X-My-Header": "custom-value",
+    "X-Campaign-ID": "spring-2026"
+  }
+}
+```
+
+<Warning>
+  The following headers are **blocked** and cannot be set via the `headers` field — Lettr manages them automatically:
+
+  `From`, `To`, `Cc`, `Bcc`, `Reply-To`, `Subject`, `Date`, `Message-ID`, `MIME-Version`, `Content-Type`, `Content-Transfer-Encoding`, `DKIM-Signature`, `Return-Path`, `Received`, `List-Unsubscribe`, `List-Unsubscribe-Post`
+</Warning>
+
 ## API Endpoints
 
 <CardGroup cols={2}>
