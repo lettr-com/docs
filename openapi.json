@@ -145,7 +145,7 @@
               "examples": {
                 "minimal": {
                   "summary": "Minimal request (required fields only)",
-                  "description": "The absolute minimum required to send an email: from, to, subject, and either html or text content.",
+                  "description": "The absolute minimum required to send an email: from, to, subject, and either html or text content. Subject is required when not using a template.",
                   "value": {
                     "from": "sender@example.com",
                     "to": ["recipient@example.com"],
@@ -230,11 +230,10 @@
                 },
                 "with-template": {
                   "summary": "Email using a template",
-                  "description": "Send an email using a pre-defined template. The template's HTML content will be used.",
+                  "description": "Send an email using a pre-defined template. The template's HTML content and subject will be used. You can optionally override the subject.",
                   "value": {
                     "from": "hello@example.com",
                     "to": ["john@example.com"],
-                    "subject": "Welcome!",
                     "template_slug": "welcome-email",
                     "substitution_data": {
                       "first_name": "John"
@@ -243,11 +242,10 @@
                 },
                 "with-template-and-project": {
                   "summary": "Email using a template from a specific project",
-                  "description": "Send an email using a template from a specific project with a specific version.",
+                  "description": "Send an email using a template from a specific project with a specific version. Subject is taken from the template unless explicitly provided.",
                   "value": {
                     "from": "hello@example.com",
                     "to": ["john@example.com"],
-                    "subject": "Welcome!",
                     "project_id": 123,
                     "template_slug": "welcome-email",
                     "template_version": 2,
@@ -3084,8 +3082,8 @@
     "schemas": {
       "SendEmailRequest": {
         "type": "object",
-        "description": "Email sending request. **Required:** `from`, `subject`, `to`, and at least one of `html`, `text`, or `template_slug`. When using `template_slug`, if `project_id` is not provided, the team's default project will be used.",
-        "required": ["from", "subject", "to"],
+        "description": "Email sending request. **Required:** `from`, `to`, and at least one of `html`, `text`, or `template_slug`. The `subject` is required unless `template_slug` is provided — when using a template, the subject defaults to the template's subject (or template name as fallback), but can be overridden. When using `template_slug`, if `project_id` is not provided, the team's default project will be used.",
+        "required": ["from", "to"],
         "properties": {
           "from": {
             "type": "string",
@@ -3101,9 +3099,9 @@
             "example": "Sender Name"
           },
           "subject": {
-            "type": "string",
+            "type": ["string", "null"],
             "maxLength": 998,
-            "description": "Email subject line",
+            "description": "Email subject line. Required when not using a template. When using `template_slug`, defaults to the template's subject (or template name as fallback). If provided alongside a template, overrides the template subject.",
             "example": "Welcome to Lettr"
           },
           "to": {
