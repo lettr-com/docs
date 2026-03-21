@@ -52,6 +52,7 @@ curl -X POST https://app.lettr.com/api/emails \
 | `options` | object | No | Tracking and sending options |
 | `tag` | string | No | Tag for analytics grouping (max 64 chars) |
 | `metadata` | object | No | Custom metadata (available in webhooks) |
+| `headers` | object | No | Custom email headers (max 10, max 998 chars per value). See [Custom Headers](/api-reference/introduction#custom-headers). |
 | `substitution_data` | object | No | Variables for template substitution |
 | `template_slug` | string | No | Template slug to use for email content |
 | `template_version` | integer | No | Specific template version to use |
@@ -114,6 +115,30 @@ await lettr.emails.send({
 <Note>
   Transactional emails typically have higher deliverability. Separating transactional and marketing email on different sending domains or subdomains is a common practice to protect your transactional sender reputation. See [Best Practices](/learn/sending/best-practices) for domain warm-up and reputation guidance.
 </Note>
+
+### Unsubscribe Handling
+
+When you send a marketing email (`transactional: false`), Lettr automatically adds the `List-Unsubscribe` and `List-Unsubscribe-Post` headers. This enables one-click unsubscribe in email clients that support it (Gmail, Apple Mail, Outlook, etc.), which is required by major mailbox providers.
+
+For an **HTML unsubscribe link** in the email body, add the `data-msys-unsubscribe="1"` attribute to your link. The URL should point to a simple "Sorry to see you go" page — Lettr handles the unsubscribe automatically:
+
+```html
+<a href="https://example.com/unsubscribe" data-msys-unsubscribe="1">
+  Unsubscribe from these emails
+</a>
+```
+
+For **plain text emails**, use the following format:
+
+```
+http://www.yourdomain.com[[data-msys-unsubscribe="1"]]
+```
+
+The unsubscribe URL should point to a simple "Sorry to see you go" confirmation page — it does **not** need to handle the actual unsubscription logic. Lettr processes the unsubscribe automatically and fires a `list_unsubscribe` or `link_unsubscribe` [webhook event](/learn/webhooks/introduction), which you should use to update subscription state in your application.
+
+<Tip>
+  You do not need to handle unsubscribe for transactional emails (`transactional: true`, the default). Unsubscribe headers and tracking only apply to marketing emails.
+</Tip>
 
 ## Common Sending Patterns
 
