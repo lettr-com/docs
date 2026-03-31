@@ -21,7 +21,9 @@
         "operationId": "healthCheck",
         "summary": "Health Check",
         "description": "Check the health status of the API. This endpoint does not require authentication.",
-        "tags": ["System"],
+        "tags": [
+          "System"
+        ],
         "security": [],
         "responses": {
           "200": {
@@ -30,7 +32,10 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": ["message", "data"],
+                  "required": [
+                    "message",
+                    "data"
+                  ],
                   "properties": {
                     "message": {
                       "type": "string",
@@ -38,7 +43,10 @@
                     },
                     "data": {
                       "type": "object",
-                      "required": ["status", "timestamp"],
+                      "required": [
+                        "status",
+                        "timestamp"
+                      ],
                       "properties": {
                         "status": {
                           "type": "string",
@@ -71,7 +79,9 @@
         "operationId": "authCheck",
         "summary": "Validate API Key",
         "description": "Validate the provided API key and return associated team information. Use this endpoint to verify API key validity in client libraries.",
-        "tags": ["System"],
+        "tags": [
+          "System"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -84,7 +94,10 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": ["message", "data"],
+                  "required": [
+                    "message",
+                    "data"
+                  ],
                   "properties": {
                     "message": {
                       "type": "string",
@@ -92,7 +105,10 @@
                     },
                     "data": {
                       "type": "object",
-                      "required": ["team_id", "timestamp"],
+                      "required": [
+                        "team_id",
+                        "timestamp"
+                      ],
                       "properties": {
                         "team_id": {
                           "type": "integer",
@@ -129,7 +145,9 @@
         "operationId": "sendEmail",
         "summary": "Send Email",
         "description": "Send a transactional email with optional attachments, tracking, and personalization. At least one of `html` or `text` content must be provided.",
-        "tags": ["Emails"],
+        "tags": [
+          "Emails"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -148,7 +166,9 @@
                   "description": "The absolute minimum required to send an email: from, to, subject, and either html or text content. Subject is required when not using a template.",
                   "value": {
                     "from": "sender@example.com",
-                    "to": ["recipient@example.com"],
+                    "to": [
+                      "recipient@example.com"
+                    ],
                     "subject": "Hello",
                     "html": "<p>Hello!</p>"
                   }
@@ -159,7 +179,9 @@
                   "value": {
                     "from": "sender@example.com",
                     "from_name": "Sender Name",
-                    "to": ["recipient@example.com"],
+                    "to": [
+                      "recipient@example.com"
+                    ],
                     "subject": "Welcome to Lettr",
                     "html": "<h1>Hello</h1><p>Welcome to our service!</p>",
                     "text": "Hello\n\nWelcome to our service!",
@@ -174,7 +196,9 @@
                   "description": "Send HTML content only. Some email clients may not render properly without a text fallback.",
                   "value": {
                     "from": "sender@example.com",
-                    "to": ["recipient@example.com"],
+                    "to": [
+                      "recipient@example.com"
+                    ],
                     "subject": "Welcome to Lettr",
                     "html": "<h1>Hello</h1><p>Welcome to our service!</p>"
                   }
@@ -184,7 +208,9 @@
                   "description": "Send plain text content only. Ideal for simple notifications.",
                   "value": {
                     "from": "sender@example.com",
-                    "to": ["recipient@example.com"],
+                    "to": [
+                      "recipient@example.com"
+                    ],
                     "subject": "Order Confirmation",
                     "text": "Your order #12345 has been confirmed.\n\nThank you for your purchase!"
                   }
@@ -195,7 +221,9 @@
                   "value": {
                     "from": "billing@example.com",
                     "from_name": "Billing Department",
-                    "to": ["customer@example.com"],
+                    "to": [
+                      "customer@example.com"
+                    ],
                     "subject": "Your Invoice",
                     "html": "<p>Please find your invoice attached.</p>",
                     "text": "Please find your invoice attached.",
@@ -214,7 +242,9 @@
                   "value": {
                     "from": "hello@example.com",
                     "from_name": "Acme Inc",
-                    "to": ["john@example.com"],
+                    "to": [
+                      "john@example.com"
+                    ],
                     "subject": "Welcome, {{first_name}}!",
                     "html": "<h1>Hello {{first_name}}</h1><p>Welcome to {{company}}!</p>",
                     "text": "Hello {{first_name}},\n\nWelcome to {{company}}!",
@@ -233,7 +263,9 @@
                   "description": "Send an email using a pre-defined template. The template's HTML content and subject will be used. You can optionally override the subject.",
                   "value": {
                     "from": "hello@example.com",
-                    "to": ["john@example.com"],
+                    "to": [
+                      "john@example.com"
+                    ],
                     "template_slug": "welcome-email",
                     "substitution_data": {
                       "first_name": "John"
@@ -245,7 +277,9 @@
                   "description": "Send an email using a template from a specific project with a specific version. Subject is taken from the template unless explicitly provided.",
                   "value": {
                     "from": "hello@example.com",
-                    "to": ["john@example.com"],
+                    "to": [
+                      "john@example.com"
+                    ],
                     "project_id": 123,
                     "template_slug": "welcome-email",
                     "template_version": 2,
@@ -394,8 +428,12 @@
                   "message": "Validation failed.",
                   "error_code": "validation_error",
                   "errors": {
-                    "from": ["The sender email address is required."],
-                    "to": ["At least one recipient email address is required."]
+                    "from": [
+                      "The sender email address is required."
+                    ],
+                    "to": [
+                      "At least one recipient email address is required."
+                    ]
                   }
                 }
               }
@@ -500,6 +538,174 @@
             }
           }
         }
+      },
+      "get": {
+        "operationId": "listEmails",
+        "summary": "List Sent Emails",
+        "description": "Retrieve a paginated list of sent emails. Supports filtering by recipient email and date range. Uses cursor-based pagination.",
+        "tags": [
+          "Emails"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "per_page",
+            "in": "query",
+            "description": "Number of results per page (1-100). Defaults to 25.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "description": "Cursor for pagination. Use the `next_cursor` value from the previous response.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "recipients",
+            "in": "query",
+            "description": "Filter by recipient email address.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "email"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "description": "Filter emails sent after this date (ISO 8601). Defaults to 10 days ago.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "description": "Filter emails sent before this date (ISO 8601).",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Emails retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListEmailsResponse"
+                },
+                "example": {
+                  "success": true,
+                  "message": "Emails retrieved successfully.",
+                  "data": {
+                    "events": {
+                      "data": [
+                        {
+                          "event_id": "abc123",
+                          "type": "injection",
+                          "timestamp": "2024-01-15T10:30:00Z",
+                          "request_id": "12345678901234567890",
+                          "message_id": "msg-abc123",
+                          "subject": "Welcome Email",
+                          "friendly_from": "sender@example.com",
+                          "sending_domain": "example.com",
+                          "rcpt_to": "recipient@example.com",
+                          "click_tracking": true,
+                          "open_tracking": true,
+                          "transactional": true
+                        }
+                      ],
+                      "total_count": 1,
+                      "from": "2024-01-05T00:00:00Z",
+                      "to": "2024-01-15T23:59:59Z",
+                      "pagination": {
+                        "next_cursor": null,
+                        "per_page": 25
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Retrieval error (e.g., sandbox key without associated user)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "message": "Sandbox API key does not have an associated user with an email address.",
+                  "error_code": "retrieval_error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "message": "Validation failed.",
+                  "errors": {
+                    "per_page": [
+                      "The per_page parameter must be an integer."
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "message": "Failed to retrieve emails. Please try again later.",
+                  "error_code": "retrieval_error"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/emails/events": {
@@ -507,7 +713,9 @@
         "operationId": "listEmailEvents",
         "summary": "List Email Events",
         "description": "Retrieve email events (deliveries, bounces, opens, clicks, etc.) for your account. Events are returned in reverse chronological order. If no `from` date is provided, defaults to the last 10 days.",
-        "tags": ["Emails"],
+        "tags": [
+          "Emails"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -523,7 +731,25 @@
               "type": "array",
               "items": {
                 "type": "string",
-                "enum": ["injection", "delivery", "bounce", "delay", "out_of_band", "spam_complaint", "policy_rejection", "click", "open", "initial_open", "amp_click", "amp_open", "amp_initial_open", "generation_failure", "generation_rejection", "list_unsubscribe", "link_unsubscribe"]
+                "enum": [
+                  "injection",
+                  "delivery",
+                  "bounce",
+                  "delay",
+                  "out_of_band",
+                  "spam_complaint",
+                  "policy_rejection",
+                  "click",
+                  "open",
+                  "initial_open",
+                  "amp_click",
+                  "amp_open",
+                  "amp_initial_open",
+                  "generation_failure",
+                  "generation_rejection",
+                  "list_unsubscribe",
+                  "link_unsubscribe"
+                ]
               }
             },
             "style": "form",
@@ -531,11 +757,17 @@
             "examples": {
               "single": {
                 "summary": "Single event type",
-                "value": ["delivery"]
+                "value": [
+                  "delivery"
+                ]
               },
               "multiple": {
                 "summary": "Multiple event types",
-                "value": ["delivery", "bounce", "open"]
+                "value": [
+                  "delivery",
+                  "bounce",
+                  "open"
+                ]
               }
             }
           },
@@ -556,11 +788,16 @@
             "examples": {
               "single": {
                 "summary": "Single recipient",
-                "value": ["recipient@example.com"]
+                "value": [
+                  "recipient@example.com"
+                ]
               },
               "multiple": {
                 "summary": "Multiple recipients",
-                "value": ["recipient@example.com", "other@example.com"]
+                "value": [
+                  "recipient@example.com",
+                  "other@example.com"
+                ]
               }
             }
           },
@@ -691,7 +928,9 @@
                   "message": "Validation failed.",
                   "error_code": "validation_error",
                   "errors": {
-                    "per_page": ["The per_page parameter must be an integer."]
+                    "per_page": [
+                      "The per_page parameter must be an integer."
+                    ]
                   }
                 }
               }
@@ -708,7 +947,9 @@
         "operationId": "getEmailDetail",
         "summary": "Get Email Detail",
         "description": "Retrieve all events for a specific sent email by its request ID. Returns delivery, bounce, open, click, and other events in reverse chronological order. If no `from` date is provided, defaults to the last 10 days.",
-        "tags": ["Emails"],
+        "tags": [
+          "Emails"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -827,7 +1068,9 @@
                   "message": "Validation failed.",
                   "error_code": "validation_error",
                   "errors": {
-                    "from": ["The from parameter must be a valid date."]
+                    "from": [
+                      "The from parameter must be a valid date."
+                    ]
                   }
                 }
               }
@@ -844,7 +1087,9 @@
         "operationId": "scheduleEmail",
         "summary": "Schedule Email",
         "description": "Schedule a transactional email for future delivery. Accepts the same payload as `POST /emails` with an additional required `scheduled_at` field. The email must be scheduled at least 5 minutes in the future and within 3 days.",
-        "tags": ["Emails"],
+        "tags": [
+          "Emails"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -860,7 +1105,9 @@
               "example": {
                 "from": "sender@example.com",
                 "from_name": "Sender Name",
-                "to": ["recipient@example.com"],
+                "to": [
+                  "recipient@example.com"
+                ],
                 "subject": "Scheduled Newsletter",
                 "html": "<h1>Hello</h1><p>This email was scheduled!</p>",
                 "scheduled_at": "2024-01-16T10:00:00Z",
@@ -978,7 +1225,9 @@
                   "message": "Validation failed.",
                   "error_code": "validation_error",
                   "errors": {
-                    "scheduled_at": ["The scheduled delivery time is required."]
+                    "scheduled_at": [
+                      "The scheduled delivery time is required."
+                    ]
                   }
                 }
               }
@@ -1023,7 +1272,9 @@
         "operationId": "showScheduledEmail",
         "summary": "Get Scheduled Email",
         "description": "Retrieve details of a scheduled email transmission by its transmission ID. If the transmission is still pending, returns the scheduled state. If the transmission has already been processed by SparkPost, automatically falls back to returning delivery events with the same response shape.",
-        "tags": ["Emails"],
+        "tags": [
+          "Emails"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -1049,7 +1300,6 @@
                 "schema": {
                   "$ref": "#/components/schemas/ShowScheduledTransmissionResponse"
                 },
-
                 "examples": {
                   "pending": {
                     "summary": "Still scheduled (pending delivery)",
@@ -1062,7 +1312,9 @@
                         "from": "sender@example.com",
                         "from_name": "Sender Name",
                         "subject": "Scheduled Newsletter",
-                        "recipients": ["recipient@example.com"],
+                        "recipients": [
+                          "recipient@example.com"
+                        ],
                         "num_recipients": 1,
                         "events": []
                       }
@@ -1079,7 +1331,9 @@
                         "from": "sender@example.com",
                         "from_name": null,
                         "subject": "Scheduled Newsletter",
-                        "recipients": ["recipient@example.com"],
+                        "recipients": [
+                          "recipient@example.com"
+                        ],
                         "num_recipients": 1,
                         "events": [
                           {
@@ -1138,7 +1392,9 @@
         "operationId": "cancelScheduledEmail",
         "summary": "Cancel Scheduled Email",
         "description": "Cancel a scheduled email transmission before it is sent. Once the scheduled delivery time has passed, the transmission can no longer be cancelled.",
-        "tags": ["Emails"],
+        "tags": [
+          "Emails"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -1198,7 +1454,9 @@
         "operationId": "listDomains",
         "summary": "List Domains",
         "description": "Retrieve all sending domains registered with your account. Returns domains with their current status, verification state, and timestamps.",
-        "tags": ["Domains"],
+        "tags": [
+          "Domains"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -1265,7 +1523,9 @@
         "operationId": "createDomain",
         "summary": "Create Domain",
         "description": "Register a new sending domain with your account. The domain will be created with SparkPost and stored as approved by default, unless global domain reputation marks it for review or blacklist.",
-        "tags": ["Domains"],
+        "tags": [
+          "Domains"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -1336,7 +1596,9 @@
                   "message": "Validation failed.",
                   "error_code": "validation_error",
                   "errors": {
-                    "domain": ["The domain must be a valid domain name (e.g., example.com)."]
+                    "domain": [
+                      "The domain must be a valid domain name (e.g., example.com)."
+                    ]
                   }
                 }
               }
@@ -1364,7 +1626,9 @@
         "operationId": "showDomain",
         "summary": "Get Domain",
         "description": "Retrieve details of a single sending domain including DNS records and tracking domain configuration.",
-        "tags": ["Domains"],
+        "tags": [
+          "Domains"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -1450,7 +1714,9 @@
         "operationId": "deleteDomain",
         "summary": "Delete Domain",
         "description": "Delete a sending domain. This removes the domain from both SparkPost and the Lettr system. The domain will no longer be available for sending emails.",
-        "tags": ["Domains"],
+        "tags": [
+          "Domains"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -1500,7 +1766,9 @@
                   "message": "Validation failed.",
                   "error_code": "validation_error",
                   "errors": {
-                    "domain": ["The domain must be a valid domain name (e.g., example.com)."]
+                    "domain": [
+                      "The domain must be a valid domain name (e.g., example.com)."
+                    ]
                   }
                 }
               }
@@ -1528,7 +1796,9 @@
         "operationId": "listWebhooks",
         "summary": "List Webhooks",
         "description": "Retrieve all webhooks configured for your account. Returns webhooks with their current status, event types, and delivery information.",
-        "tags": ["Webhooks"],
+        "tags": [
+          "Webhooks"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -1551,7 +1821,10 @@
                         "name": "Order Notifications",
                         "url": "https://example.com/webhook",
                         "enabled": true,
-                        "event_types": ["message.delivery", "message.bounce"],
+                        "event_types": [
+                          "message.delivery",
+                          "message.bounce"
+                        ],
                         "auth_type": "basic",
                         "has_auth_credentials": true,
                         "last_successful_at": "2024-01-15T10:30:00+00:00",
@@ -1599,7 +1872,9 @@
         "operationId": "storeWebhook",
         "summary": "Create Webhook",
         "description": "Create a new webhook to receive event notifications at the specified URL.",
-        "tags": ["Webhooks"],
+        "tags": [
+          "Webhooks"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -1619,7 +1894,10 @@
                 "auth_username": "user",
                 "auth_password": "secret",
                 "events_mode": "selected",
-                "events": ["delivery", "bounce"]
+                "events": [
+                  "delivery",
+                  "bounce"
+                ]
               }
             }
           }
@@ -1639,7 +1917,10 @@
                     "name": "Order Notifications",
                     "url": "https://example.com/webhook",
                     "enabled": true,
-                    "event_types": ["message.delivery", "message.bounce"],
+                    "event_types": [
+                      "message.delivery",
+                      "message.bounce"
+                    ],
                     "auth_type": "basic",
                     "has_auth_credentials": true,
                     "last_successful_at": null,
@@ -1706,7 +1987,9 @@
         "operationId": "showWebhook",
         "summary": "Get Webhook",
         "description": "Retrieve details of a single webhook including its status, event types, and delivery information.",
-        "tags": ["Webhooks"],
+        "tags": [
+          "Webhooks"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -1739,7 +2022,10 @@
                     "name": "Order Notifications",
                     "url": "https://example.com/webhook",
                     "enabled": true,
-                    "event_types": ["message.delivery", "message.bounce"],
+                    "event_types": [
+                      "message.delivery",
+                      "message.bounce"
+                    ],
                     "auth_type": "basic",
                     "has_auth_credentials": true,
                     "last_successful_at": "2024-01-15T10:30:00+00:00",
@@ -1787,7 +2073,9 @@
         "operationId": "updateWebhook",
         "summary": "Update Webhook",
         "description": "Update an existing webhook. Only the fields provided will be updated (partial update). You can change the name, target URL, authentication, events, or active status.",
-        "tags": ["Webhooks"],
+        "tags": [
+          "Webhooks"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -1834,7 +2122,10 @@
                     "name": "Updated Webhook Name",
                     "url": "https://example.com/webhook",
                     "enabled": false,
-                    "event_types": ["message.delivery", "message.bounce"],
+                    "event_types": [
+                      "message.delivery",
+                      "message.bounce"
+                    ],
                     "auth_type": "basic",
                     "has_auth_credentials": true,
                     "last_successful_at": "2024-01-15T10:30:00+00:00",
@@ -1899,7 +2190,9 @@
         "operationId": "deleteWebhook",
         "summary": "Delete Webhook",
         "description": "Delete a webhook. This removes the webhook from SparkPost and it will no longer receive event notifications.",
-        "tags": ["Webhooks"],
+        "tags": [
+          "Webhooks"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -1964,7 +2257,9 @@
                   "message": "Validation failed.",
                   "error_code": "validation_error",
                   "errors": {
-                    "webhookId": ["The webhook ID is required."]
+                    "webhookId": [
+                      "The webhook ID is required."
+                    ]
                   }
                 }
               }
@@ -1992,7 +2287,9 @@
         "operationId": "listTemplates",
         "summary": "List Templates",
         "description": "Retrieve a paginated list of email templates for a project. If `project_id` is not provided, templates from the team's default project will be returned.",
-        "tags": ["Templates"],
+        "tags": [
+          "Templates"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -2103,7 +2400,9 @@
                   "message": "Validation failed.",
                   "error_code": "validation_error",
                   "errors": {
-                    "project_id": ["The project_id parameter must be an integer."]
+                    "project_id": [
+                      "The project_id parameter must be an integer."
+                    ]
                   }
                 }
               }
@@ -2129,7 +2428,9 @@
         "operationId": "createTemplate",
         "summary": "Create Template",
         "description": "Create a new email template with HTML or Topol editor JSON content. Automatically creates and publishes a template version with extracted merge tags.",
-        "tags": ["Templates"],
+        "tags": [
+          "Templates"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -2256,7 +2557,9 @@
                       "message": "Validation failed.",
                       "error_code": "validation_error",
                       "errors": {
-                        "name": ["The name field is required."]
+                        "name": [
+                          "The name field is required."
+                        ]
                       }
                     }
                   },
@@ -2266,7 +2569,9 @@
                       "message": "Validation failed.",
                       "error_code": "validation_error",
                       "errors": {
-                        "html": ["Either html or json content is required."]
+                        "html": [
+                          "Either html or json content is required."
+                        ]
                       }
                     }
                   },
@@ -2276,7 +2581,9 @@
                       "message": "Validation failed.",
                       "error_code": "validation_error",
                       "errors": {
-                        "json": ["The json and html fields are mutually exclusive. Provide only one."]
+                        "json": [
+                          "The json and html fields are mutually exclusive. Provide only one."
+                        ]
                       }
                     }
                   },
@@ -2286,7 +2593,9 @@
                       "message": "Validation failed.",
                       "error_code": "validation_error",
                       "errors": {
-                        "json": ["The provided JSON is not valid."]
+                        "json": [
+                          "The provided JSON is not valid."
+                        ]
                       }
                     }
                   }
@@ -2316,7 +2625,9 @@
         "operationId": "getTemplate",
         "summary": "Get Template",
         "description": "Retrieve a single email template by its slug. If `project_id` is not provided, the template will be looked up in the team's default project.",
-        "tags": ["Templates"],
+        "tags": [
+          "Templates"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -2415,7 +2726,9 @@
                   "message": "Validation failed.",
                   "error_code": "validation_error",
                   "errors": {
-                    "project_id": ["The project_id parameter must be an integer."]
+                    "project_id": [
+                      "The project_id parameter must be an integer."
+                    ]
                   }
                 }
               }
@@ -2441,7 +2754,9 @@
         "operationId": "deleteTemplate",
         "summary": "Delete Template",
         "description": "Permanently delete an email template and all its versions. If `project_id` is not provided, the template will be looked up in the team's default project.",
-        "tags": ["Templates"],
+        "tags": [
+          "Templates"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -2529,7 +2844,9 @@
                   "message": "Validation failed.",
                   "error_code": "validation_error",
                   "errors": {
-                    "project_id": ["The project_id parameter must be an integer."]
+                    "project_id": [
+                      "The project_id parameter must be an integer."
+                    ]
                   }
                 }
               }
@@ -2555,7 +2872,9 @@
         "operationId": "updateTemplate",
         "summary": "Update Template",
         "description": "Update an existing email template's name and/or content. If content (html or json) is provided, a new active version will be created with extracted merge tags. If `project_id` is not provided, the template will be looked up in the team's default project.",
-        "tags": ["Templates"],
+        "tags": [
+          "Templates"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -2697,7 +3016,9 @@
                       "message": "Validation failed.",
                       "error_code": "validation_error",
                       "errors": {
-                        "json": ["The json field prohibits html from being present."]
+                        "json": [
+                          "The json field prohibits html from being present."
+                        ]
                       }
                     }
                   },
@@ -2707,7 +3028,9 @@
                       "message": "Validation failed.",
                       "error_code": "validation_error",
                       "errors": {
-                        "json": ["The provided JSON is not valid."]
+                        "json": [
+                          "The provided JSON is not valid."
+                        ]
                       }
                     }
                   },
@@ -2717,7 +3040,9 @@
                       "message": "Validation failed.",
                       "error_code": "validation_error",
                       "errors": {
-                        "name": ["The name must not be greater than 255 characters."]
+                        "name": [
+                          "The name must not be greater than 255 characters."
+                        ]
                       }
                     }
                   }
@@ -2747,7 +3072,9 @@
         "operationId": "getTemplateMergeTags",
         "summary": "Get Template Merge Tags",
         "description": "Retrieve the merge tags (variables) for a template version. By default, returns merge tags for the active version. Use the `version` parameter to get merge tags for a specific version.",
-        "tags": ["Templates"],
+        "tags": [
+          "Templates"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -2876,7 +3203,9 @@
                   "message": "Validation failed.",
                   "error_code": "validation_error",
                   "errors": {
-                    "version": ["The version parameter must be an integer."]
+                    "version": [
+                      "The version parameter must be an integer."
+                    ]
                   }
                 }
               }
@@ -2904,7 +3233,9 @@
         "operationId": "verifyDomain",
         "summary": "Verify Domain",
         "description": "Verify a domain's DNS records (DKIM and CNAME) with SparkPost. This triggers a verification check and returns the current status of DNS records.",
-        "tags": ["Domains"],
+        "tags": [
+          "Domains"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -2993,7 +3324,9 @@
                   "message": "Validation failed.",
                   "error_code": "validation_error",
                   "errors": {
-                    "domain": ["The domain must be a valid domain name (e.g., example.com)."]
+                    "domain": [
+                      "The domain must be a valid domain name (e.g., example.com)."
+                    ]
                   }
                 }
               }
@@ -3009,6 +3342,215 @@
                 "example": {
                   "message": "Failed to verify domain. Please try again later.",
                   "error_code": "send_error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/templates/html": {
+      "get": {
+        "operationId": "getTemplateHtml",
+        "summary": "Get Template HTML",
+        "description": "Retrieve the HTML content and merge tags for a template's active version. Requires `project_id` and template `slug` as query parameters.",
+        "tags": [
+          "Templates"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "query",
+            "description": "The project ID the template belongs to.",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "slug",
+            "in": "query",
+            "description": "The template slug identifier.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 255
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Template HTML retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetTemplateHtmlResponse"
+                },
+                "example": {
+                  "success": true,
+                  "data": {
+                    "html": "<h1>Hello {{name}}</h1><p>Welcome!</p>",
+                    "merge_tags": [
+                      {
+                        "key": "name",
+                        "name": "name",
+                        "required": true
+                      },
+                      {
+                        "key": "company",
+                        "name": "company",
+                        "required": false
+                      }
+                    ],
+                    "subject": "Welcome Email"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Template not found or project does not belong to team",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "message"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "success": false,
+                  "message": "Template not found."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/projects": {
+      "get": {
+        "operationId": "listProjects",
+        "summary": "List Projects",
+        "description": "Retrieve a paginated list of projects for the authenticated team.",
+        "tags": [
+          "Projects"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "per_page",
+            "in": "query",
+            "description": "Number of results per page (1-100). Defaults to 25.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number. Defaults to 1.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Projects retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListProjectsResponse"
+                },
+                "example": {
+                  "success": true,
+                  "message": "Projects retrieved successfully.",
+                  "data": {
+                    "projects": [
+                      {
+                        "id": 1,
+                        "name": "Default Project",
+                        "emoji": null,
+                        "team_id": 123,
+                        "created_at": "2024-01-15T10:30:00+00:00",
+                        "updated_at": "2024-01-15T10:30:00+00:00"
+                      }
+                    ],
+                    "pagination": {
+                      "total": 1,
+                      "per_page": 25,
+                      "current_page": 1,
+                      "last_page": 1
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "message": "Validation failed.",
+                  "errors": {
+                    "per_page": [
+                      "The per_page parameter must not exceed 100."
+                    ]
+                  }
                 }
               }
             }
@@ -3083,7 +3625,10 @@
       "SendEmailRequest": {
         "type": "object",
         "description": "Email sending request. **Required:** `from`, `to`, and at least one of `html`, `text`, or `template_slug`. The `subject` is required unless `template_slug` is provided — when using a template, the subject defaults to the template's subject (or template name as fallback), but can be overridden. When using `template_slug`, if `project_id` is not provided, the team's default project will be used.",
-        "required": ["from", "to"],
+        "required": [
+          "from",
+          "to"
+        ],
         "properties": {
           "from": {
             "type": "string",
@@ -3093,13 +3638,19 @@
             "example": "sender@example.com"
           },
           "from_name": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "maxLength": 255,
             "description": "Sender display name",
             "example": "Sender Name"
           },
           "subject": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "maxLength": 998,
             "description": "Email subject line. Required when not using a template. When using `template_slug`, defaults to the template's subject (or template name as fallback). If provided alongside a template, overrides the template subject.",
             "example": "Welcome to Lettr"
@@ -3114,7 +3665,9 @@
               "format": "email",
               "maxLength": 255
             },
-            "example": ["recipient@example.com"]
+            "example": [
+              "recipient@example.com"
+            ]
           },
           "cc": {
             "type": "array",
@@ -3124,7 +3677,9 @@
               "format": "email",
               "maxLength": 255
             },
-            "example": ["cc@example.com"]
+            "example": [
+              "cc@example.com"
+            ]
           },
           "bcc": {
             "type": "array",
@@ -3134,48 +3689,74 @@
               "format": "email",
               "maxLength": 255
             },
-            "example": ["bcc@example.com"]
+            "example": [
+              "bcc@example.com"
+            ]
           },
           "reply_to": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "email",
             "maxLength": 255,
             "description": "Reply-To email address",
             "example": "reply@example.com"
           },
           "reply_to_name": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "maxLength": 255,
             "description": "Reply-To display name",
             "example": "Reply Name"
           },
           "html": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "HTML content of the email. At least one of `html` or `text` is required, but providing both is recommended for best compatibility across email clients.",
             "example": "<h1>Hello</h1><p>Welcome!</p>"
           },
           "text": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "Plain text content of the email. At least one of `html` or `text` is required, but providing both is recommended for best compatibility across email clients.",
             "example": "Hello\n\nWelcome!"
           },
           "amp_html": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "AMP HTML content for supported email clients"
           },
           "project_id": {
-            "type": ["integer", "null"],
+            "type": [
+              "integer",
+              "null"
+            ],
             "description": "Project ID containing the template. If not provided when using template_slug, the team's default project will be used.",
             "example": 123
           },
           "template_slug": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "maxLength": 255,
             "description": "Template slug to use for email content. When provided, the template's HTML will be used instead of the html field.",
             "example": "welcome-email"
           },
           "template_version": {
-            "type": ["integer", "null"],
+            "type": [
+              "integer",
+              "null"
+            ],
             "minimum": 1,
             "description": "Specific template version to use. If not provided, the active version will be used.",
             "example": 1
@@ -3259,7 +3840,11 @@
       "Attachment": {
         "type": "object",
         "description": "Email attachment",
-        "required": ["name", "type", "data"],
+        "required": [
+          "name",
+          "type",
+          "data"
+        ],
         "properties": {
           "name": {
             "type": "string",
@@ -3283,7 +3868,10 @@
       },
       "SendEmailSuccessResponse": {
         "type": "object",
-        "required": ["message", "data"],
+        "required": [
+          "message",
+          "data"
+        ],
         "properties": {
           "message": {
             "type": "string",
@@ -3292,7 +3880,11 @@
           },
           "data": {
             "type": "object",
-            "required": ["request_id", "accepted", "rejected"],
+            "required": [
+              "request_id",
+              "accepted",
+              "rejected"
+            ],
             "properties": {
               "request_id": {
                 "type": "string",
@@ -3317,7 +3909,11 @@
       },
       "ValidationErrorResponse": {
         "type": "object",
-        "required": ["message", "error_code", "errors"],
+        "required": [
+          "message",
+          "error_code",
+          "errors"
+        ],
         "properties": {
           "message": {
             "type": "string",
@@ -3340,15 +3936,22 @@
               }
             },
             "example": {
-              "from": ["The sender email address is required."],
-              "to": ["At least one recipient email address is required."]
+              "from": [
+                "The sender email address is required."
+              ],
+              "to": [
+                "At least one recipient email address is required."
+              ]
             }
           }
         }
       },
       "ErrorResponse": {
         "type": "object",
-        "required": ["message", "error_code"],
+        "required": [
+          "message",
+          "error_code"
+        ],
         "description": "Error response for non-validation errors (400, 409, 500, 502).",
         "properties": {
           "message": {
@@ -3363,7 +3966,9 @@
       },
       "UnauthorizedResponse": {
         "type": "object",
-        "required": ["message"],
+        "required": [
+          "message"
+        ],
         "description": "Error response for authentication failures (401).",
         "properties": {
           "message": {
@@ -3376,18 +3981,31 @@
       "ErrorCode": {
         "type": "string",
         "description": "Error codes returned by the API.\n\n| Code | HTTP Status | Description |\n|------|-------------|-------------|\n| `validation_error` | 422 | Request validation failed. Check the `errors` object for field-specific messages. |\n| `invalid_domain` | 400 | The sender domain could not be determined from the email address. |\n| `unconfigured_domain` | 400 | The sender domain is not configured or approved for sending. |\n| `send_error` | 400, 500 | General error during email send preparation or domain registration. |\n| `transmission_failed` | 502 | Email transmission to the upstream provider failed. |\n| `resource_already_exists` | 409 | The resource (e.g., domain) already exists. |\n| `template_not_found` | 404 | The specified template, project, or template version was not found. |\n| `quota_exceeded` | 429 | Monthly sending quota exceeded. Upgrade your plan to continue sending. |\n| `daily_quota_exceeded` | 429 | Daily sending quota exceeded. Try again tomorrow. |",
-        "enum": ["validation_error", "invalid_domain", "unconfigured_domain", "send_error", "transmission_failed", "resource_already_exists", "template_not_found", "not_found", "quota_exceeded", "daily_quota_exceeded"],
+        "enum": [
+          "validation_error",
+          "invalid_domain",
+          "unconfigured_domain",
+          "send_error",
+          "transmission_failed",
+          "resource_already_exists",
+          "template_not_found",
+          "not_found",
+          "quota_exceeded",
+          "daily_quota_exceeded"
+        ],
         "example": "invalid_domain"
       },
       "StoreDomainRequest": {
         "type": "object",
         "description": "Request to create a new sending domain",
-        "required": ["domain"],
+        "required": [
+          "domain"
+        ],
         "properties": {
           "domain": {
             "type": "string",
             "maxLength": 255,
-            "pattern": "^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\\.[a-zA-Z]{2,})+$",
+            "pattern": "^([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\\.)+[a-zA-Z]{2,}$",
             "description": "The domain name to register (e.g., example.com)",
             "example": "example.com"
           }
@@ -3396,7 +4014,10 @@
       "StoreDomainResponse": {
         "type": "object",
         "description": "Response after successfully creating a domain",
-        "required": ["message", "data"],
+        "required": [
+          "message",
+          "data"
+        ],
         "properties": {
           "message": {
             "type": "string",
@@ -3411,7 +4032,11 @@
       "DomainView": {
         "type": "object",
         "description": "View of a sending domain",
-        "required": ["domain", "status", "status_label"],
+        "required": [
+          "domain",
+          "status",
+          "status_label"
+        ],
         "properties": {
           "domain": {
             "type": "string",
@@ -3420,7 +4045,11 @@
           },
           "status": {
             "type": "string",
-            "enum": ["pending", "approved", "blocked"],
+            "enum": [
+              "pending",
+              "approved",
+              "blocked"
+            ],
             "description": "Current status of the domain",
             "example": "pending"
           },
@@ -3430,7 +4059,10 @@
             "example": "Pending Review"
           },
           "dkim": {
-            "type": ["object", "null"],
+            "type": [
+              "object",
+              "null"
+            ],
             "description": "DKIM configuration for the domain",
             "properties": {
               "public": {
@@ -3452,7 +4084,10 @@
       "ListDomainsResponse": {
         "type": "object",
         "description": "Response containing a list of domains",
-        "required": ["message", "data"],
+        "required": [
+          "message",
+          "data"
+        ],
         "properties": {
           "message": {
             "type": "string",
@@ -3461,7 +4096,9 @@
           },
           "data": {
             "type": "object",
-            "required": ["domains"],
+            "required": [
+              "domains"
+            ],
             "properties": {
               "domains": {
                 "type": "array",
@@ -3477,7 +4114,14 @@
       "DomainListItemView": {
         "type": "object",
         "description": "View of a domain in the list response",
-        "required": ["domain", "status", "status_label", "can_send", "created_at", "updated_at"],
+        "required": [
+          "domain",
+          "status",
+          "status_label",
+          "can_send",
+          "created_at",
+          "updated_at"
+        ],
         "properties": {
           "domain": {
             "type": "string",
@@ -3486,7 +4130,11 @@
           },
           "status": {
             "type": "string",
-            "enum": ["pending", "approved", "blocked"],
+            "enum": [
+              "pending",
+              "approved",
+              "blocked"
+            ],
             "description": "Current status of the domain",
             "example": "approved"
           },
@@ -3501,12 +4149,18 @@
             "example": true
           },
           "cname_status": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "CNAME verification status",
             "example": "valid"
           },
           "dkim_status": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "DKIM verification status",
             "example": "valid"
           },
@@ -3527,7 +4181,10 @@
       "ShowDomainResponse": {
         "type": "object",
         "description": "Response containing a single domain with full details",
-        "required": ["message", "data"],
+        "required": [
+          "message",
+          "data"
+        ],
         "properties": {
           "message": {
             "type": "string",
@@ -3542,7 +4199,14 @@
       "DomainDetailView": {
         "type": "object",
         "description": "Detailed view of a single domain",
-        "required": ["domain", "status", "status_label", "can_send", "created_at", "updated_at"],
+        "required": [
+          "domain",
+          "status",
+          "status_label",
+          "can_send",
+          "created_at",
+          "updated_at"
+        ],
         "properties": {
           "domain": {
             "type": "string",
@@ -3551,7 +4215,11 @@
           },
           "status": {
             "type": "string",
-            "enum": ["pending", "approved", "blocked"],
+            "enum": [
+              "pending",
+              "approved",
+              "blocked"
+            ],
             "description": "Current status of the domain",
             "example": "approved"
           },
@@ -3566,22 +4234,34 @@
             "example": true
           },
           "cname_status": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "CNAME verification status",
             "example": "valid"
           },
           "dkim_status": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "DKIM verification status",
             "example": "valid"
           },
           "tracking_domain": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "Associated tracking domain for click/open tracking",
             "example": "tracking.example.com"
           },
           "dns": {
-            "type": ["object", "null"],
+            "type": [
+              "object",
+              "null"
+            ],
             "description": "DNS records for domain verification",
             "properties": {
               "dkim": {
@@ -3624,7 +4304,10 @@
       "VerifyDomainResponse": {
         "type": "object",
         "description": "Response containing domain verification results",
-        "required": ["message", "data"],
+        "required": [
+          "message",
+          "data"
+        ],
         "properties": {
           "message": {
             "type": "string",
@@ -3639,7 +4322,11 @@
       "DomainVerificationView": {
         "type": "object",
         "description": "Domain verification status and DNS details",
-        "required": ["domain", "dkim_status", "cname_status"],
+        "required": [
+          "domain",
+          "dkim_status",
+          "cname_status"
+        ],
         "properties": {
           "domain": {
             "type": "string",
@@ -3649,17 +4336,28 @@
           "dkim_status": {
             "type": "string",
             "description": "DKIM verification status",
-            "enum": ["valid", "unverified", "invalid"],
+            "enum": [
+              "valid",
+              "unverified",
+              "invalid"
+            ],
             "example": "valid"
           },
           "cname_status": {
             "type": "string",
             "description": "CNAME verification status",
-            "enum": ["valid", "unverified", "invalid"],
+            "enum": [
+              "valid",
+              "unverified",
+              "invalid"
+            ],
             "example": "valid"
           },
           "ownership_verified": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "Whether domain ownership has been verified",
             "example": "true"
           },
@@ -3673,22 +4371,34 @@
         "description": "DNS verification error details",
         "properties": {
           "dkim_record": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "Found DKIM record value",
             "example": null
           },
           "cname_record": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "Found CNAME record value",
             "example": null
           },
           "dkim_error": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "DKIM verification error message",
             "example": "DKIM record not found"
           },
           "cname_error": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "CNAME verification error message",
             "example": "CNAME record not found"
           }
@@ -3714,7 +4424,11 @@
           "auth_type": {
             "type": "string",
             "description": "Authentication type for the webhook",
-            "enum": ["none", "basic", "oauth2"],
+            "enum": [
+              "none",
+              "basic",
+              "oauth2"
+            ],
             "example": "none"
           },
           "auth_username": {
@@ -3774,7 +4488,10 @@
                 "relay.relay_permfail"
               ]
             },
-            "example": ["message.delivery", "message.bounce"]
+            "example": [
+              "message.delivery",
+              "message.bounce"
+            ]
           },
           "active": {
             "type": "boolean",
@@ -3786,7 +4503,10 @@
       "ListWebhooksResponse": {
         "type": "object",
         "description": "Response containing a list of webhooks",
-        "required": ["message", "data"],
+        "required": [
+          "message",
+          "data"
+        ],
         "properties": {
           "message": {
             "type": "string",
@@ -3795,7 +4515,9 @@
           },
           "data": {
             "type": "object",
-            "required": ["webhooks"],
+            "required": [
+              "webhooks"
+            ],
             "properties": {
               "webhooks": {
                 "type": "array",
@@ -3811,7 +4533,10 @@
       "ShowWebhookResponse": {
         "type": "object",
         "description": "Response containing a single webhook",
-        "required": ["message", "data"],
+        "required": [
+          "message",
+          "data"
+        ],
         "properties": {
           "message": {
             "type": "string",
@@ -3826,7 +4551,12 @@
       "StoreWebhookRequest": {
         "type": "object",
         "description": "Request body for creating a webhook",
-        "required": ["name", "url", "auth_type", "events_mode"],
+        "required": [
+          "name",
+          "url",
+          "auth_type",
+          "events_mode"
+        ],
         "properties": {
           "name": {
             "type": "string",
@@ -3843,7 +4573,11 @@
           },
           "auth_type": {
             "type": "string",
-            "enum": ["none", "basic", "oauth2"],
+            "enum": [
+              "none",
+              "basic",
+              "oauth2"
+            ],
             "description": "Authentication type for the webhook",
             "example": "basic"
           },
@@ -3877,7 +4611,10 @@
           },
           "events_mode": {
             "type": "string",
-            "enum": ["all", "selected"],
+            "enum": [
+              "all",
+              "selected"
+            ],
             "description": "Whether to receive all events or only selected ones",
             "example": "selected"
           },
@@ -3887,14 +4624,20 @@
             "items": {
               "type": "string"
             },
-            "example": ["delivery", "bounce"]
+            "example": [
+              "delivery",
+              "bounce"
+            ]
           }
         }
       },
       "StoreWebhookResponse": {
         "type": "object",
         "description": "Response after creating a webhook",
-        "required": ["message", "data"],
+        "required": [
+          "message",
+          "data"
+        ],
         "properties": {
           "message": {
             "type": "string",
@@ -3909,7 +4652,10 @@
       "ListTemplatesResponse": {
         "type": "object",
         "description": "Response containing a paginated list of templates",
-        "required": ["message", "data"],
+        "required": [
+          "message",
+          "data"
+        ],
         "properties": {
           "message": {
             "type": "string",
@@ -3918,7 +4664,10 @@
           },
           "data": {
             "type": "object",
-            "required": ["templates", "pagination"],
+            "required": [
+              "templates",
+              "pagination"
+            ],
             "properties": {
               "templates": {
                 "type": "array",
@@ -3937,7 +4686,15 @@
       "TemplateView": {
         "type": "object",
         "description": "View of an email template",
-        "required": ["id", "name", "slug", "project_id", "folder_id", "created_at", "updated_at"],
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "project_id",
+          "folder_id",
+          "created_at",
+          "updated_at"
+        ],
         "properties": {
           "id": {
             "type": "integer",
@@ -3981,7 +4738,12 @@
       "TemplatesPagination": {
         "type": "object",
         "description": "Pagination information for templates list",
-        "required": ["total", "per_page", "current_page", "last_page"],
+        "required": [
+          "total",
+          "per_page",
+          "current_page",
+          "last_page"
+        ],
         "properties": {
           "total": {
             "type": "integer",
@@ -4012,7 +4774,10 @@
       "ShowTemplateResponse": {
         "type": "object",
         "description": "Response containing a single template with details",
-        "required": ["message", "data"],
+        "required": [
+          "message",
+          "data"
+        ],
         "properties": {
           "message": {
             "type": "string",
@@ -4027,7 +4792,17 @@
       "TemplateDetailView": {
         "type": "object",
         "description": "Detailed view of an email template",
-        "required": ["id", "name", "slug", "project_id", "folder_id", "active_version", "versions_count", "created_at", "updated_at"],
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "project_id",
+          "folder_id",
+          "active_version",
+          "versions_count",
+          "created_at",
+          "updated_at"
+        ],
         "properties": {
           "id": {
             "type": "integer",
@@ -4055,7 +4830,10 @@
             "example": 10
           },
           "active_version": {
-            "type": ["integer", "null"],
+            "type": [
+              "integer",
+              "null"
+            ],
             "description": "Version number of the currently active template version, or null if no version is active",
             "example": 2
           },
@@ -4066,12 +4844,18 @@
             "example": 3
           },
           "html": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "The HTML content of the active template version, or null if no active version exists",
             "example": "<html><body><h1>Welcome!</h1></body></html>"
           },
           "json": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "The JSON definition of the active template version (for visual editor templates), or null if no active version exists or it's a custom HTML template",
             "example": "{\"tagName\":\"mj-body\",\"children\":[...]}"
           },
@@ -4092,7 +4876,9 @@
       "CreateTemplateRequest": {
         "type": "object",
         "description": "Request to create a new email template. Provide either `html` for custom HTML templates or `json` for Topol visual editor templates.",
-        "required": ["name"],
+        "required": [
+          "name"
+        ],
         "properties": {
           "name": {
             "type": "string",
@@ -4127,7 +4913,10 @@
       "CreateTemplateResponse": {
         "type": "object",
         "description": "Response after successfully creating a template",
-        "required": ["message", "data"],
+        "required": [
+          "message",
+          "data"
+        ],
         "properties": {
           "message": {
             "type": "string",
@@ -4142,7 +4931,9 @@
       "DeleteTemplateResponse": {
         "type": "object",
         "description": "Response after successfully deleting a template",
-        "required": ["message"],
+        "required": [
+          "message"
+        ],
         "properties": {
           "message": {
             "type": "string",
@@ -4182,7 +4973,10 @@
       "UpdateTemplateResponse": {
         "type": "object",
         "description": "Response after successfully updating a template",
-        "required": ["message", "data"],
+        "required": [
+          "message",
+          "data"
+        ],
         "properties": {
           "message": {
             "type": "string",
@@ -4197,7 +4991,17 @@
       "UpdatedTemplateView": {
         "type": "object",
         "description": "View of an updated template",
-        "required": ["id", "name", "slug", "project_id", "folder_id", "active_version", "merge_tags", "created_at", "updated_at"],
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "project_id",
+          "folder_id",
+          "active_version",
+          "merge_tags",
+          "created_at",
+          "updated_at"
+        ],
         "properties": {
           "id": {
             "type": "integer",
@@ -4253,7 +5057,16 @@
       "CreatedTemplateView": {
         "type": "object",
         "description": "View of a newly created template",
-        "required": ["id", "name", "slug", "project_id", "folder_id", "active_version", "merge_tags", "created_at"],
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "project_id",
+          "folder_id",
+          "active_version",
+          "merge_tags",
+          "created_at"
+        ],
         "properties": {
           "id": {
             "type": "integer",
@@ -4303,7 +5116,10 @@
       "GetMergeTagsResponse": {
         "type": "object",
         "description": "Response containing merge tags for a template version",
-        "required": ["message", "data"],
+        "required": [
+          "message",
+          "data"
+        ],
         "properties": {
           "message": {
             "type": "string",
@@ -4318,7 +5134,11 @@
       "MergeTagsListView": {
         "type": "object",
         "description": "Merge tags for a template version",
-        "required": ["template_slug", "version", "merge_tags"],
+        "required": [
+          "template_slug",
+          "version",
+          "merge_tags"
+        ],
         "properties": {
           "template_slug": {
             "type": "string",
@@ -4342,7 +5162,10 @@
       "MergeTagView": {
         "type": "object",
         "description": "A single merge tag. Loop merge tags (for iterating over arrays) include a 'children' property with nested field definitions.",
-        "required": ["key", "required"],
+        "required": [
+          "key",
+          "required"
+        ],
         "properties": {
           "key": {
             "type": "string",
@@ -4357,7 +5180,12 @@
           "type": {
             "type": "string",
             "description": "The data type of the merge tag (only present for loop children)",
-            "enum": ["text", "number", "image", "button"],
+            "enum": [
+              "text",
+              "number",
+              "image",
+              "button"
+            ],
             "example": "text"
           },
           "children": {
@@ -4372,7 +5200,9 @@
       "MergeTagChild": {
         "type": "object",
         "description": "A child merge tag within a loop block",
-        "required": ["key"],
+        "required": [
+          "key"
+        ],
         "properties": {
           "key": {
             "type": "string",
@@ -4382,7 +5212,12 @@
           "type": {
             "type": "string",
             "description": "The data type of the child merge tag",
-            "enum": ["text", "number", "image", "button"],
+            "enum": [
+              "text",
+              "number",
+              "image",
+              "button"
+            ],
             "example": "text"
           }
         }
@@ -4390,7 +5225,14 @@
       "WebhookView": {
         "type": "object",
         "description": "View of a webhook",
-        "required": ["id", "name", "url", "enabled", "auth_type", "has_auth_credentials"],
+        "required": [
+          "id",
+          "name",
+          "url",
+          "enabled",
+          "auth_type",
+          "has_auth_credentials"
+        ],
         "properties": {
           "id": {
             "type": "string",
@@ -4414,12 +5256,18 @@
             "example": true
           },
           "event_types": {
-            "type": ["array", "null"],
+            "type": [
+              "array",
+              "null"
+            ],
             "description": "Specific event types the webhook receives (null if all events)",
             "items": {
               "type": "string"
             },
-            "example": ["message.delivery", "message.bounce"]
+            "example": [
+              "message.delivery",
+              "message.bounce"
+            ]
           },
           "auth_type": {
             "type": "string",
@@ -4432,21 +5280,34 @@
             "example": true
           },
           "last_successful_at": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time",
             "description": "Timestamp of the last successful webhook delivery",
             "example": "2024-01-15T10:30:00+00:00"
           },
           "last_failure_at": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time",
             "description": "Timestamp of the last failed webhook delivery",
             "example": null
           },
           "last_status": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "Status of the last delivery attempt (success or failure)",
-            "enum": ["success", "failure", null],
+            "enum": [
+              "success",
+              "failure",
+              null
+            ],
             "example": "success"
           }
         }
@@ -4460,7 +5321,9 @@
           },
           {
             "type": "object",
-            "required": ["scheduled_at"],
+            "required": [
+              "scheduled_at"
+            ],
             "properties": {
               "scheduled_at": {
                 "type": "string",
@@ -4474,7 +5337,10 @@
       },
       "ShowScheduledTransmissionResponse": {
         "type": "object",
-        "required": ["message", "data"],
+        "required": [
+          "message",
+          "data"
+        ],
         "properties": {
           "message": {
             "type": "string",
@@ -4482,7 +5348,15 @@
           },
           "data": {
             "type": "object",
-            "required": ["transmission_id", "state", "from", "subject", "recipients", "num_recipients", "events"],
+            "required": [
+              "transmission_id",
+              "state",
+              "from",
+              "subject",
+              "recipients",
+              "num_recipients",
+              "events"
+            ],
             "properties": {
               "transmission_id": {
                 "type": "string",
@@ -4492,11 +5366,22 @@
               "state": {
                 "type": "string",
                 "description": "Current state of the transmission. `submitted`/`generating` — still pending in SparkPost. `scheduled` — injected but not yet delivered (has `injection` event only). `delivered` — successfully delivered. `bounced` — rejected by recipient server. `failed` — generation or policy failure.",
-                "enum": ["submitted", "generating", "scheduled", "delivered", "bounced", "failed", "unknown"],
+                "enum": [
+                  "submitted",
+                  "generating",
+                  "scheduled",
+                  "delivered",
+                  "bounced",
+                  "failed",
+                  "unknown"
+                ],
                 "example": "submitted"
               },
               "scheduled_at": {
-                "type": ["string", "null"],
+                "type": [
+                  "string",
+                  "null"
+                ],
                 "format": "date-time",
                 "description": "The scheduled delivery time in ISO 8601 format. Present when the transmission is still pending. May be `null` when the transmission has already been delivered.",
                 "example": "2024-01-16T10:00:00+00:00"
@@ -4508,7 +5393,10 @@
                 "example": "sender@example.com"
               },
               "from_name": {
-                "type": ["string", "null"],
+                "type": [
+                  "string",
+                  "null"
+                ],
                 "description": "Sender display name.",
                 "example": "Sender Name"
               },
@@ -4524,7 +5412,9 @@
                   "format": "email"
                 },
                 "description": "List of recipient email addresses.",
-                "example": ["recipient@example.com"]
+                "example": [
+                  "recipient@example.com"
+                ]
               },
               "num_recipients": {
                 "type": "integer",
@@ -4544,7 +5434,10 @@
       },
       "GetEmailDetailResponse": {
         "type": "object",
-        "required": ["message", "data"],
+        "required": [
+          "message",
+          "data"
+        ],
         "description": "Email detail response. Uses the same data shape as the scheduled transmission detail — see `ShowScheduledTransmissionResponse` for field descriptions.",
         "properties": {
           "message": {
@@ -4553,7 +5446,15 @@
           },
           "data": {
             "type": "object",
-            "required": ["transmission_id", "state", "from", "subject", "recipients", "num_recipients", "events"],
+            "required": [
+              "transmission_id",
+              "state",
+              "from",
+              "subject",
+              "recipients",
+              "num_recipients",
+              "events"
+            ],
             "properties": {
               "transmission_id": {
                 "type": "string",
@@ -4563,11 +5464,19 @@
               "state": {
                 "type": "string",
                 "description": "Derived delivery state based on events. `scheduled` — injected but not yet delivered. `delivered` — successfully delivered. `bounced` — rejected by recipient server. `failed` — generation or policy failure.",
-                "enum": ["scheduled", "delivered", "bounced", "failed"],
+                "enum": [
+                  "scheduled",
+                  "delivered",
+                  "bounced",
+                  "failed"
+                ],
                 "example": "delivered"
               },
               "scheduled_at": {
-                "type": ["string", "null"],
+                "type": [
+                  "string",
+                  "null"
+                ],
                 "format": "date-time",
                 "description": "The scheduled delivery time, if the email was scheduled. Usually `null` for immediately-sent emails.",
                 "example": null
@@ -4579,7 +5488,10 @@
                 "example": "sender@example.com"
               },
               "from_name": {
-                "type": ["string", "null"],
+                "type": [
+                  "string",
+                  "null"
+                ],
                 "description": "Sender display name.",
                 "example": null
               },
@@ -4595,7 +5507,9 @@
                   "format": "email"
                 },
                 "description": "Unique list of recipient email addresses derived from events.",
-                "example": ["recipient@example.com"]
+                "example": [
+                  "recipient@example.com"
+                ]
               },
               "num_recipients": {
                 "type": "integer",
@@ -4615,7 +5529,10 @@
       },
       "ListEmailEventsResponse": {
         "type": "object",
-        "required": ["message", "data"],
+        "required": [
+          "message",
+          "data"
+        ],
         "properties": {
           "message": {
             "type": "string",
@@ -4623,11 +5540,19 @@
           },
           "data": {
             "type": "object",
-            "required": ["events"],
+            "required": [
+              "events"
+            ],
             "properties": {
               "events": {
                 "type": "object",
-                "required": ["data", "total_count", "from", "to", "pagination"],
+                "required": [
+                  "data",
+                  "total_count",
+                  "from",
+                  "to",
+                  "pagination"
+                ],
                 "properties": {
                   "data": {
                     "type": "array",
@@ -4655,7 +5580,10 @@
                     "type": "object",
                     "properties": {
                       "next_cursor": {
-                        "type": ["string", "null"],
+                        "type": [
+                          "string",
+                          "null"
+                        ],
                         "description": "Cursor for the next page of results. Null if no more pages.",
                         "example": null
                       },
@@ -4675,23 +5603,57 @@
       "EmailEvent": {
         "description": "An email event. The `type` field determines which additional fields are present. All event types share common fields defined in `CommonEventProperties`.",
         "oneOf": [
-          { "$ref": "#/components/schemas/InjectionEvent" },
-          { "$ref": "#/components/schemas/DeliveryEvent" },
-          { "$ref": "#/components/schemas/BounceEvent" },
-          { "$ref": "#/components/schemas/DelayEvent" },
-          { "$ref": "#/components/schemas/OutOfBandEvent" },
-          { "$ref": "#/components/schemas/SpamComplaintEvent" },
-          { "$ref": "#/components/schemas/PolicyRejectionEvent" },
-          { "$ref": "#/components/schemas/ClickEvent" },
-          { "$ref": "#/components/schemas/OpenEvent" },
-          { "$ref": "#/components/schemas/InitialOpenEvent" },
-          { "$ref": "#/components/schemas/AmpClickEvent" },
-          { "$ref": "#/components/schemas/AmpOpenEvent" },
-          { "$ref": "#/components/schemas/AmpInitialOpenEvent" },
-          { "$ref": "#/components/schemas/GenerationFailureEvent" },
-          { "$ref": "#/components/schemas/GenerationRejectionEvent" },
-          { "$ref": "#/components/schemas/ListUnsubscribeEvent" },
-          { "$ref": "#/components/schemas/LinkUnsubscribeEvent" }
+          {
+            "$ref": "#/components/schemas/InjectionEvent"
+          },
+          {
+            "$ref": "#/components/schemas/DeliveryEvent"
+          },
+          {
+            "$ref": "#/components/schemas/BounceEvent"
+          },
+          {
+            "$ref": "#/components/schemas/DelayEvent"
+          },
+          {
+            "$ref": "#/components/schemas/OutOfBandEvent"
+          },
+          {
+            "$ref": "#/components/schemas/SpamComplaintEvent"
+          },
+          {
+            "$ref": "#/components/schemas/PolicyRejectionEvent"
+          },
+          {
+            "$ref": "#/components/schemas/ClickEvent"
+          },
+          {
+            "$ref": "#/components/schemas/OpenEvent"
+          },
+          {
+            "$ref": "#/components/schemas/InitialOpenEvent"
+          },
+          {
+            "$ref": "#/components/schemas/AmpClickEvent"
+          },
+          {
+            "$ref": "#/components/schemas/AmpOpenEvent"
+          },
+          {
+            "$ref": "#/components/schemas/AmpInitialOpenEvent"
+          },
+          {
+            "$ref": "#/components/schemas/GenerationFailureEvent"
+          },
+          {
+            "$ref": "#/components/schemas/GenerationRejectionEvent"
+          },
+          {
+            "$ref": "#/components/schemas/ListUnsubscribeEvent"
+          },
+          {
+            "$ref": "#/components/schemas/LinkUnsubscribeEvent"
+          }
         ],
         "discriminator": {
           "propertyName": "type",
@@ -4718,7 +5680,17 @@
       },
       "CommonEventProperties": {
         "type": "object",
-        "required": ["event_id", "type", "timestamp", "request_id", "rcpt_to", "raw_rcpt_to", "recipient_domain", "mailbox_provider", "mailbox_provider_region"],
+        "required": [
+          "event_id",
+          "type",
+          "timestamp",
+          "request_id",
+          "rcpt_to",
+          "raw_rcpt_to",
+          "recipient_domain",
+          "mailbox_provider",
+          "mailbox_provider_region"
+        ],
         "properties": {
           "event_id": {
             "type": "string",
@@ -4728,7 +5700,25 @@
           "type": {
             "type": "string",
             "description": "The event type",
-            "enum": ["injection", "delivery", "bounce", "delay", "out_of_band", "spam_complaint", "policy_rejection", "click", "open", "initial_open", "amp_click", "amp_open", "amp_initial_open", "generation_failure", "generation_rejection", "list_unsubscribe", "link_unsubscribe"]
+            "enum": [
+              "injection",
+              "delivery",
+              "bounce",
+              "delay",
+              "out_of_band",
+              "spam_complaint",
+              "policy_rejection",
+              "click",
+              "open",
+              "initial_open",
+              "amp_click",
+              "amp_open",
+              "amp_initial_open",
+              "generation_failure",
+              "generation_rejection",
+              "list_unsubscribe",
+              "link_unsubscribe"
+            ]
           },
           "timestamp": {
             "type": "string",
@@ -4768,119 +5758,196 @@
             "example": "Global"
           },
           "message_id": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "SMTP message ID",
             "example": "699715cd9e6961853a97"
           },
           "subject": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "Email subject line",
             "example": "Welcome to Lettr"
           },
           "friendly_from": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "Friendly from address",
             "example": "sender@example.com"
           },
           "sending_domain": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "The sending domain",
             "example": "example.com"
           },
           "sending_ip": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "IP address used to send the email",
             "example": "168.203.51.91"
           },
           "click_tracking": {
-            "type": ["boolean", "null"],
+            "type": [
+              "boolean",
+              "null"
+            ],
             "description": "Whether click tracking was enabled"
           },
           "open_tracking": {
-            "type": ["boolean", "null"],
+            "type": [
+              "boolean",
+              "null"
+            ],
             "description": "Whether open tracking was enabled"
           },
           "transactional": {
-            "type": ["boolean", "null"],
+            "type": [
+              "boolean",
+              "null"
+            ],
             "description": "Whether this was a transactional message"
           },
           "msg_size": {
-            "type": ["integer", "null"],
+            "type": [
+              "integer",
+              "null"
+            ],
             "description": "Message size in bytes",
             "example": 30823
           },
           "injection_time": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "When the message was injected into the system (ISO 8601)",
             "example": "2024-01-15T10:30:00.000Z"
           },
           "rcpt_meta": {
-            "type": ["array", "null"],
+            "type": [
+              "array",
+              "null"
+            ],
             "description": "Recipient metadata"
           },
           "campaign_id": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "Campaign identifier",
             "example": "welcome-series"
           },
           "template_id": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "Template identifier",
             "example": "template_7610639000055488914"
           },
           "template_version": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "Template version",
             "example": "0"
           },
           "ip_pool": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "IP pool used for sending",
             "example": "default"
           },
           "msg_from": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "Envelope sender (MAIL FROM)",
             "example": "msprvs1=abc123=bounces@sparkpostmail1.com"
           },
           "rcpt_type": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "Recipient type"
           },
           "rcpt_tags": {
-            "type": ["array", "null"],
-            "items": { "type": "string" },
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            },
             "description": "Recipient tags"
           },
           "amp_enabled": {
-            "type": ["boolean", "null"],
+            "type": [
+              "boolean",
+              "null"
+            ],
             "description": "Whether AMP was enabled"
           },
           "delv_method": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "Delivery method (e.g. esmtp)",
             "example": "esmtp"
           },
           "recv_method": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "Reception method (e.g. rest)",
             "example": "rest"
           },
           "routing_domain": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "Routing domain",
             "example": "gmail.com"
           },
           "scheduled_time": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "Scheduled delivery time if the email was scheduled"
           },
           "ab_test_id": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "A/B test identifier"
           },
           "ab_test_version": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "A/B test version"
           }
         }
@@ -4890,38 +5957,62 @@
         "description": "Parsed user agent information from the open/click event.",
         "properties": {
           "agent_family": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "Browser or email client family",
             "example": "Edge"
           },
           "device_brand": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "Device brand (e.g. Apple, Samsung)"
           },
           "device_family": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "Device family (e.g. iPhone, Desktop)"
           },
           "os_family": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "Operating system family",
             "example": "Windows"
           },
           "os_version": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "Operating system version",
             "example": "10"
           },
           "is_mobile": {
-            "type": ["boolean", "null"],
+            "type": [
+              "boolean",
+              "null"
+            ],
             "description": "Whether the device is mobile"
           },
           "is_proxy": {
-            "type": ["boolean", "null"],
+            "type": [
+              "boolean",
+              "null"
+            ],
             "description": "Whether the request came through a proxy"
           },
           "is_prefetched": {
-            "type": ["boolean", "null"],
+            "type": [
+              "boolean",
+              "null"
+            ],
             "description": "Whether the open was prefetched by an email provider (e.g. Gmail Image Proxy, Apple Mail Privacy Protection). If true, this may not represent a real human open."
           }
         }
@@ -4931,37 +6022,58 @@
         "description": "Geolocation data derived from the IP address of the open/click event.",
         "properties": {
           "country": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "ISO 3166-1 alpha-2 country code",
             "example": "CZ"
           },
           "region": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "Region or state code",
             "example": "10"
           },
           "city": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "City name",
             "example": "Prague"
           },
           "latitude": {
-            "type": ["number", "null"],
+            "type": [
+              "number",
+              "null"
+            ],
             "description": "Latitude",
             "example": 50.0883
           },
           "longitude": {
-            "type": ["number", "null"],
+            "type": [
+              "number",
+              "null"
+            ],
             "description": "Longitude",
             "example": 14.4124
           },
           "zip": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "ZIP code",
             "example": "110"
           },
           "postal_code": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "Postal code",
             "example": "110 00"
           }
@@ -4970,13 +6082,23 @@
       "InjectionEvent": {
         "description": "Fired when a message is received by the system and queued for delivery.",
         "allOf": [
-          { "$ref": "#/components/schemas/CommonEventProperties" },
+          {
+            "$ref": "#/components/schemas/CommonEventProperties"
+          },
           {
             "type": "object",
             "properties": {
-              "type": { "type": "string", "enum": ["injection"] },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "injection"
+                ]
+              },
               "initial_pixel": {
-                "type": ["boolean", "null"],
+                "type": [
+                  "boolean",
+                  "null"
+                ],
                 "description": "Whether initial open tracking pixel was included"
               }
             }
@@ -4986,18 +6108,31 @@
       "DeliveryEvent": {
         "description": "Fired when a message is successfully delivered to the recipient's mail server.",
         "allOf": [
-          { "$ref": "#/components/schemas/CommonEventProperties" },
+          {
+            "$ref": "#/components/schemas/CommonEventProperties"
+          },
           {
             "type": "object",
             "properties": {
-              "type": { "type": "string", "enum": ["delivery"] },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "delivery"
+                ]
+              },
               "queue_time": {
-                "type": ["integer", "null"],
+                "type": [
+                  "integer",
+                  "null"
+                ],
                 "description": "Time spent in queue in milliseconds",
                 "example": 1845
               },
               "outbound_tls": {
-                "type": ["string", "null"],
+                "type": [
+                  "string",
+                  "null"
+                ],
                 "description": "Whether TLS was used for outbound delivery (\"1\" = yes)",
                 "example": "1"
               }
@@ -5008,37 +6143,62 @@
       "BounceEvent": {
         "description": "Fired when a message is permanently rejected by the recipient's mail server.",
         "allOf": [
-          { "$ref": "#/components/schemas/CommonEventProperties" },
+          {
+            "$ref": "#/components/schemas/CommonEventProperties"
+          },
           {
             "type": "object",
             "properties": {
-              "type": { "type": "string", "enum": ["bounce"] },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "bounce"
+                ]
+              },
               "bounce_class": {
-                "type": ["integer", "null"],
+                "type": [
+                  "integer",
+                  "null"
+                ],
                 "description": "Bounce classification code (e.g. 10 = Invalid Recipient, 30 = Generic Bounce)",
                 "example": 10
               },
               "error_code": {
-                "type": ["string", "null"],
+                "type": [
+                  "string",
+                  "null"
+                ],
                 "description": "SMTP error code",
                 "example": "550"
               },
               "reason": {
-                "type": ["string", "null"],
+                "type": [
+                  "string",
+                  "null"
+                ],
                 "description": "Human-readable bounce reason",
                 "example": "550 5.1.1 The email account that you tried to reach does not exist."
               },
               "raw_reason": {
-                "type": ["string", "null"],
+                "type": [
+                  "string",
+                  "null"
+                ],
                 "description": "Raw SMTP reason string",
                 "example": "550 5.1.1 User unknown"
               },
               "num_retries": {
-                "type": ["integer", "null"],
+                "type": [
+                  "integer",
+                  "null"
+                ],
                 "description": "Number of delivery retries attempted"
               },
               "device_token": {
-                "type": ["string", "null"],
+                "type": [
+                  "string",
+                  "null"
+                ],
                 "description": "Device token if applicable"
               }
             }
@@ -5048,38 +6208,66 @@
       "DelayEvent": {
         "description": "Fired when a message delivery is temporarily delayed (will be retried).",
         "allOf": [
-          { "$ref": "#/components/schemas/CommonEventProperties" },
+          {
+            "$ref": "#/components/schemas/CommonEventProperties"
+          },
           {
             "type": "object",
             "properties": {
-              "type": { "type": "string", "enum": ["delay"] },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "delay"
+                ]
+              },
               "reason": {
-                "type": ["string", "null"],
+                "type": [
+                  "string",
+                  "null"
+                ],
                 "description": "Human-readable delay reason"
               },
               "raw_reason": {
-                "type": ["string", "null"],
+                "type": [
+                  "string",
+                  "null"
+                ],
                 "description": "Raw SMTP reason string"
               },
               "error_code": {
-                "type": ["string", "null"],
+                "type": [
+                  "string",
+                  "null"
+                ],
                 "description": "SMTP error code",
                 "example": "421"
               },
               "bounce_class": {
-                "type": ["integer", "null"],
+                "type": [
+                  "integer",
+                  "null"
+                ],
                 "description": "Bounce classification code"
               },
               "num_retries": {
-                "type": ["integer", "null"],
+                "type": [
+                  "integer",
+                  "null"
+                ],
                 "description": "Number of delivery retries attempted so far"
               },
               "queue_time": {
-                "type": ["integer", "null"],
+                "type": [
+                  "integer",
+                  "null"
+                ],
                 "description": "Time spent in queue in milliseconds"
               },
               "outbound_tls": {
-                "type": ["string", "null"],
+                "type": [
+                  "string",
+                  "null"
+                ],
                 "description": "Whether TLS was used for outbound delivery"
               }
             }
@@ -5089,29 +6277,51 @@
       "OutOfBandEvent": {
         "description": "Fired when a remote mail server sends an asynchronous bounce after initially accepting the message.",
         "allOf": [
-          { "$ref": "#/components/schemas/CommonEventProperties" },
+          {
+            "$ref": "#/components/schemas/CommonEventProperties"
+          },
           {
             "type": "object",
             "properties": {
-              "type": { "type": "string", "enum": ["out_of_band"] },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "out_of_band"
+                ]
+              },
               "bounce_class": {
-                "type": ["integer", "null"],
+                "type": [
+                  "integer",
+                  "null"
+                ],
                 "description": "Bounce classification code"
               },
               "error_code": {
-                "type": ["string", "null"],
+                "type": [
+                  "string",
+                  "null"
+                ],
                 "description": "SMTP error code"
               },
               "reason": {
-                "type": ["string", "null"],
+                "type": [
+                  "string",
+                  "null"
+                ],
                 "description": "Human-readable bounce reason"
               },
               "raw_reason": {
-                "type": ["string", "null"],
+                "type": [
+                  "string",
+                  "null"
+                ],
                 "description": "Raw SMTP reason string"
               },
               "device_token": {
-                "type": ["string", "null"],
+                "type": [
+                  "string",
+                  "null"
+                ],
                 "description": "Device token if applicable"
               }
             }
@@ -5121,22 +6331,38 @@
       "SpamComplaintEvent": {
         "description": "Fired when a recipient marks the message as spam via a feedback loop.",
         "allOf": [
-          { "$ref": "#/components/schemas/CommonEventProperties" },
+          {
+            "$ref": "#/components/schemas/CommonEventProperties"
+          },
           {
             "type": "object",
             "properties": {
-              "type": { "type": "string", "enum": ["spam_complaint"] },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "spam_complaint"
+                ]
+              },
               "fbtype": {
-                "type": ["string", "null"],
+                "type": [
+                  "string",
+                  "null"
+                ],
                 "description": "Feedback type (e.g. \"abuse\")",
                 "example": "abuse"
               },
               "report_by": {
-                "type": ["string", "null"],
+                "type": [
+                  "string",
+                  "null"
+                ],
                 "description": "Who reported the spam"
               },
               "report_to": {
-                "type": ["string", "null"],
+                "type": [
+                  "string",
+                  "null"
+                ],
                 "description": "Where the spam report was sent"
               }
             }
@@ -5146,29 +6372,51 @@
       "PolicyRejectionEvent": {
         "description": "Fired when a message is rejected due to policy (e.g. suppression list, rate limiting).",
         "allOf": [
-          { "$ref": "#/components/schemas/CommonEventProperties" },
+          {
+            "$ref": "#/components/schemas/CommonEventProperties"
+          },
           {
             "type": "object",
             "properties": {
-              "type": { "type": "string", "enum": ["policy_rejection"] },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "policy_rejection"
+                ]
+              },
               "remote_addr": {
-                "type": ["string", "null"],
+                "type": [
+                  "string",
+                  "null"
+                ],
                 "description": "Remote IP address"
               },
               "reason": {
-                "type": ["string", "null"],
+                "type": [
+                  "string",
+                  "null"
+                ],
                 "description": "Human-readable rejection reason"
               },
               "raw_reason": {
-                "type": ["string", "null"],
+                "type": [
+                  "string",
+                  "null"
+                ],
                 "description": "Raw rejection reason"
               },
               "error_code": {
-                "type": ["string", "null"],
+                "type": [
+                  "string",
+                  "null"
+                ],
                 "description": "Error code"
               },
               "bounce_class": {
-                "type": ["integer", "null"],
+                "type": [
+                  "integer",
+                  "null"
+                ],
                 "description": "Bounce classification code"
               }
             }
@@ -5178,22 +6426,38 @@
       "ClickEvent": {
         "description": "Fired when a recipient clicks a tracked link in the email.",
         "allOf": [
-          { "$ref": "#/components/schemas/CommonEventProperties" },
+          {
+            "$ref": "#/components/schemas/CommonEventProperties"
+          },
           {
             "type": "object",
             "properties": {
-              "type": { "type": "string", "enum": ["click"] },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "click"
+                ]
+              },
               "target_link_url": {
-                "type": ["string", "null"],
+                "type": [
+                  "string",
+                  "null"
+                ],
                 "description": "The URL that was clicked",
                 "example": "https://example.com/reset-password?token=abc123"
               },
               "target_link_name": {
-                "type": ["string", "null"],
+                "type": [
+                  "string",
+                  "null"
+                ],
                 "description": "The name/label of the clicked link"
               },
               "user_agent": {
-                "type": ["string", "null"],
+                "type": [
+                  "string",
+                  "null"
+                ],
                 "description": "Raw user agent string",
                 "example": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
               },
@@ -5204,7 +6468,10 @@
                 "$ref": "#/components/schemas/GeoIp"
               },
               "ip_address": {
-                "type": ["string", "null"],
+                "type": [
+                  "string",
+                  "null"
+                ],
                 "description": "IP address of the click",
                 "example": "104.28.114.11"
               }
@@ -5215,13 +6482,23 @@
       "OpenEvent": {
         "description": "Fired when a recipient opens the email (subsequent opens after the initial open).",
         "allOf": [
-          { "$ref": "#/components/schemas/CommonEventProperties" },
+          {
+            "$ref": "#/components/schemas/CommonEventProperties"
+          },
           {
             "type": "object",
             "properties": {
-              "type": { "type": "string", "enum": ["open"] },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "open"
+                ]
+              },
               "user_agent": {
-                "type": ["string", "null"],
+                "type": [
+                  "string",
+                  "null"
+                ],
                 "description": "Raw user agent string",
                 "example": "Mozilla/5.0"
               },
@@ -5232,12 +6509,18 @@
                 "$ref": "#/components/schemas/GeoIp"
               },
               "ip_address": {
-                "type": ["string", "null"],
+                "type": [
+                  "string",
+                  "null"
+                ],
                 "description": "IP address of the open",
                 "example": "104.28.114.11"
               },
               "initial_pixel": {
-                "type": ["boolean", "null"],
+                "type": [
+                  "boolean",
+                  "null"
+                ],
                 "description": "Whether this was triggered by the initial tracking pixel"
               }
             }
@@ -5247,13 +6530,23 @@
       "InitialOpenEvent": {
         "description": "Fired the first time a recipient opens the email.",
         "allOf": [
-          { "$ref": "#/components/schemas/CommonEventProperties" },
+          {
+            "$ref": "#/components/schemas/CommonEventProperties"
+          },
           {
             "type": "object",
             "properties": {
-              "type": { "type": "string", "enum": ["initial_open"] },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "initial_open"
+                ]
+              },
               "user_agent": {
-                "type": ["string", "null"],
+                "type": [
+                  "string",
+                  "null"
+                ],
                 "description": "Raw user agent string",
                 "example": "Mozilla/5.0"
               },
@@ -5264,12 +6557,18 @@
                 "$ref": "#/components/schemas/GeoIp"
               },
               "ip_address": {
-                "type": ["string", "null"],
+                "type": [
+                  "string",
+                  "null"
+                ],
                 "description": "IP address of the open",
                 "example": "104.28.114.11"
               },
               "initial_pixel": {
-                "type": ["boolean", "null"],
+                "type": [
+                  "boolean",
+                  "null"
+                ],
                 "description": "Whether this was triggered by the initial tracking pixel"
               }
             }
@@ -5279,21 +6578,37 @@
       "AmpClickEvent": {
         "description": "Fired when a recipient clicks a tracked link in an AMP email.",
         "allOf": [
-          { "$ref": "#/components/schemas/CommonEventProperties" },
+          {
+            "$ref": "#/components/schemas/CommonEventProperties"
+          },
           {
             "type": "object",
             "properties": {
-              "type": { "type": "string", "enum": ["amp_click"] },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "amp_click"
+                ]
+              },
               "target_link_url": {
-                "type": ["string", "null"],
+                "type": [
+                  "string",
+                  "null"
+                ],
                 "description": "The URL that was clicked"
               },
               "target_link_name": {
-                "type": ["string", "null"],
+                "type": [
+                  "string",
+                  "null"
+                ],
                 "description": "The name/label of the clicked link"
               },
               "user_agent": {
-                "type": ["string", "null"],
+                "type": [
+                  "string",
+                  "null"
+                ],
                 "description": "Raw user agent string"
               },
               "user_agent_parsed": {
@@ -5303,7 +6618,10 @@
                 "$ref": "#/components/schemas/GeoIp"
               },
               "ip_address": {
-                "type": ["string", "null"],
+                "type": [
+                  "string",
+                  "null"
+                ],
                 "description": "IP address of the click"
               }
             }
@@ -5313,13 +6631,23 @@
       "AmpOpenEvent": {
         "description": "Fired when a recipient opens an AMP email (subsequent opens).",
         "allOf": [
-          { "$ref": "#/components/schemas/CommonEventProperties" },
+          {
+            "$ref": "#/components/schemas/CommonEventProperties"
+          },
           {
             "type": "object",
             "properties": {
-              "type": { "type": "string", "enum": ["amp_open"] },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "amp_open"
+                ]
+              },
               "user_agent": {
-                "type": ["string", "null"],
+                "type": [
+                  "string",
+                  "null"
+                ],
                 "description": "Raw user agent string"
               },
               "user_agent_parsed": {
@@ -5329,11 +6657,17 @@
                 "$ref": "#/components/schemas/GeoIp"
               },
               "ip_address": {
-                "type": ["string", "null"],
+                "type": [
+                  "string",
+                  "null"
+                ],
                 "description": "IP address of the open"
               },
               "initial_pixel": {
-                "type": ["boolean", "null"],
+                "type": [
+                  "boolean",
+                  "null"
+                ],
                 "description": "Whether this was triggered by the initial tracking pixel"
               }
             }
@@ -5343,13 +6677,23 @@
       "AmpInitialOpenEvent": {
         "description": "Fired the first time a recipient opens an AMP email.",
         "allOf": [
-          { "$ref": "#/components/schemas/CommonEventProperties" },
+          {
+            "$ref": "#/components/schemas/CommonEventProperties"
+          },
           {
             "type": "object",
             "properties": {
-              "type": { "type": "string", "enum": ["amp_initial_open"] },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "amp_initial_open"
+                ]
+              },
               "user_agent": {
-                "type": ["string", "null"],
+                "type": [
+                  "string",
+                  "null"
+                ],
                 "description": "Raw user agent string"
               },
               "user_agent_parsed": {
@@ -5359,11 +6703,17 @@
                 "$ref": "#/components/schemas/GeoIp"
               },
               "ip_address": {
-                "type": ["string", "null"],
+                "type": [
+                  "string",
+                  "null"
+                ],
                 "description": "IP address of the open"
               },
               "initial_pixel": {
-                "type": ["boolean", "null"],
+                "type": [
+                  "boolean",
+                  "null"
+                ],
                 "description": "Whether this was triggered by the initial tracking pixel"
               }
             }
@@ -5373,21 +6723,37 @@
       "GenerationFailureEvent": {
         "description": "Fired when the system fails to generate a message (e.g. template rendering error).",
         "allOf": [
-          { "$ref": "#/components/schemas/CommonEventProperties" },
+          {
+            "$ref": "#/components/schemas/CommonEventProperties"
+          },
           {
             "type": "object",
             "properties": {
-              "type": { "type": "string", "enum": ["generation_failure"] },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "generation_failure"
+                ]
+              },
               "reason": {
-                "type": ["string", "null"],
+                "type": [
+                  "string",
+                  "null"
+                ],
                 "description": "Human-readable failure reason"
               },
               "raw_reason": {
-                "type": ["string", "null"],
+                "type": [
+                  "string",
+                  "null"
+                ],
                 "description": "Raw failure reason"
               },
               "error_code": {
-                "type": ["string", "null"],
+                "type": [
+                  "string",
+                  "null"
+                ],
                 "description": "Error code"
               }
             }
@@ -5397,21 +6763,37 @@
       "GenerationRejectionEvent": {
         "description": "Fired when the system rejects message generation (e.g. policy violation).",
         "allOf": [
-          { "$ref": "#/components/schemas/CommonEventProperties" },
+          {
+            "$ref": "#/components/schemas/CommonEventProperties"
+          },
           {
             "type": "object",
             "properties": {
-              "type": { "type": "string", "enum": ["generation_rejection"] },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "generation_rejection"
+                ]
+              },
               "reason": {
-                "type": ["string", "null"],
+                "type": [
+                  "string",
+                  "null"
+                ],
                 "description": "Human-readable rejection reason"
               },
               "raw_reason": {
-                "type": ["string", "null"],
+                "type": [
+                  "string",
+                  "null"
+                ],
                 "description": "Raw rejection reason"
               },
               "error_code": {
-                "type": ["string", "null"],
+                "type": [
+                  "string",
+                  "null"
+                ],
                 "description": "Error code"
               }
             }
@@ -5421,11 +6803,18 @@
       "ListUnsubscribeEvent": {
         "description": "Fired when a recipient uses the List-Unsubscribe header to unsubscribe.",
         "allOf": [
-          { "$ref": "#/components/schemas/CommonEventProperties" },
+          {
+            "$ref": "#/components/schemas/CommonEventProperties"
+          },
           {
             "type": "object",
             "properties": {
-              "type": { "type": "string", "enum": ["list_unsubscribe"] }
+              "type": {
+                "type": "string",
+                "enum": [
+                  "list_unsubscribe"
+                ]
+              }
             }
           }
         ]
@@ -5433,14 +6822,372 @@
       "LinkUnsubscribeEvent": {
         "description": "Fired when a recipient clicks an unsubscribe link in the email body.",
         "allOf": [
-          { "$ref": "#/components/schemas/CommonEventProperties" },
+          {
+            "$ref": "#/components/schemas/CommonEventProperties"
+          },
           {
             "type": "object",
             "properties": {
-              "type": { "type": "string", "enum": ["link_unsubscribe"] }
+              "type": {
+                "type": "string",
+                "enum": [
+                  "link_unsubscribe"
+                ]
+              }
             }
           }
         ]
+      },
+      "ListEmailsResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "required": [
+              "events"
+            ],
+            "properties": {
+              "events": {
+                "type": "object",
+                "required": [
+                  "data",
+                  "total_count",
+                  "from",
+                  "to",
+                  "pagination"
+                ],
+                "properties": {
+                  "data": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/SentEmailListItem"
+                    }
+                  },
+                  "total_count": {
+                    "type": "integer",
+                    "description": "Total number of matching emails"
+                  },
+                  "from": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Start of the query date range"
+                  },
+                  "to": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "End of the query date range"
+                  },
+                  "pagination": {
+                    "type": "object",
+                    "properties": {
+                      "next_cursor": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "description": "Cursor for the next page, or null if no more results"
+                      },
+                      "per_page": {
+                        "type": "integer"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "SentEmailListItem": {
+        "type": "object",
+        "required": [
+          "event_id",
+          "type",
+          "timestamp"
+        ],
+        "properties": {
+          "event_id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "description": "SparkPost event type (e.g., injection)"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "request_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "message_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "subject": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "friendly_from": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sending_domain": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rcpt_to": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "raw_rcpt_to": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "recipient_domain": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "mailbox_provider": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "mailbox_provider_region": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sending_ip": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "click_tracking": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "open_tracking": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "transactional": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "msg_size": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "injection_time": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "rcpt_meta": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": true
+          }
+        }
+      },
+      "GetTemplateHtmlResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "data": {
+            "type": "object",
+            "required": [
+              "html",
+              "merge_tags"
+            ],
+            "properties": {
+              "html": {
+                "type": "string",
+                "description": "The template HTML content"
+              },
+              "merge_tags": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "key",
+                    "name",
+                    "required"
+                  ],
+                  "properties": {
+                    "key": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "required": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              },
+              "subject": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The template subject line, if set"
+              }
+            }
+          }
+        }
+      },
+      "ListProjectsResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "required": [
+              "projects",
+              "pagination"
+            ],
+            "properties": {
+              "projects": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ProjectView"
+                }
+              },
+              "pagination": {
+                "$ref": "#/components/schemas/ProjectsPagination"
+              }
+            }
+          }
+        }
+      },
+      "ProjectView": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "team_id",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "emoji": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "team_id": {
+            "type": "integer"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ProjectsPagination": {
+        "type": "object",
+        "required": [
+          "total",
+          "per_page",
+          "current_page",
+          "last_page"
+        ],
+        "properties": {
+          "total": {
+            "type": "integer"
+          },
+          "per_page": {
+            "type": "integer"
+          },
+          "current_page": {
+            "type": "integer"
+          },
+          "last_page": {
+            "type": "integer"
+          }
+        }
       }
     }
   },
