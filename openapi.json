@@ -1561,7 +1561,8 @@
                     "dkim": {
                       "public": "MIGfMA0GCSqGSIb3DQEBA...",
                       "selector": "scph0123",
-                      "headers": "from:to:subject:date"
+                      "headers": "from:to:subject:date",
+                      "signing_domain": "example.com"
                     }
                   }
                 }
@@ -1663,13 +1664,18 @@
                     "can_send": true,
                     "cname_status": "valid",
                     "dkim_status": "valid",
+                    "dmarc_status": "valid",
+                    "spf_status": "valid",
+                    "is_primary_domain": false,
                     "tracking_domain": "tracking.example.com",
                     "dns": {
                       "dkim": {
                         "selector": "scph0123",
-                        "public": "MIGfMA0GCSqGSIb3DQEBA..."
+                        "public": "MIGfMA0GCSqGSIb3DQEBA...",
+                        "headers": "from:to:subject:date"
                       }
                     },
+                    "dns_provider": null,
                     "created_at": "2024-01-15T10:30:00+00:00",
                     "updated_at": "2024-01-16T14:45:00+00:00"
                   }
@@ -3121,6 +3127,7 @@
                 "example": {
                   "message": "Merge tags retrieved successfully.",
                   "data": {
+                    "project_id": 13,
                     "template_slug": "welcome-email",
                     "version": 2,
                     "merge_tags": [
@@ -3270,7 +3277,10 @@
                         "domain": "example.com",
                         "dkim_status": "valid",
                         "cname_status": "valid",
-                        "ownership_verified": "true"
+                        "dmarc_status": "valid",
+                        "spf_status": "unverified",
+                        "ownership_verified": "true",
+                        "is_primary_domain": false
                       }
                     }
                   },
@@ -3280,14 +3290,31 @@
                       "message": "Domain verification completed.",
                       "data": {
                         "domain": "example.com",
-                        "dkim_status": "unverified",
-                        "cname_status": "unverified",
+                        "dkim_status": "invalid",
+                        "cname_status": "invalid",
+                        "dmarc_status": "missing",
+                        "spf_status": "unverified",
                         "ownership_verified": null,
+                        "is_primary_domain": false,
                         "dns": {
                           "dkim_record": null,
                           "cname_record": null,
-                          "dkim_error": "DKIM record not found",
-                          "cname_error": "CNAME record not found"
+                          "dkim_error": "DNS DKIM query error: dns lookup failed for scph0226._domainkey.example.com: no TXT records found",
+                          "cname_error": "DNS CNAME query error: No CNAME records retrieved",
+                          "dmarc_record": null,
+                          "dmarc_error": "No DMARC record found for example.com or its parent domain.",
+                          "spf_record": null,
+                          "spf_error": null
+                        },
+                        "dmarc": {
+                          "is_valid": false,
+                          "status": "missing",
+                          "found_at_domain": null,
+                          "record": null,
+                          "policy": null,
+                          "subdomain_policy": null,
+                          "error": "No DMARC record found for example.com or its parent domain.",
+                          "covered_by_parent_policy": false
                         }
                       }
                     }
@@ -4076,6 +4103,10 @@
               "headers": {
                 "type": "string",
                 "description": "Headers to sign"
+              },
+              "signing_domain": {
+                "type": "string",
+                "description": "Domain used for DKIM signing. Normally matches the top-level `domain` field."
               }
             }
           }
@@ -4246,8 +4277,43 @@
               "string",
               "null"
             ],
-            "description": "DKIM verification status",
+            "description": "DKIM verification status. `null` until the domain has been verified at least once via `POST /domains/{domain}/verify`.",
             "example": "valid"
+          },
+          "dmarc_status": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "DMARC verification status. `null` until the domain has been verified at least once.",
+            "enum": [
+              "valid",
+              "invalid",
+              "missing",
+              "unverified",
+              null
+            ],
+            "example": "valid"
+          },
+          "spf_status": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "SPF verification status. `null` until the domain has been verified at least once.",
+            "enum": [
+              "valid",
+              "invalid",
+              "missing",
+              "unverified",
+              null
+            ],
+            "example": "valid"
+          },
+          "is_primary_domain": {
+            "type": "boolean",
+            "description": "True when this is a root/apex sending domain (not a subdomain). Primary domains require SPF instead of CNAME delegation.",
+            "example": false
           },
           "tracking_domain": {
             "type": [
@@ -4284,6 +4350,50 @@
                     "example": "from:to:subject:date"
                   }
                 }
+              }
+            }
+          },
+          "dns_provider": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "Detected DNS provider for this domain, or `null` if detection hasn't run.",
+            "required": [
+              "provider",
+              "provider_label",
+              "nameservers",
+              "error"
+            ],
+            "properties": {
+              "provider": {
+                "type": "string",
+                "description": "Machine-readable DNS provider identifier.",
+                "example": "cloudflare"
+              },
+              "provider_label": {
+                "type": "string",
+                "description": "Human-readable DNS provider name.",
+                "example": "Cloudflare"
+              },
+              "nameservers": {
+                "type": "array",
+                "description": "Nameservers detected for the domain.",
+                "items": {
+                  "type": "string"
+                },
+                "example": [
+                  "ns1.example.com",
+                  "ns2.example.com"
+                ]
+              },
+              "error": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Error message if DNS provider detection failed.",
+                "example": null
               }
             }
           },
@@ -4325,7 +4435,10 @@
         "required": [
           "domain",
           "dkim_status",
-          "cname_status"
+          "cname_status",
+          "dmarc_status",
+          "spf_status",
+          "is_primary_domain"
         ],
         "properties": {
           "domain": {
@@ -4345,13 +4458,41 @@
           },
           "cname_status": {
             "type": "string",
-            "description": "CNAME verification status",
+            "description": "CNAME verification status. `not_applicable` is returned for primary (apex) sending domains, which require SPF instead of CNAME delegation.",
             "enum": [
               "valid",
               "unverified",
-              "invalid"
+              "invalid",
+              "not_applicable"
             ],
             "example": "valid"
+          },
+          "dmarc_status": {
+            "type": "string",
+            "description": "DMARC verification status.",
+            "enum": [
+              "valid",
+              "invalid",
+              "missing",
+              "unverified"
+            ],
+            "example": "valid"
+          },
+          "spf_status": {
+            "type": "string",
+            "description": "SPF verification status.",
+            "enum": [
+              "valid",
+              "invalid",
+              "missing",
+              "unverified"
+            ],
+            "example": "valid"
+          },
+          "is_primary_domain": {
+            "type": "boolean",
+            "description": "True when this is a root/apex sending domain (not a subdomain). Primary domains require SPF instead of CNAME delegation.",
+            "example": false
           },
           "ownership_verified": {
             "type": [
@@ -4363,6 +4504,12 @@
           },
           "dns": {
             "$ref": "#/components/schemas/DomainDnsVerificationView"
+          },
+          "dmarc": {
+            "$ref": "#/components/schemas/DmarcValidationResult"
+          },
+          "spf": {
+            "$ref": "#/components/schemas/SpfValidationResult"
           }
         }
       },
@@ -4401,6 +4548,177 @@
             ],
             "description": "CNAME verification error message",
             "example": "CNAME record not found"
+          },
+          "dmarc_record": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Found DMARC record value.",
+            "example": null
+          },
+          "dmarc_error": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "DMARC verification error message.",
+            "example": "No DMARC record found for example.com or its parent domain."
+          },
+          "spf_record": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Found SPF record value.",
+            "example": null
+          },
+          "spf_error": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "SPF verification error message.",
+            "example": null
+          }
+        }
+      },
+      "DmarcValidationResult": {
+        "type": "object",
+        "description": "DMARC validation result details.",
+        "required": [
+          "is_valid",
+          "status",
+          "found_at_domain",
+          "record",
+          "policy",
+          "subdomain_policy",
+          "error",
+          "covered_by_parent_policy"
+        ],
+        "properties": {
+          "is_valid": {
+            "type": "boolean",
+            "description": "Whether a valid DMARC record was found.",
+            "example": false
+          },
+          "status": {
+            "type": "string",
+            "description": "DMARC validation status.",
+            "enum": [
+              "valid",
+              "invalid",
+              "missing",
+              "unverified"
+            ],
+            "example": "missing"
+          },
+          "found_at_domain": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Domain where the DMARC record was located (may be a parent domain for subdomains).",
+            "example": null
+          },
+          "record": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Raw DMARC record value.",
+            "example": null
+          },
+          "policy": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "DMARC policy tag (`p=`).",
+            "enum": [
+              "none",
+              "quarantine",
+              "reject",
+              null
+            ],
+            "example": null
+          },
+          "subdomain_policy": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "DMARC subdomain policy tag (`sp=`), if present.",
+            "enum": [
+              "none",
+              "quarantine",
+              "reject",
+              null
+            ],
+            "example": null
+          },
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Validation error message, if any.",
+            "example": "No DMARC record found for example.com or its parent domain."
+          },
+          "covered_by_parent_policy": {
+            "type": "boolean",
+            "description": "Whether this domain is covered by the parent domain's subdomain policy.",
+            "example": false
+          }
+        }
+      },
+      "SpfValidationResult": {
+        "type": "object",
+        "description": "SPF validation result details.",
+        "required": [
+          "is_valid",
+          "status",
+          "record",
+          "error",
+          "includes_sparkpost"
+        ],
+        "properties": {
+          "is_valid": {
+            "type": "boolean",
+            "description": "Whether a valid SPF record was found that authorises SparkPost.",
+            "example": false
+          },
+          "status": {
+            "type": "string",
+            "description": "SPF validation status.",
+            "enum": [
+              "valid",
+              "invalid",
+              "missing",
+              "unverified"
+            ],
+            "example": "unverified"
+          },
+          "record": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Raw SPF record value.",
+            "example": null
+          },
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Validation error message, if any.",
+            "example": null
+          },
+          "includes_sparkpost": {
+            "type": "boolean",
+            "description": "Whether the SPF record authorises `_spf.sparkpostmail.com`.",
+            "example": false
           }
         }
       },
@@ -5135,11 +5453,17 @@
         "type": "object",
         "description": "Merge tags for a template version",
         "required": [
+          "project_id",
           "template_slug",
           "version",
           "merge_tags"
         ],
         "properties": {
+          "project_id": {
+            "type": "integer",
+            "description": "Numeric ID of the project the template belongs to.",
+            "example": 13
+          },
           "template_slug": {
             "type": "string",
             "description": "The template slug",
