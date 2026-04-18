@@ -613,7 +613,6 @@
                   "$ref": "#/components/schemas/ListEmailsResponse"
                 },
                 "example": {
-                  "success": true,
                   "message": "Emails retrieved successfully.",
                   "data": {
                     "events": {
@@ -654,7 +653,6 @@
                   "$ref": "#/components/schemas/ErrorResponse"
                 },
                 "example": {
-                  "success": false,
                   "message": "Sandbox API key does not have an associated user with an email address.",
                   "error_code": "retrieval_error"
                 }
@@ -679,7 +677,6 @@
                   "$ref": "#/components/schemas/ValidationErrorResponse"
                 },
                 "example": {
-                  "success": false,
                   "message": "Validation failed.",
                   "errors": {
                     "per_page": [
@@ -698,7 +695,6 @@
                   "$ref": "#/components/schemas/ErrorResponse"
                 },
                 "example": {
-                  "success": false,
                   "message": "Failed to retrieve emails. Please try again later.",
                   "error_code": "retrieval_error"
                 }
@@ -3529,7 +3525,6 @@
                   "$ref": "#/components/schemas/ListProjectsResponse"
                 },
                 "example": {
-                  "success": true,
                   "message": "Projects retrieved successfully.",
                   "data": {
                     "projects": [
@@ -3571,7 +3566,6 @@
                   "$ref": "#/components/schemas/ValidationErrorResponse"
                 },
                 "example": {
-                  "success": false,
                   "message": "Validation failed.",
                   "errors": {
                     "per_page": [
@@ -4007,16 +4001,19 @@
       },
       "ErrorCode": {
         "type": "string",
-        "description": "Error codes returned by the API.\n\n| Code | HTTP Status | Description |\n|------|-------------|-------------|\n| `validation_error` | 422 | Request validation failed. Check the `errors` object for field-specific messages. |\n| `invalid_domain` | 400 | The sender domain could not be determined from the email address. |\n| `unconfigured_domain` | 400 | The sender domain is not configured or approved for sending. |\n| `send_error` | 400, 500 | General error during email send preparation or domain registration. |\n| `transmission_failed` | 502 | Email transmission to the upstream provider failed. |\n| `resource_already_exists` | 409 | The resource (e.g., domain) already exists. |\n| `template_not_found` | 404 | The specified template, project, or template version was not found. |\n| `quota_exceeded` | 429 | Monthly sending quota exceeded. Upgrade your plan to continue sending. |\n| `daily_quota_exceeded` | 429 | Daily sending quota exceeded. Try again tomorrow. |",
+        "description": "Error codes returned by the API.\n\n| Code | HTTP Status | Description |\n|------|-------------|-------------|\n| `validation_error` | 422 | Request validation failed. Check the `errors` object for field-specific messages. |\n| `invalid_domain` | 400 | The sender domain could not be determined from the email address. |\n| `unconfigured_domain` | 400 | The sender domain is not configured or approved for sending. |\n| `send_error` | 400, 500 | General error during email send preparation or domain registration. |\n| `retrieval_error` | 400, 500 | Failed to retrieve resources (e.g., sandbox key without associated user, upstream error). |\n| `transmission_failed` | 502 | Email transmission to the upstream provider failed. |\n| `resource_already_exists` | 409 | The resource (e.g., domain) already exists. |\n| `not_found` | 404 | The specified resource was not found. |\n| `template_not_found` | 404 | The specified template, project, or template version was not found. |\n| `insufficient_scope` | 403 | The API key does not have the required scope for this endpoint. |\n| `schedule_cancellation_failed` | 409, 500 | Could not cancel the scheduled transmission (already sent or upstream error). |\n| `quota_exceeded` | 429 | Monthly sending quota exceeded. Upgrade your plan to continue sending. |\n| `daily_quota_exceeded` | 429 | Daily sending quota exceeded. Try again tomorrow. |",
         "enum": [
           "validation_error",
           "invalid_domain",
           "unconfigured_domain",
           "send_error",
+          "retrieval_error",
           "transmission_failed",
           "resource_already_exists",
-          "template_not_found",
           "not_found",
+          "template_not_found",
+          "insufficient_scope",
+          "schedule_cancellation_failed",
           "quota_exceeded",
           "daily_quota_exceeded"
         ],
@@ -4789,12 +4786,12 @@
                 "message.out_of_band",
                 "message.spam_complaint",
                 "message.policy_rejection",
-                "engagament.click",
-                "engagament.open",
-                "engagament.initial_open",
-                "engagament.amp_click",
-                "engagament.amp_open",
-                "engagament.amp_initial_open",
+                "engagement.click",
+                "engagement.open",
+                "engagement.initial_open",
+                "engagement.amp_click",
+                "engagement.amp_open",
+                "engagement.amp_initial_open",
                 "generation.generation_failure",
                 "generation.generation_rejection",
                 "unsubscribe.list_unsubscribe",
@@ -7165,17 +7162,10 @@
       "ListEmailsResponse": {
         "type": "object",
         "required": [
-          "success",
           "message",
           "data"
         ],
         "properties": {
-          "success": {
-            "type": "boolean",
-            "enum": [
-              true
-            ]
-          },
           "message": {
             "type": "string"
           },
@@ -7421,17 +7411,10 @@
       "ListProjectsResponse": {
         "type": "object",
         "required": [
-          "success",
           "message",
           "data"
         ],
         "properties": {
-          "success": {
-            "type": "boolean",
-            "enum": [
-              true
-            ]
-          },
           "message": {
             "type": "string"
           },
