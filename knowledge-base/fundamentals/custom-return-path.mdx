@@ -78,45 +78,44 @@ DMARC:       Pass (via both SPF and DKIM alignment)
 
 ## Setting Up a Custom Return-Path in Lettr
 
-<Steps>
-  <Step title="Choose a Subdomain">
-    Select a subdomain of your sending domain to use as the bounce domain. Common choices:
+Lettr uses the sending domain itself as the bounce domain — there is no separate subdomain to configure. Once a sending domain's CNAME record is verified, you can enable it as the bounce domain with a single toggle.
 
-    - `mail.yourapp.com`
-    - `bounce.yourapp.com`
-    - `em.yourapp.com`
+<Steps>
+  <Step title="Verify the CNAME Record">
+    Open **Domains → Sending Domains** and confirm that your sending domain's `cname_status` is **valid**. The Bounce Domain toggle is disabled until the CNAME is verified.
+
+    If the CNAME is not yet valid, follow the [Sending Domains setup guide](/learn/domains/sending-domains) to add and verify the record before continuing.
 
     <Note>
-      Use a **subdomain**, not your root domain. The custom Return-Path requires specific DNS records that could conflict with other services if set on the root domain.
+      The CNAME record is the same one used for standard domain verification (pointing to `sparkpostmail.com`). No additional DNS changes are required to enable the bounce domain.
     </Note>
   </Step>
 
-  <Step title="Add DNS Records">
-    In the Lettr dashboard, navigate to **Domains** > your sending domain > **Custom Return-Path**. Lettr will provide DNS records to add to your domain. These typically include:
-
-    - A **CNAME record** on your chosen subdomain pointing to Lettr's bounce processing infrastructure
-    - An **MX record** (in some configurations) to route bounce responses to Lettr
-
-    ```
-    mail.yourapp.com  CNAME  bounce.lettr.com
-    ```
+  <Step title="Open the Domain Detail Page">
+    From **Domains → Sending Domains**, click the domain you want to configure. This opens the domain's detail and settings page.
   </Step>
 
-  <Step title="Verify in Lettr">
-    After adding the DNS records, click **Verify** in the Lettr dashboard. Lettr will check that the records are published correctly and that the subdomain resolves as expected. DNS propagation can take up to 48 hours, though it typically completes within minutes.
+  <Step title="Locate the Bounce Domain Card">
+    Scroll to the **Bounce Domain** card. It contains a single toggle labeled **Use this sending domain as bounce domain** along with a short description.
+  </Step>
+
+  <Step title="Enable the Toggle">
+    Switch **Use this sending domain as bounce domain** on. When enabled, bounce messages will use this domain's Return-Path instead of the SparkPost default, giving you SPF alignment alongside DKIM.
+
+    You will see a confirmation: *"This domain is now used as the bounce domain."* Disabling the toggle reverts the Return-Path to Lettr's default bounce domain.
   </Step>
 
   <Step title="Confirm Alignment">
     Send a test email and inspect the headers. You should see:
 
     ```
-    Return-Path: <bounces+abc123@mail.yourapp.com>
+    Return-Path: <bounces+abc123@yourapp.com>
     ```
 
     And in the `Authentication-Results` header:
 
     ```
-    spf=pass smtp.mailfrom=mail.yourapp.com
+    spf=pass smtp.mailfrom=yourapp.com
     dkim=pass header.d=yourapp.com
     dmarc=pass header.from=yourapp.com
     ```
@@ -183,16 +182,16 @@ The domain settings page in your Lettr dashboard shows the verification status o
     The From header (`hello@yourapp.com`) and the Return-Path (`bounces@mail.yourapp.com`) serve completely different purposes. The From header is what recipients see. The Return-Path is where bounces go and what SPF checks. Changing your From address does not affect SPF alignment — only the Return-Path domain matters for SPF.
   </Accordion>
 
-  <Accordion title="Using the root domain instead of a subdomain">
-    Setting up a custom Return-Path on your root domain (`yourapp.com`) can conflict with other DNS records and services. Always use a dedicated subdomain like `mail.yourapp.com` or `bounce.yourapp.com`.
+  <Accordion title="Enabling the toggle before the CNAME is valid">
+    The **Bounce Domain** toggle is disabled until the domain's CNAME record shows a `valid` status. If you see the amber "Verify the CNAME record before enabling." warning, finish verifying the sending domain first — see [Sending Domains](/learn/domains/sending-domains).
   </Accordion>
 
   <Accordion title="Forgetting to update SPF when changing providers">
     If you migrate between email service providers, your SPF include statements need to be updated to authorize the new provider's sending IPs. An outdated SPF record will cause SPF failures even with a custom Return-Path configured. Verify your SPF record includes the correct `include:` directive for Lettr.
   </Accordion>
 
-  <Accordion title="Using strict DMARC alignment with a subdomain Return-Path">
-    If your DMARC record specifies `aspf=s` (strict alignment), a Return-Path on `mail.yourapp.com` will not align with a From address on `yourapp.com`. Either use relaxed alignment (`aspf=r`, the default) or set the Return-Path domain to exactly match your From domain — which is rarely practical with an ESP.
+  <Accordion title="Using strict DMARC alignment with a subdomain sending domain">
+    If your DMARC record specifies `aspf=s` (strict alignment) and you send from a subdomain such as `mail.yourapp.com`, the Return-Path (which matches the sending domain) will not align with a From address on the root `yourapp.com`. Either use relaxed alignment (`aspf=r`, the default) or publish a DMARC record at the subdomain level.
   </Accordion>
 </AccordionGroup>
 

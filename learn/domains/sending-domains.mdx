@@ -253,6 +253,27 @@ Link a [tracking domain](/learn/domains/tracking-domains) to your sending domain
 2. Select your sending domain
 3. Under **Tracking Domain**, select or add a tracking domain
 
+## Configuring a Custom Bounce Domain
+
+By default, bounce notifications use SparkPost's shared bounce domain as the Return-Path. You can instead use your own sending domain as the bounce domain, which achieves SPF alignment alongside DKIM alignment and removes "via" labels in some email clients.
+
+<Steps>
+  <Step title="Verify the CNAME">
+    Make sure your sending domain's CNAME record shows a `valid` status. The Bounce Domain toggle is disabled until the CNAME is verified.
+  </Step>
+  <Step title="Open the domain detail page">
+    Go to **Domains → Sending Domains** and click the domain you want to configure.
+  </Step>
+  <Step title="Locate the Bounce Domain card">
+    Scroll to the **Bounce Domain** card on the domain's settings page.
+  </Step>
+  <Step title="Enable the toggle">
+    Switch **Use this sending domain as bounce domain** on. Bounce messages will now use this domain's Return-Path instead of the SparkPost default.
+  </Step>
+</Steps>
+
+See [Custom Return-Path and MAIL FROM](/knowledge-base/fundamentals/custom-return-path) for the full background on Return-Path, SPF alignment, and header-level details.
+
 ## List All Sending Domains
 
 ```bash
