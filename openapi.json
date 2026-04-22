@@ -1897,8 +1897,8 @@
                 "auth_password": "secret",
                 "events_mode": "selected",
                 "events": [
-                  "delivery",
-                  "bounce"
+                  "message.delivery",
+                  "message.bounce"
                 ]
               }
             }
@@ -4729,10 +4729,18 @@
             "maxLength": 255,
             "example": "Updated Webhook Name"
           },
-          "target": {
+          "url": {
             "type": "string",
             "format": "uri",
             "description": "URL where webhook events will be sent",
+            "maxLength": 2048,
+            "example": "https://example.com/webhook"
+          },
+          "target": {
+            "type": "string",
+            "format": "uri",
+            "description": "Deprecated alias for `url`. Accepted for backwards compatibility.",
+            "deprecated": true,
             "maxLength": 2048,
             "example": "https://example.com/webhook"
           },
@@ -4774,7 +4782,7 @@
           },
           "events": {
             "type": "array",
-            "description": "Event types that trigger the webhook",
+            "description": "Event types that trigger the webhook. Fully-prefixed names such as `message.delivery` are canonical; short names (`delivery`) and the legacy `engagament.*` prefix are accepted for backwards compatibility and are normalised to the fully-prefixed form.",
             "minItems": 1,
             "items": {
               "type": "string",
@@ -4935,13 +4943,37 @@
           },
           "events": {
             "type": "array",
-            "description": "List of event types to receive (required when events_mode is 'selected')",
+            "description": "List of event types to receive (required when events_mode is 'selected'). Fully-prefixed names such as `message.delivery` are canonical; short names (`delivery`) and the legacy `engagament.*` prefix are accepted for backwards compatibility and are normalised to the fully-prefixed form.",
             "items": {
-              "type": "string"
+              "type": "string",
+              "enum": [
+                "message.injection",
+                "message.delivery",
+                "message.bounce",
+                "message.delay",
+                "message.out_of_band",
+                "message.spam_complaint",
+                "message.policy_rejection",
+                "engagement.click",
+                "engagement.open",
+                "engagement.initial_open",
+                "engagement.amp_click",
+                "engagement.amp_open",
+                "engagement.amp_initial_open",
+                "generation.generation_failure",
+                "generation.generation_rejection",
+                "unsubscribe.list_unsubscribe",
+                "unsubscribe.link_unsubscribe",
+                "relay.relay_injection",
+                "relay.relay_rejection",
+                "relay.relay_delivery",
+                "relay.relay_tempfail",
+                "relay.relay_permfail"
+              ]
             },
             "example": [
-              "delivery",
-              "bounce"
+              "message.delivery",
+              "message.bounce"
             ]
           }
         }
