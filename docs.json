@@ -90,6 +90,15 @@
                 ]
               },
               {
+                "group": "Python",
+                "pages": [
+                  "quickstart/python/quickstart",
+                  "quickstart/python/advanced",
+                  "quickstart/python/send-with-flask",
+                  "quickstart/python/send-with-fastapi"
+                ]
+              },
+              {
                 "group": "SMTP",
                 "pages": [
                   "quickstart/smtp/introduction",

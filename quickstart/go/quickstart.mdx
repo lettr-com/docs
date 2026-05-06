@@ -67,12 +67,12 @@ Get started in three quick steps: install, configure, and send.
 
         // Verify the client is configured correctly
         ctx := context.Background()
-        health, err := client.Health.AuthCheck(ctx)
+        auth, err := client.ValidateAPIKey(ctx)
         if err != nil {
             log.Fatal(err)
         }
 
-        log.Printf("Connected to Lettr (Team ID: %s)", health.Data.TeamID)
+        log.Printf("Connected to Lettr (Team ID: %s)", auth.Data.TeamID)
     }
     ```
 

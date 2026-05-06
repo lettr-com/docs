@@ -69,11 +69,7 @@ let email = CreateEmailOptions::new(
 )
 .with_html("<p>Please find your invoice attached.</p>")
 .with_attachments(vec![
-    Attachment {
-        filename: "invoice.pdf".to_string(),
-        content: encoded,
-        content_type: "application/pdf".to_string(),
-    }
+    Attachment::new("invoice.pdf", "application/pdf", encoded),
 ]);
 
 client.emails.send(email).await?;
@@ -88,16 +84,16 @@ let pdf_data = fs::read("document.pdf")?;
 let img_data = fs::read("logo.png")?;
 
 let attachments = vec![
-    Attachment {
-        filename: "document.pdf".to_string(),
-        content: general_purpose::STANDARD.encode(&pdf_data),
-        content_type: "application/pdf".to_string(),
-    },
-    Attachment {
-        filename: "logo.png".to_string(),
-        content: general_purpose::STANDARD.encode(&img_data),
-        content_type: "image/png".to_string(),
-    },
+    Attachment::new(
+        "document.pdf",
+        "application/pdf",
+        general_purpose::STANDARD.encode(&pdf_data),
+    ),
+    Attachment::new(
+        "logo.png",
+        "image/png",
+        general_purpose::STANDARD.encode(&img_data),
+    ),
 ];
 
 let email = CreateEmailOptions::new(
@@ -122,19 +118,18 @@ Send emails using Lettr-managed templates:
 ```rust
 use std::collections::HashMap;
 
-let mut merge_tags = HashMap::new();
-merge_tags.insert("name".to_string(), "John Doe".into());
-merge_tags.insert("company".to_string(), "Acme Corp".into());
-merge_tags.insert("verify_url".to_string(), "https://example.com/verify/abc123".into());
-merge_tags.insert("support_email".to_string(), "support@yourdomain.com".into());
+let mut substitution_data = HashMap::new();
+substitution_data.insert("name".to_string(), "John Doe".to_string());
+substitution_data.insert("company".to_string(), "Acme Corp".to_string());
+substitution_data.insert("verify_url".to_string(), "https://example.com/verify/abc123".to_string());
+substitution_data.insert("support_email".to_string(), "support@yourdomain.com".to_string());
 
-let email = CreateEmailOptions::new(
+let email = CreateEmailOptions::new_with_template(
     "notifications@yourdomain.com",
     ["user@example.com"],
-    "Welcome", // Subject can be overridden by template
+    "welcome-email",
 )
-.with_template_id("welcome-email")
-.with_merge_tags(merge_tags);
+.with_substitution_data(substitution_data);
 
 client.emails.send(email).await?;
 ```

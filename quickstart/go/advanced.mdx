@@ -68,9 +68,9 @@ resp, err := client.Emails.Send(ctx, &lettr.SendEmailRequest{
     Html:    "<p>Please find your invoice attached.</p>",
     Attachments: []lettr.Attachment{
         {
-            Filename: "invoice.pdf",
-            Content:  encodedContent,
-            Type:     "application/pdf",
+            Name: "invoice.pdf",
+            Data: encodedContent,
+            Type: "application/pdf",
         },
     },
 })
@@ -84,17 +84,17 @@ attachments := []lettr.Attachment{}
 // Attach PDF
 pdfData, _ := os.ReadFile("document.pdf")
 attachments = append(attachments, lettr.Attachment{
-    Filename: "document.pdf",
-    Content:  base64.StdEncoding.EncodeToString(pdfData),
-    Type:     "application/pdf",
+    Name: "document.pdf",
+    Data: base64.StdEncoding.EncodeToString(pdfData),
+    Type: "application/pdf",
 })
 
 // Attach image
 imgData, _ := os.ReadFile("logo.png")
 attachments = append(attachments, lettr.Attachment{
-    Filename: "logo.png",
-    Content:  base64.StdEncoding.EncodeToString(imgData),
-    Type:     "image/png",
+    Name: "logo.png",
+    Data: base64.StdEncoding.EncodeToString(imgData),
+    Type: "image/png",
 })
 
 resp, err := client.Emails.Send(ctx, &lettr.SendEmailRequest{
@@ -116,13 +116,13 @@ Send emails using Lettr-managed templates:
 
 ```go
 resp, err := client.Emails.Send(ctx, &lettr.SendEmailRequest{
-    From:       "notifications@yourdomain.com",
-    To:         []string{"user@example.com"},
-    TemplateID: "welcome-email",
-    MergeTags: map[string]interface{}{
-        "name":         "John Doe",
-        "company":      "Acme Corp",
-        "verify_url":   "https://example.com/verify/abc123",
+    From:         "notifications@yourdomain.com",
+    To:           []string{"user@example.com"},
+    TemplateSlug: "welcome-email",
+    SubstitutionData: map[string]string{
+        "name":          "John Doe",
+        "company":       "Acme Corp",
+        "verify_url":    "https://example.com/verify/abc123",
         "support_email": "support@yourdomain.com",
     },
 })

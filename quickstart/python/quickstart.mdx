@@ -61,7 +61,7 @@ Get started in three quick steps: install, configure, and send.
     client = lettr.Lettr("your-api-key")
 
     # Verify the client is configured correctly
-    auth = client.health.auth_check()
+    auth = client.auth_check()
     print(f"Connected to Lettr (Team ID: {auth.team_id})")
     ```
 

@@ -41,7 +41,7 @@ use Illuminate\Support\Facades\Mail;
 
 Mail::lettr()
     ->to('user@example.com')
-    ->sendTemplate('welcome-email', 'Welcome!', [
+    ->sendTemplate('welcome-email', substitutionData: [
         'name' => 'John',
         'company' => 'Acme Inc',
     ]);

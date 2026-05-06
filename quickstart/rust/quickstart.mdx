@@ -61,8 +61,8 @@ Get started in three quick steps: install, configure, and send.
         let client = Lettr::new("your-api-key");
 
         // Verify the client is configured correctly
-        let health = client.health.auth_check().await?;
-        println!("Connected to Lettr (Team ID: {})", health.team_id);
+        let auth = client.auth_check().await?;
+        println!("Connected to Lettr (Team ID: {})", auth.data.team_id);
 
         Ok(())
     }
