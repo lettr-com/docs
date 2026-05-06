@@ -420,8 +420,8 @@ Use Lettr templates for consistent email design:
 const result = await lettr.emails.send({
   from: process.env.FROM_EMAIL!,
   to: ['user@example.com'],
-  template_id: 'welcome-email',
-  merge_tags: {
+  template_slug: 'welcome-email',
+  substitution_data: {
     user_name: 'John Doe',
     activation_link: 'https://example.com/activate?token=...',
   },

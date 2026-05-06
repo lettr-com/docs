@@ -327,13 +327,13 @@ def forgot_password():
 Send emails using Lettr-managed templates:
 
 ```python
-def send_template_email(self, recipient, template_id, merge_tags):
+def send_template_email(self, recipient, template_slug, substitution_data):
     """Send an email using a Lettr template."""
     response = self.client.emails.send(
         from_email=current_app.config["MAIL_FROM_ADDRESS"],
         to=[recipient],
-        template_id=template_id,
-        merge_tags=merge_tags,
+        template_slug=template_slug,
+        substitution_data=substitution_data,
     )
     return response.request_id
 
@@ -341,8 +341,8 @@ def send_template_email(self, recipient, template_id, merge_tags):
 email_service = EmailService()
 email_service.send_template_email(
     recipient="user@example.com",
-    template_id="welcome-email",
-    merge_tags={
+    template_slug="welcome-email",
+    substitution_data={
         "name": "John Doe",
         "verify_url": "https://example.com/verify/abc123",
     },
@@ -409,7 +409,7 @@ def register():
 Implement error handling in your routes:
 
 ```python
-from lettr.exceptions import LettrException, LettrValidationException
+import lettr
 
 @app.route("/send-email", methods=["POST"])
 def send_email():
@@ -417,10 +417,10 @@ def send_email():
         response = client.emails.send(...)
         app.logger.info(f"Email sent: {response.request_id}")
         return jsonify({"success": True, "request_id": response.request_id})
-    except LettrValidationException as e:
+    except lettr.ValidationError as e:
         app.logger.error(f"Validation error: {e.message}")
         return jsonify({"success": False, "error": "Invalid email parameters"}), 422
-    except LettrException as e:
+    except lettr.LettrError as e:
         app.logger.error(f"Email service error: {e.message}")
         return jsonify({"success": False, "error": "Email service error"}), 500
 ```

@@ -373,8 +373,8 @@ Use Lettr templates for consistent design:
 const result = await lettr.emails.send({
   from: env.FROM_EMAIL,
   to: [email],
-  template_id: 'welcome-email',
-  merge_tags: {
+  template_slug: 'welcome-email',
+  substitution_data: {
     user_name: userName,
     activation_url: `https://app.example.com/activate?token=${token}`,
   },

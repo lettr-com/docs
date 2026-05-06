@@ -161,8 +161,8 @@ class EmailRequest(BaseModel):
 class TemplateEmailRequest(BaseModel):
     """Template email sending request."""
     to: List[EmailStr]
-    template_id: str
-    merge_tags: Dict[str, str]
+    template_slug: str
+    substitution_data: Dict[str, str]
 ```
 
 ### Email Service
@@ -336,8 +336,8 @@ async def send_template(
     response = await email_service.client.emails.send(
         from_email=settings.mail_from_address,
         to=request.to,
-        template_id=request.template_id,
-        merge_tags=request.merge_tags,
+        template_slug=request.template_slug,
+        substitution_data=request.substitution_data,
     )
     return {"success": True, "request_id": response.request_id}
 ```
@@ -425,19 +425,19 @@ Implement error handling using FastAPI's HTTPException:
 
 ```python
 from fastapi import HTTPException, status
-from lettr.exceptions import LettrValidationException, LettrException
+import lettr
 
 @app.post("/send-email")
 async def send_email(request: EmailRequest):
     try:
         response = await client.emails.send(...)
         return {"success": True, "request_id": response.request_id}
-    except LettrValidationException as e:
+    except lettr.ValidationError as e:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Invalid email parameters"
         )
-    except LettrException as e:
+    except lettr.LettrError as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Email service error"

@@ -66,8 +66,8 @@ byte[] fileData = Files.readAllBytes(Paths.get("invoice.pdf"));
 String encodedContent = Base64.getEncoder().encodeToString(fileData);
 
 Attachment attachment = Attachment.builder()
-    .filename("invoice.pdf")
-    .content(encodedContent)
+    .name("invoice.pdf")
+    .data(encodedContent)
     .type("application/pdf")
     .build();
 
@@ -90,13 +90,13 @@ byte[] imgData = Files.readAllBytes(Paths.get("logo.png"));
 
 List<Attachment> attachments = List.of(
     Attachment.builder()
-        .filename("document.pdf")
-        .content(Base64.getEncoder().encodeToString(pdfData))
+        .name("document.pdf")
+        .data(Base64.getEncoder().encodeToString(pdfData))
         .type("application/pdf")
         .build(),
     Attachment.builder()
-        .filename("logo.png")
-        .content(Base64.getEncoder().encodeToString(imgData))
+        .name("logo.png")
+        .data(Base64.getEncoder().encodeToString(imgData))
         .type("image/png")
         .build()
 );
@@ -126,8 +126,8 @@ import java.util.Map;
 CreateEmailOptions email = CreateEmailOptions.builder()
     .from("notifications@yourdomain.com")
     .to("user@example.com")
-    .templateId("welcome-email")
-    .mergeTags(Map.of(
+    .templateSlug("welcome-email")
+    .substitutionData(Map.of(
         "name", "John Doe",
         "company", "Acme Corp",
         "verify_url", "https://example.com/verify/abc123",
@@ -220,9 +220,8 @@ The SDK provides structured exception types for different error scenarios:
 
 ```java
 import com.lettr.core.exception.LettrException;
+import com.lettr.core.exception.LettrApiException;
 import com.lettr.core.exception.LettrValidationException;
-import com.lettr.core.exception.LettrAuthException;
-import com.lettr.core.exception.LettrRateLimitException;
 
 CreateEmailOptions email = CreateEmailOptions.builder()
     .from("invalid@unverified-domain.com")
@@ -235,24 +234,28 @@ try {
     CreateEmailResponse response = lettr.emails().send(email);
     System.out.println("Email sent: " + response.getRequestId());
 } catch (LettrValidationException e) {
-    // 422 validation errors
+    // 422 validation errors with field-level details
     System.err.println("Validation failed: " + e.getMessage());
     e.getErrors().forEach((field, messages) ->
         System.err.println("  " + field + ": " + messages));
-} catch (LettrAuthException e) {
-    // 401 authentication errors
-    System.err.println("Authentication failed: " + e.getMessage());
-} catch (LettrRateLimitException e) {
-    // 429 rate limit errors
-    System.err.println("Rate limit exceeded: " + e.getMessage());
+} catch (LettrApiException e) {
+    // Any non-2xx response from the API. Branch on status code.
+    switch (e.getStatusCode()) {
+        case 401 -> System.err.println("Authentication failed: " + e.getMessage());
+        case 403 -> System.err.println("Forbidden: " + e.getMessage());
+        case 404 -> System.err.println("Not found: " + e.getMessage());
+        case 429 -> System.err.println("Rate limited: " + e.getMessage());
+        default  -> System.err.println("API error " + e.getStatusCode() + ": " + e.getMessage());
+    }
 } catch (LettrException e) {
-    // Other API errors (500, 503, etc.)
-    System.err.println("API error: " + e.getMessage());
-} catch (Exception e) {
-    // Network or other errors
+    // Base SDK exception (network, parsing, etc.)
     System.err.println("Request failed: " + e.getMessage());
 }
 ```
+
+<Note>
+  The Java SDK exposes three exception types: `LettrException` (base), `LettrApiException` (any non-2xx response — branch on `getStatusCode()` and `getErrorCode()`), and `LettrValidationException` (422 with `getErrors()`).
+</Note>
 
 ### Common Error Scenarios
 
@@ -262,12 +265,12 @@ try {
 - Solution: Verify your domain in the dashboard
 
 **Invalid API key:**
-- Exception: `LettrAuthException`
+- Exception: `LettrApiException` with `getStatusCode() == 401`
 - Message: "Invalid API key"
 - Solution: Check your API key is correct and active
 
 **Rate limit exceeded:**
-- Exception: `LettrRateLimitException`
+- Exception: `LettrApiException` with `getStatusCode() == 429`
 - Message: "Too many requests"
 - Solution: Implement exponential backoff retry logic
 
