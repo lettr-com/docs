@@ -1,0 +1,157 @@
+---
+title: Sending & Scheduling
+description: "Send campaigns immediately or schedule them for a future date, and understand each step of the send lifecycle"
+---
+
+When a campaign is ready to leave Draft, you have two choices: send it right away, or schedule it for a future date and time. Either way, the campaign moves through the same lifecycle from `Preparing` to `Sent` — only the trigger differs.
+
+This page covers each transition in detail, what you can and can't change at each step, and what to expect once a send is in progress.
+
+## The Campaign Lifecycle
+
+```
+Draft → (schedule) → Scheduled → Preparing → Sending → Sent
+   └─── (send now) ─────────────────┘
+```
+
+| Status | Reachable from | Editable? | What's happening |
+|-|-|-|-|
+| **Draft** | New campaign | Yes — everything | You're still composing |
+| **Scheduled** | Draft (you set a future time) | No (unschedule first) | Waiting for the scheduled send time |
+| **Preparing** | Draft (send now) or Scheduled (time reached) | No | Recipients being resolved, content being validated |
+| **In review** | Preparing (rarely) | No | An automated check flagged the content; a Lettr admin is reviewing |
+| **Sending** | Preparing (passed validation) | No | Emails being delivered in batches |
+| **Sent** | Sending (completed) | No (read-only) | All recipients processed; analytics still updating |
+| **Failed** | Preparing (no recipients or unexpected error) | No | Campaign couldn't be sent |
+
+Two important rules to keep in mind:
+
+1. **Once a campaign leaves Draft, you can't edit it.** Scheduled campaigns can be moved back to Draft (unschedule), but everything else is locked in.
+2. **Once a campaign enters Preparing, it cannot be stopped.** There is no in-flight cancellation. If you realize a campaign has a problem after you press Send, your options are limited to (a) letting it complete and following up with a correction or (b) for a *scheduled* campaign that hasn't started yet, unscheduling before the send time arrives.
+
+## Sending a Campaign Immediately
+
+From the Review step of the builder, click **Send now**.
+
+What happens:
+
+1. Lettr validates the campaign has the required content (subject, from address, body)
+2. The campaign moves to `Preparing` and starts resolving recipients
+3. Once recipients are resolved and the content is checked, the campaign moves to `Sending` and emails start going out in batches
+4. When every recipient has been processed, the campaign moves to `Sent`
+
+You're returned to the campaign's Show page, where you can watch progress in real time. A progress bar shows how many recipients have been processed; live engagement metrics start populating as recipients open and click.
+
+## Scheduling for Later
+
+In the Schedule step of the builder, choose **Schedule** and pick a date and time. The campaign moves to `Scheduled` and waits.
+
+### How Times Are Interpreted
+
+When you pick a time in the schedule picker, Lettr interprets it in your **browser's local timezone**. The picker shows you the time in your local zone so you don't have to do timezone math.
+
+<Note>
+  All recipients receive the email at the same wall-clock moment — there is no per-recipient timezone scheduling (sometimes called "send at 9am in each recipient's local time"). The scheduled time is a single global event.
+</Note>
+
+### When the Schedule Fires
+
+Lettr checks every minute for campaigns whose scheduled time has been reached. When yours is up, the campaign automatically moves from `Scheduled` to `Preparing` and follows the same flow as a "Send now" campaign from there.
+
+There can be a brief delay (typically a few seconds, up to a minute) between the scheduled time and when sending actually begins. This isn't a precision-down-to-the-second mechanism — schedule a few minutes before any hard deadline, not exactly at it.
+
+### Unscheduling
+
+If you want to make changes to a `Scheduled` campaign — or cancel the send entirely — you can **unschedule** it from the campaign's edit page. Unscheduling:
+
+- Moves the campaign back to `Draft`
+- Clears the scheduled time
+- Re-opens all fields for editing
+
+After making your changes you can schedule the campaign again (for the same time or a different one) or send it immediately.
+
+<Tip>
+  Unscheduling is always an option before the schedule fires. The moment the send time arrives, the campaign moves to `Preparing` and unscheduling is no longer possible — at that point you're committed.
+</Tip>
+
+## The Preparing State
+
+When a campaign enters `Preparing`, Lettr is doing two things behind the scenes:
+
+1. **Resolving recipients.** The audience selection (lists, segments, all contacts) is evaluated and all eligible `subscribed` contacts are written to a per-campaign recipient list. Lettr deduplicates contacts who match multiple sources and filters out non-subscribed contacts.
+2. **Running a content check.** A safety check inspects the campaign content for signals of high-risk sends (unusual patterns, unverified domains under heavy use, etc.). Most campaigns clear this check immediately.
+
+For small audiences, Preparing completes in seconds. For very large audiences it can take a few minutes — the campaign's Show page polls automatically and updates the status when it transitions.
+
+### If No Recipients Match
+
+If the resolved recipient list is empty (for example, you selected a segment that no contacts currently match), the campaign moves to `Failed` rather than `Sending`. The Show page tells you the cause so you can adjust the audience and try again.
+
+### The "In Review" State
+
+If the content check flags the campaign, the status moves from `Preparing` to `In review` and pauses there until a Lettr admin manually approves it. This is rare in practice — most campaigns pass the check automatically — and is intended to catch unusual cases (for example, a brand-new account sending a very large campaign for the first time, or content patterns that strongly resemble known abusive sends).
+
+If your campaign lands in review, you'll see a status indicator on the Show page. Contact [support@lettr.com](mailto:support@lettr.com) if it remains in review longer than you'd expect.
+
+## The Sending State
+
+Once a campaign is `Sending`, emails are delivered to recipients in batches. Lettr handles the queueing automatically — you don't configure batch sizes or throughput.
+
+Progress is visible on the Show page in real time:
+
+- A progress bar shows `recipients sent / total recipients`
+- The page polls every few seconds and updates automatically
+- Engagement metrics (opens, clicks) start populating as recipients interact
+
+### Send Speed
+
+There is no fixed sending rate. Lettr dispatches each batch as soon as the previous one completes, so the practical send speed depends on the size of the recipient list. Even very large campaigns typically complete within minutes to an hour, not days.
+
+There is no "quiet hours" or send-window configuration. Once you start sending, the campaign goes out as quickly as the queue allows.
+
+## The Sent State
+
+When every recipient has been processed, the campaign reaches `Sent`. From here on:
+
+- The campaign content is **read-only**. You cannot edit anything.
+- Engagement metrics keep updating as recipients continue to open and click. Most opens happen within the first few hours, but the long tail of engagement can run for days.
+- The per-event activity feed records every individual delivery, open, click, bounce, complaint, and unsubscribe. This data is available for 30 days; after that it's archived to a downloadable file.
+
+See [Analytics & Reporting](/learn/campaigns/analytics-and-reporting) for the full reporting experience.
+
+## Failed Campaigns
+
+A campaign can fail at the Preparing step if:
+
+- No subscribed contacts match the selected audience
+- An unexpected error occurs during recipient resolution or content validation
+
+A `Failed` campaign cannot be retried directly — instead, duplicate it, fix the issue (typically by adjusting the audience selection), and send the duplicate.
+
+You can delete failed campaigns from the Campaigns list.
+
+## What You Cannot Do
+
+Knowing the limits up front saves frustration during sends:
+
+| Want to | Possible? | Workaround |
+|-|-|-|
+| Stop a campaign that's in `Preparing` or `Sending` | No | Wait for it to complete; follow up with a correction campaign |
+| Edit a campaign after sending | No | Duplicate and re-send |
+| Schedule per-recipient timezone sends | No | Schedule different campaigns per timezone, or accept one global send time |
+| Pause an in-progress send and resume it later | No | Wait for completion |
+| Recover a deleted campaign | No | Deletion is permanent (only Draft and Failed campaigns can be deleted) |
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Analytics & Reporting" icon="chart-line" href="/learn/campaigns/analytics-and-reporting">
+    Track engagement after the campaign sends
+  </Card>
+  <Card title="Audience Selection" icon="bullseye" href="/learn/campaigns/audience-selection">
+    Refine who receives your campaign
+  </Card>
+  <Card title="Best Practices" icon="check" href="/learn/sending/best-practices">
+    Deliverability and sender-reputation guidance
+  </Card>
+</CardGroup>

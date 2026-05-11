@@ -1,0 +1,120 @@
+---
+title: Importing & Exporting
+description: "Bulk-load contacts from CSV and export your audience to a file"
+---
+
+Importing and exporting are the two main ways to move contact data in and out of Lettr in bulk. Use **import** when bringing contacts in from another tool, a spreadsheet, or your own system. Use **export** when you want a snapshot of your audience for backup, external analysis, or migration.
+
+## Importing Contacts from CSV
+
+The CSV import flow is a guided, multi-step process designed to handle messy real-world files — including ones without header rows, with mixed column orders, and with extra columns that don't map cleanly to Lettr fields.
+
+### Before You Start
+
+A bit of preparation saves time:
+
+- **Define your custom properties first.** If you want to import data like `first_name`, `plan`, or `signup_date`, create those [properties](/learn/audience/contacts#custom-properties) in **Audience** → **Properties** before importing. The import flow can then map your CSV columns directly to existing properties.
+- **Have your file ready.** A CSV with one contact per row. The only column the import truly needs is the email address; everything else is optional.
+- **Decide how you want to handle duplicates.** If a contact in your CSV already exists in your audience, you can either skip them entirely or update them with the new values from the file.
+
+### The Import Flow
+
+<Steps>
+  <Step title="Upload the file">
+    Go to **Audience** → **Imports** → **New import** and select your CSV. The file is uploaded directly to secure storage. There's no hard size limit imposed by the UI, but very large files (many millions of rows) may take longer to process.
+  </Step>
+  <Step title="Map columns">
+    Lettr reads the first few rows of your file and asks you to map each column to a Lettr field. The choices are:
+
+    - **Email** — required, exactly one column
+    - **Status** — optional; if a column contains values like `subscribed` or `unsubscribed`, you can map it here. Otherwise contacts are imported as `subscribed`
+    - **Property name** — map a column to any of your defined custom properties
+    - **Ignore** — skip the column entirely
+
+    If your CSV does not have a header row, Lettr will use AI to guess what each column represents and you can correct it before continuing.
+  </Step>
+  <Step title="Pick options">
+    Choose how duplicate emails are handled:
+
+    - **Skip** — existing contacts in your audience are left untouched. New emails are added
+    - **Update** — existing contacts have their properties (and status, if mapped) overwritten with the CSV values
+
+    You can also attach every imported contact to one or more [lists](/learn/audience/lists) or [topics](/learn/audience/topics) in this step.
+  </Step>
+  <Step title="Start the import">
+    Once you start the import, it runs in the background. You can leave the page; you'll receive an email notification when it completes with a summary of how many contacts were created, updated, and skipped.
+  </Step>
+</Steps>
+
+### AI-Assisted Column Mapping
+
+For CSVs from common sources, Lettr can suggest a complete column mapping with one click. The AI looks at the column names (or their content if there's no header) and proposes mappings to your existing properties. You always get a chance to review and adjust before continuing.
+
+### What Happens After an Import
+
+- All imported contacts immediately appear on the **Contacts** page
+- Topic memberships set in the import step are applied. Opt-in topics defined for your team are also automatically attached, just as they would be for any new contact
+- [Segments](/learn/audience/segments) re-evaluate their match counts in the background
+- Contacts from the import don't generate per-contact entries in the activity log (the import uses a faster bulk path) — but any later edits to those contacts log normally
+
+<Note>
+  Importing does not check your marketing plan's contact limit. If your import would push you over your limit, the contacts will still be added, but you won't be able to send campaigns until you upgrade your plan or remove enough contacts to fit. Check [Billing](/learn/settings/billing#marketing-plans) for plan details.
+</Note>
+
+### Tips for Clean Imports
+
+<AccordionGroup>
+  <Accordion title="Validate before importing">
+    Even basic format validation in a spreadsheet (filtering out obviously malformed addresses) saves you from a flood of bounces later. Lettr only bulk-validates the structure of email values — it does not verify whether an inbox actually exists.
+  </Accordion>
+  <Accordion title="Use Update for refreshes, Skip for first loads">
+    On your first import of a list, **Skip** prevents any unintended changes to existing contacts. On a recurring refresh (for example, syncing customer data from your CRM weekly), **Update** keeps property values fresh.
+  </Accordion>
+  <Accordion title="Map status thoughtfully">
+    If your source system tracks unsubscribes, map a column to **Status** so those contacts come in as `unsubscribed` and won't be emailed. If you don't have status data, leave it unmapped — new contacts default to `subscribed`.
+  </Accordion>
+  <Accordion title="Prefer many small imports over one giant one">
+    Large imports work, but breaking up data into chunks (per cohort, per source) makes it easier to spot mistakes before they affect your full audience.
+  </Accordion>
+</AccordionGroup>
+
+## Exporting Contacts to CSV
+
+Exporting produces a CSV file of your contacts that you can download from your email. Exports respect any filters you have applied on the **Contacts** page, so you can export a subset of your audience without first creating a list.
+
+### How to Export
+
+<Steps>
+  <Step title="Filter your contacts (optional)">
+    On the **Contacts** page, apply any filters you want — search by email, filter by status, list, topic, or segment.
+  </Step>
+  <Step title="Start the export">
+    Open the **Export** menu and start the export. The job runs in the background; you don't have to wait on the page.
+  </Step>
+  <Step title="Download the file">
+    When the export is ready, you'll receive an email with a download link. The link is also visible from the **Recent exports** panel on the **Contacts** page.
+  </Step>
+</Steps>
+
+### What's in the Export
+
+The CSV contains one row per matching contact. Columns include the email address, status, every custom property defined for your team, and the timestamps for when the contact was created and last updated.
+
+### Limits
+
+- Each user can run up to **20 exports per hour**
+- **Download links expire 1 hour** after the export becomes ready. You can re-run the export if you need a fresh download
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Contacts" icon="user" href="/learn/audience/contacts">
+    Set up custom properties to populate during import
+  </Card>
+  <Card title="Lists" icon="layer-group" href="/learn/audience/lists">
+    Attach imported contacts to a list
+  </Card>
+  <Card title="Double Opt-In" icon="envelope-circle-check" href="/learn/audience/double-opt-in">
+    For sign-up forms, prefer double opt-in over imports
+  </Card>
+</CardGroup>

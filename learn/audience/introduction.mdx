@@ -1,57 +1,89 @@
 ---
 title: Audience
-description: "Manage contacts, lists, segments, and campaigns"
+description: "Build and organize the people you send campaigns to"
 ---
 
-Lettr's Audience system lets you manage contacts, organize them into lists, create dynamic segments, and send email campaigns. It works alongside the transactional sending API — transactional emails are triggered by user actions, while campaigns are sent proactively to groups of contacts.
+Your Audience is the database of people you send marketing email to from Lettr. It lives separately from your transactional sending: transactional emails go to recipients you specify per API call, while campaigns go to people you've already collected in your Audience.
+
+The Audience is a single, team-wide pool of contacts. You don't create multiple audiences — instead, you organize one pool using lists, topics, and segments, then point campaigns at whichever slice of the pool you want to reach.
 
 <Note>
-  Audience features require a [Marketing plan](/learn/settings/billing#marketing-plans). All accounts include a free 500-contact tier.
+  The Audience feature is part of Lettr's marketing plan. Every account includes a free 500-contact tier; larger audiences require a paid marketing tier. See [Billing](/learn/settings/billing#marketing-plans) for tiers and pricing.
 </Note>
 
 ## Core Concepts
 
+The Audience feature is built around five entities. Understanding how they relate is the fastest way to get productive.
+
+| Concept | What it is |
+|-|-|
+| **Contact** | One person in your audience, identified by email address. Has a status (subscribed, unsubscribed, bounced, complained, unverified) and any custom properties you choose to attach. |
+| **Property** | A named field you define once for your whole team (for example `first_name`, `plan`, `signed_up_at`). Every contact can have its own value for each property. |
+| **List** | A static, named group of contacts. You add and remove contacts yourself. A contact can belong to many lists. |
+| **Topic** | A subscription category contacts can opt in or out of (for example "Product Updates" or "Weekly Digest"). Lets recipients manage preferences at a finer grain than a single subscribe/unsubscribe toggle. |
+| **Segment** | A dynamic group defined by conditions (for example "subscribed contacts with `plan = pro` who signed up after January"). Segments re-evaluate themselves whenever contact data changes. |
+
 <CardGroup cols={2}>
   <Card title="Contacts" icon="user" href="/learn/audience/contacts">
-    Individual email addresses with custom properties, subscription status, and list memberships.
+    The individual records that make up your audience — statuses, properties, and the activity log
+  </Card>
+  <Card title="Lists" icon="layer-group" href="/learn/audience/lists">
+    Static groups for organizing contacts by purpose
+  </Card>
+  <Card title="Topics" icon="tags" href="/learn/audience/topics">
+    Subscription preferences contacts can opt in and out of
   </Card>
   <Card title="Segments" icon="filter" href="/learn/audience/segments">
-    Dynamic groups of contacts that update automatically based on conditions you define.
+    Dynamic groups defined by conditions, with an AI segment builder
   </Card>
-  <Card title="Campaigns" icon="paper-plane" href="/learn/audience/campaigns">
-    Email campaigns sent to lists, segments, or your entire audience.
+  <Card title="Importing & Exporting" icon="file-csv" href="/learn/audience/importing-and-exporting">
+    Bulk-load contacts from CSV and export your audience
   </Card>
-  <Card title="Billing" icon="credit-card" href="/learn/settings/billing#marketing-plans">
-    Contact-based marketing plans and pricing.
+  <Card title="Double Opt-In" icon="envelope-circle-check" href="/learn/audience/double-opt-in">
+    Confirm new signups before they enter your audience
   </Card>
 </CardGroup>
 
-## Key Features
+## How Audience and Campaigns Connect
 
-- **Custom contact properties** — Define string, number, boolean, date, and JSON properties to store any data on your contacts
-- **CSV import and export** — Bulk import contacts from CSV files with column mapping; export contacts to CSV for external use
-- **Double opt-in** — Optional confirmation email flow for GDPR-compliant list building
-- **Subscription topics** — Let contacts subscribe and unsubscribe per topic for granular preference management
-- **AI segment builder** — Describe your target audience in natural language and let the AI generate the segment conditions
-- **Campaign analytics** — Track opens, clicks, bounces, and unsubscribes per campaign
+The Audience feature gives you the people. The [Campaigns](/learn/campaigns/introduction) feature gives you the way to email them.
+
+When you build a campaign, you choose its audience by selecting one of three options:
+
+1. **All contacts** — every subscribed contact in your team
+2. **One or more lists** — contacts who are members of any of the selected lists
+3. **One or more segments** — contacts matching the conditions of any of the selected segments
+
+You can combine lists and segments in the same campaign. Contacts that appear in more than one source are sent the email exactly once.
+
+<Note>
+  Campaigns only send to contacts whose status is **subscribed**. Contacts marked `unsubscribed`, `bounced`, `complained`, or `unverified` are skipped automatically. You don't have to manage suppression yourself.
+</Note>
 
 ## Getting Started
 
 <Steps>
-  <Step title="Subscribe to a Marketing Plan">
-    All accounts include a free 500-contact tier. For larger audiences, upgrade from **Settings** → **Billing**.
+  <Step title="Define your custom properties">
+    Before importing or adding contacts, set up the [properties](/learn/audience/contacts#custom-properties) you want to track — names, plans, signup dates, anything you'll want to personalize emails by or filter on later. Adding properties first means imports can populate them from day one.
   </Step>
-  <Step title="Add Contacts">
-    Import contacts via CSV or add them through the API. Each contact needs at minimum an email address.
+  <Step title="Add your contacts">
+    Add contacts manually from the dashboard, [import them from a CSV](/learn/audience/importing-and-exporting), or create them via the API (with optional [double opt-in](/learn/audience/double-opt-in)).
   </Step>
-  <Step title="Organize Your Audience">
-    Create lists to group contacts manually, or create segments to group contacts dynamically based on conditions.
+  <Step title="Organize them">
+    Group contacts manually using [lists](/learn/audience/lists), let recipients pick their own preferences using [topics](/learn/audience/topics), and create [segments](/learn/audience/segments) to target slices of your audience dynamically.
   </Step>
-  <Step title="Send a Campaign">
-    Choose your audience, build your email content, preview, and send or schedule your campaign.
+  <Step title="Send a campaign">
+    Head to [Campaigns](/learn/campaigns/introduction) and create your first campaign. Pick which lists or segments to target, design your content, and send.
   </Step>
 </Steps>
 
-## API Access
+## What's Next
 
-Audience resources are available through the API with the `audience:read` and `audience:write` [scopes](/learn/api-keys/permissions#custom). You can manage contacts, lists, and segments programmatically.
+<CardGroup cols={2}>
+  <Card title="Add your first contacts" icon="user-plus" href="/learn/audience/contacts">
+    Learn how contacts work and start adding them
+  </Card>
+  <Card title="Send your first campaign" icon="paper-plane" href="/learn/campaigns/introduction">
+    Use your audience to send a marketing email
+  </Card>
+</CardGroup>

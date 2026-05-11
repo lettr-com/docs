@@ -1,0 +1,108 @@
+---
+title: Audience Selection
+description: "Choose who receives a campaign — all contacts, specific lists, or segments"
+---
+
+The Audience step of the campaign builder is where you decide who receives the campaign. You can target your entire audience, a curated set of lists, a set of segments, or any combination.
+
+This page covers the three targeting modes, how multiple selections combine, and which contacts get filtered out before delivery.
+
+## Targeting Modes
+
+There are three ways to choose recipients:
+
+| Mode | What it does |
+|-|-|
+| **All contacts** | Every subscribed contact in your audience receives the campaign |
+| **Lists** | Recipients are the union of all selected [lists](/learn/audience/lists) |
+| **Segments** | Recipients are the union of all selected [segments](/learn/audience/segments) |
+
+You can also combine lists and segments in the same campaign — for example, "send to the Newsletter list **plus** anyone matching the Pro Customers segment". A contact who appears in multiple selected sources only receives the campaign once.
+
+## How Recipients Are Resolved
+
+When you send a campaign, Lettr resolves the actual recipient list at the start of the **Preparing** state, not when you save the campaign. This means:
+
+- Segments are re-evaluated at send time, so contacts who match the segment conditions when you send (not when you built the segment) are the ones who get the email
+- Newly added contacts who fit your audience selection between scheduling and sending are included
+- Contacts whose status changed to `unsubscribed`, `bounced`, or `complained` after you built the campaign are excluded
+
+The same logic applies whether the campaign is sent immediately or pulled out of a scheduled queue.
+
+## Live Recipient Estimate
+
+While you're building a campaign, the Audience step shows a live count of how many recipients your current selection will reach. The estimate runs the same recipient resolution logic as a real send — so the number you see is what you'll actually email, give or take any contact changes between your estimate and the real send.
+
+The estimate is computed on demand whenever you change your selection. Large audiences may take a moment to count.
+
+## Automatic Suppression
+
+Lettr filters out contacts who shouldn't be emailed automatically. You don't need to manage suppression lists yourself.
+
+A contact is excluded from a campaign send if their status is anything other than `subscribed`:
+
+| Status | Excluded? | Reason |
+|-|-|-|
+| `subscribed` | No | Eligible recipient |
+| `unsubscribed` | **Yes** | The contact has opted out |
+| `bounced` | **Yes** | Their email permanently failed previously; sending again would hurt your reputation |
+| `complained` | **Yes** | They marked you as spam previously; sending again would compound the problem |
+| `unverified` | **Yes** | They haven't completed [double opt-in](/learn/audience/double-opt-in) |
+
+This filter applies even when you pick "All contacts" or include contacts via lists or segments — non-subscribed contacts are silently filtered out at the recipient-resolution step.
+
+<Note>
+  If your live recipient estimate seems lower than the size of the lists you picked, suppression is usually why. Open a list and filter by status to see how many contacts in it are not currently `subscribed`.
+</Note>
+
+## Deduplication Across Sources
+
+When the same contact appears in multiple selected lists or segments, they receive the email exactly once. Lettr deduplicates at recipient resolution, so:
+
+- Combining overlapping lists doesn't double-send
+- A contact who matches multiple segments gets one email
+- A contact in both a list and a segment gets one email
+
+This makes it safe to be inclusive when picking your audience — you can pick "Newsletter Subscribers" and "Pro Plan Segment" together without worrying about doubling up on the overlap.
+
+## No Exclusion Lists
+
+Lettr doesn't currently support an "exclude this list/segment" option in the audience builder. If you want to send to people on List A but **not** on List B, the workaround is to build a [segment](/learn/audience/segments) that captures the inclusion logic — for example, "members of List A AND not members of List B" — using the segment builder's condition groups.
+
+<Tip>
+  Many "exclude" use cases are easier to express as segment conditions than as separate exclusion controls. If you find yourself frequently wanting to send to "everyone except X", build a segment that defines your real target rather than treating it as a list-minus-list operation.
+</Tip>
+
+## Targeting "All Contacts"
+
+The **All contacts** option sends to every subscribed contact in your audience. This is appropriate for:
+
+- Company-wide announcements
+- Major product launches
+- Compliance updates that affect every recipient
+
+For more focused sends, prefer lists or segments — a campaign that goes to every subscriber gets a worse engagement rate than one tailored to a smaller, relevant group, which over time affects your sender reputation.
+
+## Audience and Campaign Status
+
+Once a campaign is in **Sending** or **Sent** status, the recipient list is fixed. Adding new contacts to the audience after that point doesn't add them to the campaign — those contacts need to be targeted in a separate campaign.
+
+If you scheduled a campaign and you've grown your audience significantly since, double-check the recipient estimate before the schedule fires. You may want to unschedule and resend with updated targeting.
+
+## Editing Audience Selection
+
+You can change a campaign's audience selection any time it's in `Draft` status. Once you schedule the campaign, the selection is locked in (unscheduling back to Draft re-opens it for edits). Once you start sending, it's permanent.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Sending & Scheduling" icon="paper-plane" href="/learn/campaigns/sending-and-scheduling">
+    Send the campaign or schedule it for later
+  </Card>
+  <Card title="Analytics & Reporting" icon="chart-line" href="/learn/campaigns/analytics-and-reporting">
+    Review the campaign after sending
+  </Card>
+  <Card title="Segments" icon="filter" href="/learn/audience/segments">
+    Build segments for more precise targeting
+  </Card>
+</CardGroup>

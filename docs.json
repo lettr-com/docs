@@ -232,8 +232,22 @@
                 "pages": [
                   "learn/audience/introduction",
                   "learn/audience/contacts",
+                  "learn/audience/lists",
+                  "learn/audience/topics",
                   "learn/audience/segments",
-                  "learn/audience/campaigns"
+                  "learn/audience/importing-and-exporting",
+                  "learn/audience/double-opt-in"
+                ]
+              },
+              {
+                "group": "Campaigns",
+                "pages": [
+                  "learn/campaigns/introduction",
+                  "learn/campaigns/creating-a-campaign",
+                  "learn/campaigns/content-and-design",
+                  "learn/campaigns/audience-selection",
+                  "learn/campaigns/sending-and-scheduling",
+                  "learn/campaigns/analytics-and-reporting"
                 ]
               },
               {

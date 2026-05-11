@@ -1,0 +1,128 @@
+---
+title: Campaigns
+description: "Send marketing emails to your audience as one-time bulk sends"
+---
+
+A campaign is a one-time bulk email send to a group of contacts from your [audience](/learn/audience/introduction). You build the content, pick who receives it, send (or schedule it for later), and track engagement after the send.
+
+Campaigns are different from transactional emails in two important ways:
+
+| | Campaign | Transactional email |
+|-|-|-|
+| Triggered by | You, sending from the dashboard | A user action or system event, sent through the API |
+| Recipient list | A pre-built audience (lists or segments) | Specified per request, usually one or a few recipients |
+| Use case | Newsletters, product announcements, promotions | Password resets, order confirmations, account alerts |
+
+If you've used a traditional newsletter tool, the campaign concept will be familiar. Pick a slice of your audience, write the email, hit send, and watch the metrics roll in.
+
+## What a Campaign Is (and Isn't)
+
+A campaign in Lettr is **one email** going out to **one batch of recipients** at **one point in time**. Campaigns are not drip sequences, automations, or RSS-triggered sends. If you want to follow up to opens or non-opens, schedule a second campaign manually — there is no built-in series feature today.
+
+Beyond that, the model is intentionally simple:
+
+- One **content** (HTML body, subject, sender details)
+- One **audience selection** (lists, segments, or all contacts)
+- One **schedule** (send now, or pick a future date/time)
+- One **report** (engagement metrics after the send)
+
+## Prerequisites
+
+Before you send your first campaign, make sure you have:
+
+1. A [verified sending domain](/learn/domains/sending-domains) for the address you'll send from
+2. At least a handful of `subscribed` [contacts](/learn/audience/contacts) in your audience — or a [list](/learn/audience/lists) or [segment](/learn/audience/segments) you want to target
+3. Either a [template](/learn/templates/introduction) you want to base the campaign on, or content you'll build directly in the campaign editor
+
+<Note>
+  Campaigns are part of Lettr's marketing plan. The free tier includes 500 contacts; larger audiences require a paid marketing tier. See [Billing](/learn/settings/billing#marketing-plans) for tiers and pricing. If your audience exceeds your plan's contact limit, you cannot send new campaigns until you upgrade or remove contacts.
+</Note>
+
+## How a Campaign Moves Through Its Lifecycle
+
+Every campaign goes through the same states from the moment you create it to the moment it's sent and reporting.
+
+```
+Draft → (schedule) → Scheduled → Preparing → Sending → Sent
+   └─── (send now) ─────────────────┘
+```
+
+| Status | What it means |
+|-|-|
+| **Draft** | You're still editing. No emails have been queued or sent. |
+| **Scheduled** | You set a future send time. The campaign is waiting; you can unschedule it back to Draft any time before it starts. |
+| **Preparing** | Recipients are being built and the campaign is being validated. Brief but real — typically a few seconds to a few minutes for large audiences. |
+| **Sending** | Emails are being delivered in batches. Live metrics are updating as they come in. |
+| **Sent** | Every recipient has been processed. The campaign is now read-only; analytics keep updating as recipients open and click. |
+| **In review** | An automated content check flagged the campaign, and a Lettr admin is reviewing it before sending continues. Rare in practice. |
+| **Failed** | The campaign couldn't be sent (typically because no recipients matched the audience or an unexpected error occurred). |
+
+Two things to know up front:
+
+- Once a campaign enters **Preparing**, it cannot be cancelled. Only a `Scheduled` campaign can be moved back to `Draft`.
+- Once a campaign reaches **Sent**, its content is frozen. You cannot edit a sent campaign — duplicate it instead.
+
+The [Sending & Scheduling](/learn/campaigns/sending-and-scheduling) page covers each transition in detail.
+
+## The Campaign Workflow
+
+<CardGroup cols={2}>
+  <Card title="1. Create" icon="plus" href="/learn/campaigns/creating-a-campaign">
+    Start from scratch, from a template, or duplicate an existing campaign
+  </Card>
+  <Card title="2. Build content" icon="paintbrush" href="/learn/campaigns/content-and-design">
+    Design with the visual editor, write raw HTML, or use AI assistance
+  </Card>
+  <Card title="3. Choose your audience" icon="bullseye" href="/learn/campaigns/audience-selection">
+    Pick all contacts, specific lists, segments, or a combination
+  </Card>
+  <Card title="4. Send or schedule" icon="paper-plane" href="/learn/campaigns/sending-and-scheduling">
+    Send now or pick a future date and time
+  </Card>
+  <Card title="5. Review results" icon="chart-line" href="/learn/campaigns/analytics-and-reporting">
+    Track opens, clicks, bounces, and unsubscribes
+  </Card>
+</CardGroup>
+
+## Quick Start
+
+<Steps>
+  <Step title="Open the Campaigns page">
+    Click **Campaigns** in the sidebar. You'll see a list of past and in-progress campaigns.
+  </Step>
+  <Step title="Create a new campaign">
+    Click **New campaign**. You can describe what the campaign is about, and Lettr's AI will pre-fill the subject and pull sender defaults from a similar previous campaign if one exists.
+  </Step>
+  <Step title="Walk through the builder">
+    The campaign builder is a four-step wizard:
+
+    - **Compose** — subject, from address, content
+    - **Audience** — who receives it
+    - **Schedule** — send now or later
+    - **Review** — a final check before sending
+  </Step>
+  <Step title="Test before sending">
+    From the builder you can send a **test email** to yourself or your team to check rendering and merge tags before committing to the full send.
+  </Step>
+  <Step title="Send or schedule">
+    From the Review step, **Send now** dispatches immediately or **Schedule** picks a future time.
+  </Step>
+  <Step title="Watch the results">
+    Open the campaign's **Show** page to see live progress while it sends, and engagement metrics afterwards. Stats keep updating for the full window after the send.
+  </Step>
+</Steps>
+
+## Where Campaigns Live
+
+All campaign work happens in the Lettr dashboard. There is currently no campaigns API — campaigns are created, sent, and reported on through the web app only. If you need programmatic email sending, use the [transactional email API](/learn/sending/introduction) instead. The two systems serve different purposes and are intentionally separate.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Build your audience" icon="users" href="/learn/audience/introduction">
+    Add contacts, lists, and segments before sending
+  </Card>
+  <Card title="Create your first campaign" icon="plus" href="/learn/campaigns/creating-a-campaign">
+    Walk through the 4-step campaign builder
+  </Card>
+</CardGroup>

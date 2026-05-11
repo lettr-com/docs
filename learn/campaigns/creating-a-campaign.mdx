@@ -1,0 +1,111 @@
+---
+title: Creating a Campaign
+description: "Start a new campaign and walk through the 4-step builder"
+---
+
+The campaign builder is a guided, four-step wizard that takes you from an empty campaign to ready-to-send. This page covers each step at a high level. Deeper details about the content editor, audience picker, and scheduling controls live on their own pages.
+
+## Starting a New Campaign
+
+There are three ways to start a campaign:
+
+| Starting point | When to use it |
+|-|-|
+| **From scratch** | A new email idea that isn't based on anything you've sent before |
+| **From a template** | You've already designed an email in your template library and want to reuse it |
+| **Duplicate an existing campaign** | You want to send a follow-up, a similar promotion, or a recurring update without rebuilding the layout |
+
+### From Scratch
+
+Click **New campaign** on the **Campaigns** page. You'll see a prompt asking what the campaign is about. You can fill in a short description — this becomes a starting point for the campaign name and, if you fill it in, lets Lettr's AI generate a suggested subject line and pull sender defaults from a similar campaign you've sent before. You can skip the prompt and fill in everything by hand if you prefer.
+
+### From a Template
+
+You can also link the campaign to an existing [template](/learn/templates/introduction) from the **Compose** step (see below). Linked campaigns inherit the template's HTML and stay in sync with it while they're in Draft — see [Content & Design](/learn/campaigns/content-and-design#linking-a-template) for details.
+
+### Duplicate
+
+From the **Campaigns** list, choose **Duplicate** on any campaign. A new Draft is created with the same subject, sender, content, and audience configuration. Modify whatever you need and send it as a new campaign — the original is unaffected.
+
+You can also duplicate multiple campaigns at once from the bulk action bar on the Campaigns page.
+
+## The Four-Step Builder
+
+Once you've created a campaign, you land in the builder. It's organized as four steps you can move through in order, but you're free to jump back and forth — Lettr saves your progress automatically as you edit.
+
+### Step 1 — Compose
+
+The Compose step is where you set the email itself:
+
+- **Subject line** — what recipients see in their inbox. Lettr offers an AI spam check that highlights words and patterns that might trigger spam filters.
+- **From address** — choose the local part (the bit before the `@`) and pick which of your verified [sending domains](/learn/domains/sending-domains) to send from.
+- **From name** — the display name recipients see (for example, "Acme Newsletter" instead of just the email address).
+- **Reply-to** — optional. An address recipients reach if they hit "Reply".
+- **Content** — the body of the email. You can use the [visual editor](/learn/campaigns/content-and-design#visual-editor), the [HTML editor](/learn/campaigns/content-and-design#raw-html-editor), or link to a [template](/learn/campaigns/content-and-design#linking-a-template).
+
+See [Content & Design](/learn/campaigns/content-and-design) for the full editor experience.
+
+### Step 2 — Audience
+
+The Audience step is where you choose who receives the campaign. You have three options:
+
+- **All contacts** — every subscribed contact in your audience
+- **Lists** — one or more [audience lists](/learn/audience/lists)
+- **Segments** — one or more [segments](/learn/audience/segments)
+
+The builder shows you an estimated recipient count next to each option as you pick. The estimate filters down to only `subscribed` contacts and deduplicates across overlapping lists or segments.
+
+See [Audience Selection](/learn/campaigns/audience-selection) for how multiple selections combine and which contacts are filtered out.
+
+### Step 3 — Schedule
+
+Decide when the campaign goes out:
+
+- **Send now** — the campaign begins delivering as soon as you confirm
+- **Schedule** — pick a future date and time. Until that moment, the campaign is in `Scheduled` status and you can unschedule it back to Draft at any point
+
+See [Sending & Scheduling](/learn/campaigns/sending-and-scheduling) for timezone behavior and the full schedule mechanics.
+
+### Step 4 — Review
+
+The Review step shows a summary of everything you've set up: subject, sender, audience size, schedule, and a preview of the email. From here you can:
+
+- **Send a test email** to yourself or a colleague to check rendering and merge tags
+- **Go back** to any prior step to make adjustments
+- **Send** (or **Schedule**) to commit the campaign
+
+<Tip>
+  Always send a test email before launching. Even when you've used a template you trust, a typo in the subject or a broken merge tag in the body is much easier to catch from your own inbox than from your support queue afterwards.
+</Tip>
+
+## Saving Progress
+
+Edits in the builder save automatically as you make them. You can close the page and come back later — the campaign stays in `Draft` status until you explicitly send or schedule it.
+
+## Deleting a Draft
+
+If you decide not to send a campaign, you can delete it from the Campaigns list. Deleting is only allowed for `Draft` and `Failed` campaigns — once a campaign has been scheduled, prepared, or sent, deletion is disabled (you can unschedule a Scheduled campaign back to Draft if you want to delete it).
+
+## Test Emails
+
+The **Send test email** button in the builder sends a single copy of the current campaign to one or more recipients you specify. Tests are sent as transactional emails — tracking is disabled on test sends — and they're rate-limited to prevent accidental flooding.
+
+Test emails are a good way to:
+
+- Check how the campaign renders in different mail clients
+- Verify that merge tags resolve correctly (test emails use whatever recipient you specify, so unique-to-recipient merge tags will look different in a real send)
+- Run the campaign past stakeholders for approval before launch
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Content & Design" icon="paintbrush" href="/learn/campaigns/content-and-design">
+    Build the email body and personalize with merge tags
+  </Card>
+  <Card title="Audience Selection" icon="bullseye" href="/learn/campaigns/audience-selection">
+    Pick who receives the campaign
+  </Card>
+  <Card title="Sending & Scheduling" icon="paper-plane" href="/learn/campaigns/sending-and-scheduling">
+    Send now or schedule for later
+  </Card>
+</CardGroup>
