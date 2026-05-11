@@ -1,0 +1,163 @@
+---
+title: Double Opt-In
+description: "Confirm new signups by email before they enter your audience"
+---
+
+Double opt-in is a two-step subscription flow: when someone signs up to your audience, they receive a confirmation email and only become a fully subscribed contact after clicking the confirmation link. Contacts who never click stay in your audience with status `unverified` and never receive campaigns.
+
+This is the standard approach for public sign-up forms, both because it improves audience quality (you only end up with addresses that work and people who actually want to be on your list) and because it's a GDPR-friendly way to demonstrate explicit consent.
+
+## When to Use It
+
+Use double opt-in for any contact who comes from a source you don't directly control — the kind of sign-up where a typo, a fake address, or a bot could insert junk into your audience.
+
+| Sign-up type | Double opt-in? |
+|-|-|
+| Public newsletter form on your website | **Yes** — anyone can submit anything |
+| Marketing landing page lead capture | **Yes** — same reason |
+| In-app subscription toggle for verified users | Usually no — you already verified the email at account creation |
+| CSV import from a trusted CRM | No — those contacts have already been verified by the upstream system |
+| Manual entry by your team | No |
+
+Lettr's double opt-in flow is **API-only** — it's designed to be wired into your own sign-up form. There is no built-in hosted sign-up form in Lettr that uses double opt-in.
+
+## How the Flow Works
+
+<Steps>
+  <Step title="Your form calls the API">
+    When someone submits your sign-up form, your server calls `POST /api/audience/contacts` with the visitor's email and a `double_opt_in` block describing the confirmation email to send.
+  </Step>
+  <Step title="Lettr creates an unverified contact">
+    The contact is added to your audience with status `unverified` and a unique confirmation token. Unverified contacts do not receive campaigns.
+  </Step>
+  <Step title="Lettr sends the confirmation email">
+    Using the template you specified, Lettr sends the contact a transactional email with a `{{confirmation_url}}` variable that points back to Lettr's confirmation endpoint.
+  </Step>
+  <Step title="The contact clicks the link">
+    Lettr verifies the token, switches the contact's status to `subscribed`, and redirects the contact's browser to the URL you specified (typically a "Thanks for confirming!" page on your site).
+  </Step>
+  <Step title="The contact starts receiving campaigns">
+    From here on, the contact is treated like any other subscribed contact in your audience.
+  </Step>
+</Steps>
+
+## Setting It Up
+
+There are three pieces you need to prepare before wiring the flow into your sign-up form.
+
+### 1. A Confirmation Template
+
+Create a [template](/learn/templates/introduction) for the confirmation email. It should:
+
+- Briefly explain what the recipient signed up for
+- Include the confirmation link using the `{{confirmation_url}}` merge tag
+- Mention what happens if they didn't sign up (they can ignore the email)
+
+A minimal example:
+
+```html
+<p>Hi! Please confirm your email to join our newsletter:</p>
+<p><a href="{{confirmation_url}}">Confirm your subscription</a></p>
+<p>If you didn't sign up, you can ignore this email.</p>
+```
+
+Take note of the template's slug — you'll pass it in the API call.
+
+### 2. A Verified Sending Domain
+
+The `from` address on the confirmation email must be from a [verified sending domain](/learn/domains/sending-domains). If your sending domain isn't yet verified, the confirmation email will fail to send.
+
+### 3. A Redirect URL
+
+The page on your site where Lettr will send the contact's browser after they click the confirmation link. A simple "Thanks for confirming, you're now subscribed" page is plenty.
+
+## Creating an Unverified Contact
+
+Once those three pieces are ready, your sign-up handler calls the API:
+
+```bash
+curl -X POST https://app.lettr.com/api/audience/contacts \
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "subscriber@example.com",
+    "properties": {
+      "first_name": "Alex"
+    },
+    "double_opt_in": {
+      "from": "newsletter@yourdomain.com",
+      "from_name": "Acme Newsletter",
+      "subject": "Confirm your subscription",
+      "template_slug": "newsletter-confirmation",
+      "redirect_url": "https://yourdomain.com/newsletter/confirmed"
+    }
+  }'
+```
+
+The API responds immediately. The contact is created with status `unverified`, and the confirmation email is queued for delivery. If you also pass `properties` or `list_id` in the call, they're attached to the contact right away — they don't wait for confirmation.
+
+### Required `double_opt_in` Fields
+
+| Field | Description |
+|-|-|
+| `from` | Sender email address (must be on a verified [sending domain](/learn/domains/sending-domains)) |
+| `from_name` | Display name for the sender |
+| `subject` | Subject line of the confirmation email |
+| `template_slug` | Slug of the [template](/learn/templates/introduction) to use |
+| `redirect_url` | URL on your site where the contact lands after clicking the link |
+
+## What Recipients See
+
+When the contact clicks the confirmation link in their inbox:
+
+- If the token is valid and the contact is still `unverified`, Lettr promotes them to `subscribed` and redirects to your `redirect_url`
+- If the contact has already confirmed (or the token is invalid), Lettr responds with an error so the contact knows the link is no longer active. The redirect doesn't happen in this case.
+
+You can verify the confirmation worked by looking the contact up in your dashboard — their status should be `subscribed`, and their [activity log](/learn/audience/contacts#activity-log) will show the status transition.
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Keep the confirmation email short">
+    The recipient signed up two seconds ago. They just want to confirm. Don't open with marketing copy — get the link in front of them in the first paragraph.
+  </Accordion>
+  <Accordion title="Set expectations on the form">
+    Tell the user on the sign-up form itself that they'll receive a confirmation email. People are less likely to abandon a flow they know is coming.
+  </Accordion>
+  <Accordion title="Send confirmation from a recognizable address">
+    The `from` address should match your brand. A confirmation email from `noreply@some-random-tool.com` is more likely to be ignored or marked spam.
+  </Accordion>
+  <Accordion title="Don't expect 100% confirmation">
+    Even good flows lose 10–30% of signups at the confirmation step. That's normal — most of the unconfirmed addresses would have been low-value contacts anyway.
+  </Accordion>
+  <Accordion title="Don't email unverified contacts manually">
+    Unverified contacts are deliberately excluded from campaigns. If you start "helping them along" by emailing them through other channels, you defeat the consent purpose of double opt-in.
+  </Accordion>
+</AccordionGroup>
+
+## Single Opt-In vs. Double Opt-In
+
+If you don't use the `double_opt_in` block on the API call, the contact is created as `subscribed` immediately — that's single opt-in. The trade-offs:
+
+| | Single opt-in | Double opt-in |
+|-|-|-|
+| Conversion rate | Higher (no extra step) | Lower (10–30% drop) |
+| Audience quality | Lower (more typos, bots, fakes) | Higher (only confirmed addresses) |
+| Deliverability over time | Worse (more bounces and complaints) | Better |
+| GDPR posture | Weaker (consent is harder to prove) | Stronger (explicit click is a clear consent record) |
+
+For most public sign-up forms the deliverability and compliance benefits make double opt-in worth the conversion hit.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Contacts" icon="user" href="/learn/audience/contacts">
+    See how unverified contacts work
+  </Card>
+  <Card title="Templates" icon="paintbrush" href="/learn/templates/introduction">
+    Build your confirmation template
+  </Card>
+  <Card title="Sending Domains" icon="paper-plane" href="/learn/domains/sending-domains">
+    Verify the domain you'll send the confirmation from
+  </Card>
+</CardGroup>

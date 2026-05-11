@@ -1,0 +1,109 @@
+---
+title: Topics
+description: "Let contacts manage their subscription preferences at a finer grain than a single opt-out"
+---
+
+Topics are subscription categories that contacts can opt in or out of independently. Instead of a single "subscribe / unsubscribe" toggle for everything you send, topics let you offer recipients meaningful choices — for example, they can opt out of weekly digests but keep receiving product updates.
+
+Topics are useful for two reasons:
+
+1. **Recipient experience** — letting people choose what they want to receive instead of forcing an all-or-nothing decision usually improves engagement and reduces unsubscribes.
+2. **Internal organization** — you can use private topics as a way to categorize contacts by interest, even if recipients never see the topic name.
+
+## How Topics Work
+
+A topic has a name, an optional description, a default subscription, and a visibility setting:
+
+| Setting | Description |
+|-|-|
+| **Default subscription** | `opt_in` means newly added contacts are automatically subscribed to this topic. `opt_out` means new contacts start unsubscribed and have to actively choose it. |
+| **Visibility** | `public` topics are intended to appear in preference centers contacts can see. `private` topics are internal to your team and not surfaced to recipients. |
+
+A contact can be subscribed to any number of topics at once. Topic memberships are tracked separately from list memberships and from the contact's overall `subscribed` / `unsubscribed` status.
+
+<Note>
+  Topics replace the older "Tags" concept. If you're returning to Lettr after a long break, the same idea has been redesigned with explicit visibility and default-subscription settings.
+</Note>
+
+## Creating a Topic
+
+<Steps>
+  <Step title="Open the Topics page">
+    Go to **Audience** → **Topics**.
+  </Step>
+  <Step title="Create the topic">
+    Click **Create topic**. Give it a clear name (for example, "Weekly Digest" or "Promotions"), an optional description, choose `opt-in` or `opt-out` as the default, and set visibility to `public` or `private`.
+  </Step>
+  <Step title="Decide who should be on it">
+    For opt-in topics, every newly added contact gets attached automatically. For existing contacts, use the bulk action bar on the **Contacts** page to add many at once, or attach the topic from individual contact profiles.
+  </Step>
+</Steps>
+
+## Default Subscription
+
+Setting a topic's default determines how new contacts interact with it:
+
+- **`opt_in` (default subscribed)** — every contact added to your audience after the topic is created is automatically subscribed. This makes the topic a sensible default channel, like a main newsletter that everyone should get unless they explicitly opt out.
+- **`opt_out` (default unsubscribed)** — new contacts start *not* subscribed to the topic. They have to actively join. This is appropriate for narrower interests like "Beta Program" or "Product Roadmap".
+
+<Tip>
+  Changing a topic's default later only affects contacts added afterwards. It does not retroactively subscribe or unsubscribe existing contacts.
+</Tip>
+
+The default behavior applies to every contact creation path — manual entry, CSV imports, and the API — so you don't have to remember to attach default-on topics each time.
+
+## Public vs. Private Topics
+
+A topic's visibility controls whether the topic is intended to be exposed to recipients (for example in a preference center linked from your emails). Public topics are surfaced; private topics are internal-only.
+
+Visibility doesn't change what the topic does in Lettr — it only signals intent. Use private topics as a lightweight tagging system for internal organization (for example "Beta Tester" or "Enterprise Lead") that you don't want recipients to see or control. Use public topics for the choices you genuinely want recipients to make for themselves.
+
+## Adding and Removing Topics on Contacts
+
+You can manage topic membership from several places:
+
+| Where | What you can do |
+|-|-|
+| Contact profile | Add or remove topics from a single contact |
+| Bulk action bar on **Contacts** page | Add or remove topics from many selected contacts at once |
+| Import step | Attach one or more topics to every contact in a CSV import |
+| API | Create a contact via `POST /api/audience/contacts` with optional topic attachments |
+
+Every topic opt-in and opt-out (including the automatic ones at contact creation) is recorded in the contact's [activity log](/learn/audience/contacts#activity-log).
+
+## Renaming and Deleting Topics
+
+You can rename a topic at any time from the **Topics** page. Renaming preserves all existing memberships.
+
+Deleting a topic removes the topic and all memberships for it. The contacts themselves are untouched.
+
+<Warning>
+  Segments reference topics by **name**, not by ID. If you rename a topic that a segment uses in its conditions, that segment will silently stop matching contacts based on the renamed topic until you update the segment. Always check your segments after renaming a topic.
+</Warning>
+
+## Using Topics in Segments
+
+Topics are first-class fields in the [segment builder](/learn/audience/segments). You can build conditions like "contacts who are subscribed to Weekly Digest" or "contacts who are *not* subscribed to Promotions" and use those segments as the target for campaigns.
+
+This makes topics a natural way to slice your audience for campaigns — when you have a "Product Updates" topic, sending a product announcement to a "Subscribed to Product Updates" segment automatically respects every contact's preference.
+
+## Topics vs. Lists vs. Segments
+
+A quick reminder:
+
+| Use | When |
+|-|-|
+| **Topic** | The contact decides — they can opt in or out for themselves |
+| **List** | You decide — manually managed membership |
+| **Segment** | The data decides — conditions evaluated on the fly |
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Segments" icon="filter" href="/learn/audience/segments">
+    Build segments that filter by topic subscription
+  </Card>
+  <Card title="Campaigns" icon="paper-plane" href="/learn/campaigns/introduction">
+    Send a campaign to topic-aware segments
+  </Card>
+</CardGroup>

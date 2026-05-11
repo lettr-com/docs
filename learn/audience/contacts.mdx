@@ -1,119 +1,156 @@
 ---
 title: Contacts
-description: "Manage your audience contacts, custom properties, and subscription status"
+description: "Manage individual contacts, their statuses, custom properties, and activity history"
 ---
 
-A contact represents an individual email address in your audience. Each contact belongs to a team and has a subscription status, optional custom properties, list memberships, and topic subscriptions.
+A contact is one person in your audience, identified by their email address. Every contact belongs to your team, has a single status, an optional set of custom property values, list and topic memberships, and a chronological activity log of changes that have happened to them.
+
+This page covers how to work with individual contacts. For bulk operations like CSV import and export, see [Importing and Exporting](/learn/audience/importing-and-exporting).
 
 ## Contact Status
 
-Every contact has one of five statuses:
+Every contact has exactly one of five statuses. The status determines whether the contact will receive your next campaign and how Lettr handles them internally.
 
-| Status | Description |
+| Status | What it means |
 |-|-|
-| `subscribed` | Active contact eligible to receive campaigns |
-| `unsubscribed` | Contact has opted out of receiving campaigns |
-| `bounced` | Email address has hard-bounced and is suppressed |
-| `complained` | Contact marked an email as spam |
-| `unverified` | Contact has not yet confirmed via double opt-in |
+| `subscribed` | Active contact, eligible to receive campaigns. This is the default for newly added contacts. |
+| `unsubscribed` | The contact has opted out. Excluded from all campaign sends. |
+| `bounced` | A previous email to this address bounced permanently. Excluded from campaigns to protect your sender reputation. |
+| `complained` | The contact marked one of your emails as spam. Excluded from campaigns. |
+| `unverified` | The contact was created through [double opt-in](/learn/audience/double-opt-in) and hasn't confirmed yet. Excluded from campaigns until they click their confirmation link. |
 
 <Warning>
-  Contacts with `bounced` or `complained` status are automatically excluded from campaign sends. Sending to these addresses would damage your sender reputation.
+  Only contacts with status `subscribed` are eligible to receive campaigns. Lettr applies this filter automatically when a campaign is sent — you don't need to manage suppression manually.
 </Warning>
+
+### Statuses and Your Marketing Plan
+
+Your marketing plan has a contact limit (for example, the free tier allows 500 contacts). The limit is checked against the **total** count of contacts in your audience, regardless of status. Unsubscribed, bounced, and complained contacts still count toward the limit. If your audience exceeds your plan's limit, you cannot send new campaigns until you upgrade your plan or remove contacts.
+
+<Tip>
+  If you've accumulated a lot of bounced or unsubscribed contacts and you're approaching your plan limit, delete the ones you no longer need before upgrading.
+</Tip>
+
+## Adding Contacts
+
+There are three ways to add contacts to your audience:
+
+| Method | Best for | Where to find it |
+|-|-|-|
+| **Manual entry** | A handful of contacts you want to add right now | **Audience** → **Contacts** → **Add contacts** |
+| **CSV import** | Bringing in a list from another tool | **Audience** → **Imports** → **New import**. See [Importing and Exporting](/learn/audience/importing-and-exporting) |
+| **API** | Sign-up forms on your website or app | `POST /api/audience/contacts`, optionally with [double opt-in](/learn/audience/double-opt-in) |
+
+### Manual Entry
+
+The **Add contacts** dialog accepts one or more email addresses separated by spaces, commas, or newlines. You can optionally pick a list and a topic to attach the new contacts to in the same step. All new contacts start with status `subscribed`.
+
+### Auto-Attached Topics
+
+Whenever a new contact is created, Lettr automatically attaches every [topic](/learn/audience/topics) whose default is **opt-in**. This means recipients are subscribed to your default topics from the moment they enter your audience, without you having to assign them.
+
+## Editing Contacts
+
+Open any contact from the **Contacts** list to view their profile. From there you can:
+
+- Change their **email address** — the address is unique per team, so an existing email in your audience will block the change
+- Change their **status** — useful for manually marking a contact as unsubscribed or re-subscribing them
+- Edit their **property values** — covered in the [Custom Properties](#custom-properties) section below
+- Add or remove them from **lists** and **topics**
+
+Every change is recorded in the contact's [activity log](#activity-log).
+
+## Deleting Contacts
+
+You can delete contacts individually from their profile, or in bulk from the contacts list (select rows, then use the bulk action bar).
+
+<Warning>
+  Contact deletion is permanent — there is no recycle bin or recovery. Their activity log, list memberships, and topic memberships are all removed. Past campaign records remain intact, but the contact is no longer linked to them.
+</Warning>
+
+If you want to keep a record of a contact but stop emailing them, set their status to `unsubscribed` instead of deleting them.
+
+## Bulk Actions
+
+When you select multiple contacts from the list view, the bulk action bar at the bottom of the page lets you:
+
+- Delete the selected contacts
+- Change their status (for example, mass-unsubscribe a set of contacts)
+- Add them to or remove them from one or more lists
+- Add them to or remove them from one or more topics
+
+Bulk actions are useful after running an import or when cleaning up your audience.
 
 ## Custom Properties
 
-Custom properties let you store additional data on each contact beyond the email address and status. You can create properties in the dashboard or via the API.
+Custom properties let you store any data you want on a contact beyond their email and status. You define each property once at the team level (giving it a name and a type), and every contact in your audience can have its own value for it.
+
+Common uses:
+
+- Personalizing campaign emails (`Hi {{first_name}}`)
+- Filtering contacts in [segments](/learn/audience/segments) (for example, "all contacts where `plan = pro`")
+- Tracking signup-time data you want to keep alongside the contact
 
 ### Property Types
 
-| Type | Description | Example |
-|-|-|-|
-| `string` | Text values | Name, company, city |
-| `number` | Numeric values | Age, order count, revenue |
-| `boolean` | True/false values | VIP status, newsletter preference |
-| `date` | Date values | Sign-up date, last purchase date |
-| `json` | Structured data | Preferences object, tags array |
+Each property has a type that affects how it can be filtered in segments and how it's rendered in the dashboard.
 
-Each property can have an optional **fallback value** that is used when the property is not set on a contact. This is useful for providing defaults in segment conditions and template personalization.
+| Type | Use for |
+|-|-|
+| `string` | Names, companies, cities, plan tiers, any free-form text |
+| `number` | Order counts, revenue, age, any numeric value |
+| `boolean` | True/false flags like `is_vip` or `has_completed_onboarding` |
+| `date` | Sign-up dates, last purchase dates, renewal dates |
+| `json` | Structured data when one of the simple types isn't enough |
 
-### Using Properties in Templates
+### Fallback Values
 
-Custom properties are available as merge tags in campaign emails. If a contact has a property called `first_name`, you can use `{{first_name}}` in your campaign template. See [Template Language](/learn/templates/template-language) for syntax details.
+Each property can have an optional fallback value, used whenever a contact doesn't have a value of their own for that property. Fallbacks are handy when you want to safely personalize emails without leaving variables blank — for example, a `first_name` property with the fallback `there` will render as "Hi there" for contacts whose first name you don't know.
 
-## Lists
+### Managing Properties
 
-Lists are named, static groupings of contacts. A contact can belong to multiple lists. Use lists to organize contacts by purpose — for example, "Newsletter Subscribers", "Beta Users", or "Enterprise Customers".
-
-Lists are managed manually: you add and remove contacts explicitly, either through the dashboard, CSV import, or the API. This is different from [segments](/learn/audience/segments), which are dynamic and update automatically based on conditions.
-
-## Subscription Topics
-
-Topics let contacts manage their subscription preferences at a granular level. Instead of a single subscribe/unsubscribe toggle, contacts can opt in or out of specific topics — for example, "Product Updates", "Weekly Digest", or "Promotions".
-
-Topics can be **public** (visible to contacts in preference centers) or **private** (used internally for segmentation).
-
-## Double Opt-In
-
-Double opt-in adds a confirmation step when a contact is created. Instead of immediately becoming `subscribed`, the contact starts as `unverified` and receives a confirmation email. They become `subscribed` only after clicking the confirmation link.
-
-This is a best practice for GDPR compliance and ensures that only real, engaged email addresses enter your audience.
+Go to **Audience** → **Properties** to view, create, edit, and delete your team's property schema.
 
 <Tip>
-  Double opt-in reduces list size but improves deliverability and engagement rates. It's recommended for all public-facing signup forms.
+  Define the properties you care about before you import contacts. The CSV import flow can map columns directly to existing properties, so having them set up first saves a step.
 </Tip>
 
-## Import and Export
+### Using Properties in Campaigns
 
-### CSV Import
+Custom properties become merge tags in campaign emails. If a contact has a property called `first_name`, you can reference it as `{{first_name}}` in your subject or body. See [Content and Design](/learn/campaigns/content-and-design#personalization) for the full personalization syntax.
 
-Import contacts in bulk from a CSV file:
+## Activity Log
 
-<Steps>
-  <Step title="Upload Your CSV">
-    Go to **Audience** → **Import** and upload your CSV file. The file is uploaded directly to secure storage via a presigned URL.
-  </Step>
-  <Step title="Map Columns">
-    Map CSV columns to contact fields (email, status, custom properties). The email column is required.
-  </Step>
-  <Step title="Configure Options">
-    Optionally assign imported contacts to lists and add tags.
-  </Step>
-  <Step title="Start Import">
-    The import processes in the background. You'll receive an email notification when it completes with a summary of created, updated, and skipped contacts.
-  </Step>
-</Steps>
+Every contact has a chronological log of events that happened to them. The log is visible on the contact's profile page and includes:
 
-### CSV Export
+| Event | When it happens |
+|-|-|
+| **Created** | The contact was added to your audience |
+| **Subscribed / Unsubscribed** | Their status changed to or from `subscribed` |
+| **List added / removed** | They were added to or removed from a list |
+| **Topic opted in / opted out** | They subscribed to or unsubscribed from a topic |
+| **Property set / changed / cleared** | A custom property value was added, modified, or removed |
+| **Email changed** | Their email address was updated |
 
-Export your contacts to a CSV file:
-
-1. Go to **Audience** → **Contacts**
-2. Apply any filters you want (optional)
-3. Click **Export**
-4. The export processes in the background and you'll receive an email with a download link when ready
+The activity log is permanent for the life of the contact and is the easiest way to understand why a contact is in their current state.
 
 <Note>
-  Export download links expire after 7 days.
+  Contacts added through CSV imports do not generate a "Created" event in the activity log — imports use a faster bulk-insert path that skips per-contact logging. Their list and topic memberships from the import are also not individually logged. All later changes (status, properties, manual list edits) are logged as normal.
 </Note>
-
-## API Access
-
-The API provides full CRUD access to contacts with the `audience:read` and `audience:write` scopes. You can create, update, list, and delete contacts programmatically.
 
 ## Next Steps
 
 <CardGroup cols={2}>
+  <Card title="Lists" icon="layer-group" href="/learn/audience/lists">
+    Group contacts into static lists for organization
+  </Card>
+  <Card title="Topics" icon="tags" href="/learn/audience/topics">
+    Let contacts manage their own subscription preferences
+  </Card>
   <Card title="Segments" icon="filter" href="/learn/audience/segments">
-    Create dynamic groups of contacts based on conditions
+    Build dynamic groups using contact data and properties
   </Card>
-  <Card title="Campaigns" icon="paper-plane" href="/learn/audience/campaigns">
-    Send email campaigns to your contacts
-  </Card>
-  <Card title="Template Language" icon="brackets-curly" href="/learn/templates/template-language">
-    Personalize campaign emails with merge tags
-  </Card>
-  <Card title="API Key Permissions" icon="key" href="/learn/api-keys/permissions">
-    Configure audience API scopes
+  <Card title="Importing & Exporting" icon="file-csv" href="/learn/audience/importing-and-exporting">
+    Bulk-load contacts from CSV
   </Card>
 </CardGroup>

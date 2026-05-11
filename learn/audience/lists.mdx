@@ -1,0 +1,93 @@
+---
+title: Lists
+description: "Organize your contacts into static, named groups"
+---
+
+A list is a named group of contacts you manage manually. Unlike [segments](/learn/audience/segments) — which include contacts dynamically based on conditions — lists are static: you decide who's in and who's not by adding or removing contacts explicitly.
+
+Lists are the simplest way to slice your audience for campaigns. A contact can belong to many lists at once, and many lists can be targeted in a single campaign.
+
+## When to Use Lists
+
+Lists work best when membership is a deliberate choice rather than a property of the contact. Some typical uses:
+
+- **Source-based grouping** — "Newsletter Signups", "Trade Show Leads", "Beta Waitlist"
+- **Lifecycle stage** — "Onboarding Cohort October 2026", "Renewal Outreach Q4"
+- **Manual outreach** — "VIP Customers", "Press Contacts", "Internal Test Recipients"
+
+For groupings that should update automatically based on contact data — like "everyone with `plan = pro`" or "contacts who signed up in the last 30 days" — use a [segment](/learn/audience/segments) instead. Lists are not recomputed; once a contact is in, they stay until you remove them.
+
+## Creating a List
+
+<Steps>
+  <Step title="Open the Lists page">
+    Go to **Audience** → **Lists**.
+  </Step>
+  <Step title="Create the list">
+    Click **Create list**, give it a clear name, and save. List names must be unique within your team.
+  </Step>
+  <Step title="Add contacts">
+    Open the list and use **Add contacts** to attach existing contacts. You can also add contacts to a list from the contact's profile page or via the **Lists** column on the **Contacts** page.
+  </Step>
+</Steps>
+
+## Adding and Removing Contacts
+
+There are several entry points for managing list membership:
+
+| Where | What you can do |
+|-|-|
+| **Audience** → **Lists** → list detail | Add or remove contacts for one list at a time |
+| **Audience** → **Contacts** → contact profile | Edit a single contact's full list membership |
+| **Audience** → **Contacts** → bulk selection | Add or remove many contacts from one or more lists in one operation |
+| **Audience** → **Imports** | Assign every contact in a CSV import to one or more lists during the mapping step |
+
+Every list addition and removal is recorded in the contact's [activity log](/learn/audience/contacts#activity-log) — except for memberships set during a CSV import, which are applied in bulk and not individually logged.
+
+## Renaming and Deleting Lists
+
+You can rename a list at any time from the **Lists** page. Renaming does not affect the contacts inside it, but it does affect [segments](/learn/audience/segments) — see the warning below.
+
+Deleting a list removes the list itself and the membership records, but does **not** delete the contacts. The contacts remain in your audience and in any other lists or segments they belong to.
+
+<Warning>
+  Segments reference lists by **name**, not by ID. If you rename a list that a segment uses in its conditions, that segment will silently stop matching anyone from the renamed list until you update the segment. Always check your segments after renaming a list.
+</Warning>
+
+## Using Lists in Campaigns
+
+When you create a [campaign](/learn/campaigns/introduction), you select its audience by choosing one of three modes: all contacts, lists, or segments. In list mode, you pick one or more lists, and the campaign goes out to the union of their members — every contact in any selected list — filtered to those with status `subscribed`.
+
+A contact who belongs to multiple selected lists is only sent the email once. See [Audience Selection](/learn/campaigns/audience-selection) for the full set of rules.
+
+## List-Scoped Segments
+
+When you create a segment, you can optionally scope it to a single list. The segment then only matches contacts who are members of that list **and** match the conditions. This is useful for further filtering a list — for example, "everyone in the Q4 onboarding list whose `last_login` is older than 30 days" — without affecting other contacts.
+
+See [Segments](/learn/audience/segments#list-scoped-segments) for details.
+
+## Lists vs. Topics vs. Segments
+
+It's easy to confuse these three concepts. A quick decision guide:
+
+| Use | When |
+|-|-|
+| **List** | You decide who's in it, manually |
+| **Topic** | The contact decides whether they want it (opt-in/opt-out preference) |
+| **Segment** | The data decides — contacts come in and out automatically based on conditions |
+
+You can combine all three in any campaign.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Topics" icon="tags" href="/learn/audience/topics">
+    Let contacts opt in and out of subscription categories
+  </Card>
+  <Card title="Segments" icon="filter" href="/learn/audience/segments">
+    Build dynamic groups that update themselves
+  </Card>
+  <Card title="Campaigns" icon="paper-plane" href="/learn/campaigns/introduction">
+    Send an email to a list
+  </Card>
+</CardGroup>

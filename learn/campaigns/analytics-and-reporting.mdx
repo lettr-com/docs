@@ -1,0 +1,147 @@
+---
+title: Analytics & Reporting
+description: "Track campaign engagement: opens, clicks, bounces, unsubscribes, and per-recipient activity"
+---
+
+Once a campaign starts sending, Lettr tracks engagement at two levels: aggregated counts for the campaign as a whole, and individual events for every recipient. Both update in real time as recipients interact with the email.
+
+This page covers what metrics are tracked, where to find them, and how to interpret the data after a campaign sends.
+
+## Where to See the Data
+
+Every campaign has a **Show** page (open any campaign from the Campaigns list). It's the single place to view delivery progress, engagement metrics, the activity feed, and the unsubscribe summary. The page polls live while a campaign is sending and for a window afterward, so you can watch the metrics propagate.
+
+You can also **compare** several sent campaigns side by side by selecting them from the Campaigns list and opening the comparison panel.
+
+## Aggregated Metrics
+
+Lettr tracks nine metrics for every campaign. They're shown as tiles at the top of the Show page.
+
+| Metric | What it counts |
+|-|-|
+| **Injections** | Emails accepted into the delivery pipeline. Roughly your total recipient count. |
+| **Deliveries** | Emails successfully accepted by the recipient's mail server. The baseline for everything else. |
+| **Bounces** | Emails that couldn't be delivered (permanent failures). Both immediate bounces and out-of-band bounces (rejected after acceptance) are counted. |
+| **Spam complaints** | Recipients who marked your email as spam in their inbox. |
+| **Opens** | Total opens across all recipients (so one recipient opening twice counts as two). |
+| **Unique opens** | Distinct recipients who opened at least once. |
+| **Clicks** | Total clicks on links in the email. |
+| **Unique clicks** | Distinct recipients who clicked at least once. |
+| **Unsubscribes** | Recipients who clicked the unsubscribe link or used their mail client's unsubscribe button. |
+
+Use **unique opens** and **unique clicks** for engagement rates — they're what people usually mean by "open rate" and "click rate".
+
+### How Engagement Is Detected
+
+| Type | How Lettr measures it |
+|-|-|
+| **Open** | A tiny invisible image in the email is loaded when the recipient views the message |
+| **Click** | Links in the email are rewritten to route through Lettr's tracking domain, which logs the click and immediately redirects to the destination |
+| **Bounce** | The recipient's mail server explicitly rejects the message |
+| **Spam complaint** | The recipient's mail provider notifies Lettr through a feedback loop |
+| **Unsubscribe** | The recipient clicks the unsubscribe link in the email or uses their mail client's built-in unsubscribe button |
+
+Open tracking depends on the recipient's client loading images. Mail clients that block images by default (some corporate clients, privacy-focused users) will show as non-opens even if the email was read. Open rates tend to slightly under-count in practice.
+
+## Per-Event Activity Feed
+
+Below the metric tiles, the Show page has an activity feed listing every individual event that occurred during the campaign. Each event includes:
+
+- Event type (injection, delivery, bounce, open, click, spam complaint, unsubscribe)
+- The recipient's email address
+- Timestamp
+- For bounces: the bounce class and reason
+- For clicks: the URL that was clicked
+- For some events: the recipient's user agent
+
+You can filter the feed by event type to focus on specific behavior — for example, viewing only bounces to diagnose deliverability issues, or only clicks to see what links are driving engagement.
+
+The feed is paginated and uses cursor-based navigation, so you can step through even very large campaigns without performance issues.
+
+### 30-Day Window
+
+Per-event data is available on the Show page for **30 days after the campaign sends**. After that, individual events are archived to a downloadable file (see below) and the live feed is no longer populated for the campaign.
+
+The **aggregated metrics** (tile counts) are kept permanently — only the per-event activity feed has the 30-day window.
+
+## Real-Time Updates
+
+While a campaign is `Preparing` or `Sending`, the Show page polls every few seconds to update progress and metrics. After the campaign reaches `Sent`, polling continues for roughly 10 minutes to capture the burst of early engagement, then stops. Refreshing the page after that fetches the latest metrics.
+
+You can return to the page later — metrics keep updating in the background even when you're not watching.
+
+## Bounce Rate Warning
+
+The Show page highlights campaigns with a bounce rate of 10% or higher with a visible warning. A bounce rate that high is a strong signal that:
+
+- Your audience contains many stale or invalid addresses
+- Your sending domain authentication may have issues
+- You may be hitting deliverability problems that will affect future campaigns
+
+If you see this warning, audit your audience before sending more campaigns. See [List Hygiene](/knowledge-base/best-practices/list-hygiene) for cleanup guidance.
+
+## Unsubscribes
+
+When a recipient clicks the unsubscribe link in a campaign:
+
+1. The contact's status changes to `unsubscribed` in your audience
+2. The unsubscribe is counted toward the campaign's unsubscribe metric
+3. The contact is automatically excluded from all future campaigns
+
+Unsubscribes are permanent until you manually re-subscribe the contact (which you can do from their profile if they ask to be re-added).
+
+<Tip>
+  A small unsubscribe rate is normal and healthy — recipients self-selecting out of your list improves engagement for the ones who stay. A sudden spike (more than ~0.5–1% of recipients on one campaign) is worth investigating — it usually points to content that didn't match expectations or an audience that was added without clear consent.
+</Tip>
+
+## Archived Events
+
+About 28 days after a campaign sends, Lettr archives its per-event activity to a downloadable CSV file. The archive includes every event captured during the 30-day window — every delivery, open, click, bounce, complaint, and unsubscribe — with timestamps, recipient addresses, and detail fields.
+
+To download the archive, open the campaign's Show page after the archive is ready and click the archive download option. Lettr generates a one-time download link valid for 1 hour and sends it to your email.
+
+The archive is useful for:
+
+- Long-term auditing and compliance records
+- Importing campaign event data into your own analytics tools
+- Investigating delivery issues for older campaigns
+
+Aggregated metrics remain visible on the Show page indefinitely, so you don't need to download the archive just to see the campaign's open or click rates.
+
+## Comparing Campaigns
+
+To see metrics for several campaigns side by side, go to the Campaigns list, select the campaigns you want to compare (use the checkboxes), and open the comparison panel. The comparison view shows the same metric tiles for each campaign next to one another, making it easy to spot trends like "the campaign with the AI-generated subject had a 3% higher open rate" or "the Tuesday send had fewer unsubscribes than the Saturday one".
+
+Only `Sent` campaigns appear in the comparison.
+
+## Reading the Metrics
+
+A quick guide to interpretation:
+
+| Metric | Healthy range | What it tells you |
+|-|-|-|
+| Delivery rate (deliveries / injections) | 98%+ | How well your audience and sender authentication are working |
+| Bounce rate (bounces / injections) | Under 2% | Audience freshness; above 5% needs attention |
+| Spam complaint rate (complaints / deliveries) | Under 0.1% | Whether content and consent are aligned with expectations |
+| Open rate (unique opens / deliveries) | 15–30%+ | Subject line and sender recognition |
+| Click rate (unique clicks / deliveries) | 1–5%+ | Whether content engaged recipients enough to act |
+| Unsubscribe rate (unsubscribes / deliveries) | Under 0.5% | Whether you're meeting recipient expectations |
+
+These are general benchmarks — every audience and industry has its own norms. The most useful comparison is always against your own historical campaigns.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Best Practices" icon="check" href="/learn/sending/best-practices">
+    Improve open and click rates over time
+  </Card>
+  <Card title="List Hygiene" icon="broom" href="/knowledge-base/best-practices/list-hygiene">
+    Reduce bounce rates with audience cleanup
+  </Card>
+  <Card title="Audience" icon="users" href="/learn/audience/introduction">
+    Grow and organize your audience
+  </Card>
+  <Card title="Sender Reputation" icon="shield" href="/knowledge-base/best-practices/sending-reputation">
+    Protect your long-term deliverability
+  </Card>
+</CardGroup>

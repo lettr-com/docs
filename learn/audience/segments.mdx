@@ -1,99 +1,141 @@
 ---
 title: Segments
-description: "Create dynamic contact segments with conditions and AI"
+description: "Build dynamic contact groups defined by conditions, with help from AI"
 ---
 
-Segments are dynamic groups of contacts that update automatically based on conditions you define. Unlike [lists](/learn/audience/contacts#lists) (which are static), segments re-evaluate their membership whenever the underlying contact data changes.
+A segment is a dynamic group of contacts defined by conditions. Unlike a [list](/learn/audience/lists) — which is static and only changes when you add or remove contacts manually — a segment continuously matches contacts based on their data. When a contact's status, properties, list memberships, or topic subscriptions change, segment membership updates automatically.
+
+Segments are how you target specific slices of your audience for campaigns. Common examples:
+
+- "Subscribed contacts whose `plan` equals `pro`"
+- "Contacts who joined after October 1st and are subscribed to the Weekly Digest topic"
+- "Contacts on the 'Beta Users' list whose email ends with `@acme.com`"
 
 ## How Segments Work
 
-A segment is a set of conditions. A contact is included in the segment when it matches all conditions. Segments can be **global** (across all contacts in your team) or **scoped to a specific list**.
+A segment is made up of **condition groups**. Each group contains one or more conditions, and a contact must satisfy every group to be included. Within a single group, the conditions are combined with **OR** — any one match is enough. Between groups, the logic is **AND** — all groups must match.
 
-Segment contact counts are cached and recalculated asynchronously to keep the dashboard fast even with large audiences.
+In plain English:
+
+> **(condition A OR condition B)** AND **(condition C OR condition D)**
+
+This structure lets you express expressive queries without writing SQL. For example, "subscribed contacts (group 1: status = subscribed) who are either VIPs or have placed more than 10 orders (group 2: plan = vip OR order_count > 10)".
 
 ## Creating a Segment
 
 <Steps>
-  <Step title="Navigate to Segments">
-    Go to **Audience** → **Segments** and click **Create Segment**.
+  <Step title="Open the Segments page">
+    Go to **Audience** → **Segments** and click **Create segment**.
   </Step>
-  <Step title="Name Your Segment">
-    Give your segment a descriptive name (e.g., "Active customers in Europe").
+  <Step title="Name your segment">
+    Use a name that explains what the segment represents (for example, "Pro plan, active in last 30 days"). Segment names must be unique within your team.
   </Step>
-  <Step title="Add Conditions">
-    Build your conditions by selecting a field, an operator, and a value. Add multiple conditions — all must match for a contact to be included (AND logic).
+  <Step title="Optionally scope to a list">
+    If you want the segment to only consider contacts from a specific list, choose that list. Otherwise the segment runs over your entire audience.
   </Step>
-  <Step title="Preview and Save">
-    Preview the matching contacts to verify your conditions, then save the segment.
+  <Step title="Add condition groups">
+    Pick a field, an operator, and a value. Add additional conditions to the same group (OR), or add a new group (AND). You can mix conditions across different field types in the same segment.
+  </Step>
+  <Step title="Preview the match count">
+    The live preview panel shows the contacts that match your current conditions as you build, and the total matching count. Adjust until you're satisfied.
+  </Step>
+  <Step title="Save">
+    Save the segment. The contact count is cached and refreshed in the background as your audience changes.
   </Step>
 </Steps>
 
-## Conditions
+## Fields You Can Filter By
 
-Each condition consists of three parts:
+The segment builder exposes every piece of contact data Lettr stores:
 
-1. **Field** — The contact property to evaluate (email, status, a custom property, list membership, or topic subscription)
-2. **Operator** — How to compare the field value
-3. **Value** — The value to compare against
+| Field | What it represents |
+|-|-|
+| `email` | The contact's email address |
+| `status` | One of `subscribed`, `unsubscribed`, `bounced`, `complained`, `unverified` |
+| `created_at` | When the contact was added to your audience |
+| `topics` | Whether the contact is subscribed to a specific topic |
+| `lists` | Whether the contact is a member of a specific list |
+| `properties.{name}` | Any [custom property](/learn/audience/contacts#custom-properties) you've defined for your team |
 
-### Operators
+Custom properties appear in the field picker by name. Each property uses operators appropriate for its type (string, number, boolean, date, or JSON).
 
-| Operator | Description | Field Types |
+## Operators
+
+Each condition uses an operator that depends on the field type. Lettr supports the following:
+
+| Operator | Description | Field types |
 |-|-|-|
-| `contains` | Field value contains the string | String |
-| `not_contains` | Field value does not contain the string | String |
-| `equals` | Field value exactly matches | String, Number |
-| `not_equals` | Field value does not match | String, Number |
-| `starts_with` | Field value starts with the string | String |
-| `not_starts_with` | Field value does not start with the string | String |
-| `ends_with` | Field value ends with the string | String |
-| `not_ends_with` | Field value does not end with the string | String |
-| `is_true` | Boolean property is true | Boolean |
-| `is_false` | Boolean property is false | Boolean |
-| `greater_than` | Numeric value is greater than | Number |
-| `greater_than_or_equal` | Numeric value is greater than or equal to | Number |
-| `less_than` | Numeric value is less than | Number |
-| `less_than_or_equal` | Numeric value is less than or equal to | Number |
-| `before` | Date is before the specified date | Date |
-| `after` | Date is after the specified date | Date |
+| `contains` | Value contains the substring | String |
+| `not_contains` | Value does not contain the substring | String |
+| `equals` | Value matches exactly | String, Number, Status, Topic, List |
+| `not_equals` | Value does not match | String, Number, Status, Topic, List |
+| `starts_with` | Value begins with the substring | String |
+| `not_starts_with` | Value does not begin with the substring | String |
+| `ends_with` | Value ends with the substring | String |
+| `not_ends_with` | Value does not end with the substring | String |
+| `is_true` | Boolean value is `true` | Boolean |
+| `is_false` | Boolean value is `false` | Boolean |
+| `greater_than` | Numeric value is greater | Number |
+| `greater_than_or_equal` | Numeric value is greater or equal | Number |
+| `less_than` | Numeric value is less | Number |
+| `less_than_or_equal` | Numeric value is less or equal | Number |
+| `before` | Date is earlier than the given date | Date |
+| `after` | Date is later than the given date | Date |
 
-### Example Conditions
-
-- **Email ends with** `@company.com` — target all contacts from a specific domain
-- **Status equals** `subscribed` — only active contacts
-- **Custom property `order_count` greater than** `5` — high-value customers
-- **Custom property `signup_date` after** `2026-01-01` — recent signups
+For `topics` and `lists` fields, `equals` means "is a member" and `not_equals` means "is not a member".
 
 ## AI Segment Builder
 
-Instead of manually building conditions, you can describe your target audience in plain English. The AI segment builder converts your description into structured conditions automatically.
+Building conditions by hand is fine for simple segments, but for complex ones you can describe the audience in plain English and let Lettr's AI generate the conditions for you.
 
-For example, type:
+In the **Create segment** form, click the AI prompt option and type something like:
 
-> "Subscribed contacts who signed up after January 2026 with more than 3 orders"
+> "Subscribed contacts on the Pro plan who signed up after October 1st and aren't already on the Weekly Digest topic."
 
-The AI generates the corresponding conditions:
-- Status equals `subscribed`
-- `signup_date` after `2026-01-01`
-- `order_count` greater than `3`
-
-You can review and adjust the generated conditions before saving.
+The AI converts your description into structured condition groups, opens the segment editor with them pre-filled, and lets you review or adjust before saving.
 
 <Tip>
-  The AI segment builder works best with clear, specific descriptions that reference your custom property names.
+  The AI works best when you reference your custom properties and topics by their actual names. If your property is called `plan`, say "plan equals pro" rather than "pro tier customers" — it removes ambiguity.
 </Tip>
+
+## List-Scoped Segments
+
+A segment can optionally be scoped to a single [list](/learn/audience/lists). When scoped, the segment only matches contacts who are members of that list **and** satisfy the conditions.
+
+List-scoped segments are useful when you want to slice a specific list further without affecting the rest of your audience. For example, a list called "Onboarding Cohort October 2026" can have its own segments for "completed the welcome tour" or "didn't open the first email" — without those segments running over your entire audience.
+
+## Renaming Lists and Topics
+
+This is the most common gotcha with segments:
+
+<Warning>
+  Segments reference lists and topics by their **name** (the actual string) rather than by an internal ID. If you rename a list or a topic, every segment that uses it in a condition will silently stop matching against it — the segment will keep working but will look at the old name, which no longer exists.
+
+  When you rename a list or topic, search your segments for any conditions that referenced the old name and update them.
+</Warning>
+
+Renaming a *segment* itself is safe — campaigns reference segments by their internal ID, so a segment rename doesn't break anything.
+
+## Match Counts and Refresh
+
+Each segment shows its current match count on the Segments page. Counts are cached and refreshed asynchronously when your audience changes — large audiences are not recounted on every page load. If you've just made a change you want to verify (for example, you imported a thousand contacts that should match a segment), give it a moment for the count to settle, or use the segment's preview to query live.
 
 ## Using Segments in Campaigns
 
-When creating a [campaign](/learn/audience/campaigns), you can select a segment as your target audience. The campaign is sent to all contacts that match the segment's conditions at the time of sending.
+When you build a [campaign](/learn/campaigns/introduction), you can target one or more segments in its audience selection step. The campaign sends to the union of all selected segments' contacts (with `subscribed` status). The segment is evaluated at the moment recipients are being prepared for the send — so a campaign always reflects the audience as it stands when you send it, not when you originally created the segment.
+
+A contact who matches multiple selected segments still only receives the email once.
 
 ## Next Steps
 
 <CardGroup cols={2}>
   <Card title="Contacts" icon="user" href="/learn/audience/contacts">
-    Manage individual contacts and properties
+    Set up custom properties to filter on
   </Card>
-  <Card title="Campaigns" icon="paper-plane" href="/learn/audience/campaigns">
-    Send campaigns to your segments
+  <Card title="Lists" icon="layer-group" href="/learn/audience/lists">
+    Use lists as a base for scoped segments
+  </Card>
+  <Card title="Campaigns" icon="paper-plane" href="/learn/campaigns/audience-selection">
+    Target segments with a campaign
   </Card>
 </CardGroup>

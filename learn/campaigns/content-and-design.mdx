@@ -1,0 +1,173 @@
+---
+title: Content & Design
+description: "Build campaign email content with the visual editor, raw HTML, or templates — and personalize it for each recipient"
+---
+
+The content of a campaign is the email itself — the subject line, the sender details, and the body that recipients see in their inbox. Lettr gives you several ways to build that body, depending on whether you want a visual drag-and-drop experience, full control over the HTML, or both.
+
+This page covers content building, personalization with merge tags, and how to test your work before sending.
+
+## Subject Line
+
+The subject is the first thing recipients see and the single biggest driver of whether they open your email. Lettr's Compose step gives you two helpers:
+
+- **AI subject generation** — if you fill in a prompt when starting the campaign, Lettr suggests a subject line based on what you described. Useful as a starting point even if you rewrite it.
+- **Spam check** — click the spam check button next to the subject field and Lettr runs an AI scan that flags words and patterns commonly associated with spam filters (excessive punctuation, all-caps phrases, urgency words). You'll see specific warnings rather than just a score.
+
+Subject lines can be up to 998 characters (the standard email header limit), but anything past about 50 characters gets cut off on most mobile clients. Aim for short.
+
+You can use [merge tags](#personalization) in the subject — for example, `Welcome to Acme, {{first_name}}!` — just like in the body.
+
+## Sender Details
+
+Three fields make up the sender:
+
+| Field | Description |
+|-|-|
+| **From address** | A local part you choose plus a domain from your team's verified [sending domains](/learn/domains/sending-domains). For example, `newsletter@yourdomain.com`. |
+| **From name** | The display name shown next to the address in the recipient's inbox. Use your brand or product name. |
+| **Reply-to** | Optional. Leave blank to keep replies going to the from address, or set a separate address (for example, a support inbox). |
+
+<Warning>
+  The from address must be on a sending domain you've verified for your team. If you try to send a campaign from an unverified domain, the send will fail at the delivery stage. The domain picker in the builder only shows verified domains, so this shouldn't normally happen — but if you remove a domain after building a campaign, the campaign will fail when you try to send it.
+</Warning>
+
+## Content Editors
+
+The body of a campaign can be built three ways. You can mix and match — for example, design the foundation in the visual editor and then drop into the HTML editor for fine-tuning.
+
+### Visual Editor
+
+The default editor is a drag-and-drop builder (powered by Topol). It exposes pre-built content blocks — headers, columns, buttons, images, dividers, footers — that you arrange in a canvas. The editor handles responsive design, dark-mode rendering, and the email-safe HTML output for you.
+
+This is the right choice when:
+
+- You want to produce a polished, branded email without writing HTML
+- You're comfortable working visually rather than in code
+- Your campaign needs to look good across many email clients (the editor outputs MJML-based markup that's been tested for cross-client compatibility)
+
+Lettr also automatically organizes campaign templates and assets into a dedicated **Campaigns** folder within your [template library](/learn/templates/projects).
+
+### Raw HTML Editor
+
+If you have a custom design that doesn't fit the block model — or you'd rather paste in HTML you've built elsewhere — open the full-screen HTML editor (the **Edit content** button in the builder). You get:
+
+- A code editor with syntax highlighting on the left
+- A live iframe preview on the right
+- An AI chat panel that can apply natural-language edits to the HTML (for example "make the button blue", "shorten the intro paragraph")
+
+This is the right choice when:
+
+- You're starting from existing HTML email markup
+- You need fine control over inline styles, dark-mode CSS, or specific client quirks
+- You want to use Lettr's AI to iterate quickly on a hand-coded design
+
+Saves from the HTML editor flow back into the campaign immediately. If you switch back to the visual editor after editing HTML, the visual editor reopens with the latest content.
+
+### Linking a Template
+
+You can link a campaign to one of your [templates](/learn/templates/introduction) instead of writing content directly. To link, choose **Use template** in the Compose step and pick a template marked for campaign use.
+
+Linking does two things:
+
+1. Copies the template's HTML into the campaign so you can preview, test, and send
+2. Sets up a sync between the template and any **Draft** campaigns linked to it
+
+While the campaign is still in Draft, future edits to the template's HTML automatically propagate to the campaign. Once the campaign moves out of Draft (when you schedule or send it), the HTML is frozen — later template edits don't affect it.
+
+<Warning>
+  If you link a template and then make edits directly in the campaign's HTML editor while still in Draft, the next time the source template is saved your changes will be overwritten with the template's version. If you want to diverge from the template, **unlink** the template from the campaign before editing, or finish your campaign customizations after you've stopped editing the template.
+</Warning>
+
+## Personalization
+
+You can personalize the subject and body with merge tags that pull values from the recipient's contact record. The syntax is `{{name}}` — wrap any custom property name in double curly braces.
+
+```html
+<p>Hi {{first_name}},</p>
+<p>Thanks for signing up to {{plan}}. Your account is ready.</p>
+```
+
+When the campaign sends, each recipient gets their own values substituted in. The values come from:
+
+- **The recipient's email** — always available as `{{email}}`
+- **Custom properties** you've defined for your team — see [Custom Properties](/learn/audience/contacts#custom-properties)
+
+If a recipient doesn't have a value set for a property, the [fallback value](/learn/audience/contacts#fallback-values) on the property is used. If the property has no fallback either, the merge tag is replaced with an empty string.
+
+<Tip>
+  Always set fallbacks on properties you use in subjects or visible body text. "Hi !" reads strangely to recipients whose first name you don't know — "Hi there!" reads naturally with a fallback of `there`.
+</Tip>
+
+### The Unsubscribe Link
+
+Marketing campaigns must include an unsubscribe mechanism. Lettr provides a special merge tag for this: `{{unsubscribe_link}}`. When the campaign sends, it's replaced with a unique per-recipient URL that, when clicked, marks the contact as `unsubscribed`.
+
+A typical footer looks like:
+
+```html
+<p style="font-size: 12px; color: #666;">
+  You're receiving this because you signed up at yourdomain.com.
+  <a href="{{unsubscribe_link}}">Unsubscribe</a>
+</p>
+```
+
+You can also customize the page recipients land on after unsubscribing using the optional redirect form:
+
+```html
+<a href="{{unsubscribe_link:redirect=https://yourdomain.com/unsubscribed}}">Unsubscribe</a>
+```
+
+After they unsubscribe, Lettr redirects to your URL with a confirmation parameter so you can show a "Sorry to see you go" page on your own site.
+
+<Warning>
+  Including an unsubscribe link is not optional in practice. Without one, you risk:
+  - Recipients marking you as spam (which damages your sender reputation)
+  - Hitting compliance issues under CAN-SPAM, GDPR, and similar laws
+  - Mailbox providers like Gmail and Yahoo throttling or blocking your sends
+
+  Always include the unsubscribe link before sending. See [List Hygiene](/knowledge-base/best-practices/list-hygiene) and [Unsubscribe Best Practices](/knowledge-base/compliance/unsubscribe-best-practices) for guidance.
+</Warning>
+
+## Previewing Your Campaign
+
+Before sending you can:
+
+- See a live **preview** of the rendered email in the builder
+- View a **screenshot** thumbnail of the campaign on the Campaigns list
+- Send a **test email** to verify rendering and merge tag substitution in a real inbox
+
+The preview and screenshot are useful for layout checks. Test emails are the only way to see what the email looks like when fully rendered in a real client (Gmail, Outlook, Apple Mail) — always test in at least one before committing to a real send.
+
+### Sending a Test Email
+
+From the Compose or Review step, click **Send test email** and enter one or more recipient addresses (yourself, teammates, a QA address). The test arrives as a transactional email; tracking is disabled on tests to keep them out of campaign analytics. Tests are rate-limited to prevent accidents.
+
+Tests use sample data for merge tags rather than real recipient values — they're for checking layout and merge tag syntax, not for confirming personalization for a specific contact.
+
+## Editing Sent Campaigns
+
+You cannot edit a campaign that has been sent. The content is frozen at the moment the send begins. If you need to send a corrected version:
+
+1. Duplicate the original campaign
+2. Make your edits in the duplicate
+3. Send the duplicate to the same (or a smaller) audience
+
+This pattern keeps the original campaign's analytics intact and creates a clear record of the correction.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Audience Selection" icon="bullseye" href="/learn/campaigns/audience-selection">
+    Pick who receives the campaign
+  </Card>
+  <Card title="Sending & Scheduling" icon="paper-plane" href="/learn/campaigns/sending-and-scheduling">
+    Send the campaign or schedule it for later
+  </Card>
+  <Card title="Templates" icon="layer-group" href="/learn/templates/introduction">
+    Reuse designs across campaigns
+  </Card>
+  <Card title="Template Language" icon="brackets-curly" href="/learn/templates/template-language">
+    Full merge tag syntax reference
+  </Card>
+</CardGroup>
