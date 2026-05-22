@@ -61,6 +61,10 @@ Inline text editing with a formatting toolbar. Supports font family, size, weigh
 
 Text blocks also support **merge tag insertion** through a toolbar dropdown. Merge tags are inserted at the cursor position and inherit the surrounding formatting. For merge tag syntax and data binding, see [Template Language](/learn/templates/template-language).
 
+<Note>
+  When the editor is opened from the campaign builder, two campaign-only merge tags are also available: `{{unsubscribe_link}}` (mandatory, with an automatic fallback footer) and `{{webversion_link}}` (optional in-browser version). See [Content & Design](/learn/campaigns/content-and-design#the-unsubscribe-link) for the full behavior.
+</Note>
+
 ### Image
 
 Displays a single image sourced from the File Manager or an external URL. Configuration includes alignment, width, margins, alt text, and an optional click-through link.

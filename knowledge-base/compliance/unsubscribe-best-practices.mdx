@@ -38,6 +38,15 @@ Lettr automatically includes the `List-Unsubscribe` and `List-Unsubscribe-Post` 
 
 ## Implementing Unsubscribe in Lettr
 
+<Note>
+  Lettr has two unsubscribe mechanisms depending on how you're sending:
+
+  - **Marketing campaigns** built in the Lettr UI use the `{{unsubscribe_link}}` merge tag, which Lettr replaces with a unique per-recipient signed URL. The link is mandatory, and Lettr appends a default footer automatically if it's missing. See [Content & Design](/learn/campaigns/content-and-design#the-unsubscribe-link).
+  - **Transactional sends via the API** use a link you host on your own domain, marked with the `data-msys-unsubscribe="1"` attribute described below.
+
+  The rest of this article focuses on the API-level mechanism.
+</Note>
+
 ### In-Body Unsubscribe Link with Tracking
 
 To track unsubscribe events in Lettr, add the `data-msys-unsubscribe="1"` attribute to your unsubscribe link. This tells Lettr to fire an unsubscribe event when the recipient clicks the link.

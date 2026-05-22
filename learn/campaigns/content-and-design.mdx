@@ -101,7 +101,7 @@ If a recipient doesn't have a value set for a property, the [fallback value](/le
 
 ### The Unsubscribe Link
 
-Marketing campaigns must include an unsubscribe mechanism. Lettr provides a special merge tag for this: `{{unsubscribe_link}}`. When the campaign sends, it's replaced with a unique per-recipient URL that, when clicked, marks the contact as `unsubscribed`.
+Every campaign you send through Lettr must include an unsubscribe mechanism. Lettr exposes this as a merge tag: `{{unsubscribe_link}}`. At send time it's replaced with a unique per-recipient URL that, when clicked, marks the contact as `unsubscribed` and fires the corresponding webhook event.
 
 A typical footer looks like:
 
@@ -120,14 +120,47 @@ You can also customize the page recipients land on after unsubscribing using the
 
 After they unsubscribe, Lettr redirects to your URL with a confirmation parameter so you can show a "Sorry to see you go" page on your own site.
 
+#### Automatic Fallback Footer
+
+Because the unsubscribe link is mandatory for marketing campaigns (`transactional: false`), Lettr enforces it for you. If your campaign HTML doesn't contain `{{unsubscribe_link}}` (or the raw SparkPost variant `{{unsubscribe_url}}`) by the time you send, Lettr automatically appends a minimal default footer right before the closing `</body>` tag. The same fallback is applied to test emails so they always remain compliant.
+
+You'll see this surfaced as a warning in the campaign builder in two places:
+
+- **In the HTML editor**: a banner above the code editor flags that no unsubscribe tag was found and offers an **Insert link** button that drops a styled footer into your HTML.
+- **On the Review step**: the same warning appears next to **Send a test email**, reminding you that Lettr will append the default footer to the test send and to every real send.
+
+Neither warning blocks you from saving the template or sending the test. The fallback is a safety net, not a gate. If you want full control over the styling and copy, add `{{unsubscribe_link}}` to your own footer and the auto-append is skipped.
+
 <Warning>
-  Including an unsubscribe link is not optional in practice. Without one, you risk:
+  Even with the automatic fallback, you should include your own unsubscribe link. The default footer is intentionally plain so it doesn't clash with your design, and recipients are more likely to use a clearly branded unsubscribe link than a generic one. Without a visible unsubscribe path you also risk:
+
   - Recipients marking you as spam (which damages your sender reputation)
-  - Hitting compliance issues under CAN-SPAM, GDPR, and similar laws
+  - Compliance issues under CAN-SPAM, GDPR, and similar laws
   - Mailbox providers like Gmail and Yahoo throttling or blocking your sends
 
-  Always include the unsubscribe link before sending. See [List Hygiene](/knowledge-base/best-practices/list-hygiene) and [Unsubscribe Best Practices](/knowledge-base/compliance/unsubscribe-best-practices) for guidance.
+  See [List Hygiene](/knowledge-base/best-practices/list-hygiene) and [Unsubscribe Best Practices](/knowledge-base/compliance/unsubscribe-best-practices) for guidance.
 </Warning>
+
+### The Web-version Link
+
+For recipients whose email client renders your campaign poorly (older Outlook versions, dark-mode quirks, image blocking, very narrow mobile clients), Lettr provides an optional merge tag that links to a hosted, in-browser version of the email: `{{webversion_link}}`.
+
+When the campaign sends, the tag is replaced with a unique signed URL for that recipient. Opening it loads a personalized render of the email, with the recipient's merge values already substituted in.
+
+A typical header link looks like:
+
+```html
+<p style="font-size: 12px; color: #666; text-align: center;">
+  Trouble viewing this email?
+  <a href="{{webversion_link}}">View it in your browser</a>
+</p>
+```
+
+The web-version tag is fully optional. If you don't include `{{webversion_link}}` in your HTML, nothing is added automatically and no hosted page is generated for that send. Unlike the unsubscribe link, there's no fallback and no warning in the editor.
+
+<Tip>
+  Test emails substitute `{{webversion_link}}` with a preview URL that renders the campaign against your own data, so you can click through during QA without needing a real recipient record.
+</Tip>
 
 ## Previewing Your Campaign
 
