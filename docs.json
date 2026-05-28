@@ -533,6 +533,12 @@
   "integrations": {
     "ga4": {
       "measurementId": "G-GMH8JTRY9Q"
+    },
+    "posthog": {
+      "apiKey": "phc_67BYz5Uv0uoiydQyaN3OyeK9OPx6LjmFDFvF0mNaTy9",
+      "apiHost": "https://eu.i.posthog.com",
+      "ui_host": "https://eu.posthog.com",
+      "sessionRecording": true
     }
   }
 }
