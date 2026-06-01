@@ -7,6 +7,10 @@
     "contact": {
       "name": "Lettr Support",
       "url": "https://lettr.com"
+    },
+    "license": {
+      "name": "Proprietary",
+      "url": "https://lettr.com/terms"
     }
   },
   "servers": [
@@ -231,7 +235,7 @@
                       {
                         "name": "invoice.pdf",
                         "type": "application/pdf",
-                        "data": "JVBERi0xLjQKJeLjz9M..."
+                        "data": "JVBERi0xLjQKJeLjz9MKMyAwIG9iago8PC9UeXBlL1BhZ2U="
                       }
                     ]
                   }
@@ -678,6 +682,7 @@
                 },
                 "example": {
                   "message": "Validation failed.",
+                  "error_code": "validation_error",
                   "errors": {
                     "per_page": [
                       "The per_page parameter must be an integer."
@@ -881,6 +886,10 @@
                           "timestamp": "2024-01-15T10:31:00.000Z",
                           "request_id": "12345678901234567890",
                           "rcpt_to": "recipient@example.com",
+                          "raw_rcpt_to": "recipient@example.com",
+                          "recipient_domain": "example.com",
+                          "mailbox_provider": "Gmail",
+                          "mailbox_provider_region": "Global",
                           "subject": "Welcome to Lettr",
                           "friendly_from": "sender@example.com",
                           "queue_time": 500
@@ -891,6 +900,10 @@
                           "timestamp": "2024-01-15T10:32:00.000Z",
                           "request_id": "12345678901234567891",
                           "rcpt_to": "bounced@example.com",
+                          "raw_rcpt_to": "bounced@example.com",
+                          "recipient_domain": "example.com",
+                          "mailbox_provider": "Gmail",
+                          "mailbox_provider_region": "Global",
                           "subject": "Welcome to Lettr",
                           "bounce_class": 10,
                           "error_code": "550",
@@ -996,41 +1009,58 @@
                 "example": {
                   "message": "Email retrieved successfully.",
                   "data": {
-                    "events": {
-                      "data": [
-                        {
-                          "event_id": "event-open-1",
-                          "type": "open",
-                          "timestamp": "2024-01-15T10:32:00.000Z",
-                          "request_id": "7610639000055488914",
-                          "rcpt_to": "recipient@example.com",
-                          "subject": "Welcome to Lettr",
-                          "friendly_from": "sender@example.com"
-                        },
-                        {
-                          "event_id": "event-delivery-1",
-                          "type": "delivery",
-                          "timestamp": "2024-01-15T10:31:00.000Z",
-                          "request_id": "7610639000055488914",
-                          "rcpt_to": "recipient@example.com",
-                          "subject": "Welcome to Lettr",
-                          "friendly_from": "sender@example.com",
-                          "queue_time": 500
-                        },
-                        {
-                          "event_id": "event-injection-1",
-                          "type": "injection",
-                          "timestamp": "2024-01-15T10:30:00.000Z",
-                          "request_id": "7610639000055488914",
-                          "rcpt_to": "recipient@example.com",
-                          "subject": "Welcome to Lettr",
-                          "friendly_from": "sender@example.com"
-                        }
-                      ],
-                      "total_count": 3,
-                      "from": "2024-01-05T00:00:00+00:00",
-                      "to": "2024-01-15T10:35:00+00:00"
-                    }
+                    "transmission_id": "7610639000055488914",
+                    "state": "delivered",
+                    "scheduled_at": null,
+                    "from": "sender@example.com",
+                    "from_name": null,
+                    "subject": "Welcome to Lettr",
+                    "recipients": [
+                      "recipient@example.com"
+                    ],
+                    "num_recipients": 1,
+                    "events": [
+                      {
+                        "event_id": "event-open-1",
+                        "type": "open",
+                        "timestamp": "2024-01-15T10:32:00.000Z",
+                        "request_id": "7610639000055488914",
+                        "rcpt_to": "recipient@example.com",
+                        "raw_rcpt_to": "recipient@example.com",
+                        "recipient_domain": "example.com",
+                        "mailbox_provider": "Gmail",
+                        "mailbox_provider_region": "Global",
+                        "subject": "Welcome to Lettr",
+                        "friendly_from": "sender@example.com"
+                      },
+                      {
+                        "event_id": "event-delivery-1",
+                        "type": "delivery",
+                        "timestamp": "2024-01-15T10:31:00.000Z",
+                        "request_id": "7610639000055488914",
+                        "rcpt_to": "recipient@example.com",
+                        "raw_rcpt_to": "recipient@example.com",
+                        "recipient_domain": "example.com",
+                        "mailbox_provider": "Gmail",
+                        "mailbox_provider_region": "Global",
+                        "subject": "Welcome to Lettr",
+                        "friendly_from": "sender@example.com",
+                        "queue_time": 500
+                      },
+                      {
+                        "event_id": "event-injection-1",
+                        "type": "injection",
+                        "timestamp": "2024-01-15T10:30:00.000Z",
+                        "request_id": "7610639000055488914",
+                        "rcpt_to": "recipient@example.com",
+                        "raw_rcpt_to": "recipient@example.com",
+                        "recipient_domain": "example.com",
+                        "mailbox_provider": "Gmail",
+                        "mailbox_provider_region": "Global",
+                        "subject": "Welcome to Lettr",
+                        "friendly_from": "sender@example.com"
+                      }
+                    ]
                   }
                 }
               }
@@ -1338,6 +1368,10 @@
                             "timestamp": "2024-01-16T10:00:02.000Z",
                             "request_id": "12345678901234567890",
                             "rcpt_to": "recipient@example.com",
+                            "raw_rcpt_to": "recipient@example.com",
+                            "recipient_domain": "example.com",
+                            "mailbox_provider": "Gmail",
+                            "mailbox_provider_region": "Global",
                             "subject": "Scheduled Newsletter",
                             "friendly_from": "sender@example.com",
                             "queue_time": 500
@@ -1348,6 +1382,10 @@
                             "timestamp": "2024-01-16T10:00:00.000Z",
                             "request_id": "12345678901234567890",
                             "rcpt_to": "recipient@example.com",
+                            "raw_rcpt_to": "recipient@example.com",
+                            "recipient_domain": "example.com",
+                            "mailbox_provider": "Gmail",
+                            "mailbox_provider_region": "Global",
                             "subject": "Scheduled Newsletter",
                             "friendly_from": "sender@example.com"
                           }
@@ -3567,6 +3605,7 @@
                 },
                 "example": {
                   "message": "Validation failed.",
+                  "error_code": "validation_error",
                   "errors": {
                     "per_page": [
                       "The per_page parameter must not exceed 100."
@@ -3575,6 +3614,2812 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/audience/lists": {
+      "get": {
+        "operationId": "listAudienceLists",
+        "summary": "List audience lists",
+        "description": "Returns all audience lists for the authenticated team. Requires the `audience:read` scope.",
+        "tags": [
+          "Audience"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            },
+            "description": "Page number"
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            },
+            "description": "Items per page (max 100)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lists retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListAudienceListsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createAudienceList",
+        "summary": "Create an audience list",
+        "description": "Create a new audience list. The name must be unique within the team. Requires the `audience:write` scope and is blocked for sandbox API keys.",
+        "tags": [
+          "Audience"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StoreAudienceListRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "List created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShowAudienceListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/audience/lists/bulk": {
+      "delete": {
+        "operationId": "bulkDestroyAudienceLists",
+        "summary": "Bulk delete audience lists",
+        "description": "Delete up to 50 lists in a single request. All `list_ids` must belong to the authenticated team. Requires the `audience:write` scope and is blocked for sandbox API keys.",
+        "tags": [
+          "Audience"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkDestroyAudienceListsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkDestroyAudienceListsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/audience/lists/{listId}": {
+      "get": {
+        "operationId": "showAudienceList",
+        "summary": "Show an audience list",
+        "description": "Retrieve a single audience list. Requires the `audience:read` scope.",
+        "tags": [
+          "Audience"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "listId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "List ID",
+            "example": "0193e6a8-1f3a-7c2a-b9e2-1aa1d2e5d3f0"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShowAudienceListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "List not found.",
+                  "error_code": "not_found"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateAudienceList",
+        "summary": "Update an audience list",
+        "description": "Partially update an audience list. If no fields are provided the existing list is returned unchanged. Requires the `audience:write` scope and is blocked for sandbox API keys.",
+        "tags": [
+          "Audience"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "listId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "List ID",
+            "example": "0193e6a8-1f3a-7c2a-b9e2-1aa1d2e5d3f0"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAudienceListRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShowAudienceListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "List not found.",
+                  "error_code": "not_found"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "destroyAudienceList",
+        "summary": "Delete an audience list",
+        "description": "Permanently delete an audience list. Requires the `audience:write` scope and is blocked for sandbox API keys.",
+        "tags": [
+          "Audience"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "listId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "List ID",
+            "example": "0193e6a8-1f3a-7c2a-b9e2-1aa1d2e5d3f0"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "List deleted"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "List not found.",
+                  "error_code": "not_found"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/audience/contacts": {
+      "get": {
+        "operationId": "listAudienceContacts",
+        "summary": "List audience contacts",
+        "description": "List contacts with pagination and filtering. Requires the `audience:read` scope.",
+        "tags": [
+          "Audience"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            },
+            "description": "Page number"
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            },
+            "description": "Items per page (max 100)"
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 255
+            },
+            "description": "Search by email or contact name"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "subscribed",
+                "unsubscribed",
+                "bounced",
+                "complained",
+                "unverified"
+              ]
+            },
+            "description": "Filter by contact status"
+          },
+          {
+            "name": "list_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Filter to contacts in a specific list (must belong to the team)"
+          },
+          {
+            "name": "segment_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Filter to contacts matching a specific segment (must belong to the team)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Contacts retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListAudienceContactsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createAudienceContact",
+        "summary": "Create a contact",
+        "description": "Create a single contact. If `double_opt_in` is provided the contact is created in `unverified` status and receives a confirmation email — they become `subscribed` only after clicking the confirmation link. Requires the `audience:write` scope and is blocked for sandbox API keys.",
+        "tags": [
+          "Audience"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StoreAudienceContactRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Contact created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShowAudienceContactResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "description": "Double opt-in confirmation template not found. Returned only when `double_opt_in` is supplied and its `template_slug` does not exist, has no active (published) version, or no default project is configured for the team. No contact is created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "template_not_found": {
+                    "summary": "Template slug not found",
+                    "value": {
+                      "message": "Template with slug 'confirm-subscription' was not found.",
+                      "error_code": "template_not_found"
+                    }
+                  },
+                  "no_active_version": {
+                    "summary": "Template has no active version",
+                    "value": {
+                      "message": "Template 'confirm-subscription' has no active version. Publish a version of this template before using it.",
+                      "error_code": "template_not_found"
+                    }
+                  },
+                  "no_default_project": {
+                    "summary": "No default project configured",
+                    "value": {
+                      "message": "No default project is configured for this team.",
+                      "error_code": "template_not_found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          },
+          "502": {
+            "description": "Confirmation email transmission failed (upstream provider error). Returned only when `double_opt_in` is supplied and the confirmation email could not be sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "Unconfigured Sending Domain <sender.example.com>",
+                  "error_code": "transmission_failed"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/audience/contacts/bulk": {
+      "post": {
+        "operationId": "bulkCreateAudienceContacts",
+        "summary": "Bulk create contacts",
+        "description": "Create up to 1000 contacts in a single request. Emails are normalized and deduplicated; contacts that already exist are reported in `already_existed`. Requires the `audience:write` scope and is blocked for sandbox API keys.",
+        "tags": [
+          "Audience"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkStoreAudienceContactsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Contacts created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkStoreAudienceContactsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/audience/contacts/lists/bulk": {
+      "post": {
+        "operationId": "bulkAttachContactsToLists",
+        "summary": "Bulk attach contacts to lists",
+        "description": "Attach every combination of `contact_ids × list_ids` (up to 1000 contacts × 50 lists). Existing pairs are reported in `already_attached`. Requires the `audience:write` scope and is blocked for sandbox API keys.",
+        "tags": [
+          "Audience"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkAudienceContactListsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkAttachContactsToListsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "bulkDetachContactsFromLists",
+        "summary": "Bulk detach contacts from lists",
+        "description": "Detach every combination of `contact_ids × list_ids` (up to 1000 contacts × 50 lists). Pairs that were not attached are reported in `not_present`. Requires the `audience:write` scope and is blocked for sandbox API keys.",
+        "tags": [
+          "Audience"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkAudienceContactListsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkDetachContactsFromListsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/audience/contacts/{contactId}": {
+      "get": {
+        "operationId": "showAudienceContact",
+        "summary": "Show a contact",
+        "description": "Retrieve a single contact. Requires the `audience:read` scope.",
+        "tags": [
+          "Audience"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "contactId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Contact ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Contact retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShowAudienceContactResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "Contact not found.",
+                  "error_code": "not_found"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateAudienceContact",
+        "summary": "Update a contact",
+        "description": "Partially update a contact. If no fields are provided the contact is returned unchanged. Requires the `audience:write` scope and is blocked for sandbox API keys.",
+        "tags": [
+          "Audience"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "contactId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Contact ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAudienceContactRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShowAudienceContactResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "Contact not found.",
+                  "error_code": "not_found"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "destroyAudienceContact",
+        "summary": "Delete a contact",
+        "description": "Permanently delete a contact. Requires the `audience:write` scope and is blocked for sandbox API keys.",
+        "tags": [
+          "Audience"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "contactId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Contact ID"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Contact deleted"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "Contact not found.",
+                  "error_code": "not_found"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/audience/contacts/{contactId}/lists/{listId}": {
+      "post": {
+        "operationId": "attachAudienceContactToList",
+        "summary": "Attach contact to list",
+        "description": "Add a contact to a list. Returns `201` if the contact was newly attached, or `200` if the contact was already in the list. Requires the `audience:write` scope and is blocked for sandbox API keys.",
+        "tags": [
+          "Audience"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "contactId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Contact ID"
+          },
+          {
+            "name": "listId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "List ID",
+            "example": "0193e6a8-1f3a-7c2a-b9e2-1aa1d2e5d3f0"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Contact was already in the list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttachContactToListResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Contact attached to list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttachContactToListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "Contact or list not found.",
+                  "error_code": "not_found"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "detachAudienceContactFromList",
+        "summary": "Detach contact from list",
+        "description": "Remove a contact from a list. Idempotent — returns `204` whether the pair existed or not. Requires the `audience:write` scope and is blocked for sandbox API keys.",
+        "tags": [
+          "Audience"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "contactId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Contact ID"
+          },
+          {
+            "name": "listId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "List ID",
+            "example": "0193e6a8-1f3a-7c2a-b9e2-1aa1d2e5d3f0"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Detached (or pair did not exist)"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "Contact or list not found.",
+                  "error_code": "not_found"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/audience/contacts/{contactId}/topics/{topicId}": {
+      "post": {
+        "operationId": "subscribeAudienceContactToTopic",
+        "summary": "Subscribe contact to topic",
+        "description": "Subscribe a contact to a topic. Returns `201` if the subscription is new, or `200` if the contact was already subscribed. Requires the `audience:write` scope and is blocked for sandbox API keys.",
+        "tags": [
+          "Audience"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "contactId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Contact ID"
+          },
+          {
+            "name": "topicId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Topic ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Contact was already subscribed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttachContactToTopicResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Contact subscribed to topic",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttachContactToTopicResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "Contact or topic not found.",
+                  "error_code": "not_found"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "unsubscribeAudienceContactFromTopic",
+        "summary": "Unsubscribe contact from topic",
+        "description": "Unsubscribe a contact from a topic. Idempotent — returns `204` whether the subscription existed or not. Requires the `audience:write` scope and is blocked for sandbox API keys.",
+        "tags": [
+          "Audience"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "contactId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Contact ID"
+          },
+          {
+            "name": "topicId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Topic ID"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Unsubscribed (or no subscription existed)"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "Contact or topic not found.",
+                  "error_code": "not_found"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/audience/topics": {
+      "get": {
+        "operationId": "listAudienceTopics",
+        "summary": "List audience topics",
+        "description": "List topics with pagination. Requires the `audience:read` scope.",
+        "tags": [
+          "Audience"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            },
+            "description": "Page number"
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            },
+            "description": "Items per page (max 100)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Topics retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListAudienceTopicsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createAudienceTopic",
+        "summary": "Create a topic",
+        "description": "Create a topic. The `default_subscription` field is set at creation and cannot be changed later. Requires the `audience:write` scope and is blocked for sandbox API keys.",
+        "tags": [
+          "Audience"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StoreAudienceTopicRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Topic created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShowAudienceTopicResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/audience/topics/{topicId}": {
+      "get": {
+        "operationId": "showAudienceTopic",
+        "summary": "Show a topic",
+        "description": "Retrieve a single topic. Requires the `audience:read` scope.",
+        "tags": [
+          "Audience"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "topicId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Topic ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Topic retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShowAudienceTopicResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "Topic not found.",
+                  "error_code": "not_found"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateAudienceTopic",
+        "summary": "Update a topic",
+        "description": "Partially update a topic. The `default_subscription` field is immutable. Requires the `audience:write` scope and is blocked for sandbox API keys.",
+        "tags": [
+          "Audience"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "topicId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Topic ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAudienceTopicRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShowAudienceTopicResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "Topic not found.",
+                  "error_code": "not_found"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "destroyAudienceTopic",
+        "summary": "Delete a topic",
+        "description": "Permanently delete a topic. Requires the `audience:write` scope and is blocked for sandbox API keys.",
+        "tags": [
+          "Audience"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "topicId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Topic ID"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Topic deleted"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "Topic not found.",
+                  "error_code": "not_found"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/audience/properties": {
+      "get": {
+        "operationId": "listAudienceProperties",
+        "summary": "List audience properties",
+        "description": "List the team's custom contact properties. Requires the `audience:read` scope.",
+        "tags": [
+          "Audience"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            },
+            "description": "Page number"
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            },
+            "description": "Items per page (max 100)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Properties retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListAudiencePropertiesResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createAudienceProperty",
+        "summary": "Create a property",
+        "description": "Create a new property that contacts can store. The `name` and `type` fields are immutable after creation — to change them, delete the property and create a new one. Requires the `audience:write` scope and is blocked for sandbox API keys.",
+        "tags": [
+          "Audience"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StoreAudiencePropertyRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Property created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShowAudiencePropertyResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "A property with this name already exists.",
+                  "error_code": "resource_already_exists"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/audience/properties/{propertyId}": {
+      "get": {
+        "operationId": "showAudienceProperty",
+        "summary": "Show a property",
+        "description": "Retrieve a single property. Requires the `audience:read` scope.",
+        "tags": [
+          "Audience"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "propertyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Property ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Property retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShowAudiencePropertyResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "Property not found.",
+                  "error_code": "not_found"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateAudienceProperty",
+        "summary": "Update a property",
+        "description": "Update the property's fallback value. The `name` and `type` fields cannot be changed (they would orphan data on existing contacts). If the request body contains no recognized fields, the property is returned unchanged with a `200` response. Requires the `audience:write` scope and is blocked for sandbox API keys.",
+        "tags": [
+          "Audience"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "propertyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Property ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAudiencePropertyRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShowAudiencePropertyResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "Property not found.",
+                  "error_code": "not_found"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "destroyAudienceProperty",
+        "summary": "Delete a property",
+        "description": "Permanently delete a property. Requires the `audience:write` scope and is blocked for sandbox API keys.",
+        "tags": [
+          "Audience"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "propertyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Property ID"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Property deleted"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "Property not found.",
+                  "error_code": "not_found"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/audience/segments": {
+      "get": {
+        "operationId": "listAudienceSegments",
+        "summary": "List audience segments",
+        "description": "List segments with pagination. Requires the `audience:read` scope.",
+        "tags": [
+          "Audience"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            },
+            "description": "Page number"
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            },
+            "description": "Items per page (max 100)"
+          },
+          {
+            "name": "list_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Filter to segments restricted to a specific list (must belong to the team)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Segments retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListAudienceSegmentsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createAudienceSegment",
+        "summary": "Create a segment",
+        "description": "Create a segment defined by condition groups (conditions within a group are joined by OR; groups are joined by AND). Requires the `audience:write` scope and is blocked for sandbox API keys.",
+        "tags": [
+          "Audience"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StoreAudienceSegmentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Segment created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShowAudienceSegmentResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/audience/segments/{segmentId}": {
+      "get": {
+        "operationId": "showAudienceSegment",
+        "summary": "Show a segment",
+        "description": "Retrieve a single segment. Requires the `audience:read` scope.",
+        "tags": [
+          "Audience"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "segmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Segment ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Segment retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShowAudienceSegmentResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "Segment not found.",
+                  "error_code": "not_found"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateAudienceSegment",
+        "summary": "Update a segment",
+        "description": "Partially update a segment. Requires the `audience:write` scope and is blocked for sandbox API keys.",
+        "tags": [
+          "Audience"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "segmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Segment ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAudienceSegmentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShowAudienceSegmentResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "Segment not found.",
+                  "error_code": "not_found"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "destroyAudienceSegment",
+        "summary": "Delete a segment",
+        "description": "Permanently delete a segment. Requires the `audience:write` scope and is blocked for sandbox API keys.",
+        "tags": [
+          "Audience"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "segmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Segment ID"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Segment deleted"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "Segment not found.",
+                  "error_code": "not_found"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/campaigns": {
+      "get": {
+        "operationId": "listCampaigns",
+        "summary": "List campaigns",
+        "description": "Returns a paginated list of campaigns for the authenticated team, each with embedded engagement stats. Requires the `campaigns:read` scope.",
+        "tags": [
+          "Campaigns"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10000,
+              "default": 1
+            },
+            "description": "Page number"
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            },
+            "description": "Items per page (max 100)"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "draft",
+                "scheduled",
+                "preparing",
+                "in_review",
+                "sending",
+                "sent",
+                "failed"
+              ]
+            },
+            "description": "Filter by campaign status"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Campaigns retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListCampaignsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/campaigns/{campaignId}": {
+      "get": {
+        "operationId": "showCampaign",
+        "summary": "Show a campaign",
+        "description": "Retrieve a single campaign with embedded stats and rendered HTML content. Requires the `campaigns:read` scope.",
+        "tags": [
+          "Campaigns"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "campaignId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Campaign ID",
+            "example": "0193e6a8-1f3a-7c2a-b9e2-1aa1d2e5d3f0"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Campaign retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShowCampaignResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "Campaign not found.",
+                  "error_code": "not_found"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/campaigns/{campaignId}/events": {
+      "get": {
+        "operationId": "listCampaignEvents",
+        "summary": "List campaign engagement events",
+        "description": "Returns engagement events (opens, clicks, bounces, etc.) for a campaign, with optional filtering by type, recipient email, and date range. Uses cursor-based pagination: keep requesting with the returned `next_cursor` until it is `null`. When a filter is applied, a page may come back with an empty `events` array **and** a non-null `next_cursor` — that means more pages remain, not that there are no matching events, so continue paginating until `next_cursor` is `null`. Requires the `campaigns:read` scope.",
+        "tags": [
+          "Campaigns"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "campaignId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Campaign ID",
+            "example": "0193e6a8-1f3a-7c2a-b9e2-1aa1d2e5d3f0"
+          },
+          {
+            "name": "event_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "injection",
+                "delivery",
+                "bounce",
+                "spam_complaint",
+                "open",
+                "click",
+                "list_unsubscribe"
+              ]
+            },
+            "description": "Filter by event type"
+          },
+          {
+            "name": "email",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "email"
+            },
+            "description": "Filter by recipient email"
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "description": "Only events at or after this time (ISO 8601). A date-only value (e.g. `2026-05-01`) is treated as the start of that day in UTC."
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "description": "Only events at or before this time (ISO 8601), inclusive. A date-only value (e.g. `2026-05-01`) covers the whole of that day in UTC (through 23:59:59)."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25
+            },
+            "description": "Max events per page (max 100)"
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Pagination cursor from a previous response"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Campaign events retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListCampaignEventsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "Campaign not found.",
+                  "error_code": "not_found"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/campaigns/{campaignId}/send": {
+      "post": {
+        "operationId": "sendCampaign",
+        "summary": "Send a campaign now",
+        "description": "Immediately dispatches a draft campaign. The campaign must be a draft with a subject, sender email, and content. Sending is asynchronous; the campaign transitions to `preparing`. Requires the `campaigns:write` scope. Not available to sandbox keys.",
+        "tags": [
+          "Campaigns"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "campaignId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Campaign ID",
+            "example": "0193e6a8-1f3a-7c2a-b9e2-1aa1d2e5d3f0"
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Campaign sending started.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CampaignActionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "Campaign not found.",
+                  "error_code": "not_found"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Precondition failed. `campaign_not_sendable` when the campaign is not a draft or is missing a subject, sender, or content; `campaign_has_pending_schedule` when the campaign already has a future scheduled delivery time (unschedule it first, or use the schedule endpoint).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "not_sendable": {
+                    "summary": "Campaign is not in a sendable state",
+                    "value": {
+                      "message": "Campaign can only be sent from draft status.",
+                      "error_code": "campaign_not_sendable"
+                    }
+                  },
+                  "pending_schedule": {
+                    "summary": "Campaign has a pending scheduled time",
+                    "value": {
+                      "message": "This campaign is staged to send at 2026-06-01T09:00:00+00:00. Unschedule it first to send immediately, or use the schedule endpoint to confirm the delivery time.",
+                      "error_code": "campaign_has_pending_schedule"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/campaigns/{campaignId}/schedule": {
+      "post": {
+        "operationId": "scheduleCampaign",
+        "summary": "Schedule a campaign",
+        "description": "Schedules a campaign for future delivery, or reschedules an already-scheduled campaign to a new time. The campaign transitions to (or stays) `scheduled` and is dispatched automatically at the given time. Requires the `campaigns:write` scope. Not available to sandbox keys.",
+        "tags": [
+          "Campaigns"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "campaignId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Campaign ID",
+            "example": "0193e6a8-1f3a-7c2a-b9e2-1aa1d2e5d3f0"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScheduleCampaignRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Campaign scheduled for delivery.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CampaignActionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "Campaign not found.",
+                  "error_code": "not_found"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error (invalid or missing `scheduled_at`), or `campaign_not_sendable` when the campaign is not a draft or scheduled campaign, or is missing a subject, sender, or content.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/ValidationErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    }
+                  ]
+                },
+                "examples": {
+                  "validation_error": {
+                    "summary": "Invalid or missing scheduled_at",
+                    "value": {
+                      "message": "Validation failed.",
+                      "error_code": "validation_error",
+                      "errors": {
+                        "scheduled_at": [
+                          "The scheduled delivery time must be in the future."
+                        ]
+                      }
+                    }
+                  },
+                  "not_sendable": {
+                    "summary": "Campaign is not in a sendable state",
+                    "value": {
+                      "message": "Campaign can only be sent from draft status.",
+                      "error_code": "campaign_not_sendable"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/campaigns/{campaignId}/unschedule": {
+      "post": {
+        "operationId": "unscheduleCampaign",
+        "summary": "Unschedule a campaign",
+        "description": "Cancels a scheduled send, returning the campaign to `draft`. The campaign must currently be `scheduled`. Requires the `campaigns:write` scope. Not available to sandbox keys.",
+        "tags": [
+          "Campaigns"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "campaignId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Campaign ID",
+            "example": "0193e6a8-1f3a-7c2a-b9e2-1aa1d2e5d3f0"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Campaign unscheduled.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CampaignActionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "Campaign not found.",
+                  "error_code": "not_found"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Precondition failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "Only scheduled campaigns can be unscheduled.",
+                  "error_code": "campaign_not_scheduled"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
           }
         }
       }
@@ -3637,6 +6482,16 @@
             "example": {
               "message": "An unexpected error occurred. Please try again later.",
               "error_code": "send_error"
+            }
+          }
+        }
+      },
+      "ValidationError": {
+        "description": "Validation error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ValidationErrorResponse"
             }
           }
         }
@@ -3883,7 +6738,7 @@
             "type": "string",
             "pattern": "^[A-Za-z0-9+/=]+$",
             "description": "Base64 encoded file content (no line breaks)",
-            "example": "JVBERi0xLjQKJeLjz9MKMyAwIG9iago8PC9UeXBlL1BhZ2U..."
+            "example": "JVBERi0xLjQKJeLjz9MKMyAwIG9iago8PC9UeXBlL1BhZ2U="
           }
         }
       },
@@ -4001,7 +6856,7 @@
       },
       "ErrorCode": {
         "type": "string",
-        "description": "Error codes returned by the API.\n\n| Code | HTTP Status | Description |\n|------|-------------|-------------|\n| `validation_error` | 422 | Request validation failed. Check the `errors` object for field-specific messages. |\n| `invalid_domain` | 400 | The sender domain could not be determined from the email address. |\n| `unconfigured_domain` | 400 | The sender domain is not configured or approved for sending. |\n| `send_error` | 400, 500 | General error during email send preparation or domain registration. |\n| `retrieval_error` | 400, 500 | Failed to retrieve resources (e.g., sandbox key without associated user, upstream error). |\n| `transmission_failed` | 502 | Email transmission to the upstream provider failed. |\n| `resource_already_exists` | 409 | The resource (e.g., domain) already exists. |\n| `not_found` | 404 | The specified resource was not found. |\n| `template_not_found` | 404 | The specified template, project, or template version was not found. |\n| `insufficient_scope` | 403 | The API key does not have the required scope for this endpoint. |\n| `schedule_cancellation_failed` | 409, 500 | Could not cancel the scheduled transmission (already sent or upstream error). |\n| `quota_exceeded` | 429 | Monthly sending quota exceeded. Upgrade your plan to continue sending. |\n| `daily_quota_exceeded` | 429 | Daily sending quota exceeded. Try again tomorrow. |",
+        "description": "Error codes returned by the API.\n\n| Code | HTTP Status | Description |\n|------|-------------|-------------|\n| `validation_error` | 422 | Request validation failed. Check the `errors` object for field-specific messages. |\n| `invalid_domain` | 400 | The sender domain could not be determined from the email address. |\n| `unconfigured_domain` | 400 | The sender domain is not configured or approved for sending. |\n| `send_error` | 400, 500 | General error during email send preparation or domain registration. |\n| `retrieval_error` | 400, 500 | Failed to retrieve resources (e.g., sandbox key without associated user, upstream error). |\n| `transmission_failed` | 502 | Email transmission to the upstream provider failed. |\n| `resource_already_exists` | 409 | The resource (e.g., domain) already exists. |\n| `not_found` | 404 | The specified resource was not found. |\n| `template_not_found` | 404 | The specified template, project, or template version was not found. |\n| `insufficient_scope` | 403 | The API key does not have the required scope for this endpoint. |\n| `schedule_cancellation_failed` | 409, 500 | Could not cancel the scheduled transmission (already sent or upstream error). |\n| `quota_exceeded` | 429 | Monthly sending quota exceeded. Upgrade your plan to continue sending. |\n| `daily_quota_exceeded` | 429 | Daily sending quota exceeded. Try again tomorrow. |\n| `campaign_not_sendable` | 422 | The campaign cannot be sent in its current state (not a draft, or missing subject/sender/content). |\n| `campaign_not_scheduled` | 422 | The campaign is not scheduled, so it cannot be unscheduled. |",
         "enum": [
           "validation_error",
           "invalid_domain",
@@ -4015,7 +6870,9 @@
           "insufficient_scope",
           "schedule_cancellation_failed",
           "quota_exceeded",
-          "daily_quota_exceeded"
+          "daily_quota_exceeded",
+          "campaign_not_sendable",
+          "campaign_not_scheduled"
         ],
         "example": "invalid_domain"
       },
@@ -7527,6 +10384,1563 @@
             "type": "integer"
           }
         }
+      },
+      "AudiencePagination": {
+        "type": "object",
+        "description": "Pagination info for audience list responses",
+        "required": [
+          "total",
+          "per_page",
+          "current_page",
+          "last_page"
+        ],
+        "properties": {
+          "total": {
+            "type": "integer",
+            "description": "Total items",
+            "example": 42
+          },
+          "per_page": {
+            "type": "integer",
+            "description": "Items per page",
+            "example": 20
+          },
+          "current_page": {
+            "type": "integer",
+            "description": "Current page (1-indexed)",
+            "example": 1
+          },
+          "last_page": {
+            "type": "integer",
+            "description": "Last available page (= ceil(total / per_page), minimum 1)",
+            "example": 3
+          }
+        }
+      },
+      "AudienceListView": {
+        "type": "object",
+        "description": "Audience list summary",
+        "required": [
+          "id",
+          "name",
+          "contacts_count"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "List ID",
+            "example": "0193e6a8-1f3a-7c2a-b9e2-1aa1d2e5d3f0"
+          },
+          "name": {
+            "type": "string",
+            "description": "List name",
+            "example": "Newsletter subscribers"
+          },
+          "contacts_count": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Number of contacts in the list",
+            "example": 124
+          }
+        }
+      },
+      "ListAudienceListsResponse": {
+        "type": "object",
+        "required": [
+          "message",
+          "data"
+        ],
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Lists retrieved successfully."
+          },
+          "data": {
+            "type": "object",
+            "required": [
+              "lists",
+              "pagination"
+            ],
+            "properties": {
+              "lists": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/AudienceListView"
+                }
+              },
+              "pagination": {
+                "$ref": "#/components/schemas/AudiencePagination"
+              }
+            }
+          }
+        }
+      },
+      "ShowAudienceListResponse": {
+        "type": "object",
+        "required": [
+          "message",
+          "data"
+        ],
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "List retrieved successfully."
+          },
+          "data": {
+            "$ref": "#/components/schemas/AudienceListView"
+          }
+        }
+      },
+      "StoreAudienceListRequest": {
+        "type": "object",
+        "description": "Request to create an audience list",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "List name (must be unique within the team)",
+            "example": "Newsletter subscribers"
+          }
+        }
+      },
+      "UpdateAudienceListRequest": {
+        "type": "object",
+        "description": "Request to update an audience list. All fields are optional.",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "New list name (must remain unique within the team)",
+            "example": "Newsletter subscribers (renamed)"
+          }
+        }
+      },
+      "BulkDestroyAudienceListsRequest": {
+        "type": "object",
+        "description": "Bulk delete audience lists",
+        "required": [
+          "list_ids"
+        ],
+        "properties": {
+          "list_ids": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 50,
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "1–50 list IDs (all must belong to the authenticated team)",
+            "example": [
+              "0193e6a8-1f3a-7c2a-b9e2-1aa1d2e5d3f0",
+              "0193e6a8-2a4b-7d1c-a3f5-2bb2e3f6e4a1"
+            ]
+          }
+        }
+      },
+      "BulkDestroyAudienceListsResponse": {
+        "type": "object",
+        "required": [
+          "message",
+          "data"
+        ],
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Lists deleted successfully."
+          },
+          "data": {
+            "type": "object",
+            "required": [
+              "deleted"
+            ],
+            "properties": {
+              "deleted": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Number of lists actually deleted",
+                "example": 2
+              }
+            }
+          }
+        }
+      },
+      "AudienceContactStatus": {
+        "type": "string",
+        "enum": [
+          "subscribed",
+          "unsubscribed",
+          "bounced",
+          "complained",
+          "unverified"
+        ],
+        "description": "Contact subscription status",
+        "example": "subscribed"
+      },
+      "AudienceContactListLink": {
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "AudienceContactTopicLink": {
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "AudienceContactView": {
+        "type": "object",
+        "description": "Audience contact",
+        "required": [
+          "id",
+          "email",
+          "status",
+          "properties",
+          "created_at",
+          "lists",
+          "topics"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "0193e6b0-9c1d-7d4f-a8f1-cef9a1b2d3e4"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "jane@example.com"
+          },
+          "status": {
+            "$ref": "#/components/schemas/AudienceContactStatus"
+          },
+          "properties": {
+            "type": "object",
+            "description": "Custom properties for the contact (string values)",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "example": {
+              "first_name": "Jane",
+              "country": "US"
+            }
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-15T10:30:00Z"
+          },
+          "lists": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AudienceContactListLink"
+            }
+          },
+          "topics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AudienceContactTopicLink"
+            }
+          }
+        }
+      },
+      "ListAudienceContactsResponse": {
+        "type": "object",
+        "required": [
+          "message",
+          "data"
+        ],
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Contacts retrieved successfully."
+          },
+          "data": {
+            "type": "object",
+            "required": [
+              "contacts",
+              "pagination"
+            ],
+            "properties": {
+              "contacts": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/AudienceContactView"
+                }
+              },
+              "pagination": {
+                "$ref": "#/components/schemas/AudiencePagination"
+              }
+            }
+          }
+        }
+      },
+      "ShowAudienceContactResponse": {
+        "type": "object",
+        "required": [
+          "message",
+          "data"
+        ],
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Contact retrieved successfully."
+          },
+          "data": {
+            "$ref": "#/components/schemas/AudienceContactView"
+          }
+        }
+      },
+      "DoubleOptInConfig": {
+        "type": "object",
+        "description": "Double opt-in configuration. When provided, the contact receives a confirmation email and is created in `unverified` status until they click the confirmation link.",
+        "required": [
+          "from",
+          "subject",
+          "template_slug",
+          "redirect_url"
+        ],
+        "properties": {
+          "from": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 255,
+            "example": "no-reply@example.com"
+          },
+          "from_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 255,
+            "example": "Example Newsletter"
+          },
+          "subject": {
+            "type": "string",
+            "maxLength": 998,
+            "example": "Please confirm your subscription"
+          },
+          "template_slug": {
+            "type": "string",
+            "maxLength": 255,
+            "example": "double-opt-in"
+          },
+          "redirect_url": {
+            "type": "string",
+            "format": "uri",
+            "maxLength": 2048,
+            "example": "https://example.com/confirmed"
+          }
+        }
+      },
+      "StoreAudienceContactRequest": {
+        "type": "object",
+        "description": "Request to create a single contact",
+        "required": [
+          "email"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 255,
+            "example": "jane@example.com"
+          },
+          "list_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Optional list to add the contact to"
+          },
+          "properties": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": {
+              "type": "string",
+              "maxLength": 1000
+            },
+            "description": "Custom property values. Each key must match a property defined for the team.",
+            "example": {
+              "first_name": "Jane"
+            }
+          },
+          "double_opt_in": {
+            "$ref": "#/components/schemas/DoubleOptInConfig"
+          }
+        }
+      },
+      "BulkStoreAudienceContactsRequest": {
+        "type": "object",
+        "description": "Bulk create contacts. Emails are normalized (lowercased, trimmed) and deduplicated.",
+        "required": [
+          "emails"
+        ],
+        "properties": {
+          "emails": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 1000,
+            "items": {
+              "type": "string",
+              "format": "email",
+              "maxLength": 255
+            },
+            "example": [
+              "jane@example.com",
+              "joe@example.com"
+            ]
+          },
+          "list_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Optional list to add all contacts to"
+          },
+          "properties": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": {
+              "type": "string",
+              "maxLength": 1000
+            },
+            "description": "Custom property values applied to every contact created in this batch"
+          }
+        }
+      },
+      "BulkStoreAudienceContactsResponse": {
+        "type": "object",
+        "required": [
+          "message",
+          "data"
+        ],
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Contacts created successfully."
+          },
+          "data": {
+            "type": "object",
+            "required": [
+              "created",
+              "already_existed"
+            ],
+            "properties": {
+              "created": {
+                "type": "integer",
+                "minimum": 0,
+                "example": 2
+              },
+              "already_existed": {
+                "type": "integer",
+                "minimum": 0,
+                "example": 0
+              }
+            }
+          }
+        }
+      },
+      "UpdateAudienceContactRequest": {
+        "type": "object",
+        "description": "Request to update a contact. All fields are optional.",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 255,
+            "description": "New email address (must remain unique within the team)"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "subscribed",
+              "unsubscribed"
+            ]
+          },
+          "properties": {
+            "type": "object",
+            "additionalProperties": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "maxLength": 1000
+            },
+            "description": "Partial property update. A property set to null is removed."
+          }
+        }
+      },
+      "BulkAudienceContactListsRequest": {
+        "type": "object",
+        "description": "Bulk attach/detach contacts to/from lists. All combinations of contact_ids × list_ids are processed.",
+        "required": [
+          "contact_ids",
+          "list_ids"
+        ],
+        "properties": {
+          "contact_ids": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 1000,
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "list_ids": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 50,
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        }
+      },
+      "BulkAttachContactsToListsResponse": {
+        "type": "object",
+        "required": [
+          "message",
+          "data"
+        ],
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Contacts attached to lists."
+          },
+          "data": {
+            "type": "object",
+            "required": [
+              "attached",
+              "already_attached",
+              "total_pairs"
+            ],
+            "properties": {
+              "attached": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Newly attached pairs"
+              },
+              "already_attached": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Pairs that already existed"
+              },
+              "total_pairs": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Total contact × list pairs processed"
+              }
+            }
+          }
+        }
+      },
+      "BulkDetachContactsFromListsResponse": {
+        "type": "object",
+        "required": [
+          "message",
+          "data"
+        ],
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Contacts detached from lists."
+          },
+          "data": {
+            "type": "object",
+            "required": [
+              "detached",
+              "not_present",
+              "total_pairs"
+            ],
+            "properties": {
+              "detached": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Newly detached pairs"
+              },
+              "not_present": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Pairs that were not attached"
+              },
+              "total_pairs": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        }
+      },
+      "AttachContactToListResponse": {
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Contact attached to list."
+          }
+        }
+      },
+      "AttachContactToTopicResponse": {
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Contact subscribed to topic."
+          }
+        }
+      },
+      "AudienceTopicVisibility": {
+        "type": "string",
+        "enum": [
+          "private",
+          "public"
+        ],
+        "description": "Whether the topic is visible to public subscription pages",
+        "example": "public"
+      },
+      "AudienceTopicDefaultSubscription": {
+        "type": "string",
+        "enum": [
+          "opt_in",
+          "opt_out"
+        ],
+        "description": "Default subscription state for newly-created contacts. `opt_in` means the contact must subscribe themselves (not auto-attached). `opt_out` means the contact is subscribed by default and must opt out to leave (auto-attached on creation).",
+        "example": "opt_in"
+      },
+      "AudienceTopicView": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "description",
+          "default_subscription",
+          "visibility",
+          "contacts_count",
+          "created_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Product updates"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "Monthly product updates"
+          },
+          "default_subscription": {
+            "$ref": "#/components/schemas/AudienceTopicDefaultSubscription"
+          },
+          "visibility": {
+            "$ref": "#/components/schemas/AudienceTopicVisibility"
+          },
+          "contacts_count": {
+            "type": "integer",
+            "minimum": 0,
+            "example": 12
+          },
+          "created_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "ListAudienceTopicsResponse": {
+        "type": "object",
+        "required": [
+          "message",
+          "data"
+        ],
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Topics retrieved successfully."
+          },
+          "data": {
+            "type": "object",
+            "required": [
+              "topics",
+              "pagination"
+            ],
+            "properties": {
+              "topics": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/AudienceTopicView"
+                }
+              },
+              "pagination": {
+                "$ref": "#/components/schemas/AudiencePagination"
+              }
+            }
+          }
+        }
+      },
+      "ShowAudienceTopicResponse": {
+        "type": "object",
+        "required": [
+          "message",
+          "data"
+        ],
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Topic retrieved successfully."
+          },
+          "data": {
+            "$ref": "#/components/schemas/AudienceTopicView"
+          }
+        }
+      },
+      "StoreAudienceTopicRequest": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255,
+            "example": "Product updates"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 1000
+          },
+          "default_subscription": {
+            "$ref": "#/components/schemas/AudienceTopicDefaultSubscription",
+            "default": "opt_in",
+            "description": "Defaults to `opt_in` when omitted."
+          },
+          "visibility": {
+            "$ref": "#/components/schemas/AudienceTopicVisibility",
+            "default": "private",
+            "description": "Defaults to `private` when omitted."
+          }
+        }
+      },
+      "UpdateAudienceTopicRequest": {
+        "type": "object",
+        "description": "Update a topic. All fields are optional. The `default_subscription` field is immutable.",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 1000
+          },
+          "visibility": {
+            "$ref": "#/components/schemas/AudienceTopicVisibility"
+          }
+        }
+      },
+      "AudiencePropertyType": {
+        "type": "string",
+        "enum": [
+          "string",
+          "number",
+          "boolean",
+          "date",
+          "json"
+        ],
+        "description": "Data type of the property",
+        "example": "string"
+      },
+      "AudiencePropertyView": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "type",
+          "fallback_value",
+          "created_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "first_name"
+          },
+          "type": {
+            "$ref": "#/components/schemas/AudiencePropertyType"
+          },
+          "fallback_value": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "Friend"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ListAudiencePropertiesResponse": {
+        "type": "object",
+        "required": [
+          "message",
+          "data"
+        ],
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Properties retrieved successfully."
+          },
+          "data": {
+            "type": "object",
+            "required": [
+              "properties",
+              "pagination"
+            ],
+            "properties": {
+              "properties": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/AudiencePropertyView"
+                }
+              },
+              "pagination": {
+                "$ref": "#/components/schemas/AudiencePagination"
+              }
+            }
+          }
+        }
+      },
+      "ShowAudiencePropertyResponse": {
+        "type": "object",
+        "required": [
+          "message",
+          "data"
+        ],
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Property retrieved successfully."
+          },
+          "data": {
+            "$ref": "#/components/schemas/AudiencePropertyView"
+          }
+        }
+      },
+      "StoreAudiencePropertyRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "type"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255,
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "description": "Property name. Must start with a lowercase letter and contain only lowercase letters, numbers, and underscores.",
+            "example": "first_name"
+          },
+          "type": {
+            "$ref": "#/components/schemas/AudiencePropertyType"
+          },
+          "fallback_value": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 255,
+            "example": "Friend"
+          }
+        }
+      },
+      "UpdateAudiencePropertyRequest": {
+        "type": "object",
+        "description": "Update a property's fallback value. The `name` and `type` fields are immutable (changing them would orphan data on existing contacts) and must not be provided.",
+        "properties": {
+          "fallback_value": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 255,
+            "example": "Friend"
+          }
+        }
+      },
+      "SegmentOperator": {
+        "type": "string",
+        "enum": [
+          "contains",
+          "not_contains",
+          "equals",
+          "not_equals",
+          "starts_with",
+          "not_starts_with",
+          "ends_with",
+          "not_ends_with",
+          "is_true",
+          "is_false",
+          "greater_than",
+          "greater_than_or_equal",
+          "less_than",
+          "less_than_or_equal",
+          "before",
+          "after"
+        ],
+        "description": "Segment condition operator",
+        "example": "equals"
+      },
+      "SegmentCondition": {
+        "type": "object",
+        "required": [
+          "field",
+          "operator"
+        ],
+        "properties": {
+          "field": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "Field name to match against (e.g., `email`, `status`, a property name)",
+            "example": "email"
+          },
+          "operator": {
+            "$ref": "#/components/schemas/SegmentOperator"
+          },
+          "value": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 1000,
+            "description": "Value to compare against. Required for all operators except `is_true` and `is_false`, which evaluate the field's truthiness and accept no value (may be omitted or `null`).",
+            "example": "@example.com"
+          }
+        }
+      },
+      "SegmentConditionGroup": {
+        "type": "object",
+        "description": "Group of conditions joined by OR. Multiple groups in a segment are joined by AND.",
+        "required": [
+          "conditions"
+        ],
+        "properties": {
+          "conditions": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/SegmentCondition"
+            }
+          }
+        }
+      },
+      "SegmentConditionsInput": {
+        "type": "object",
+        "required": [
+          "groups"
+        ],
+        "properties": {
+          "groups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SegmentConditionGroup"
+            }
+          }
+        }
+      },
+      "AudienceSegmentView": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "list_id",
+          "list_name",
+          "condition_groups",
+          "cached_contacts_count",
+          "created_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Engaged subscribers"
+          },
+          "list_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Restrict segment to a single list (null = all lists)"
+          },
+          "list_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "condition_groups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SegmentConditionGroup"
+            }
+          },
+          "cached_contacts_count": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "description": "Last computed contacts count (may be stale)"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ListAudienceSegmentsResponse": {
+        "type": "object",
+        "required": [
+          "message",
+          "data"
+        ],
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Segments retrieved successfully."
+          },
+          "data": {
+            "type": "object",
+            "required": [
+              "segments",
+              "pagination"
+            ],
+            "properties": {
+              "segments": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/AudienceSegmentView"
+                }
+              },
+              "pagination": {
+                "$ref": "#/components/schemas/AudiencePagination"
+              }
+            }
+          }
+        }
+      },
+      "ShowAudienceSegmentResponse": {
+        "type": "object",
+        "required": [
+          "message",
+          "data"
+        ],
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Segment retrieved successfully."
+          },
+          "data": {
+            "$ref": "#/components/schemas/AudienceSegmentView"
+          }
+        }
+      },
+      "StoreAudienceSegmentRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "conditions"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255,
+            "example": "Engaged subscribers"
+          },
+          "list_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Restrict segment to a single list. Must belong to the authenticated team."
+          },
+          "conditions": {
+            "$ref": "#/components/schemas/SegmentConditionsInput"
+          }
+        }
+      },
+      "UpdateAudienceSegmentRequest": {
+        "type": "object",
+        "description": "Update a segment. All fields are optional.",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "list_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "conditions": {
+            "$ref": "#/components/schemas/SegmentConditionsInput"
+          }
+        }
+      },
+      "CampaignStats": {
+        "type": "object",
+        "description": "Aggregated engagement statistics for a campaign.",
+        "required": [
+          "injections",
+          "deliveries",
+          "bounces",
+          "spam_complaints",
+          "opens",
+          "unique_opens",
+          "clicks",
+          "unique_clicks",
+          "unsubscribes"
+        ],
+        "properties": {
+          "injections": {
+            "type": "integer",
+            "minimum": 0,
+            "example": 0
+          },
+          "deliveries": {
+            "type": "integer",
+            "minimum": 0,
+            "example": 0
+          },
+          "bounces": {
+            "type": "integer",
+            "minimum": 0,
+            "example": 0
+          },
+          "spam_complaints": {
+            "type": "integer",
+            "minimum": 0,
+            "example": 0
+          },
+          "opens": {
+            "type": "integer",
+            "minimum": 0,
+            "example": 0
+          },
+          "unique_opens": {
+            "type": "integer",
+            "minimum": 0,
+            "example": 0
+          },
+          "clicks": {
+            "type": "integer",
+            "minimum": 0,
+            "example": 0
+          },
+          "unique_clicks": {
+            "type": "integer",
+            "minimum": 0,
+            "example": 0
+          },
+          "unsubscribes": {
+            "type": "integer",
+            "minimum": 0,
+            "example": 0
+          }
+        }
+      },
+      "CampaignSummary": {
+        "type": "object",
+        "description": "Campaign summary with embedded engagement stats.",
+        "required": [
+          "id",
+          "name",
+          "status",
+          "sent_count",
+          "created_at",
+          "stats"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "0193e6a8-1f3a-7c2a-b9e2-1aa1d2e5d3f0"
+          },
+          "name": {
+            "type": "string",
+            "example": "Spring Sale"
+          },
+          "subject": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Email subject line"
+          },
+          "from_email": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Sender email address",
+            "format": "email"
+          },
+          "from_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Sender display name"
+          },
+          "reply_to": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Reply-to address",
+            "format": "email"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "scheduled",
+              "preparing",
+              "in_review",
+              "sending",
+              "sent",
+              "failed"
+            ],
+            "example": "sent"
+          },
+          "scheduled_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Scheduled delivery time (ISO 8601)",
+            "format": "date-time"
+          },
+          "total_recipients": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Total recipients resolved for the send"
+          },
+          "sent_count": {
+            "type": "integer",
+            "minimum": 0,
+            "example": 124
+          },
+          "sent_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "When the campaign finished sending (ISO 8601)",
+            "format": "date-time"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-05-01T09:00:00+00:00"
+          },
+          "stats": {
+            "$ref": "#/components/schemas/CampaignStats"
+          }
+        }
+      },
+      "CampaignDetail": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CampaignSummary"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "html_content": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Rendered HTML content of the campaign email"
+              }
+            }
+          }
+        ],
+        "description": "Full campaign representation including rendered HTML content."
+      },
+      "CampaignEvent": {
+        "type": "object",
+        "description": "A single campaign engagement event.",
+        "required": [
+          "event_id",
+          "event_type",
+          "email",
+          "timestamp"
+        ],
+        "properties": {
+          "event_id": {
+            "type": "string",
+            "example": "92356829"
+          },
+          "event_type": {
+            "type": "string",
+            "enum": [
+              "injection",
+              "delivery",
+              "bounce",
+              "spam_complaint",
+              "open",
+              "click",
+              "list_unsubscribe"
+            ],
+            "example": "open"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "jane@example.com"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-05-01T12:30:00+00:00"
+          },
+          "bounce_class": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "SparkPost bounce classification code"
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Failure or bounce reason"
+          },
+          "target_link_url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Clicked link URL (click events only)"
+          },
+          "user_agent": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Recipient user agent (open/click events)"
+          }
+        }
+      },
+      "CampaignPagination": {
+        "type": "object",
+        "description": "Pagination info for campaign list responses",
+        "required": [
+          "total",
+          "per_page",
+          "current_page",
+          "last_page"
+        ],
+        "properties": {
+          "total": {
+            "type": "integer",
+            "example": 42
+          },
+          "per_page": {
+            "type": "integer",
+            "example": 20
+          },
+          "current_page": {
+            "type": "integer",
+            "example": 1
+          },
+          "last_page": {
+            "type": "integer",
+            "example": 3
+          }
+        }
+      },
+      "ListCampaignsResponse": {
+        "type": "object",
+        "required": [
+          "message",
+          "data"
+        ],
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Campaigns retrieved successfully."
+          },
+          "data": {
+            "type": "object",
+            "required": [
+              "campaigns",
+              "pagination"
+            ],
+            "properties": {
+              "campaigns": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/CampaignSummary"
+                }
+              },
+              "pagination": {
+                "$ref": "#/components/schemas/CampaignPagination"
+              }
+            }
+          }
+        }
+      },
+      "ShowCampaignResponse": {
+        "type": "object",
+        "required": [
+          "message",
+          "data"
+        ],
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Campaign retrieved successfully."
+          },
+          "data": {
+            "$ref": "#/components/schemas/CampaignDetail"
+          }
+        }
+      },
+      "ListCampaignEventsResponse": {
+        "type": "object",
+        "required": [
+          "message",
+          "data"
+        ],
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Campaign events retrieved successfully."
+          },
+          "data": {
+            "type": "object",
+            "required": [
+              "events",
+              "next_cursor"
+            ],
+            "properties": {
+              "events": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/CampaignEvent"
+                }
+              },
+              "next_cursor": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Opaque cursor for the next page; null when there are no more events"
+              }
+            }
+          }
+        }
+      },
+      "CampaignActionResponse": {
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Campaign scheduled for delivery."
+          },
+          "data": {
+            "description": "The updated campaign. Present on success; omitted in the rare case the campaign cannot be re-read immediately after the action (e.g. it was concurrently deleted).",
+            "$ref": "#/components/schemas/CampaignSummary"
+          }
+        }
+      },
+      "ScheduleCampaignRequest": {
+        "type": "object",
+        "required": [
+          "scheduled_at"
+        ],
+        "properties": {
+          "scheduled_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Future delivery time (ISO 8601). Include a timezone offset (e.g. `+02:00` or `Z`); a value without an offset is interpreted as UTC. Must be in the future.",
+            "example": "2026-06-01T09:00:00+00:00"
+          }
+        }
       }
     }
   },
@@ -7546,6 +11960,14 @@
     {
       "name": "Webhooks",
       "description": "Webhook management operations"
+    },
+    {
+      "name": "Audience",
+      "description": "Audience management: lists, contacts, topics, properties, and segments"
+    },
+    {
+      "name": "Campaigns",
+      "description": "Campaign operations: listing, stats, engagement events, and dispatch/scheduling"
     }
   ]
 }
