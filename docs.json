@@ -157,7 +157,12 @@
                 "group": "Java",
                 "pages": [
                   "quickstart/java/quickstart",
-                  "quickstart/java/advanced"
+                  "quickstart/java/advanced",
+                  "quickstart/java/templates",
+                  "quickstart/java/domains",
+                  "quickstart/java/webhooks",
+                  "quickstart/java/audience",
+                  "quickstart/java/campaigns"
                 ]
               }
             ]

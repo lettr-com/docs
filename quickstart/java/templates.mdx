@@ -1,0 +1,102 @@
+---
+title: Templates
+description: "Manage Lettr templates with the Java SDK"
+---
+
+The `lettr.templates()` service manages Lettr-managed templates. To *send* a template, set `templateSlug` on `CreateEmailOptions` — see [Sending Emails](/quickstart/java/quickstart#sending-emails).
+
+```java
+import com.lettr.Lettr;
+import com.lettr.services.templates.model.*;
+
+Lettr lettr = new Lettr("your-api-key");
+```
+
+## List Templates
+
+```java
+ListTemplatesResponse templates = lettr.templates().list();
+
+// With pagination
+ListTemplatesResponse page = lettr.templates().list(
+    ListTemplatesParams.builder()
+        .projectId(5)
+        .perPage(10)
+        .page(2)
+        .build()
+);
+```
+
+<Card title="API Reference" icon="book" href="/api-reference/templates/list-templates">
+  GET /templates
+</Card>
+
+## Get a Template
+
+```java
+TemplateDetail template = lettr.templates().get("welcome-email");
+System.out.println("Name: " + template.getName());
+System.out.println("Active version: " + template.getActiveVersion());
+
+// With a specific project
+TemplateDetail scoped = lettr.templates().get("welcome-email", 5);
+```
+
+## Create a Template
+
+Provide `html` **or** `json` (the TOPOL.io editor format), not both:
+
+```java
+CreateTemplateResponse response = lettr.templates().create(
+    CreateTemplateOptions.builder()
+        .name("Welcome Email")
+        .html("<p>Hello {{FIRST_NAME}}!</p>")
+        .projectId(5)    // optional
+        .folderId(10)    // optional
+        .build()
+);
+System.out.println("Slug: " + response.getSlug());
+```
+
+<Card title="API Reference" icon="book" href="/api-reference/templates/create-template">
+  POST /templates
+</Card>
+
+## Update & Delete
+
+```java
+UpdateTemplateResponse updated = lettr.templates().update("welcome-email",
+    UpdateTemplateOptions.builder()
+        .html("<p>Hello {{FIRST_NAME}}, welcome aboard!</p>")
+        .build()
+);
+
+lettr.templates().delete("welcome-email");
+lettr.templates().delete("welcome-email", 5);  // within a project
+```
+
+## Get Merge Tags
+
+Retrieve the variables a template expects — useful for validating data before sending:
+
+```java
+GetMergeTagsResponse tags = lettr.templates().getMergeTags("welcome-email");
+for (MergeTag tag : tags.getMergeTags()) {
+    System.out.println(tag.getKey() + " (required: " + tag.isRequired() + ")");
+}
+```
+
+<Card title="API Reference" icon="book" href="/api-reference/templates/get-merge-tags">
+  GET /templates/{slug}/merge-tags
+</Card>
+
+## What's Next
+
+<CardGroup cols={2}>
+  <Card title="Template Language" icon="code" href="/learn/templates/template-language">
+    Merge tag syntax, conditionals, loops
+  </Card>
+  <Card title="Sending Emails" icon="paper-plane" href="/quickstart/java/quickstart">
+    Send a template with substitution data
+  </Card>
+</CardGroup>
