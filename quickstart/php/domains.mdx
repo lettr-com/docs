@@ -34,9 +34,9 @@ $result = $lettr->domains()->create('example.com');
 // or pass a DomainName value object
 $result = $lettr->domains()->create(new DomainName('example.com'));
 
-echo $result->domain;       // example.com
-echo $result->status;       // DomainStatus::Pending
-echo $result->statusLabel;  // "Pending Review"
+echo $result->domain;        // example.com
+echo $result->status->value; // 'pending'
+echo $result->statusLabel;   // "Pending Review"
 
 // DKIM configuration to publish in DNS
 if ($result->dkim !== null) {
@@ -59,7 +59,7 @@ Adding a domain returns the DNS records you need to publish. Once published, cal
 $domain = $lettr->domains()->get('example.com');
 
 echo $domain->domain;
-echo $domain->status;
+echo $domain->status->value;
 echo $domain->canSend;
 echo $domain->dkimStatus?->label();   // DnsStatus enum
 echo $domain->cnameStatus?->label();

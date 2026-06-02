@@ -155,7 +155,12 @@
                 "group": "Rust",
                 "pages": [
                   "quickstart/rust/quickstart",
-                  "quickstart/rust/advanced"
+                  "quickstart/rust/advanced",
+                  "quickstart/rust/templates",
+                  "quickstart/rust/domains",
+                  "quickstart/rust/webhooks",
+                  "quickstart/rust/audience",
+                  "quickstart/rust/campaigns"
                 ]
               },
               {

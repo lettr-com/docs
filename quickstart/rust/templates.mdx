@@ -1,0 +1,89 @@
+---
+title: Templates
+description: "Manage Lettr templates with the Rust SDK"
+---
+
+The `client.templates` service manages Lettr-managed templates. To *send* a template, set the template on `CreateEmailOptions` — see [Sending Emails](/quickstart/rust/quickstart#sending-emails).
+
+```rust
+use lettr::Lettr;
+use lettr::templates::{ListTemplatesOptions, CreateTemplateOptions, UpdateTemplateOptions};
+
+let client = Lettr::new("your-api-key");
+```
+
+## List Templates
+
+```rust
+let response = client.templates.list(ListTemplatesOptions::new()).await?;
+for template in &response.templates {
+    println!("{}: {} (slug: {})", template.id, template.name, template.slug);
+}
+```
+
+<Card title="API Reference" icon="book" href="/api-reference/templates/list-templates">
+  GET /templates
+</Card>
+
+## Get a Template
+
+```rust
+let detail = client.templates.get("welcome-email", None).await?;
+println!("Version: {:?}, has HTML: {}", detail.active_version, detail.html.is_some());
+```
+
+## Create a Template
+
+Provide HTML **or** JSON (the TOPOL.io editor format), not both:
+
+```rust
+let options = CreateTemplateOptions::new("Welcome Email")
+    .with_html("<h1>Hello {{FIRST_NAME}}!</h1>")
+    .with_project_id(5);
+
+let result = client.templates.create(options).await?;
+println!("Created: {} (slug: {})", result.name, result.slug);
+```
+
+<Card title="API Reference" icon="book" href="/api-reference/templates/create-template">
+  POST /templates
+</Card>
+
+## Update & Delete
+
+Updating a template creates a new active version:
+
+```rust
+let options = UpdateTemplateOptions::new()
+    .with_html("<h1>Hello {{NAME}}!</h1>");
+let updated = client.templates.update("welcome-email", options).await?;
+println!("Updated version: {}", updated.active_version);
+
+client.templates.delete("welcome-email", None).await?;
+```
+
+## Get Merge Tags
+
+Retrieve the variables a template expects — useful for validating data before sending:
+
+```rust
+let tags = client.templates.get_merge_tags("welcome-email", None, None).await?;
+for tag in &tags.merge_tags {
+    println!("{}: required={}", tag.key, tag.required);
+}
+```
+
+<Card title="API Reference" icon="book" href="/api-reference/templates/get-merge-tags">
+  GET /templates/{slug}/merge-tags
+</Card>
+
+## What's Next
+
+<CardGroup cols={2}>
+  <Card title="Template Language" icon="code" href="/learn/templates/template-language">
+    Merge tag syntax, conditionals, loops
+  </Card>
+  <Card title="Sending Emails" icon="paper-plane" href="/quickstart/rust/quickstart">
+    Send a template with substitution data
+  </Card>
+</CardGroup>

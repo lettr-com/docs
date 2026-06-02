@@ -38,9 +38,9 @@ $result = Lettr::domains()->create('example.com');
 // or pass a DomainName value object
 $result = Lettr::domains()->create(new DomainName('example.com'));
 
-echo $result->domain;       // example.com
-echo $result->status;       // DomainStatus::Pending
-echo $result->statusLabel;  // "Pending Review"
+echo $result->domain;        // example.com
+echo $result->status->value; // 'pending'
+echo $result->statusLabel;   // "Pending Review"
 
 // DKIM records to publish in DNS
 if ($result->dkim !== null) {
@@ -61,7 +61,7 @@ if ($result->dkim !== null) {
 $domain = Lettr::domains()->get('example.com');
 
 echo $domain->domain;
-echo $domain->status;
+echo $domain->status->value;
 echo $domain->canSend;
 echo $domain->dkimStatus?->label();   // DnsStatus enum
 echo $domain->cnameStatus?->label();

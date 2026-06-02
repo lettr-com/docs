@@ -1,0 +1,94 @@
+---
+title: Managing Domains
+description: "List, add, verify, and delete sending domains with the Rust SDK"
+---
+
+The `client.domains` service manages your sending domains — useful for multi-tenant apps onboarding customer domains, or for automating DNS verification.
+
+For the concepts behind domain setup (SPF, DKIM, DMARC), see [Sending Domains](/learn/domains/sending-domains).
+
+```rust
+use lettr::Lettr;
+
+let client = Lettr::new("your-api-key");
+```
+
+## List Domains
+
+```rust
+let domains = client.domains.list().await?;
+for domain in &domains {
+    println!("{}: {} (can send: {})", domain.domain, domain.status, domain.can_send);
+}
+```
+
+<Card title="API Reference" icon="book" href="/api-reference/domains/list-domains">
+  GET /domains
+</Card>
+
+## Create a Domain
+
+```rust
+let result = client.domains.create("example.com").await?;
+println!("DKIM selector: {:?}", result.dkim);
+```
+
+<Card title="API Reference" icon="book" href="/api-reference/domains/create-domain">
+  POST /domains
+</Card>
+
+## Get Domain Details
+
+```rust
+let detail = client.domains.get("example.com").await?;
+println!("DKIM: {:?}, DMARC: {:?}, SPF: {:?}",
+    detail.dkim_status, detail.dmarc_status, detail.spf_status);
+```
+
+<Card title="API Reference" icon="book" href="/api-reference/domains/get-domain">
+  GET /domains/{domain}
+</Card>
+
+## Verify Domain DNS
+
+After publishing the records, trigger a verification check:
+
+```rust
+let verification = client.domains.verify("example.com").await?;
+println!("DKIM: {}, CNAME: {}, DMARC: {}, SPF: {}",
+    verification.dkim_status, verification.cname_status,
+    verification.dmarc_status, verification.spf_status);
+```
+
+<Tip>
+  DNS changes take time to propagate. If verification fails right after publishing, wait a few minutes and retry. See [Domain Verification troubleshooting](/knowledge-base/troubleshooting/domain-verification).
+</Tip>
+
+<Card title="API Reference" icon="book" href="/api-reference/domains/verify-domain">
+  POST /domains/{domain}/verify
+</Card>
+
+## Delete a Domain
+
+```rust
+client.domains.delete("example.com").await?;
+```
+
+<Warning>
+  Deleting a domain stops all sending from it immediately. Emails from a deleted domain fail with a validation error.
+</Warning>
+
+<Card title="API Reference" icon="book" href="/api-reference/domains/delete-domain">
+  DELETE /domains/{domain}
+</Card>
+
+## What's Next
+
+<CardGroup cols={2}>
+  <Card title="Sending Domains" icon="globe" href="/learn/domains/sending-domains">
+    DNS setup: SPF, DKIM, DMARC
+  </Card>
+  <Card title="Webhooks" icon="bell" href="/quickstart/rust/webhooks">
+    Receive delivery and engagement events
+  </Card>
+</CardGroup>
