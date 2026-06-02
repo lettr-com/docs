@@ -78,7 +78,11 @@
                   "quickstart/php/introduction",
                   "quickstart/php/installation",
                   "quickstart/php/sending-emails",
-                  "quickstart/php/templates"
+                  "quickstart/php/templates",
+                  "quickstart/php/domains",
+                  "quickstart/php/webhooks",
+                  "quickstart/php/audience",
+                  "quickstart/php/campaigns"
                 ]
               },
               {
