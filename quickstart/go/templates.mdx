@@ -1,0 +1,88 @@
+---
+title: Templates
+description: "Manage Lettr templates with the Go SDK"
+---
+
+The `client.Templates` service manages Lettr-managed templates. To *send* a template, set `TemplateSlug` on `SendEmailRequest` — see [Sending Emails](/quickstart/go/quickstart#sending-emails).
+
+```go
+import lettr "github.com/lettr-com/lettr-go"
+
+client := lettr.NewClient("your-api-key")
+```
+
+## List Templates
+
+```go
+templates, err := client.Templates.List(ctx, &lettr.ListTemplatesParams{
+    ProjectID: 5,
+    PerPage:   10,
+    Page:      1,
+})
+```
+
+<Card title="API Reference" icon="book" href="/api-reference/templates/list-templates">
+  GET /templates
+</Card>
+
+## Get a Template
+
+```go
+template, err := client.Templates.Get(ctx, "welcome-email", nil)
+
+// With a specific project
+template, err = client.Templates.Get(ctx, "welcome-email", &lettr.GetTemplateParams{
+    ProjectID: 5,
+})
+```
+
+## Create a Template
+
+Provide `Html` **or** `Json` (the TOPOL.io editor format), not both:
+
+```go
+created, err := client.Templates.Create(ctx, &lettr.CreateTemplateRequest{
+    Name: "Welcome Email",
+    Html: "<h1>Hello {{FIRST_NAME}}!</h1>",
+})
+```
+
+<Card title="API Reference" icon="book" href="/api-reference/templates/create-template">
+  POST /templates
+</Card>
+
+## Update & Delete
+
+```go
+updated, err := client.Templates.Update(ctx, "welcome-email", &lettr.UpdateTemplateRequest{
+    Html: "<h1>Updated Hello {{FIRST_NAME}}!</h1>",
+})
+
+_, err = client.Templates.Delete(ctx, "welcome-email", nil)
+```
+
+## Get Merge Tags
+
+Retrieve the variables a template expects — useful for validating data before sending:
+
+```go
+tags, err := client.Templates.GetMergeTags(ctx, "welcome-email", nil)
+for _, tag := range tags.Data.MergeTags {
+    fmt.Printf("Tag: %s (required: %v)\n", tag.Key, tag.Required)
+}
+```
+
+<Card title="API Reference" icon="book" href="/api-reference/templates/get-merge-tags">
+  GET /templates/{slug}/merge-tags
+</Card>
+
+## What's Next
+
+<CardGroup cols={2}>
+  <Card title="Template Language" icon="code" href="/learn/templates/template-language">
+    Merge tag syntax, conditionals, loops
+  </Card>
+  <Card title="Sending Emails" icon="paper-plane" href="/quickstart/go/quickstart">
+    Send a template with substitution data
+  </Card>
+</CardGroup>

@@ -256,6 +256,28 @@ resp, err := client.Emails.Send(ctx, &lettr.SendEmailRequest{
   Providing both HTML and plain text ensures your emails are readable in all email clients, including text-only clients and accessibility tools.
 </Tip>
 
+## Explore the SDK
+
+Beyond sending, the SDK manages every Lettr resource:
+
+<CardGroup cols={2}>
+  <Card title="Templates" icon="file-code" href="/quickstart/go/templates">
+    Manage Lettr templates and merge tags
+  </Card>
+  <Card title="Domains" icon="globe" href="/quickstart/go/domains">
+    Add, verify, and manage sending domains
+  </Card>
+  <Card title="Webhooks" icon="bell" href="/quickstart/go/webhooks">
+    Manage webhook endpoints for delivery and engagement events
+  </Card>
+  <Card title="Audience" icon="users" href="/quickstart/go/audience">
+    Lists, contacts, topics, properties, and segments
+  </Card>
+  <Card title="Campaigns" icon="paper-plane" href="/quickstart/go/campaigns">
+    List, send, and schedule campaigns
+  </Card>
+</CardGroup>
+
 ## What's Next
 
 <CardGroup cols={2}>
@@ -264,9 +286,6 @@ resp, err := client.Emails.Send(ctx, &lettr.SendEmailRequest{
   </Card>
   <Card title="API Reference" icon="book" href="/api-reference/introduction">
     Complete API documentation
-  </Card>
-  <Card title="Templates" icon="file-code" href="/learn/templates/introduction">
-    Use Lettr-managed templates
   </Card>
   <Card title="Best Practices" icon="shield-check" href="/knowledge-base/best-practices/deliverability">
     Email deliverability tips

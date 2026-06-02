@@ -143,7 +143,12 @@
                 "group": "Go",
                 "pages": [
                   "quickstart/go/quickstart",
-                  "quickstart/go/advanced"
+                  "quickstart/go/advanced",
+                  "quickstart/go/templates",
+                  "quickstart/go/domains",
+                  "quickstart/go/webhooks",
+                  "quickstart/go/audience",
+                  "quickstart/go/campaigns"
                 ]
               },
               {

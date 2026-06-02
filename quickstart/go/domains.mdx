@@ -1,0 +1,92 @@
+---
+title: Managing Domains
+description: "List, add, verify, and delete sending domains with the Go SDK"
+---
+
+The `client.Domains` service manages your sending domains — useful for multi-tenant apps onboarding customer domains, or for automating DNS verification.
+
+For the concepts behind domain setup (SPF, DKIM, DMARC), see [Sending Domains](/learn/domains/sending-domains).
+
+```go
+import lettr "github.com/lettr-com/lettr-go"
+
+client := lettr.NewClient("your-api-key")
+```
+
+## List Domains
+
+```go
+domains, err := client.Domains.List(ctx)
+```
+
+<Card title="API Reference" icon="book" href="/api-reference/domains/list-domains">
+  GET /domains
+</Card>
+
+## Create a Domain
+
+```go
+created, err := client.Domains.Create(ctx, &lettr.CreateDomainRequest{
+    Domain: "example.com",
+})
+```
+
+<Card title="API Reference" icon="book" href="/api-reference/domains/create-domain">
+  POST /domains
+</Card>
+
+## Get Domain Details
+
+```go
+domain, err := client.Domains.Get(ctx, "example.com")
+```
+
+<Card title="API Reference" icon="book" href="/api-reference/domains/get-domain">
+  GET /domains/{domain}
+</Card>
+
+## Verify Domain DNS
+
+After publishing the records, trigger a verification check:
+
+```go
+verification, err := client.Domains.Verify(ctx, "example.com")
+fmt.Printf("DKIM: %s, SPF: %s, DMARC: %s\n",
+    verification.Data.DkimStatus,
+    verification.Data.SpfStatus,
+    verification.Data.DmarcStatus,
+)
+```
+
+<Tip>
+  DNS changes take time to propagate. If verification fails right after publishing, wait a few minutes and retry. See [Domain Verification troubleshooting](/knowledge-base/troubleshooting/domain-verification).
+</Tip>
+
+<Card title="API Reference" icon="book" href="/api-reference/domains/verify-domain">
+  POST /domains/{domain}/verify
+</Card>
+
+## Delete a Domain
+
+```go
+err = client.Domains.Delete(ctx, "example.com")
+```
+
+<Warning>
+  Deleting a domain stops all sending from it immediately. Emails from a deleted domain fail with a validation error.
+</Warning>
+
+<Card title="API Reference" icon="book" href="/api-reference/domains/delete-domain">
+  DELETE /domains/{domain}
+</Card>
+
+## What's Next
+
+<CardGroup cols={2}>
+  <Card title="Sending Domains" icon="globe" href="/learn/domains/sending-domains">
+    DNS setup: SPF, DKIM, DMARC
+  </Card>
+  <Card title="Webhooks" icon="bell" href="/quickstart/go/webhooks">
+    Receive delivery and engagement events
+  </Card>
+</CardGroup>
