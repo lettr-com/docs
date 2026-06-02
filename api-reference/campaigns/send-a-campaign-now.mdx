@@ -1,0 +1,6 @@
+---
+title: Send a campaign now
+openapi: POST /campaigns/{campaignId}/send
+---
+
+Immediately dispatches a draft campaign. The campaign must be a draft with a subject, sender email, and content. Sending is asynchronous; the campaign transitions to `preparing`. Requires the `campaigns:write` scope. Not available to sandbox keys.

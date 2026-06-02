@@ -1,0 +1,6 @@
+---
+title: Create a property
+openapi: POST /audience/properties
+---
+
+Create a new property that contacts can store. The `name` and `type` fields are immutable after creation — to change them, delete the property and create a new one. Requires the `audience:write` scope and is blocked for sandbox API keys.

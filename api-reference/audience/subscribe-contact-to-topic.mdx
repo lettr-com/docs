@@ -1,0 +1,6 @@
+---
+title: Subscribe contact to topic
+openapi: POST /audience/contacts/{contactId}/topics/{topicId}
+---
+
+Subscribe a contact to a topic. Returns `201` if the subscription is new, or `200` if the contact was already subscribed. Requires the `audience:write` scope and is blocked for sandbox API keys.

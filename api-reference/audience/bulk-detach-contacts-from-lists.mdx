@@ -1,0 +1,6 @@
+---
+title: Bulk detach contacts from lists
+openapi: DELETE /audience/contacts/lists/bulk
+---
+
+Detach every combination of `contact_ids × list_ids` (up to 1000 contacts × 50 lists). Pairs that were not attached are reported in `not_present`. Requires the `audience:write` scope and is blocked for sandbox API keys.

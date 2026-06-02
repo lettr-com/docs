@@ -1,0 +1,6 @@
+---
+title: Unsubscribe contact from topic
+openapi: DELETE /audience/contacts/{contactId}/topics/{topicId}
+---
+
+Unsubscribe a contact from a topic. Idempotent — returns `204` whether the subscription existed or not. Requires the `audience:write` scope and is blocked for sandbox API keys.
