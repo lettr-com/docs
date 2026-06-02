@@ -1,0 +1,6 @@
+---
+title: Bulk delete audience lists
+openapi: DELETE /audience/lists/bulk
+---
+
+Delete up to 50 lists in a single request. All `list_ids` must belong to the authenticated team. Requires the `audience:write` scope and is blocked for sandbox API keys.

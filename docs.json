@@ -381,6 +381,75 @@
               "api-reference/system/health-check",
               "api-reference/system/auth-check"
             ]
+          },
+          {
+            "group": "Campaigns",
+            "pages": [
+              "api-reference/campaigns/list-campaigns",
+              "api-reference/campaigns/show-a-campaign",
+              "api-reference/campaigns/list-campaign-engagement-events",
+              "api-reference/campaigns/send-a-campaign-now",
+              "api-reference/campaigns/schedule-a-campaign",
+              "api-reference/campaigns/unschedule-a-campaign"
+            ]
+          },
+          {
+            "group": "Audience Lists",
+            "pages": [
+              "api-reference/audience/list-audience-lists",
+              "api-reference/audience/create-an-audience-list",
+              "api-reference/audience/bulk-delete-audience-lists",
+              "api-reference/audience/show-an-audience-list",
+              "api-reference/audience/update-an-audience-list",
+              "api-reference/audience/delete-an-audience-list"
+            ]
+          },
+          {
+            "group": "Audience Contacts",
+            "pages": [
+              "api-reference/audience/list-audience-contacts",
+              "api-reference/audience/create-a-contact",
+              "api-reference/audience/bulk-create-contacts",
+              "api-reference/audience/bulk-attach-contacts-to-lists",
+              "api-reference/audience/bulk-detach-contacts-from-lists",
+              "api-reference/audience/show-a-contact",
+              "api-reference/audience/update-a-contact",
+              "api-reference/audience/delete-a-contact",
+              "api-reference/audience/attach-contact-to-list",
+              "api-reference/audience/detach-contact-from-list",
+              "api-reference/audience/subscribe-contact-to-topic",
+              "api-reference/audience/unsubscribe-contact-from-topic"
+            ]
+          },
+          {
+            "group": "Audience Topics",
+            "pages": [
+              "api-reference/audience/list-audience-topics",
+              "api-reference/audience/create-a-topic",
+              "api-reference/audience/show-a-topic",
+              "api-reference/audience/update-a-topic",
+              "api-reference/audience/delete-a-topic"
+            ]
+          },
+          {
+            "group": "Audience Properties",
+            "pages": [
+              "api-reference/audience/list-audience-properties",
+              "api-reference/audience/create-a-property",
+              "api-reference/audience/show-a-property",
+              "api-reference/audience/update-a-property",
+              "api-reference/audience/delete-a-property"
+            ]
+          },
+          {
+            "group": "Audience Segments",
+            "pages": [
+              "api-reference/audience/list-audience-segments",
+              "api-reference/audience/create-a-segment",
+              "api-reference/audience/show-a-segment",
+              "api-reference/audience/update-a-segment",
+              "api-reference/audience/delete-a-segment"
+            ]
           }
         ]
       },

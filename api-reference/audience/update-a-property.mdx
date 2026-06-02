@@ -1,0 +1,6 @@
+---
+title: Update a property
+openapi: PATCH /audience/properties/{propertyId}
+---
+
+Update the property's fallback value. The `name` and `type` fields cannot be changed (they would orphan data on existing contacts). If the request body contains no recognized fields, the property is returned unchanged with a `200` response. Requires the `audience:write` scope and is blocked for sandbox API keys.

@@ -1,0 +1,6 @@
+---
+title: Detach contact from list
+openapi: DELETE /audience/contacts/{contactId}/lists/{listId}
+---
+
+Remove a contact from a list. Idempotent — returns `204` whether the pair existed or not. Requires the `audience:write` scope and is blocked for sandbox API keys.

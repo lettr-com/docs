@@ -1,0 +1,6 @@
+---
+title: List campaign engagement events
+openapi: GET /campaigns/{campaignId}/events
+---
+
+Returns engagement events (opens, clicks, bounces, etc.) for a campaign, with optional filtering by type, recipient email, and date range. Uses cursor-based pagination: keep requesting with the returned `next_cursor` until it is `null`. When a filter is applied, a page may come back with an empty `events` array **and** a non-null `next_cursor` — that means more pages remain, not that there are no matching events, so continue paginating until `next_cursor` is `null`. Requires the `campaigns:read` scope.

@@ -1,0 +1,6 @@
+---
+title: Bulk create contacts
+openapi: POST /audience/contacts/bulk
+---
+
+Create up to 1000 contacts in a single request. Emails are normalized and deduplicated; contacts that already exist are reported in `already_existed`. Requires the `audience:write` scope and is blocked for sandbox API keys.

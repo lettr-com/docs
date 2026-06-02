@@ -1,0 +1,6 @@
+---
+title: Schedule a campaign
+openapi: POST /campaigns/{campaignId}/schedule
+---
+
+Schedules a campaign for future delivery, or reschedules an already-scheduled campaign to a new time. The campaign transitions to (or stays) `scheduled` and is dispatched automatically at the given time. Requires the `campaigns:write` scope. Not available to sandbox keys.

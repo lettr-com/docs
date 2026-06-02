@@ -1,0 +1,6 @@
+---
+title: Bulk attach contacts to lists
+openapi: POST /audience/contacts/lists/bulk
+---
+
+Attach every combination of `contact_ids × list_ids` (up to 1000 contacts × 50 lists). Existing pairs are reported in `already_attached`. Requires the `audience:write` scope and is blocked for sandbox API keys.

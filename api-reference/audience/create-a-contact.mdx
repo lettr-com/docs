@@ -1,0 +1,6 @@
+---
+title: Create a contact
+openapi: POST /audience/contacts
+---
+
+Create a single contact. If `double_opt_in` is provided the contact is created in `unverified` status and receives a confirmation email — they become `subscribed` only after clicking the confirmation link. Requires the `audience:write` scope and is blocked for sandbox API keys.

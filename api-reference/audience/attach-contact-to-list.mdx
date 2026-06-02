@@ -1,0 +1,6 @@
+---
+title: Attach contact to list
+openapi: POST /audience/contacts/{contactId}/lists/{listId}
+---
+
+Add a contact to a list. Returns `201` if the contact was newly attached, or `200` if the contact was already in the list. Requires the `audience:write` scope and is blocked for sandbox API keys.
