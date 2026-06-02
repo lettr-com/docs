@@ -69,7 +69,11 @@
                   "quickstart/laravel/installation",
                   "quickstart/laravel/sending-emails",
                   "quickstart/laravel/templates",
-                  "quickstart/laravel/type-safety"
+                  "quickstart/laravel/type-safety",
+                  "quickstart/laravel/domains",
+                  "quickstart/laravel/webhooks",
+                  "quickstart/laravel/audience",
+                  "quickstart/laravel/campaigns"
                 ]
               },
               {

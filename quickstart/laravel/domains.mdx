@@ -1,0 +1,140 @@
+---
+title: Managing Domains
+description: "List, add, verify, and delete sending domains from Laravel"
+---
+
+Manage your sending domains through the `Lettr` facade. This is useful for multi-tenant apps that onboard customer domains, or for automating DNS verification checks from an Artisan command or job.
+
+For the concepts behind domain setup (SPF, DKIM, DMARC, tracking domains), see [Sending Domains](/learn/domains/sending-domains).
+
+```php
+use Lettr\Laravel\Facades\Lettr;
+```
+
+## List Domains
+
+```php
+$domains = Lettr::domains()->list();
+
+foreach ($domains as $domain) {
+    echo $domain->domain;              // example.com
+    echo $domain->status->value;       // 'pending', 'approved'
+    echo $domain->canSend;             // true/false
+    echo $domain->dkimStatus?->value;  // 'valid', 'invalid', etc.
+    echo $domain->cnameStatus?->value;
+}
+```
+
+<Card title="API Reference" icon="book" href="/api-reference/domains/list-domains">
+  GET /domains
+</Card>
+
+## Add a Domain
+
+```php
+use Lettr\ValueObjects\DomainName;
+
+$result = Lettr::domains()->create('example.com');
+// or pass a DomainName value object
+$result = Lettr::domains()->create(new DomainName('example.com'));
+
+echo $result->domain;       // example.com
+echo $result->status;       // DomainStatus::Pending
+echo $result->statusLabel;  // "Pending Review"
+
+// DKIM records to publish in DNS
+if ($result->dkim !== null) {
+    echo $result->dkim->selector;      // e.g. "scph0226"
+    echo $result->dkim->publicKey;
+    echo $result->dkim->headers;       // signed headers
+    echo $result->dkim->signingDomain;
+}
+```
+
+<Card title="API Reference" icon="book" href="/api-reference/domains/create-domain">
+  POST /domains
+</Card>
+
+## Get Domain Details
+
+```php
+$domain = Lettr::domains()->get('example.com');
+
+echo $domain->domain;
+echo $domain->status;
+echo $domain->canSend;
+echo $domain->dkimStatus?->label();   // DnsStatus enum
+echo $domain->cnameStatus?->label();
+echo $domain->dmarcStatus?->label();
+echo $domain->spfStatus?->label();
+echo $domain->trackingDomain;
+echo $domain->createdAt;
+
+// DKIM record helpers
+if ($domain->dkim !== null) {
+    echo $domain->dkim->recordName('example.com'); // Full DNS record name
+    echo $domain->dkim->recordValue();             // Full DNS record value
+}
+```
+
+<Card title="API Reference" icon="book" href="/api-reference/domains/get-domain">
+  GET /domains/{domain}
+</Card>
+
+## Verify Domain DNS
+
+After publishing the DNS records, trigger a verification check:
+
+```php
+$verification = Lettr::domains()->verify('example.com');
+
+if ($verification->isFullyVerified()) {
+    echo "Domain is ready to send!";
+} else {
+    // Individual record statuses
+    echo $verification->dkimStatus->label();   // "Valid", "Invalid", "Missing", etc.
+    echo $verification->cnameStatus->label();
+    echo $verification->dmarcStatus->label();
+    echo $verification->spfStatus->label();
+
+    // Specific DNS record errors
+    if ($verification->hasErrors()) {
+        foreach ($verification->errors() as $type => $error) {
+            echo "$type: $error";
+        }
+    }
+}
+```
+
+<Tip>
+  DNS changes can take time to propagate. If verification fails immediately after publishing records, wait a few minutes and try again. See [Domain Verification troubleshooting](/knowledge-base/troubleshooting/domain-verification) for common issues.
+</Tip>
+
+<Card title="API Reference" icon="book" href="/api-reference/domains/verify-domain">
+  POST /domains/{domain}/verify
+</Card>
+
+## Delete a Domain
+
+```php
+Lettr::domains()->delete('example.com');
+```
+
+<Warning>
+  Deleting a domain stops all sending from that domain immediately. Emails sent from a deleted domain will fail with a validation error.
+</Warning>
+
+<Card title="API Reference" icon="book" href="/api-reference/domains/delete-domain">
+  DELETE /domains/{domain}
+</Card>
+
+## What's Next
+
+<CardGroup cols={2}>
+  <Card title="Sending Domains" icon="globe" href="/learn/domains/sending-domains">
+    DNS setup: SPF, DKIM, DMARC
+  </Card>
+  <Card title="Webhooks" icon="bell" href="/quickstart/laravel/webhooks">
+    Receive delivery and engagement events
+  </Card>
+</CardGroup>
