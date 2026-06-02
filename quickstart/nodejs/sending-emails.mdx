@@ -1,0 +1,180 @@
+---
+title: Sending Emails
+description: "Send HTML, text, and template emails with the Lettr Node.js SDK"
+---
+
+The `client.emails` resource sends transactional email. Every call returns a `Result` — destructure `{ data, error }` and handle `error` before using `data`.
+
+```typescript
+import { Lettr } from "lettr";
+
+const client = new Lettr(process.env.LETTR_API_KEY!);
+```
+
+## Send an Email
+
+```typescript
+const { data, error } = await client.emails.send({
+  from: "sender@yourdomain.com",
+  from_name: "Your App",
+  to: ["recipient@example.com"],
+  subject: "Hello from Lettr",
+  html: "<h1>Welcome!</h1><p>Thanks for signing up.</p>",
+});
+
+if (error) {
+  console.error(error.message);
+  return;
+}
+
+console.log(data.request_id); // unique id for tracking
+console.log(data.accepted);   // number of accepted recipients
+console.log(data.rejected);   // number of rejected recipients
+```
+
+A send requires `from`, `to`, `subject`, and at least one of `html`, `text`, or `template_slug`. The full recipient cap is 50 addresses across `to`/`cc`/`bcc`.
+
+<Card title="API Reference" icon="book" href="/api-reference/emails/send-email">
+  POST /emails
+</Card>
+
+## Plain Text & Multipart
+
+```typescript
+await client.emails.send({
+  from: "sender@yourdomain.com",
+  to: ["recipient@example.com"],
+  subject: "Plain text update",
+  text: "This is a plain text email.",
+  // include both html and text for a multipart message
+});
+```
+
+## Send with a Template
+
+When sending a template, `subject` is optional — the template's own subject is used unless you override it. The `substitution_data` keys map to merge tags (e.g. `{{name}}`):
+
+```typescript
+await client.emails.send({
+  from: "sender@yourdomain.com",
+  to: ["customer@example.com"],
+  template_slug: "welcome",
+  substitution_data: { name: "John" },
+  template_version: 2, // optional: pin a version
+});
+```
+
+See [Templates](/quickstart/nodejs/templates) for managing templates programmatically.
+
+## Tracking, Tags & Metadata
+
+```typescript
+await client.emails.send({
+  from: "sender@yourdomain.com",
+  to: ["recipient@example.com"],
+  subject: "Newsletter",
+  html: "<p>...</p>",
+  tag: "newsletter",
+  metadata: { user_id: "123", campaign: "weekly" },
+  headers: { "X-Entity-Ref-ID": "order-456" },
+  options: {
+    open_tracking: true,
+    click_tracking: true,
+    transactional: true,
+  },
+});
+```
+
+## Attachments
+
+```typescript
+await client.emails.send({
+  from: "billing@yourdomain.com",
+  to: ["customer@example.com"],
+  subject: "Your invoice",
+  html: "<p>Invoice attached.</p>",
+  attachments: [
+    {
+      name: "invoice.pdf",
+      type: "application/pdf",
+      data: base64EncodedString, // base64-encoded file content
+    },
+  ],
+});
+```
+
+## Scheduling
+
+Pass an ISO-8601 `scheduled_at` to schedule a send, then manage it by transmission id:
+
+```typescript
+const { data } = await client.emails.schedule({
+  from: "sender@yourdomain.com",
+  to: ["recipient@example.com"],
+  subject: "Reminder",
+  html: "<p>Don't forget!</p>",
+  scheduled_at: "2026-06-01T09:00:00Z",
+});
+
+// Look up or cancel later
+await client.emails.getScheduled(data!.request_id);
+await client.emails.cancelScheduled(data!.request_id);
+```
+
+<Card title="API Reference" icon="book" href="/api-reference/emails/schedule-email">
+  POST /emails/schedule
+</Card>
+
+## Error Handling
+
+The SDK never throws for API or network errors — it returns them in `error`. Discriminate on `error.type` first, then optionally on `error.error_code`:
+
+```typescript
+const { data, error } = await client.emails.send({ /* ... */ });
+
+if (error) {
+  switch (error.type) {
+    case "validation":
+      // 422 — invalid request. Field validation populates error.errors
+      // (a field → messages map); precondition 422s (e.g. campaign_not_sendable)
+      // leave it empty and carry error.error_code instead.
+      if (Object.keys(error.errors).length > 0) {
+        console.error("Field errors:", error.errors);
+      } else {
+        console.error("Precondition failed:", error.error_code);
+      }
+      break;
+    case "api":
+      // Other API errors. error.error_code is always present
+      // (e.g. "unauthorized", "quota_exceeded", "not_found").
+      console.error("API error:", error.error_code, error.message);
+      break;
+    case "network":
+      // Connection failure, timeout, DNS — no response received.
+      console.error("Network error:", error.message);
+      break;
+  }
+  return;
+}
+```
+
+<Warning>
+  Always handle `error` before reading `data`. TypeScript narrows `data` to non-null only inside the `if (!error)` branch — reading `data` without the check leaves it typed as possibly `null`.
+</Warning>
+
+| `error.type` | When | Key fields |
+|-|-|-|
+| `validation` | 422 — bad request data or failed precondition | `errors` (field map), `error_code` |
+| `api` | Other 4xx/5xx | `error_code`, `message` |
+| `network` | No response (timeout, DNS, connection) | `message` |
+
+## What's Next
+
+<CardGroup cols={2}>
+  <Card title="Templates" icon="file-code" href="/quickstart/nodejs/templates">
+    Manage Lettr templates
+  </Card>
+  <Card title="Webhooks" icon="bell" href="/quickstart/nodejs/webhooks">
+    Receive delivery and engagement events
+  </Card>
+</CardGroup>

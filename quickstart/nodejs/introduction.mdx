@@ -16,7 +16,39 @@ Before you begin, make sure you have:
 3. A [verified sending domain](/learn/domains/introduction)
 4. Node.js 18 or higher
 
-## Choose Your Framework
+## The SDK
+
+The official `lettr` package is the recommended way to use Lettr from Node.js — a type-safe client that returns a `Result` (`{ data, error }`) instead of throwing:
+
+```typescript
+import { Lettr } from "lettr";
+
+const client = new Lettr(process.env.LETTR_API_KEY!);
+
+const { data, error } = await client.emails.send({
+  from: "you@yourdomain.com",
+  to: ["recipient@example.com"],
+  subject: "Hello from Lettr",
+  html: "<p>Your email content here.</p>",
+});
+
+if (error) throw new Error(error.message);
+console.log(data.request_id);
+```
+
+### SDK Guides
+
+| Page | What You'll Learn |
+|-|-|
+| [Installation](/quickstart/nodejs/installation) | Install, create a client, and the Result pattern |
+| [Sending Emails](/quickstart/nodejs/sending-emails) | HTML, text, templates, attachments, scheduling, errors |
+| [Templates](/quickstart/nodejs/templates) | Manage Lettr templates and merge tags |
+| [Domains](/quickstart/nodejs/domains) | Add, verify, and manage sending domains |
+| [Webhooks](/quickstart/nodejs/webhooks) | Manage webhook endpoints |
+| [Audience](/quickstart/nodejs/audience) | Lists, contacts, topics, properties, segments |
+| [Campaigns](/quickstart/nodejs/campaigns) | List, send, and schedule campaigns |
+
+## Framework Guides
 
 <CardGroup cols={2}>
   <Card title="Next.js" icon="react" href="/quickstart/nodejs/nextjs">
@@ -29,7 +61,7 @@ Before you begin, make sure you have:
 
 ## Direct API Usage
 
-For any Node.js application, you can send emails directly via the REST API using `fetch`:
+If you'd rather not add a dependency, send via the REST API using `fetch`:
 
 ```javascript
 const apiKey = 'lttr_xxxxxxxxxxxx';

@@ -1,0 +1,97 @@
+---
+title: Templates
+description: "Manage Lettr templates with the Node.js SDK"
+---
+
+The `client.templates` resource manages Lettr-managed templates. To *send* a template, see [Sending Emails → Send with a Template](/quickstart/nodejs/sending-emails#send-with-a-template).
+
+## List Templates
+
+```typescript
+const { data, error } = await client.templates.list({ project_id: 123, per_page: 20 });
+
+if (!error) {
+  for (const template of data.templates) {
+    console.log(template.name, template.slug);
+  }
+}
+```
+
+<Card title="API Reference" icon="book" href="/api-reference/templates/list-templates">
+  GET /templates
+</Card>
+
+## Get a Template
+
+```typescript
+const { data, error } = await client.templates.get("welcome-email");
+// with a specific project:
+await client.templates.get("welcome-email", 123);
+
+if (!error) {
+  console.log(data.html);
+  console.log(data.active_version);
+}
+```
+
+## Create a Template
+
+Provide `html` **or** `json` (the TOPOL.io editor format), not both:
+
+```typescript
+const { data, error } = await client.templates.create({
+  name: "My Template",
+  html: "<html>...</html>",
+  project_id: 123,   // optional
+  folder_id: 5,      // optional
+});
+
+if (!error) {
+  console.log(data.id, data.slug, data.active_version);
+}
+```
+
+<Card title="API Reference" icon="book" href="/api-reference/templates/create-template">
+  POST /templates
+</Card>
+
+## Update & Delete
+
+```typescript
+await client.templates.update("my-template", { name: "Renamed" });
+
+await client.templates.delete("my-template");
+await client.templates.delete("my-template", 123); // within a project
+```
+
+## Get Merge Tags
+
+Retrieve the variables a template expects — useful for validating data before sending:
+
+```typescript
+const { data, error } = await client.templates.getMergeTags("welcome-email", {
+  project_id: 123, // optional
+  version: 2,      // optional
+});
+
+if (!error) {
+  for (const tag of data.merge_tags) {
+    console.log(tag.key, tag.required, tag.type);
+  }
+}
+```
+
+<Card title="API Reference" icon="book" href="/api-reference/templates/get-merge-tags">
+  GET /templates/{slug}/merge-tags
+</Card>
+
+## What's Next
+
+<CardGroup cols={2}>
+  <Card title="Template Language" icon="code" href="/learn/templates/template-language">
+    Merge tag syntax, conditionals, loops
+  </Card>
+  <Card title="lettr-kit CLI" icon="terminal" href="/quickstart/nodejs/introduction">
+    Pull and sync templates locally
+  </Card>
+</CardGroup>

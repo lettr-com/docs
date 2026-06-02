@@ -1,0 +1,122 @@
+---
+title: Managing Domains
+description: "List, add, verify, and delete sending domains with the Node.js SDK"
+---
+
+The `client.domains` resource manages your sending domains — useful for multi-tenant apps onboarding customer domains, or for automating DNS verification.
+
+For the concepts behind domain setup (SPF, DKIM, DMARC), see [Sending Domains](/learn/domains/sending-domains).
+
+## List Domains
+
+```typescript
+const { data, error } = await client.domains.list();
+
+if (!error) {
+  for (const domain of data.domains) {
+    console.log(domain.domain);        // example.com
+    console.log(domain.status);        // "pending" | "approved" | "blocked"
+    console.log(domain.can_send);      // boolean
+    console.log(domain.dkim_status);   // "valid" | "invalid" | null
+    console.log(domain.cname_status);
+  }
+}
+```
+
+<Card title="API Reference" icon="book" href="/api-reference/domains/list-domains">
+  GET /domains
+</Card>
+
+## Add a Domain
+
+```typescript
+const { data, error } = await client.domains.create("example.com");
+
+if (!error) {
+  console.log(data.domain);        // example.com
+  console.log(data.status_label);  // "Pending Review"
+
+  // DKIM record to publish in DNS
+  console.log(data.dkim.selector);
+  console.log(data.dkim.public);
+  console.log(data.dkim.headers);
+}
+```
+
+<Card title="API Reference" icon="book" href="/api-reference/domains/create-domain">
+  POST /domains
+</Card>
+
+## Get Domain Details
+
+```typescript
+const { data, error } = await client.domains.get("example.com");
+
+if (!error) {
+  console.log(data.status_label);
+  console.log(data.can_send);
+  console.log(data.dmarc_status);
+  console.log(data.spf_status);
+  console.log(data.tracking_domain);
+
+  if (data.dns.dkim) {
+    console.log(data.dns.dkim.selector, data.dns.dkim.public);
+  }
+}
+```
+
+<Card title="API Reference" icon="book" href="/api-reference/domains/get-domain">
+  GET /domains/{domain}
+</Card>
+
+## Verify Domain DNS
+
+After publishing the records, trigger a verification check:
+
+```typescript
+const { data, error } = await client.domains.verify("example.com");
+
+if (!error) {
+  console.log(data.dkim_status);  // "valid", "invalid", "missing", ...
+  console.log(data.cname_status);
+  console.log(data.dmarc_status);
+  console.log(data.spf_status);
+
+  // Per-record errors, when present
+  if (data.dns?.dkim_error) console.error("DKIM:", data.dns.dkim_error);
+  if (data.dns?.spf_error) console.error("SPF:", data.dns.spf_error);
+}
+```
+
+<Tip>
+  DNS changes take time to propagate. If verification fails right after publishing, wait a few minutes and retry. See [Domain Verification troubleshooting](/knowledge-base/troubleshooting/domain-verification).
+</Tip>
+
+<Card title="API Reference" icon="book" href="/api-reference/domains/verify-domain">
+  POST /domains/{domain}/verify
+</Card>
+
+## Delete a Domain
+
+```typescript
+const { error } = await client.domains.delete("example.com");
+```
+
+<Warning>
+  Deleting a domain stops all sending from it immediately. Emails from a deleted domain fail with a validation error.
+</Warning>
+
+<Card title="API Reference" icon="book" href="/api-reference/domains/delete-domain">
+  DELETE /domains/{domain}
+</Card>
+
+## What's Next
+
+<CardGroup cols={2}>
+  <Card title="Sending Domains" icon="globe" href="/learn/domains/sending-domains">
+    DNS setup: SPF, DKIM, DMARC
+  </Card>
+  <Card title="Webhooks" icon="bell" href="/quickstart/nodejs/webhooks">
+    Receive delivery and engagement events
+  </Card>
+</CardGroup>

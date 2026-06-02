@@ -93,6 +93,13 @@
                 "group": "Node.js",
                 "pages": [
                   "quickstart/nodejs/introduction",
+                  "quickstart/nodejs/installation",
+                  "quickstart/nodejs/sending-emails",
+                  "quickstart/nodejs/templates",
+                  "quickstart/nodejs/domains",
+                  "quickstart/nodejs/webhooks",
+                  "quickstart/nodejs/audience",
+                  "quickstart/nodejs/campaigns",
                   "quickstart/nodejs/nextjs",
                   "quickstart/nodejs/nuxt"
                 ]
