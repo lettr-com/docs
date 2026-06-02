@@ -1,19 +1,19 @@
 ---
 title: SDKs
-description: "Official SDKs for all major languages"
+description: "Official Lettr SDKs for all major languages"
 ---
 
-Official Lettr SDKs for all major programming languages.
+Official Lettr SDKs for all major programming languages. Each SDK has a guide to get you sending in minutes — follow the card for your language, then use the [API reference](/api-reference/introduction) for full endpoint details.
 
 ## Official SDKs
 
 <CardGroup cols={2}>
-  <Card title="Node.js" icon="node-js" href="https://github.com/lettr/lettr-node">
+  <Card title="Node.js" icon="node-js" href="/quickstart/nodejs/introduction">
     ```bash
     npm install lettr
     ```
   </Card>
-  <Card title="PHP" icon="php" href="https://github.com/lettr/lettr-php">
+  <Card title="PHP" icon="php" href="/quickstart/php/introduction">
     ```bash
     composer require lettr/lettr-php
     ```
@@ -23,14 +23,14 @@ Official Lettr SDKs for all major programming languages.
     pip install lettr
     ```
   </Card>
-  <Card title="Ruby" icon="gem" href="https://github.com/lettr/lettr-ruby">
-    ```bash
-    gem install lettr
-    ```
-  </Card>
   <Card title="Go" icon="golang" href="/quickstart/go/quickstart">
     ```bash
     go get github.com/lettr-com/lettr-go
+    ```
+  </Card>
+  <Card title="Rust" icon="rust" href="/quickstart/rust/quickstart">
+    ```bash
+    cargo add lettr
     ```
   </Card>
   <Card title="Java" icon="java" href="/quickstart/java/quickstart">
@@ -47,162 +47,42 @@ Official Lettr SDKs for all major programming languages.
 ## Framework Integrations
 
 <CardGroup cols={3}>
-  <Card title="Laravel" icon="laravel" href="https://github.com/lettr/lettr-laravel">
+  <Card title="Laravel" icon="laravel" href="/quickstart/laravel/introduction">
     Official Laravel package
   </Card>
-  {/* <Card title="Django" icon="python" href="https://github.com/lettr/lettr-django">
-    Django email backend
-  </Card> */}
+  <Card title="Next.js" icon="react" href="/quickstart/nodejs/nextjs">
+    Send from Next.js apps
+  </Card>
+  <Card title="Nuxt" icon="vuejs" href="/quickstart/nodejs/nuxt">
+    Send from Nuxt apps
+  </Card>
+  <Card title="Flask" icon="python" href="/quickstart/python/send-with-flask">
+    Send from Flask apps
+  </Card>
+  <Card title="FastAPI" icon="python" href="/quickstart/python/send-with-fastapi">
+    Send from FastAPI apps
+  </Card>
+  <Card title="Serverless" icon="bolt" href="/quickstart/serverless/introduction">
+    AWS Lambda, Vercel, Cloudflare
+  </Card>
 </CardGroup>
-
-## Node.js SDK
-
-### Installation
-
-```bash
-npm install lettr
-```
-
-### Usage
-
-```javascript
-import { Lettr } from 'lettr';
-
-const lettr = new Lettr('your-api-key');
-
-// Send email
-const email = await lettr.emails.send({
-  from: 'you@example.com',
-  to: ['recipient@example.com'],
-  subject: 'Hello',
-  html: '<p>Hello World</p>'
-});
-
-// List emails
-const emails = await lettr.emails.list({ limit: 10 });
-
-// Get domains
-const domains = await lettr.domains.list();
-```
-
-## PHP SDK
-
-### Installation
-
-```bash
-composer require lettr/lettr-php
-```
-
-### Usage
-
-```php
-<?php
-
-use Lettr\Lettr;
-
-$lettr = Lettr::client('your-api-key');
-
-// Send email
-$response = $lettr->emails()->send(
-    $lettr->emails()->create()
-        ->from('you@example.com')
-        ->to(['recipient@example.com'])
-        ->subject('Hello')
-        ->html('<p>Hello World</p>')
-);
-
-// Manage domains
-$domains = $lettr->domains()->list();
-```
-
-## Python SDK
-
-### Installation
-
-```bash
-pip install lettr
-```
-
-### Usage
-
-```python
-import lettr
-
-client = lettr.Lettr("your-api-key")
-
-# Send email
-response = client.emails.send(
-    from_email="you@example.com",
-    to=["recipient@example.com"],
-    subject="Hello",
-    html="<p>Hello World</p>",
-)
-
-# List emails
-email_list = client.emails.list(per_page=10)
-```
-
-## Go SDK
-
-### Installation
-
-```bash
-go get github.com/lettr-com/lettr-go
-```
-
-### Usage
-
-```go
-package main
-
-import (
-    "context"
-    lettr "github.com/lettr-com/lettr-go"
-)
-
-func main() {
-    client := lettr.NewClient("your-api-key")
-
-    resp, err := client.Emails.Send(context.Background(), &lettr.SendEmailRequest{
-        From:    "you@example.com",
-        To:      []string{"recipient@example.com"},
-        Subject: "Hello",
-        Html:    "<p>Hello World</p>",
-    })
-}
-```
 
 ## SDK Features
 
 All SDKs include:
 
 | Feature | Description |
-|---------|-------------|
+|-|-|
 | Type definitions | Full TypeScript/type hints support |
 | Error handling | Structured error responses |
 | Automatic retries | Retry on transient failures |
 | Webhook verification | Built-in signature verification |
 | Rate limiting | Automatic rate limit handling |
 
-## Contributing
+## Source & Contributing
 
-SDKs are open source. Contributions welcome!
+SDKs are open source on [GitHub](https://github.com/lettr-com). Each repository's README has install notes and a hello-world example; full usage lives in the per-language guides above and the [API reference](/api-reference/introduction).
 
 <Card title="Contribution Guide" icon="code-pull-request" href="https://github.com/lettr/lettr-node/blob/main/CONTRIBUTING.md">
   Learn how to contribute to our SDKs
 </Card>
-
-## Platform Integrations
-
-<CardGroup cols={3}>
-  <Card title="Stripe" icon="stripe" href="/integrations/stripe">
-    Send emails from Stripe
-  </Card>
-  <Card title="Supabase" icon="bolt" href="/integrations/supabase">
-    Auth emails and Edge Functions
-  </Card>
-  <Card title="WordPress" icon="wordpress" href="/integrations/wordpress">
-    Replace wp_mail with Lettr
-  </Card>
-</CardGroup>
-

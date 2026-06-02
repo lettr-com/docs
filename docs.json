@@ -318,6 +318,12 @@
               "integrations/wordpress",
               "integrations/zapier"
             ]
+          },
+          {
+            "group": "Resources",
+            "pages": [
+              "resources/sdks"
+            ]
           }
         ]
       },
