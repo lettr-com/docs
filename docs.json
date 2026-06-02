@@ -109,6 +109,11 @@
                 "pages": [
                   "quickstart/python/quickstart",
                   "quickstart/python/advanced",
+                  "quickstart/python/templates",
+                  "quickstart/python/domains",
+                  "quickstart/python/webhooks",
+                  "quickstart/python/audience",
+                  "quickstart/python/campaigns",
                   "quickstart/python/send-with-flask",
                   "quickstart/python/send-with-fastapi"
                 ]

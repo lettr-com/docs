@@ -1,0 +1,90 @@
+---
+title: Templates
+description: "Manage Lettr templates with the Python SDK"
+---
+
+The `client.templates` resource manages Lettr-managed templates. To *send* a template, pass `template_slug` to `client.emails.send()` — see [Sending Emails](/quickstart/python/quickstart#sending-emails).
+
+```python
+import lettr
+
+client = lettr.Lettr("lttr_your_api_key")
+```
+
+## List Templates
+
+```python
+template_list = client.templates.list(per_page=10)
+for template in template_list.templates:
+    print(f"{template.name} ({template.slug})")
+```
+
+<Card title="API Reference" icon="book" href="/api-reference/templates/list-templates">
+  GET /templates
+</Card>
+
+## Get a Template
+
+```python
+template = client.templates.get("welcome-email")
+print(template.html)
+
+# Or fetch only the rendered HTML for a project
+html = client.templates.get_html(project_id=1, slug="welcome-email")
+```
+
+## Create a Template
+
+Provide `html` **or** `json` (the TOPOL.io editor format), not both:
+
+```python
+template = client.templates.create(
+    name="Welcome Email",
+    html="<h1>Hello {{NAME}}!</h1><p>Welcome aboard.</p>",
+    project_id=123,  # optional
+    folder_id=5,     # optional
+)
+```
+
+<Card title="API Reference" icon="book" href="/api-reference/templates/create-template">
+  POST /templates
+</Card>
+
+## Update & Delete
+
+Updating a template creates a new version:
+
+```python
+client.templates.update(
+    "welcome-email",
+    html="<h1>Hi {{NAME}}!</h1><p>Updated content.</p>",
+)
+
+client.templates.delete("welcome-email")
+client.templates.delete("welcome-email", project_id=123)  # within a project
+```
+
+## Get Merge Tags
+
+Retrieve the variables a template expects — useful for validating data before sending:
+
+```python
+merge_tags = client.templates.get_merge_tags("welcome-email")
+for tag in merge_tags.merge_tags:
+    print(f"{tag.key} (required: {tag.required}, type: {tag.type})")
+```
+
+<Card title="API Reference" icon="book" href="/api-reference/templates/get-merge-tags">
+  GET /templates/{slug}/merge-tags
+</Card>
+
+## What's Next
+
+<CardGroup cols={2}>
+  <Card title="Template Language" icon="code" href="/learn/templates/template-language">
+    Merge tag syntax, conditionals, loops
+  </Card>
+  <Card title="Sending Emails" icon="paper-plane" href="/quickstart/python/quickstart">
+    Send a template with substitution data
+  </Card>
+</CardGroup>

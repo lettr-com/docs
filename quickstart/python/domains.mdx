@@ -1,0 +1,97 @@
+---
+title: Managing Domains
+description: "List, add, verify, and delete sending domains with the Python SDK"
+---
+
+The `client.domains` resource manages your sending domains — useful for multi-tenant apps onboarding customer domains, or for automating DNS verification.
+
+For the concepts behind domain setup (SPF, DKIM, DMARC), see [Sending Domains](/learn/domains/sending-domains).
+
+```python
+import lettr
+
+client = lettr.Lettr("lttr_your_api_key")
+```
+
+## List Domains
+
+```python
+domains = client.domains.list()
+for domain in domains:
+    print(f"{domain.domain} — {domain.status_label}")
+    print(domain.can_send, domain.dkim_status, domain.cname_status)
+```
+
+<Card title="API Reference" icon="book" href="/api-reference/domains/list-domains">
+  GET /domains
+</Card>
+
+## Add a Domain
+
+```python
+domain = client.domains.create("example.com")
+print(domain.status_label)
+print(domain.dkim)  # DKIM config to publish in DNS
+```
+
+<Card title="API Reference" icon="book" href="/api-reference/domains/create-domain">
+  POST /domains
+</Card>
+
+## Get Domain Details
+
+```python
+domain = client.domains.get("example.com")
+print(f"DMARC: {domain.dmarc_status}, SPF: {domain.spf_status}")
+print(domain.tracking_domain)
+print(domain.dns_provider)
+```
+
+<Card title="API Reference" icon="book" href="/api-reference/domains/get-domain">
+  GET /domains/{domain}
+</Card>
+
+## Verify Domain DNS
+
+After publishing the records, trigger a verification check:
+
+```python
+verification = client.domains.verify("example.com")
+print(f"DKIM: {verification.dkim_status}")
+print(f"CNAME: {verification.cname_status}")
+print(f"DMARC: {verification.dmarc_status}")
+print(f"SPF: {verification.spf_status}")
+```
+
+<Tip>
+  DNS changes take time to propagate. If verification fails right after publishing, wait a few minutes and retry. See [Domain Verification troubleshooting](/knowledge-base/troubleshooting/domain-verification).
+</Tip>
+
+<Card title="API Reference" icon="book" href="/api-reference/domains/verify-domain">
+  POST /domains/{domain}/verify
+</Card>
+
+## Delete a Domain
+
+```python
+client.domains.delete("example.com")
+```
+
+<Warning>
+  Deleting a domain stops all sending from it immediately. Emails from a deleted domain fail with a validation error.
+</Warning>
+
+<Card title="API Reference" icon="book" href="/api-reference/domains/delete-domain">
+  DELETE /domains/{domain}
+</Card>
+
+## What's Next
+
+<CardGroup cols={2}>
+  <Card title="Sending Domains" icon="globe" href="/learn/domains/sending-domains">
+    DNS setup: SPF, DKIM, DMARC
+  </Card>
+  <Card title="Webhooks" icon="bell" href="/quickstart/python/webhooks">
+    Receive delivery and engagement events
+  </Card>
+</CardGroup>

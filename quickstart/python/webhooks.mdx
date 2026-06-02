@@ -1,0 +1,110 @@
+---
+title: Managing Webhooks
+description: "List, create, update, and delete webhooks with the Python SDK"
+---
+
+Webhooks deliver real-time notifications when emails are delivered, opened, clicked, bounced, or marked as spam. The `client.webhooks` resource manages your endpoints.
+
+For the event payload format and signature verification, see [Webhooks](/learn/webhooks/introduction).
+
+```python
+import lettr
+
+client = lettr.Lettr("lttr_your_api_key")
+```
+
+## List Webhooks
+
+```python
+webhooks = client.webhooks.list()
+for webhook in webhooks:
+    print(f"{webhook.name}: {webhook.url} (enabled: {webhook.enabled})")
+    print(webhook.auth_type, webhook.last_status)
+
+    # event_types is None when subscribed to all events
+    if webhook.event_types is None:
+        print("all events")
+    else:
+        print(webhook.event_types)  # ["message.delivery", "engagement.click", ...]
+```
+
+<Card title="API Reference" icon="book" href="/api-reference/webhooks/list-webhooks">
+  GET /webhooks
+</Card>
+
+## Create a Webhook
+
+```python
+webhook = client.webhooks.create(
+    name="Production events",
+    url="https://example.com/webhooks/lettr",
+    auth_type="none",
+    events_mode="selected",
+    events=["message.delivery", "message.bounce", "engagement.click"],
+)
+```
+
+Use `events_mode="all"` to receive every event type (no `events` needed), or `events_mode="selected"` with an explicit `events` list. For authenticated endpoints:
+
+```python
+webhook = client.webhooks.create(
+    name="Secure Webhook",
+    url="https://example.com/webhooks/lettr",
+    auth_type="basic",
+    events_mode="all",
+    auth_username="user",
+    auth_password="secret",
+)
+```
+
+<Card title="API Reference" icon="book" href="/api-reference/webhooks/create-webhook">
+  POST /webhooks
+</Card>
+
+## Get a Webhook
+
+```python
+webhook = client.webhooks.get("webhook-abc123")
+print(webhook.last_successful_at, webhook.last_failure_at)
+```
+
+<Card title="API Reference" icon="book" href="/api-reference/webhooks/get-webhook">
+  GET /webhooks/{webhook}
+</Card>
+
+## Update a Webhook
+
+Pass only the fields you want to change:
+
+```python
+client.webhooks.update(
+    "webhook-abc123",
+    name="Renamed Webhook",
+    active=False,
+)
+```
+
+<Card title="API Reference" icon="book" href="/api-reference/webhooks/update-webhook">
+  PATCH /webhooks/{webhook}
+</Card>
+
+## Delete a Webhook
+
+```python
+client.webhooks.delete("webhook-abc123")
+```
+
+<Card title="API Reference" icon="book" href="/api-reference/webhooks/delete-webhook">
+  DELETE /webhooks/{webhook}
+</Card>
+
+## What's Next
+
+<CardGroup cols={2}>
+  <Card title="Webhook Events" icon="bell" href="/learn/webhooks/introduction">
+    Event types and payload format
+  </Card>
+  <Card title="Webhook Authorization" icon="shield-check" href="/learn/webhooks/authorization">
+    Verify webhook authenticity
+  </Card>
+</CardGroup>
