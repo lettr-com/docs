@@ -41,6 +41,10 @@ There are three ways to add contacts to your audience:
 | **CSV import** | Bringing in a list from another tool | **Audience** → **Imports** → **New import**. See [Importing and Exporting](/learn/audience/importing-and-exporting) |
 | **API** | Sign-up forms on your website or app | `POST /api/audience/contacts`, optionally with [double opt-in](/learn/audience/double-opt-in) |
 
+<Tip>
+  Importing from another system or syncing contacts from your own database? The [Contacts API](/api-reference/audience/bulk-create-contacts) can create or update many contacts in a single request, so you don't have to call the create endpoint once per contact.
+</Tip>
+
 ### Manual Entry
 
 The **Add contacts** dialog accepts one or more email addresses separated by spaces, commas, or newlines. You can optionally pick a list and a topic to attach the new contacts to in the same step. All new contacts start with status `subscribed`.
