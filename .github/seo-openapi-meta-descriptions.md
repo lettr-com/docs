@@ -79,5 +79,4 @@ to a 100–160 character description:
 
 Target band for both lists: **100–160 characters** of inner description text.
 
-> This file is documentation for maintainers. It is not in `docs.json` navigation, so
-> Mintlify does not publish it.
+> Maintainer notes. Lives in `.github/` so the Mintlify build never parses or publishes it.

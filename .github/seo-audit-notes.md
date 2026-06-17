@@ -17,7 +17,7 @@ content-quality signals — so the disposition is tracked rather than silently d
 ## OpenAPI-derived (fix in `lettr-app`, not here)
 API reference pages take their meta description from `openapi.json`, which is re-fetched
 from `app.lettr.com` at build time. 25 over-long + 15 too-short endpoint descriptions are
-listed with their lengths in [`api-reference/META_DESCRIPTIONS.md`](api-reference/META_DESCRIPTIONS.md).
+listed with their lengths in [`seo-openapi-meta-descriptions.md`](seo-openapi-meta-descriptions.md).
 Editing `openapi.json` here is overwritten on the next deploy.
 
 ## No code change required
@@ -53,4 +53,4 @@ source to trim. Mitigation is a hosting/CDN concern, not a docs-source change.
 The `http://docs.lettr.com/` → `https://` 308 is correct canonical behavior enforced at the
 host/proxy layer. Not configurable in this repo, and not a defect.
 
-> Maintainer notes file. Not in `docs.json` navigation, so Mintlify does not publish it.
+> Maintainer notes. Lives in `.github/` so the Mintlify build never parses or publishes it.
