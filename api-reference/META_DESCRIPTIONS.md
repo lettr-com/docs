@@ -53,5 +53,31 @@ Tip: the first sentence of each operation `description` is what becomes the meta
 description. Keeping that first sentence ≤160 characters (and moving scope/permission
 notes to a second sentence) resolves the flag without losing detail on the page.
 
+## Also too SHORT (15 endpoints, <100 chars)
+
+The same 2026-06-16 crawl flagged 15 endpoint descriptions as too short (<100 chars).
+These also come from `openapi.json` and must be lengthened at the source in `lettr-app`
+to a 100–160 character description:
+
+| chars | endpoint page |
+|-|-|
+| 58 | api-reference/audience/show-a-topic |
+| 60 | api-reference/audience/show-a-contact |
+| 60 | api-reference/audience/show-a-segment |
+| 61 | api-reference/audience/show-a-property |
+| 62 | api-reference/audience/list-audience-topics |
+| 64 | api-reference/audience/list-audience-segments |
+| 66 | api-reference/audience/show-an-audience-list |
+| 73 | api-reference/webhooks/create-webhook |
+| 76 | api-reference/audience/list-audience-properties |
+| 78 | api-reference/audience/list-audience-contacts |
+| 82 | api-reference/system/health-check |
+| 88 | api-reference/audience/list-audience-lists |
+| 97 | api-reference/webhooks/get-webhook |
+| 98 | api-reference/audience/delete-a-topic |
+| 98 | api-reference/audience/update-a-segment |
+
+Target band for both lists: **100–160 characters** of inner description text.
+
 > This file is documentation for maintainers. It is not in `docs.json` navigation, so
 > Mintlify does not publish it.
