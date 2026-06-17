@@ -1,6 +1,6 @@
 ---
 title: Idempotency
-description: "Prevent duplicate emails with request tracking"
+description: "Use Lettr request IDs and application-level idempotency patterns to send each email exactly once, even through failures and retries"
 ---
 
 Duplicate emails damage user trust — nobody wants to receive the same order confirmation twice. Network failures, retries, and concurrent requests can all cause a single email to be sent more than once unless your integration is designed to prevent it. This page covers how to use Lettr's request IDs and application-level idempotency patterns to ensure each email is sent exactly once, even when failures and retries occur.
