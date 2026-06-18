@@ -67,7 +67,7 @@ See [Email Headers Explained](/knowledge-base/fundamentals/email-headers).
 
 An email header (`Auto-Submitted: auto-reply` or `auto-generated`) that indicates a message was generated automatically rather than by a human. Auto-submitted headers identify out-of-office replies, bounce notifications, mailing list responses, and automated system messages. Properly setting this header prevents auto-reply loops and helps receiving systems classify automated messages.
 
-See [Reply Tracking](/learn/receiving/reply-tracking) and [Email Headers Explained](/knowledge-base/fundamentals/email-headers).
+See [Reply Tracking](/learn/inbound/reply-tracking) and [Email Headers Explained](/knowledge-base/fundamentals/email-headers).
 
 ---
 
@@ -133,7 +133,7 @@ See [CAN-SPAM Requirements](/knowledge-base/compliance/can-spam).
 
 The method of representing text characters as bytes in email content. UTF-8 is the modern standard that supports all Unicode characters (emoji, non-Latin scripts, symbols). Older emails may use ISO-8859-1 (Latin-1), Windows-1252, or other legacy encodings. The character encoding is declared in the `Content-Type` header (e.g., `text/html; charset=utf-8`). Mismatched encoding declarations and content cause rendering issues.
 
-See [Email Parsing](/learn/receiving/parsing) and [Rendering Issues](/knowledge-base/troubleshooting/rendering-issues).
+See [Email Parsing](/learn/inbound/parsing) and [Rendering Issues](/knowledge-base/troubleshooting/rendering-issues).
 
 ### CASL (Canadian Anti-Spam Legislation)
 
@@ -569,7 +569,7 @@ See [Personalization and Dynamic Content](/knowledge-base/best-practices/persona
 
 The email client feature that groups related messages into conversation threads using email headers (`Message-ID`, `In-Reply-To`, `References`). When replying to an email, the reply includes these headers to indicate the relationship to the original message. Lettr supports message threading for inbound emails, enabling reply tracking and conversation reconstruction.
 
-See [Reply Tracking](/learn/receiving/reply-tracking) and [Email Headers Explained](/knowledge-base/fundamentals/email-headers).
+See [Reply Tracking](/learn/inbound/reply-tracking) and [Email Headers Explained](/knowledge-base/fundamentals/email-headers).
 
 ### Message-ID
 
@@ -703,7 +703,7 @@ See [Google & Yahoo Sender Requirements](/knowledge-base/compliance/google-yahoo
 
 A MIME encoding method (defined in RFC 2045) that represents 8-bit characters using ASCII-safe `=XX` hexadecimal codes. Quoted-printable encoding is used for email content that is mostly ASCII text with occasional non-ASCII characters (accented letters, special symbols). It's more human-readable than Base64 encoding and is the default for `text/plain` and `text/html` email parts.
 
-See [Email Parsing](/learn/receiving/parsing) and [Content Types](/knowledge-base/fundamentals/content-types).
+See [Email Parsing](/learn/inbound/parsing) and [Content Types](/knowledge-base/fundamentals/content-types).
 
 ---
 
@@ -725,7 +725,7 @@ See [SMTP Protocol Basics](/knowledge-base/fundamentals/smtp-protocol-basics).
 
 The process of receiving inbound email on a domain configured with Lettr and forwarding (relaying) it to a destination endpoint via webhook or SMTP. Relay events track the lifecycle of inbound messages: injection (received), delivery (successfully forwarded), rejection (blocked by spam filtering or routing rules), temporary failure, and permanent failure.
 
-See [Receiving Email Setup](/learn/receiving/introduction) and [Email Routing](/learn/receiving/routing).
+See [Inbound Email Setup](/learn/inbound/introduction) and [Email Routing](/learn/inbound/routing).
 
 ### Rendering Engine
 
@@ -831,7 +831,7 @@ See [Bounce Diagnosis](/knowledge-base/troubleshooting/bounce-diagnosis).
 
 A numeric value (0.0–10.0) assigned to incoming emails indicating the likelihood of spam. Scores near 0.0 indicate legitimate email, while scores approaching 10.0 indicate almost certain spam. Lettr's inbound email processing uses spam scores to route or filter messages based on configurable thresholds.
 
-See [Spam Filtering](/learn/receiving/spam-filtering).
+See [Spam Filtering](/learn/inbound/spam-filtering).
 
 ### Spam Trap
 
@@ -955,7 +955,7 @@ A DNS record type used to store text data. Email authentication relies heavily o
 
 A technique where data is encoded in the reply-to email address (e.g., `reply+ticket_ID@domain.com`) to track which emails recipients reply to without parsing email headers. When a recipient replies, the variable portion is extracted from the recipient address, associating the reply with the original context. This is a more reliable alternative to threading headers for tracking replies across systems.
 
-See [Reply Tracking](/learn/receiving/reply-tracking), [Inbound Domains](/learn/domains/inbound-domains), and [Plus Addressing](#plus-addressing).
+See [Reply Tracking](/learn/inbound/reply-tracking), [Inbound Domains](/learn/domains/inbound-domains), and [Plus Addressing](#plus-addressing).
 
 ### Verified Mark Certificate (VMC)
 

@@ -1,6 +1,6 @@
 ---
-title: Receiving Introduction
-description: "Receive and process incoming email programmatically with Lettr by configuring an inbound domain and webhooks to capture parsed messages."
+title: Inbound Introduction
+description: "Receive and process inbound email programmatically with Lettr by configuring an inbound domain and webhooks to capture parsed messages."
 ---
 
 Lettr allows you to receive and process incoming emails programmatically. By configuring an inbound domain and setting up webhooks, your application can capture replies to transactional emails, process support requests, parse incoming data, and trigger automated workflows whenever an email arrives.
@@ -59,7 +59,7 @@ Add the provided MX records to your domain:
 | MX | 10 | `rx2.sparkpostmail.com` |
 | MX | 10 | `rx3.sparkpostmail.com` |
 
-Multiple MX records with equal priority provide load balancing — sending servers distribute email across all three servers. If one is unavailable, the others handle delivery. See the [Setup Guide](/learn/receiving/setup) for DNS propagation details.
+Multiple MX records with equal priority provide load balancing — sending servers distribute email across all three servers. If one is unavailable, the others handle delivery. See the [Setup Guide](/learn/inbound/setup) for DNS propagation details.
 
 ### 3. Handle Incoming Emails
 
@@ -109,7 +109,7 @@ app.post('/webhooks/inbound', (req, res, next) => {
 ```
 
 <Warning>
-  Always [verify webhook credentials](/learn/receiving/security) before processing incoming emails to ensure requests are genuinely from Lettr. Configure Basic Auth or OAuth 2.0 authentication when creating your webhook in the dashboard.
+  Always [verify webhook credentials](/learn/inbound/security) before processing incoming emails to ensure requests are genuinely from Lettr. Configure Basic Auth or OAuth 2.0 authentication when creating your webhook in the dashboard.
 </Warning>
 
 ## Webhook Payload
@@ -144,7 +144,7 @@ When an email is received, Lettr sends a `relay.relay_delivery` webhook event. T
 ]
 ```
 
-Lettr automatically handles MIME parsing and delivers both the structured content fields and the raw RFC 822 message. For a complete breakdown of each field and how to work with them, see [Email Parsing](/learn/receiving/parsing).
+Lettr automatically handles MIME parsing and delivers both the structured content fields and the raw RFC 822 message. For a complete breakdown of each field and how to work with them, see [Email Parsing](/learn/inbound/parsing).
 
 ## Key Capabilities
 
@@ -175,7 +175,7 @@ app.post('/webhooks/inbound', express.json(), async (req, res) => {
 });
 ```
 
-The `reply+` pattern above is called variable addressing (or plus addressing). It's a common way to encode context in the recipient address so you can route replies back to the right record. See [Routing](/learn/receiving/routing) for more patterns including routing by subject, sender domain, and content.
+The `reply+` pattern above is called variable addressing (or plus addressing). It's a common way to encode context in the recipient address so you can route replies back to the right record. See [Routing](/learn/inbound/routing) for more patterns including routing by subject, sender domain, and content.
 
 ### Spam Filtering
 
@@ -189,7 +189,7 @@ if (spamScore >= 6) {
 }
 ```
 
-You can also configure spam filtering sensitivity for your inbound domain through the dashboard under **Domains** → **Inbound**. Regardless of dashboard settings, you can implement your own filtering logic in your webhook handler. See [Spam Filtering](/learn/receiving/spam-filtering) for advanced detection patterns and allowlist/blocklist management.
+You can also configure spam filtering sensitivity for your inbound domain through the dashboard under **Domains** → **Inbound**. Regardless of dashboard settings, you can implement your own filtering logic in your webhook handler. See [Spam Filtering](/learn/inbound/spam-filtering) for advanced detection patterns and allowlist/blocklist management.
 
 ### Attachment Handling
 
@@ -207,7 +207,7 @@ for (const attachment of email.attachments) {
   Attachment URLs expire after 24 hours. Download and store attachments promptly if you need them longer.
 </Warning>
 
-Each attachment includes `filename`, `contentType`, `size` (in bytes), and a download `url`. See [Attachments](/learn/receiving/attachments) for storage examples (S3, GCS) and security best practices including file type verification and malware scanning.
+Each attachment includes `filename`, `contentType`, `size` (in bytes), and a download `url`. See [Attachments](/learn/inbound/attachments) for storage examples (S3, GCS) and security best practices including file type verification and malware scanning.
 
 ### Reply Tracking
 
@@ -231,7 +231,7 @@ if (match) {
 }
 ```
 
-For more advanced threading, use email headers like `Message-ID`, `In-Reply-To`, and `References` to build full conversation threads. See [Reply Tracking](/learn/receiving/reply-tracking) for header-based threading, auto-reply detection, and a complete support ticket example.
+For more advanced threading, use email headers like `Message-ID`, `In-Reply-To`, and `References` to build full conversation threads. See [Reply Tracking](/learn/inbound/reply-tracking) for header-based threading, auto-reply detection, and a complete support ticket example.
 
 ## Real-World Examples
 
@@ -336,36 +336,36 @@ This lets you keep your root domain's MX records pointing to your regular email 
 - **Store before processing** — Save the raw webhook payload before doing any processing, so you can replay events if something fails.
 - **Validate attachments** — Verify file types and scan for malware before processing attachments from unknown senders.
 
-See [Best Practices](/learn/receiving/best-practices) for architecture patterns, reliability strategies, and monitoring recommendations.
+See [Best Practices](/learn/inbound/best-practices) for architecture patterns, reliability strategies, and monitoring recommendations.
 
 ## Learn More
 
 <CardGroup cols={2}>
-  <Card title="Setup Guide" icon="gear" href="/learn/receiving/setup">
+  <Card title="Setup Guide" icon="gear" href="/learn/inbound/setup">
     Step-by-step domain and webhook configuration
   </Card>
   <Card title="Webhooks" icon="webhook" href="/learn/webhooks/introduction">
     Webhook configuration and event handling
   </Card>
-  <Card title="Routing" icon="route" href="/learn/receiving/routing">
+  <Card title="Routing" icon="route" href="/learn/inbound/routing">
     Route emails to different handlers
   </Card>
-  <Card title="Attachments" icon="paperclip" href="/learn/receiving/attachments">
+  <Card title="Attachments" icon="paperclip" href="/learn/inbound/attachments">
     Handle incoming file attachments
   </Card>
-  <Card title="Spam Filtering" icon="shield" href="/learn/receiving/spam-filtering">
+  <Card title="Spam Filtering" icon="shield" href="/learn/inbound/spam-filtering">
     Filter and manage spam
   </Card>
-  <Card title="Reply Tracking" icon="reply" href="/learn/receiving/reply-tracking">
+  <Card title="Reply Tracking" icon="reply" href="/learn/inbound/reply-tracking">
     Track and thread email replies
   </Card>
-  <Card title="Email Parsing" icon="code" href="/learn/receiving/parsing">
+  <Card title="Email Parsing" icon="code" href="/learn/inbound/parsing">
     Understanding parsed email data
   </Card>
-  <Card title="Security" icon="lock" href="/learn/receiving/security">
+  <Card title="Security" icon="lock" href="/learn/inbound/security">
     Secure your inbound processing
   </Card>
-  <Card title="Best Practices" icon="star" href="/learn/receiving/best-practices">
+  <Card title="Best Practices" icon="star" href="/learn/inbound/best-practices">
     Build reliable email processing
   </Card>
 </CardGroup>
