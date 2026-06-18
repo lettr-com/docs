@@ -226,18 +226,18 @@
                 ]
               },
               {
-                "group": "Receiving",
+                "group": "Inbound",
                 "pages": [
-                  "learn/receiving/introduction",
-                  "learn/receiving/setup",
-                  "learn/receiving/routing",
-                  "learn/receiving/attachments",
-                  "learn/receiving/spam-filtering",
-                  "learn/receiving/reply-tracking",
-                  "learn/receiving/parsing",
-                  "learn/receiving/security",
-                  "learn/receiving/best-practices",
-                  "learn/receiving/sandbox"
+                  "learn/inbound/introduction",
+                  "learn/inbound/setup",
+                  "learn/inbound/routing",
+                  "learn/inbound/attachments",
+                  "learn/inbound/spam-filtering",
+                  "learn/inbound/reply-tracking",
+                  "learn/inbound/parsing",
+                  "learn/inbound/security",
+                  "learn/inbound/best-practices",
+                  "learn/inbound/sandbox"
                 ]
               },
               {
@@ -632,6 +632,46 @@
     {
       "source": "/learn/sending/rate-limits",
       "destination": "/api-reference/rate-limit"
+    },
+    {
+      "source": "/learn/receiving/introduction",
+      "destination": "/learn/inbound/introduction"
+    },
+    {
+      "source": "/learn/receiving/setup",
+      "destination": "/learn/inbound/setup"
+    },
+    {
+      "source": "/learn/receiving/routing",
+      "destination": "/learn/inbound/routing"
+    },
+    {
+      "source": "/learn/receiving/attachments",
+      "destination": "/learn/inbound/attachments"
+    },
+    {
+      "source": "/learn/receiving/spam-filtering",
+      "destination": "/learn/inbound/spam-filtering"
+    },
+    {
+      "source": "/learn/receiving/reply-tracking",
+      "destination": "/learn/inbound/reply-tracking"
+    },
+    {
+      "source": "/learn/receiving/parsing",
+      "destination": "/learn/inbound/parsing"
+    },
+    {
+      "source": "/learn/receiving/security",
+      "destination": "/learn/inbound/security"
+    },
+    {
+      "source": "/learn/receiving/best-practices",
+      "destination": "/learn/inbound/best-practices"
+    },
+    {
+      "source": "/learn/receiving/sandbox",
+      "destination": "/learn/inbound/sandbox"
     }
   ],
   "footer": {
