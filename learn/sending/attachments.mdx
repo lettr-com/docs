@@ -60,23 +60,24 @@ await lettr.emails.send({
 
 ## Inline Images
 
-Embed images directly in your email HTML:
+<Warning>
+  Lettr does not currently support inline (embedded) images. Referencing an attachment from your HTML with a `cid:` URL — for example `<img src="cid:logo">` — will **not** embed the image in the message body. The image is delivered as a regular attachment (with `Content-Disposition: attachment` and no `Content-ID`), so the `cid:` reference has nothing to bind to and the image will not display inline.
+</Warning>
+
+To show an image inside the body of an email, host it at a public URL and reference that URL directly:
 
 ```javascript
 await lettr.emails.send({
   from: 'you@example.com',
   to: ['recipient@example.com'],
   subject: 'Email with Image',
-  html: '<p>Check out this image:</p><img src="cid:logo" />',
-  attachments: [
-    {
-      name: 'logo.png',
-      data: logoBase64,
-      type: 'image/png'
-    }
-  ]
+  html: '<p>Check out this image:</p><img src="https://cdn.example.com/logo.png" alt="Logo" />'
 });
 ```
+
+<Note>
+  Many email clients block remote images by default and ask the recipient to "display images." An `alt` attribute keeps the message readable when the image is blocked.
+</Note>
 
 ## Attachment Limits
 
