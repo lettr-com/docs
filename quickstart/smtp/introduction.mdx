@@ -48,6 +48,16 @@ Use the following settings to connect to Lettr's SMTP server:
   Your SMTP password is your Lettr API key. Never commit this to version control or share it publicly. Store it in environment variables or a secrets manager.
 </Warning>
 
+<Note>
+  The username is always the literal string `lettr` — the same for every account, not your email address. Your account is identified by the API key you send as the password.
+</Note>
+
+## Sender Address
+
+The address in your message's `From:` header must belong to a [verified sending domain](/learn/domains/sending-domains). Lettr validates that header address, not the SMTP envelope sender your client uses in `MAIL FROM`. Most libraries set both from the same value, but if you configure them separately, the `From:` header is the one that has to match.
+
+If the address isn't on a verified domain, authentication still succeeds and the message is rejected afterwards, at the point your client sends the message body.
+
 ## Ports & Security
 
 The port you choose determines the security protocol for your SMTP connection:
@@ -85,6 +95,28 @@ If the connection succeeds, you'll see output showing the SMTP conversation and 
   `swaks` is available via package managers: `brew install swaks` (macOS), `apt-get install swaks` (Ubuntu/Debian), or download from [jetmore.org/john/code/swaks](http://www.jetmore.org/john/code/swaks/).
 </Tip>
 
+## BCC Is Not Private Over SMTP
+
+<Warning>
+  Do not use BCC when sending over SMTP. Recipients you add with BCC are **visible to everyone else on the message**.
+
+  BCC addresses are not carried in the message headers — your client passes them in the SMTP envelope, alongside the To and Cc addresses. Lettr's SMTP relay reads recipients from that envelope and cannot tell which ones were meant to be blind, so every address is delivered as a regular `To` recipient.
+</Warning>
+
+To keep recipients hidden from one another, send a separate message to each one. If you're sending the same content to many people, the [HTTP API](/api-reference/emails/send-email) handles BCC correctly and supports [batch sending](/learn/sending/batch-sending) with per-recipient personalization.
+
+## Limits
+
+| Limit | Value |
+|-------|-------|
+| Max recipients per message | 50 (combined to, cc, bcc) |
+| Max message size (including attachments) | 50 MB |
+| Failed authentication attempts | 5 per 5 minutes, then a 15-minute block |
+
+<Note>
+  The recipient limit matches the [HTTP API](/learn/sending/recipients). Exceeding it returns `452 Too many recipients`.
+</Note>
+
 ## Framework Integration Guides
 
 Choose your framework or library for specific setup instructions:
@@ -108,8 +140,19 @@ Choose your framework or library for specific setup instructions:
     If you see "Authentication failed" or "535 Authentication credentials invalid":
 
     - Verify your API key is correct and starts with `lttr_`
-    - Check that the username is exactly `lettr` (lowercase)
+    - Check that the username is exactly `lettr` (lowercase) — not your email address
     - Ensure your API key hasn't been revoked in the [dashboard](https://app.lettr.com/api-keys)
+    - If the key is restricted to specific IP addresses, confirm the machine you're sending from is on that list. This returns `535 Access denied. Your IP address is not allowed.`
+  </Accordion>
+
+  <Accordion title="Temporarily Blocked After Failed Attempts">
+    Five failed authentication attempts within five minutes will block your IP address for 15 minutes. While blocked, connections are refused with:
+
+    ```
+    421 Too many authentication failures, try again later
+    ```
+
+    The block applies to your IP address across every port, so switching ports won't restore access — wait for it to expire. A successful login clears the counter, so fix the credential before retrying.
   </Accordion>
 
   <Accordion title="Connection Timeout">
@@ -118,6 +161,18 @@ Choose your framework or library for specific setup instructions:
     - Check your firewall isn't blocking outbound connections on the SMTP port
     - Try alternate ports (`2465` or `2587`)
     - Verify `smtp.lettr.com` resolves correctly: `nslookup smtp.lettr.com`
+
+    Many cloud providers and residential ISPs block outbound port `25` by default. Use `465` instead.
+  </Accordion>
+
+  <Accordion title="Authentication Works but the Message Is Rejected">
+    If your client connects and logs in, then fails when sending the message body, the credentials are fine and the message itself was refused. Common causes:
+
+    - The `From:` address isn't on a [verified sending domain](/learn/domains/sending-domains). Note that Lettr checks the `From:` header, not the envelope sender
+    - The message exceeds 50 recipients (`452 Too many recipients`) or 50 MB
+    - Your account has reached its [sending quota](/learn/sending/usage-quotas)
+
+    Errors at this stage return `451` with the reason from the API. Sends are recorded in the [dashboard](https://app.lettr.com) alongside API sends, so check there for the full error.
   </Accordion>
 
   <Accordion title="TLS/SSL Errors">
@@ -139,6 +194,7 @@ Here's a quick comparison to help you decide:
 | **Error handling** | Limited — SMTP status codes only | Rich — detailed JSON error responses |
 | **Request tracking** | No request ID returned | Returns `request_id` for tracking |
 | **Attachments** | Standard MIME encoding | Base64 in JSON payload |
+| **BCC** | Not private — BCC recipients are visible | Kept private |
 | **Templates** | Not supported | Full template support |
 | **Metadata** | Not supported | Custom metadata supported |
 | **Webhooks** | Not supported | Full event tracking |
