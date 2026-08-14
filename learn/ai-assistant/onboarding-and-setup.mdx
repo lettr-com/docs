@@ -1,0 +1,85 @@
+---
+title: "Onboarding & Setup"
+description: "Let Adamko set up your entire Lettr account — brand kit, branded transactional emails, sending domain, and API key — from nothing but your website URL"
+---
+
+The fastest way to get a new Lettr account production-ready is to hand the job to Adamko. Give him your website URL and he handles the rest: brand detection, branded email templates, a sending domain, and your first API key. What used to be an afternoon of setup becomes a few minutes of confirming his suggestions.
+
+## The Complete Setup Flow
+
+On a fresh account, the dashboard greets you with a **"Welcome to Lettr — let's get you sending"** banner, and the chat drawer opens with setup options. Pick **Set up everything for me** (or click **Set up with Adamko** on the banner) and the flow runs in two steps:
+
+<Steps>
+  <Step title="Give Adamko your website">
+    A card asks **"What's your website?"** Enter your domain and click **Analyze**. Adamko visits the site and builds a [brand kit](#the-brand-kit) from it: logo, brand colors, fonts, business name, industry, tone of voice, and the language your site is written in. This takes up to a minute.
+  </Step>
+  <Step title="Review the brand and pick your emails">
+    Adamko shows the detected brand as a preview card, plus a checklist of transactional emails tailored to your type of business — a SaaS gets welcome, email verification, password reset, and invoice emails pre-selected; an e-commerce store gets a different mix. Tick or untick whatever you want and confirm.
+  </Step>
+  <Step title="Adamko builds everything">
+    In one pass, he:
+
+    1. **Creates the selected templates** — each one designed in your brand colors with a shared header and footer, written in your website's language
+    2. **Creates your first API key** — shown once in a copy-once card (store it immediately; it can't be shown again)
+    3. **Registers a sending domain** — derived from your website's domain, ready for DNS verification
+    4. **Offers integration code** — pick your stack (Node.js, Next.js, Laravel, PHP, Python, Django, Go, SMTP, or cURL) and get a working send-email snippet with your key prefix filled in
+  </Step>
+  <Step title="Verify your domain">
+    The one thing Adamko cannot do for you is edit DNS at your registrar. He shows the exact records to add — each value click-to-copy — and can start a [guided walkthrough](/learn/ai-assistant/guided-tours-and-nudges) on the domain page. Once the records are in place, ask him to check: he runs live DNS lookups and tells you record by record what's verified and what still needs fixing.
+  </Step>
+</Steps>
+
+If anything in the flow fails — say, your domain is already registered elsewhere — Adamko reports it honestly and continues with the rest rather than aborting. Every entity he creates lands in the [activity log](/learn/ai-assistant/activity-log-and-undo), where it can be undone while it's still untouched.
+
+<Tip>
+  You don't have to run the whole flow at once. The welcome screen also offers the individual pieces — **Set up my brand**, **Sending domain**, **Transactional emails**, **API key & first send** — and completed steps disappear from the list as you go. The dashboard banner tracks the same four steps and turns each chip green when it's done.
+</Tip>
+
+## The Brand Kit
+
+The brand kit is what makes Adamko's output look like *yours* instead of a generic template. From your website he extracts:
+
+| Detected | Used for |
+|-|-|
+| Logo | Header of every generated email |
+| Brand colors | Buttons, links, accents across all generated designs |
+| Fonts | Typography in generated templates |
+| Business name & industry | Copywriting context |
+| Tone of voice | How generated copy sounds |
+| Site language | The language templates are written in |
+| Social & legal links | Email footers |
+
+You can review and fine-tune everything under **Settings → Brand kit**. If you later ask Adamko to regenerate the brand kit from a *different* website, he asks for explicit confirmation before overwriting a completed kit.
+
+## The Transactional Email Catalog
+
+Adamko scaffolds from a curated catalog of eleven transactional email types, each mapped to a professionally designed base:
+
+- **Welcome** — greets a new sign-up
+- **Verify email** — the double-opt-in / account confirmation message
+- **Password reset**
+- **Invoice** — receipt after a payment
+- **Payment failed** — dunning notice
+- **Card expiring** — heads-up before a saved card lapses
+- **Trial expiring**
+- **Subscription created / renewal / canceled**
+- **Invitation** — invite a teammate or user
+
+He recommends the subset that fits your business (billing emails only make sense if you charge customers) and skips anything you already have, so re-running the flow never creates duplicates. Generated templates share a synced header and footer — edit those once and every email updates.
+
+You can add more types at any time — say *"scaffold a payment failed email"* or pick **Add another email type** from the welcome screen.
+
+## After Setup: First Send
+
+Once your domain verifies, ask Adamko for an integration snippet in your stack, or say *"help me send my first email."* The snippets are hand-tested examples — the same ones from the [quickstart guides](/quickstart/laravel/introduction) — with your API key prefix pre-filled (never the secret itself). Each snippet card also has a **Copy AI prompt** button that produces a ready-made prompt for your own AI coding assistant, so you can hand the integration to Cursor or Claude Code with full context.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Create more content" icon="paintbrush" href="/learn/ai-assistant/content-creation">
+    Custom templates, campaign drafts, and a sending calendar
+  </Card>
+  <Card title="Verify your sending domain" icon="globe" href="/learn/domains/sending-domains">
+    What the DNS records mean and how verification works
+  </Card>
+</CardGroup>

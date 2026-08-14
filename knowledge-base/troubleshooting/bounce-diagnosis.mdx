@@ -245,6 +245,10 @@ Lettr handles retries automatically with exponential backoff. You do not need to
 
 ## Reducing Your Bounce Rate
 
+<Tip>
+  For a single problem recipient, [Adamko](/learn/ai-assistant/troubleshooting-and-diagnostics#a-specific-recipient-didnt-get-an-email) can do the bounce forensics for you — he reads the recipient's recent events, decodes the SMTP response, checks suppression state, and names the likely root cause. For a list-wide view, ask him to *"check my sending health"*.
+</Tip>
+
 <AccordionGroup>
   <Accordion title="Validate email addresses at collection">
     Check for valid syntax, common typos (e.g., `gmial.com`), and disposable email providers at the point of signup. Catching invalid addresses before they enter your list prevents bounces entirely.

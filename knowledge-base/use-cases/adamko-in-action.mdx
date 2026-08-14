@@ -1,0 +1,125 @@
+---
+title: "Adamko in Action: Real-World Scenarios"
+description: "Seven worked examples of solving everyday email problems with Adamko, Lettr's AI assistant — from launch-day setup to debugging a broken integration"
+---
+
+The [AI Assistant section](/learn/ai-assistant/introduction) explains what Adamko can do feature by feature. This article shows the same abilities the way you'll actually meet them: as everyday situations. Each scenario gives you the situation, what to type, and what happens — copy the prompts and adapt them.
+
+<Note>
+  Adamko is rolling out gradually and may not be enabled in your account yet. If you don't see the **Ask Adamko** button, these workflows will become available when he reaches your team.
+</Note>
+
+## 1. Launch Day: From Empty Account to First Email
+
+**The situation:** You're launching a SaaS tomorrow. You've just created a Lettr account and you have nothing — no templates, no domain, no API key — and other work to do.
+
+**What to do:** Open Adamko (he'll likely open himself on a fresh account) and pick **Set up everything for me**, or type:
+
+> Set up my account. Our website is https://getacme.com
+
+**What happens:** Adamko reads your site and shows the brand he detected — logo, colors, tone, language. He proposes the transactional emails a SaaS needs (welcome, email verification, password reset, invoice) as a checklist; you untick invoice because billing isn't live yet, and confirm. A minute later you have three branded templates in the editor, an API key in a copy-once card, and `mail.getacme.com` registered as a sending domain with its DNS records listed. You paste the records at your registrar (each value is click-to-copy), ask *"check my domain"*, and once it verifies, ask for the Node.js snippet and drop it into your codebase.
+
+Total time in Lettr: about ten minutes, most of it at your DNS provider.
+
+## 2. Support Ticket: "I Never Got My Password Reset"
+
+**The situation:** A customer emails support saying password reset emails never arrive. Your app logs show the API accepted the request. Somewhere between Lettr and their inbox, the message vanished.
+
+**What to type:**
+
+> Why didn't marta@bigcorp.example receive our password reset email?
+
+**What happens:** Adamko pulls the recipient's recent message events, checks the suppression list, and verifies your domain state — then gives one root cause with evidence:
+
+> This address hard-bounced 12 days ago ("550 5.1.1 user unknown") and was automatically suppressed. All sends since were skipped before reaching the mail server.
+
+Now you know the fix and the conversation to have: the customer's address was mistyped or their mailbox was full/deleted at some point. If the address is actually valid, remove it from [suppressions](/learn/suppressions/introduction) and have them retry. Follow-up prompts that pay off: *"is anyone else at bigcorp.example suppressed?"* and *"show me all hard bounces this week."*
+
+<Tip>
+  Ask soon after the incident — detailed event data is retained for a limited window, and Adamko will tell you if the evidence has already aged out.
+</Tip>
+
+## 3. The Domain That Won't Verify
+
+**The situation:** You added your sending domain two days ago, pasted the DNS records into Cloudflare, and the domain still shows **Pending**. You've stared at both screens and everything *looks* identical.
+
+**What to type:**
+
+> My domain notify.acme.io has been stuck on pending for two days. What's wrong?
+
+**What happens:** Adamko runs live DNS lookups and compares each record against what Lettr expects — not what your registrar's UI shows, but what the internet actually resolves. The usual culprits he catches:
+
+- The record was added at `notify.acme.io.acme.io` because the registrar auto-appends the domain
+- The tracking CNAME is **proxied** through Cloudflare (orange cloud) when it must be DNS-only
+- Two SPF records exist, which invalidates both
+- The DMARC record sits at the subdomain instead of the organizational domain
+
+Each finding comes as a verdict with the expected value, the found value, and the fix. Click **Guide me** and he walks you through the domain page highlighting each record as you correct it. When the last lookup returns clean, he confirms the domain is verified — he never claims verification without a live check.
+
+## 4. Migrating 12,000 Contacts From Another Tool
+
+**The situation:** You're moving from another email platform. You've exported a CSV with 12,000 contacts, eight columns of varying quality, and a `status` column using the old tool's vocabulary.
+
+**What to do:** Drag the CSV onto the open Adamko drawer. It goes straight to the importer — Adamko never reads the raw file — and you land on the import flow. On the mapping step, ask:
+
+> Review this import before I run it.
+
+**What happens:** Working from the importer's analysis of a sample, Adamko flags what would hurt you: two columns about to be silently skipped, a handful of malformed addresses, duplicates within the file, and `status` values like "cleaned" that don't map to Lettr's fixed subscription statuses. If the file carries no consent signal, he says so bluntly — importing a list without opt-in evidence damages deliverability and violates [consent requirements](/knowledge-base/compliance/email-consent).
+
+For the skipped columns, click **Map them for me**: a preview dialog shows exactly what he'll do — map `plan` to a new custom property, map `newsletter_optin` to a topic subscription — and nothing is created until you confirm. After the import completes, ask *"how should I segment these contacts?"* and he proposes segments based on the actual data (say, `plan = pro` as "Pro customers"), handing you to the segment builder to create them — segment membership stays a human decision.
+
+## 5. Black Friday: From Landing Page to Scheduled Campaign
+
+**The situation:** Marketing finished the Black Friday landing page an hour ago. You need a campaign email that matches it, and a plan for the follow-up sends, without burning the afternoon in an editor.
+
+**What to type:**
+
+> Draft a Black Friday campaign based on https://acme.com/black-friday — 30% off annual plans, ends Sunday midnight.
+
+**What happens:** Adamko reads the landing page you linked, pulls the offer details and imagery context, and drafts the campaign in your brand design — your colors, your header and footer, copy in your brand voice, subject line included. The draft appears in your Campaigns list for review; he never sends or schedules anything himself.
+
+Then zoom out: *"plan the rest of my November sends."* He builds a dated calendar from your real audience sizes and remaining quota — early announcement, the main offer, a last-chance reminder spaced days apart, a re-engagement send after — and drafts each one as you approve it. Before the big send, run the pre-flight from scenario 6.
+
+## 6. Pre-Flight Check Before a Big Send
+
+**The situation:** The newsletter goes to your entire list in two hours. The last one had a broken merge tag that greeted 8,000 people as `{{first_name}}`. Never again.
+
+**What to type:**
+
+> Review my "November newsletter" template, and check my sending health.
+
+**What happens:** Two reports. The template review catches content problems: broken or empty merge tags, a missing unsubscribe link, images without alt text, an image-only layout that spam filters distrust, `http://` links, size that Gmail will clip. The sending health check catches account problems: an unverified domain, a bounce-rate trend creeping up, how much of your list is suppressed. Each finding has a concrete fix.
+
+Fix what he found, send yourself a [test email](/learn/sending/test-emails), then send for real. Afterwards: *"how did the newsletter do compared to October's?"*
+
+## 7. The Integration That Stopped Sending
+
+**The situation:** Wednesday, 9 AM: your monitoring says no emails have gone out since last night's deploy. The app logs show requests going *somewhere*. Nobody remembers touching the email code.
+
+**What to type:**
+
+> Our app stopped sending emails last night. What's failing?
+
+**What happens:** Adamko samples your recent API request logs and reads your key and webhook configuration, then returns issues by severity. In this story, the deploy rotated environment variables and your app is authenticating with a revoked key — the logs show a wall of 401s starting at 11:47 PM, and he shows you sample failed requests as evidence. Other mornings, the same prompt catches expired sandbox keys, payload validation errors after a schema change, or a webhook endpoint that's been failing silently for a week.
+
+The fix is yours to deploy, but the hour of grepping is gone. If you need a fresh key right now: *"create a new API key named production-2026"* — it appears in a copy-once card, and the creation lands in the [activity log](/learn/ai-assistant/activity-log-and-undo) where your whole team can see it.
+
+## The Pattern Behind the Scenarios
+
+Across all seven, the same division of labor holds:
+
+- **Adamko does the evidence-gathering** — DNS lookups, log sampling, event correlation, catalog knowledge — and the production work of drafting and scaffolding.
+- **You make the decisions** — every send, every schedule, every import confirmation, every DNS change, every undo stays a human click.
+
+That's the intended way to use him: hand over the tedious middle of the workflow and keep the judgment at both ends.
+
+## Related Reading
+
+<CardGroup cols={2}>
+  <Card title="Meet Adamko" icon="sparkles" href="/learn/ai-assistant/introduction">
+    The full feature-by-feature guide to the AI assistant
+  </Card>
+  <Card title="Privacy, permissions & limits" icon="shield-halved" href="/learn/ai-assistant/privacy-and-limits">
+    What Adamko sees, what's redacted, and who can use him
+  </Card>
+</CardGroup>

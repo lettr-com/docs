@@ -1,0 +1,58 @@
+---
+title: "Privacy, Permissions & Limits"
+description: "What data Adamko can see, what never reaches the AI provider, who on your team can use him, and the usage limits that apply"
+---
+
+Adamko is powered by a large language model, which means answering your questions involves sending context to an AI model provider. This page states plainly what is sent, what is protected, and what limits apply — so you can decide how to use him with full information.
+
+## What Adamko Sees
+
+By default, each conversation carries minimal context: your first name, your team name, your company's basic business info (name, website, business type — if you've provided or generated it), and a one-line summary of your setup progress.
+
+Everything else is fetched **on demand**: when you ask about your domains, campaigns, or contacts, Adamko queries that data through the same team-scoped permissions as the rest of the app. He can only ever see data belonging to the team you have open — never other teams, never other accounts.
+
+## What Never Reaches the AI Provider
+
+A redaction layer sits between Adamko and the model, and it filters **everything** — your messages, his replies, and all data he looks up:
+
+- **Secrets are always masked.** API keys (Lettr's and other providers'), bearer tokens, JWTs, private keys, passwords, and anything that looks like a credential is replaced with `[redacted]` before leaving Lettr's infrastructure. This is also why Adamko physically cannot reveal an API key in chat — newly created keys appear only in a copy-once card that bypasses the model entirely.
+- **Recipient details inside email content are pseudonymized.** When Adamko works with template or campaign HTML, email addresses and phone numbers in the content are replaced with placeholder tokens before the model sees them, and restored afterwards — the model edits your email without reading who it addresses.
+- **Files are never read.** A CSV you drop into the chat goes straight to the importer. Adamko sees the importer's structured analysis (column names, sampled statistics, flagged issues), not your raw rows.
+
+## What Does Reach the AI Provider
+
+Honesty requires the other half of the statement: **contact data you explicitly bring into the conversation is processed by the model.** If you ask *"why didn't jane@acme.com receive my email?"*, that address — and the delivery data Adamko looks up about it — is sent to the AI model provider, because diagnosing the problem is impossible otherwise. The same applies to contact lookups, import review summaries, and event data you ask about.
+
+This processing is covered by our data processing agreements with the AI model provider, under the same data-protection framework as the rest of Lettr's [subprocessors](/knowledge-base/compliance/gdpr-email). If your data-protection posture requires that contact PII never reach an AI subprocessor, the practical rule is simple: don't ask Adamko about specific contacts — every other feature works without doing so.
+
+Adamko reaches the public internet only when you explicitly hand him a URL — your website for brand detection, or a linked page as campaign source material. Content fetched this way is treated as untrusted input, and he never follows instructions embedded in it.
+
+## Permissions
+
+**Every member of your team can use Adamko**, including his create actions — drafting campaigns, creating templates, generating API keys. Access is not differentiated by team role. Two mechanisms keep that accountable:
+
+- The [activity log](/learn/ai-assistant/activity-log-and-undo) is team-wide: every change any member makes through Adamko is visible to everyone, attributed by name, with the prompt that caused it.
+- Actions with consequences beyond Adamko's own changes — sending, scheduling, team management, segment membership — are simply outside his abilities, for everyone.
+
+Chat conversations are private to each user (and separate per team). Your history is kept until you clear it with the trash icon in the drawer header.
+
+## Usage Limits
+
+- **Monthly AI allowance.** Each team has a monthly allowance of AI usage that refills at the start of each cycle. Heavy work (template generation, campaign drafting) draws on it more than quick questions. When the allowance runs out, the chat input pauses until the next cycle — but [quick actions](/learn/ai-assistant/guided-tours-and-nudges#quick-actions), navigation, and everything Adamko already built keep working.
+- **Burst rate limit.** A per-user hourly cap prevents runaway usage; hitting it asks you to wait a moment, not a month.
+- **Message length.** Very long messages are rejected — split large requests into steps. Adamko keeps the recent thread as context, so multi-message conversations work naturally.
+
+## Availability
+
+Adamko is rolling out gradually across accounts. If the **Ask Adamko** button isn't visible in your dashboard, the feature hasn't been enabled for your team yet. Availability is not tied to a pricing plan.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="GDPR and email" icon="scale-balanced" href="/knowledge-base/compliance/gdpr-email">
+    Lettr's broader data-protection framework
+  </Card>
+  <Card title="Back to the introduction" icon="arrow-left" href="/learn/ai-assistant/introduction">
+    Everything Adamko can do, in one overview
+  </Card>
+</CardGroup>

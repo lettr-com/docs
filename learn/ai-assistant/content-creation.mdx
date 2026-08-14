@@ -1,0 +1,74 @@
+---
+title: "Templates & Campaigns"
+description: "Use Adamko to scaffold branded transactional templates, design custom emails, draft campaigns in your brand voice, and plan a realistic sending calendar"
+---
+
+Adamko creates email content the same way a designer on your team would: starting from your [brand kit](/learn/ai-assistant/onboarding-and-setup#the-brand-kit), reusing your shared header and footer, and writing in your brand's tone and language. This page covers the four content jobs he does — transactional templates, custom templates, campaign drafts, and planning.
+
+<Note>
+  Generation runs in the background and typically takes about a minute — the chat shows a progress bar, and you can keep talking to Adamko or navigate away while it finishes. New templates appear in your Emails list as in-progress placeholders until they're ready.
+</Note>
+
+## Transactional Templates
+
+Ask for any email type from the [transactional catalog](/learn/ai-assistant/onboarding-and-setup#the-transactional-email-catalog) — *"create a password reset email"*, *"I need an invoice email"* — and Adamko builds it branded and wired into your synced header/footer. For emails that need a destination link (welcome, invoice, billing notices), he asks for the URL first rather than inventing one.
+
+To create several at once, say *"scaffold my transactional emails"* — he shows the checklist card, pre-ticks what's recommended for your business type, marks what you already have, and creates the rest only after you confirm.
+
+Not sure what you need? Ask *"what emails should my app be sending?"* — Adamko compares the catalog against what already exists in your account and recommends the gaps, tagged by lifecycle stage and priority. He won't recommend billing emails to a blog.
+
+## Custom Templates
+
+For everything the catalog doesn't cover — product announcements, newsletters, event invites, promos — describe what you want:
+
+> Create a template announcing our new dark mode feature. Call it "Dark mode launch". Button should link to https://app.example.com/settings/appearance
+
+Adamko picks the closest professional base design, adapts its structure to your content, then applies your brand: colors, typography, logo, footer links. The result lands in the Topol editor as a normal template you can edit like any other.
+
+If you'd rather start from a stock design untouched, ask him to *clone a premade template* — a fast copy of a professionally designed premade into your project, no AI rewriting involved.
+
+## Template Review
+
+Before a big send, ask Adamko to QA a template: *"review my welcome email."* He checks the actual template content for:
+
+- **Broken merge tags** — empty, malformed, or undefined tags that would render literally
+- **Missing compliance elements** — unsubscribe link and postal address on campaign templates
+- **Layout risks** — missing alt text, fixed widths that break on mobile, custom HTML without dark-mode handling
+- **Spam triggers** — shouting subject lines, image-only bodies, `http://` links, URL shorteners, size that gets clipped by Gmail
+
+Each finding comes with a concrete fix. This pairs well with a [test send](/learn/sending/test-emails) before the real one.
+
+## Drafting Campaigns
+
+Tell Adamko the occasion and he drafts the whole campaign — subject line, body copy in your brand voice, layout in your brand design:
+
+> Draft a campaign announcing 20% off annual plans for Black Friday. Link to https://example.com/pricing
+
+The draft appears in your Campaigns list. Adamko **never sends or schedules anything** — you review the draft, pick the audience, and click send yourself. Drafts he created and you never touched can be [undone](/learn/ai-assistant/activity-log-and-undo) with one click.
+
+He can also work from a source you give him: paste a link to a blog post or product page and ask him to turn it into a campaign — he reads the page and uses it as the raw material.
+
+<Tip>
+  Ask *"how did my last campaign do?"* afterwards — Adamko pulls open, click, bounce, and unsubscribe rates for any campaign and compares performance across recent sends.
+</Tip>
+
+## Planning a Sending Calendar
+
+Ask *"plan my campaigns for next quarter"* and Adamko builds a dated plan grounded in your real account: your audience lists and their sizes, your remaining sending quota, and proven cadence guidelines (smaller audiences get one to two sends a month; larger ones support more). The plan mixes content themes — product news, educational, newsletters, promotions, re-engagement — and spaces sends so the same audience isn't hit twice in the same week.
+
+The calendar is a plan, not an automation: Adamko drafts the campaigns one by one as you approve them, and scheduling each send remains your decision.
+
+## Localization
+
+Templates Adamko generates are written in your website's detected language automatically. He can also translate existing generated content — layout, styling, images, links, and merge tags are all preserved; only the human-readable copy and subject line change. Supported languages include Czech, Slovak, German, French, Spanish, Italian, Polish, Portuguese, Dutch, Danish, Swedish, Norwegian, Finnish, Hungarian, Romanian, Turkish, Greek, Ukrainian, Japanese, Korean, and Chinese.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Edit templates in the Topol editor" icon="pen-ruler" href="/learn/templates/topol-editor">
+    Every Adamko-generated template is fully editable
+  </Card>
+  <Card title="Send your first campaign" icon="paper-plane" href="/learn/campaigns/creating-a-campaign">
+    From draft to sent with the campaign builder
+  </Card>
+</CardGroup>
