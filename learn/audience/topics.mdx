@@ -76,7 +76,7 @@ You can manage topic membership from several places:
 Every topic opt-in and opt-out (including the automatic ones at contact creation) is recorded in the contact's [activity log](/learn/audience/contacts#activity-log).
 
 <Note>
-  Topics can also be managed programmatically. The [Audience Topics API](/api-reference/audience/list-audience-topics) lets you create, update, and delete topics, and subscribe or unsubscribe contacts from your own application.
+  Topics can also be managed programmatically. The [Audience Topics API](/api-reference/audience/list-audience-topics) lets you create, update, and delete topics, and subscribe or unsubscribe contacts from your own application. For many contacts at once, the [bulk subscribe](/api-reference/audience/bulk-subscribe-contacts-to-topics) and [bulk unsubscribe](/api-reference/audience/bulk-unsubscribe-contacts-from-topics) endpoints handle up to 1000 contacts × 50 topics per request, and the [bulk create contacts](/api-reference/audience/bulk-create-contacts) endpoint can set per-contact topic subscriptions (including opt-outs) during import.
 </Note>
 
 ## Renaming and Deleting Topics

@@ -78,6 +78,10 @@ Points your subdomain to Lettr's tracking servers:
 | Name | `links` (your chosen subdomain) |
 | Value | `proxy.lettr-tracking.com` |
 
+<Warning>
+  If your DNS is managed by Cloudflare, the CNAME record must be set to **DNS only** (grey cloud). With the proxy enabled (orange cloud), the hostname returns Cloudflare's A records instead of the CNAME, and Lettr rejects verification with a "hostname is returning A records instead of the required CNAME" error. See the [Cloudflare guide](/knowledge-base/dns-guides/cloudflare) for details.
+</Warning>
+
 ### SSL Validation TXT Record
 
 Required for automatic SSL certificate provisioning:

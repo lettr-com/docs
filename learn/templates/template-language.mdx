@@ -498,6 +498,10 @@ Prevent a specific link from being tracked:
 <a href="http://www.example.com/" data-msys-clicktrack="0">Click</a>
 ```
 
+<Warning>
+  Click tracking rewrites the link's URL to route through your tracking domain. For **signed or single-use URLs** — password resets, magic links, download links with tokens — always disable click tracking on that link, or the rewrite can invalidate the signature. Pass such URLs into the template as merge tags via `substitution_data` rather than hardcoding them.
+</Warning>
+
 #### Custom Sub-Paths
 
 Add a custom path segment to the tracked link URL:

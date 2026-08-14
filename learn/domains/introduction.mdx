@@ -106,6 +106,10 @@ Each domain has an approval status that determines whether you can send emails:
 
 DNS records are verified separately with their own status values (`valid`, `unverified`, `invalid`, `missing`, `not_applicable`).
 
+<Note>
+  Verified domains stay monitored: a daily [DNS health check](/learn/settings/alerts#domain-dns-health-alerts) watches every verified domain and warns you — in-app, and optionally by email or webhook — if a DNS record later stops resolving. Monitoring is informational only; it never blocks your sending.
+</Note>
+
 Check domain status via API:
 
 ```bash

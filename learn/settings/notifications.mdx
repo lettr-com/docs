@@ -1,0 +1,44 @@
+---
+title: "Notification Center"
+description: "The in-app notification center collects product announcements from Lettr and system events for your team, such as sent campaigns and DNS problems"
+---
+
+The notification center is the bell icon in the top-right header bar. It collects two kinds of notifications in a single feed, sorted newest first:
+
+- **Announcements** — product news and updates from the Lettr team, such as new features or scheduled maintenance. Some announcements include an action link to the relevant page.
+- **System events** — things that happened in your team, generated automatically by Lettr.
+
+## System Events
+
+Lettr currently generates notifications for these events:
+
+| Event | What it says |
+|-|-|
+| Campaign sent | A campaign finished sending, with the recipient count and a **View campaign** link |
+| Contacts export ready | Your audience export is ready to download — the download link expires in 1 hour |
+| DNS problem on a domain | A daily [DNS health check](/learn/settings/alerts#domain-dns-health-alerts) found a previously working DNS record that stopped resolving, with a **Check domain** link |
+
+## Reading and Managing Notifications
+
+- The bell shows an unread badge (capped at 99+).
+- Click a notification to open its action link, or use **Mark all as read** to clear the badge.
+- The feed loads 15 notifications at a time; use **Load more** to page back through history.
+
+<Note>
+  Read state is tracked per user, and the feed is scoped to the team you're currently viewing — switching teams shows that team's notifications.
+</Note>
+
+<Tip>
+  You can also ask [Adamko](/learn/ai-assistant/introduction) *"Any new notifications?"* — he reads your unread notifications and summarizes them in chat.
+</Tip>
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Monitoring & Alerts" icon="bell" href="/learn/settings/alerts">
+    Configure API failure and DNS health alerts
+  </Card>
+  <Card title="Dashboard" icon="gauge" href="/learn/settings/dashboard">
+    Usage, traffic, and delivery performance at a glance
+  </Card>
+</CardGroup>

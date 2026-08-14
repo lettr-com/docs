@@ -23,7 +23,15 @@ Team
 
 Every team has a default project created automatically. Templates are organized into projects and folders, which you can reference when working with the API.
 
-## Using Projects in API Calls
+## Transactional vs. Marketing Templates
+
+Every template belongs to one of Lettr's two modes: **Transactional** (sent via the API or SMTP) or **Marketing** (used by [campaigns](/learn/campaigns/introduction)). Folders are mode-scoped too — a folder holds templates of one mode, and the folder pickers in the move and duplicate dialogs only show folders of the mode you're browsing, so you can't accidentally move a marketing email into a transactional folder.
+
+A few behaviors that follow from this:
+
+- **Copying to the other mode** — Use the **Copy to Transactional** / **Copy to Marketing** action on a template to create a copy in the other mode. The copy is named "*name* (Copy)", gets a new unique slug, and carries over all versions and merge tags. It lands in your current folder if that folder already belongs to the target mode, otherwise in the project's default folder for that mode.
+- **Duplicating into a folder** — A duplicated template takes on the mode of the folder you duplicate it into, not the mode of the original.
+- **Deleting a folder keeps its templates** — Templates in a deleted folder are not deleted with it. Each one is moved to the project's default folder for its mode.
 
 When sending emails with templates, you can specify which project to use:
 
