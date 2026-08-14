@@ -70,6 +70,10 @@ Lettr automatically suppresses addresses when certain events occur:
 
 ## Monitoring Suppressions
 
+<Tip>
+  For a quick one-off check, ask [Adamko](/learn/ai-assistant/troubleshooting-and-diagnostics): *"is jane@acme.com suppressed?"* — he checks the suppression list, tells you why the address was suppressed and when, and can diagnose the underlying delivery problem in the same conversation.
+</Tip>
+
 You can track suppression events using webhooks. When an address is suppressed due to a bounce, complaint, or unsubscribe, you receive a webhook event that you can use to update your own systems.
 
 Webhook payloads arrive as an array of events in SparkPost format. Each event is wrapped in an `msys` object containing the event category and data. See [Handling Webhooks](/learn/webhooks/handling) for full details on the payload structure.

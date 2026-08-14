@@ -1,0 +1,64 @@
+---
+title: "Troubleshooting & Diagnostics"
+description: "Adamko runs live DNS checks, sending health reports, per-recipient delivery diagnosis, and API integration debugging — ask him before you open a support ticket"
+---
+
+Diagnostics is where Adamko saves the most time. Instead of cross-referencing DNS lookups, event logs, suppression lists, and webhook configs yourself, you describe the symptom and he pulls the evidence from every relevant source at once.
+
+## Domain Verification Problems
+
+*"Why isn't my domain verifying?"* triggers a live diagnosis: Adamko queries the actual DNS records for your domain right now and compares them against what Lettr expects. For each record — DKIM, SPF, DMARC, tracking CNAME — you get a verdict:
+
+- **ok** — the record is correct and verified
+- **wait** — the record looks right but hasn't propagated yet
+- **fix** — something is wrong, with the exact host, the expected value, what was actually found, and how to fix it
+
+He recognizes the classic mistakes: records added at the wrong host, the full domain pasted where only the subdomain belongs, multiple SPF records, a missing include, a Cloudflare-proxied CNAME that should be DNS-only, and DMARC placed at the wrong level. Every record value he quotes is click-to-copy, and he can start a [guided walkthrough](/learn/ai-assistant/guided-tours-and-nudges) on the domain page that highlights each record as you work through it.
+
+<Note>
+  Adamko never guesses about verification. He only calls a domain verified after a live check confirms it — if he hasn't checked this turn, he checks.
+</Note>
+
+## Sending Health
+
+*"Check my sending health"* produces a single verdict — **healthy**, **needs attention**, or **at risk** — backed by everything that feeds into it: domain verification state, bounce and complaint trends split into transactional versus marketing traffic, samples of recent problem emails, and an estimate of how many of your contacts are suppressed. It's the five-second answer to "is anything about to hurt my deliverability?"
+
+Some checks run on their own: if your bounce rate spikes or a domain sits unverified for more than a day, Adamko surfaces a [nudge](/learn/ai-assistant/guided-tours-and-nudges#proactive-nudges) on the relevant page before you go looking.
+
+## A Specific Recipient Didn't Get an Email
+
+The most common support question — *"why didn't jane@acme.com receive my email?"* — is one Adamko answers end to end. He pulls the recipient's recent message events, checks whether the address is on your [suppression list](/learn/suppressions/introduction) (and why), and factors in your domain state, then gives one likely root cause with the evidence and fix steps:
+
+> The address hard-bounced on May 12 ("550 mailbox does not exist") and was automatically suppressed. Every send since then was skipped before reaching the mail server. If the address is actually valid, remove it from suppressions and send again.
+
+You can dig further from there: *"show me all bounces this week"*, *"is anyone else at acme.com suppressed?"*, *"show me the events for that message."*
+
+<Info>
+  Detailed email events are retained for a limited window (around ten days), so diagnose delivery problems soon after they happen. Adamko tells you when the data he'd need has already aged out.
+</Info>
+
+## Integration & API Problems
+
+When your app stops sending, ask *"why are my API requests failing?"* Adamko samples your recent API request logs, reads your webhook configuration and API key setup, and returns issues ordered by severity — each with a verdict, the evidence (including sample failed requests with status codes), and fix steps. Typical catches: requests failing with 401s from a revoked key, a disabled webhook that stopped delivering events, validation errors from a malformed payload, or rate-limit responses.
+
+For deeper digging he can browse the raw API request logs with you — filtered by key, status, or time range — and list your webhooks with their last success and failure. Webhook history stores only the most recent success and failure per endpoint, so for full delivery debugging see [webhook troubleshooting](/knowledge-base/troubleshooting/webhook-failures).
+
+## Account Questions
+
+Adamko also answers the small questions that otherwise mean a trip through Settings:
+
+- *"How many emails do I have left this month?"* — plan, usage, and remaining quota
+- *"Who's on my team?"* — members, roles, and pending invitations (read-only; he never changes membership)
+- *"What API keys do we have?"* — names, prefixes, and permissions (never the secrets)
+- *"Any new notifications?"* — your unread product and system notifications
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Deliverability troubleshooting" icon="magnifying-glass" href="/knowledge-base/troubleshooting/delivery-issues">
+    The systematic guide to diagnosing delivery problems
+  </Card>
+  <Card title="See Adamko in action" icon="lightbulb" href="/knowledge-base/use-cases/adamko-in-action">
+    Worked troubleshooting scenarios with real prompts
+  </Card>
+</CardGroup>

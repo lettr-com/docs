@@ -1,0 +1,54 @@
+---
+title: "Activity Log & Undo"
+description: "Every change Adamko makes is recorded in a team-wide activity log, and most changes can be undone with one click — as long as nothing has touched them since"
+---
+
+An assistant that creates real things in your account needs a paper trail. Adamko has one: every entity he creates, updates, or deletes is recorded in an activity log visible to your whole team, and most changes carry an **Undo** button.
+
+## The Activity Log
+
+Open it from the **Activity** button in the drawer header. Entries are grouped by the request that caused them — you see who asked, when, and the exact prompt they typed, followed by what Adamko did:
+
+> **Erik · 2h ago** — *"set everything up for me"*
+> Created 4 templates · Created API key "Adamko API key" · Created domain mail.example.com
+
+The log covers seven kinds of entities: campaigns, templates, brand kits, sending domains, API keys, contact properties, and topics. It's **team-wide** — everyone on the team sees what Adamko did for anyone, which matters because any team member can use him. Chat conversations themselves stay private per user; only the changes are shared.
+
+The log is permanent. Undoing a change marks the entry as **Undone** (struck through) rather than erasing it — the history of what happened, including reversals, is always intact.
+
+## Undo
+
+Each loggable change shows an **Undo** button while undoing is still safe. There's no time limit — instead, the rule is **"untouched since"**: a change can be undone as long as nothing meaningful happened to the entity after Adamko made it.
+
+| Change | Undoable while | Undo does |
+|-|-|-|
+| Campaign drafted | Still a draft and never edited by anyone | Deletes the draft |
+| Template created | Never edited (no version changes) | Deletes the template |
+| Brand kit generated or updated | Kit still exists | Deletes it, or restores the previous version |
+| Sending domain created | Not yet DNS-verified | Removes the domain from your account |
+| API key created | Key still exists | **Revokes the key** — anything using it stops sending |
+| Contact property created | Never edited | Deletes the property and its values |
+| Topic created | No contacts subscribed yet | Deletes the topic |
+
+The logic behind the exceptions: a verified domain means you adopted it; an edited template contains your work now; a topic subscription is a real consent record, not an AI artifact. Once a human has built on top of Adamko's change, one-click reversal would destroy human work — so the button disappears, and from then on you manage the entity normally.
+
+Undo always asks for confirmation first, stating the consequence plainly ("This permanently revokes the API key — anything still using it will stop sending."). Eligibility is re-checked at the moment you confirm, so a teammate editing the template a second earlier turns the undo into a friendly refusal rather than a lost edit.
+
+<Warning>
+  Undoing an API key is a real revocation. If you've already deployed the key to production, undoing the creation will stop your application from sending immediately.
+</Warning>
+
+## What Doesn't Appear in the Log
+
+Read-only work — answering questions, running diagnoses, searching docs — isn't logged as activity, because nothing changed. Separately from this user-facing log, every tool call Adamko makes (including read-only ones) is audited internally with its inputs and outputs, which is part of how the feature is monitored for correctness.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Privacy, permissions & limits" icon="shield-halved" href="/learn/ai-assistant/privacy-and-limits">
+    What data Adamko sees and who can use him
+  </Card>
+  <Card title="What Adamko can create" icon="paintbrush" href="/learn/ai-assistant/content-creation">
+    Templates, campaigns, and the brand kit
+  </Card>
+</CardGroup>

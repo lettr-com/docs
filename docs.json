@@ -182,6 +182,19 @@
             "group": "Learn",
             "pages": [
               {
+                "group": "AI Assistant",
+                "pages": [
+                  "learn/ai-assistant/introduction",
+                  "learn/ai-assistant/onboarding-and-setup",
+                  "learn/ai-assistant/content-creation",
+                  "learn/ai-assistant/troubleshooting-and-diagnostics",
+                  "learn/ai-assistant/audience-and-imports",
+                  "learn/ai-assistant/guided-tours-and-nudges",
+                  "learn/ai-assistant/activity-log-and-undo",
+                  "learn/ai-assistant/privacy-and-limits"
+                ]
+              },
+              {
                 "group": "API Keys",
                 "pages": [
                   "learn/api-keys/introduction",
@@ -608,7 +621,8 @@
               "knowledge-base/use-cases/order-confirmation-emails",
               "knowledge-base/use-cases/welcome-onboarding-emails",
               "knowledge-base/use-cases/two-factor-authentication-emails",
-              "knowledge-base/use-cases/invoice-billing-emails"
+              "knowledge-base/use-cases/invoice-billing-emails",
+              "knowledge-base/use-cases/adamko-in-action"
             ]
           },
           {

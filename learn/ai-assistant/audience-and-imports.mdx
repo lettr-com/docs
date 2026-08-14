@@ -1,0 +1,67 @@
+---
+title: "Audience & Imports"
+description: "Drop a CSV into the chat, let Adamko review it for risks, auto-map columns to properties, and suggest segments — without him ever reading your raw file"
+---
+
+Importing contacts is the moment most audience problems are born: wrong column mappings, dead addresses, and lists without consent. Adamko sits alongside the [import flow](/learn/audience/importing-and-exporting) to catch these before they land in your audience.
+
+## Drag a CSV into the Chat
+
+The fastest way to start an import is to drop the file straight onto the open Adamko drawer. A drop overlay confirms what happens next — and it's worth being precise about, because the answer is a privacy guarantee:
+
+**Adamko never reads your file.** The CSV goes directly to Lettr's importer, exactly as if you'd uploaded it on the import page. Adamko only ever sees the importer's structured analysis — column names, sampled statistics, flagged issues — not the raw rows. Anything other than a `.csv` is politely refused.
+
+Once the upload lands, you're on the normal import flow with Adamko ready to help.
+
+## Import Review
+
+Ask Adamko to review an import — or accept the offer he makes on the mapping page — and he examines a sample of the file for the problems that ruin audiences:
+
+- **Mapping gaps** — columns that would be skipped, with suggested matches to existing or new properties
+- **Data quality** — invalid or empty email addresses, duplicates within the file, addresses already in your audience
+- **Unrecognized values** — subscription statuses that don't match Lettr's fixed set (`subscribed`, `unsubscribed`, `bounced`, `complained`, `unverified`)
+- **Consent risks** — no consent signal in the file at all
+
+On consent he is deliberately blunt: if the file gives no indication that these people opted in, he says so and warns you about it. Importing purchased or scraped lists damages your deliverability and violates [consent requirements](/knowledge-base/compliance/email-consent) — Adamko won't help you soften that.
+
+<Note>
+  The review works on a sample of the file (the first couple hundred rows), so counts are indicative — "3 invalid emails in the sampled rows" — not exhaustive totals.
+</Note>
+
+## Auto-Mapping Columns
+
+On the mapping step, if some of your columns are about to be skipped, an Adamko card offers to **map them for me**. Nothing happens silently: a preview dialog lists exactly what he intends to do with each column —
+
+- map it to an existing property
+- create a **new custom property** and map it
+- map it to the built-in subscription status
+- subscribe matching rows to a **topic**
+
+— and only your confirmation executes it. Properties and topics he creates are recorded in the [activity log](/learn/ai-assistant/activity-log-and-undo) and can be undone (topics only while no contacts are subscribed to them, since a subscription is a real consent record).
+
+## Segment Suggestions
+
+After an import finishes, ask *"how should I segment these contacts?"* Adamko looks at the mapped columns and suggests segments that make sense for the data — the dominant values of a `plan` column, subscribed-only when statuses are mixed — each with a proposed name, a starting condition, and the reasoning. He checks your existing segments first so nothing duplicates.
+
+Adamko **cannot create segments himself** — segment membership determines who gets emailed, so that stays a human action. He hands you off to the segment builder with a [guided walkthrough](/learn/ai-assistant/guided-tours-and-nudges) instead.
+
+## Looking Up Contacts
+
+For day-to-day audience questions, Adamko queries your contacts directly:
+
+- *"Is jane@acme.com in my audience?"* — status, lists, topics, custom properties, and an activity timeline
+- *"Show me everyone at acme.com"* — partial matches across a domain
+- *"What happened with my last import?"* — import history with processed, skipped, and failed row counts
+
+If a contact isn't receiving mail, that flows straight into [delivery diagnosis](/learn/ai-assistant/troubleshooting-and-diagnostics#a-specific-recipient-didnt-get-an-email).
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Importing & exporting contacts" icon="file-import" href="/learn/audience/importing-and-exporting">
+    The full import flow Adamko plugs into
+  </Card>
+  <Card title="List hygiene best practices" icon="broom" href="/knowledge-base/best-practices/list-hygiene">
+    Why clean lists deliver better
+  </Card>
+</CardGroup>

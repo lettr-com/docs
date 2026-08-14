@@ -106,6 +106,10 @@ Double-check the record type in your DNS provider matches what Lettr specifies.
 
 ## Checking DNS Records Yourself
 
+<Note>
+  Don't want to run `dig` yourself? Ask [Adamko](/learn/ai-assistant/troubleshooting-and-diagnostics#domain-verification-problems) — *"why isn't my domain verifying?"* runs the same live lookups, compares each record against what Lettr expects, and flags the classic mistakes below (wrong host, duplicate SPF, proxied CNAME) with a per-record fix.
+</Note>
+
 Before re-verifying in Lettr, confirm your records are publicly visible using command-line tools.
 
 **Check the DKIM TXT record:**

@@ -1,0 +1,61 @@
+---
+title: "Guided Tours & Nudges"
+description: "Adamko doesn't just tell you where things are — he takes you there, highlights the exact field, and proactively flags problems before you notice them"
+---
+
+Most assistants answer "where do I configure X?" with a paragraph. Adamko answers with a button. This page covers the three ways he moves you through the app: navigation, guided walkthroughs, and proactive nudges.
+
+## Navigation
+
+Ask Adamko to take you somewhere — *"open my domains"*, *"take me to billing"* — and he navigates immediately. When a page is merely *relevant* to an answer, he attaches a **Go to …** chip instead, so you decide whether to jump. He can deep-link to every major area: domains, API keys, templates, campaigns, audience, webhooks, events, logs, settings, and billing.
+
+## Guided Walkthroughs
+
+For multi-step jobs, replies carry a **Guide me** button. Clicking it closes the drawer, takes you to the right page, and walks you through the task one element at a time:
+
+- A **pulsing highlight** rings the exact button or field for the current step, scrolled into view
+- A **speech bubble** next to it explains what to do, with a "Step N of M" counter
+- The tour **advances by itself** when you complete the step — clicking the highlighted element, finishing typing in it, or copying the highlighted value (handy for DNS records)
+- Steps that are **already done** say so and skip ahead on their own
+- **Escape** dismisses the tour at any point
+
+Walkthroughs exist for the flows people most often get lost in: adding and verifying each domain type, creating API keys, building segments, setting up webhooks, importing contacts, and more.
+
+<Tip>
+  Some articles in this documentation include a **Show me in the app** link. Clicking one opens the Lettr dashboard and starts the matching walkthrough automatically — the last step links you back to the article you came from.
+</Tip>
+
+## Proactive Nudges
+
+Adamko watches for a small set of situations worth interrupting you about, and surfaces each as a dismissible banner on the relevant page:
+
+| Nudge | When it appears |
+|-|-|
+| Sending domain not verifying | A domain has sat unverified for more than a day |
+| Bounce spike | Your bounce rate crossed the warning threshold over the past week |
+| Setup incomplete | Everything's configured but you've never sent a test email |
+| Missing API key | Your domain is verified but there's no key to send with |
+| Abandoned draft | A campaign Adamko drafted for you has sat untouched |
+| Tracking / inbound / storage domain failing | One of your auxiliary domains lost its DNS records |
+
+Every nudge has a one-click CTA that opens Adamko with the diagnosis already started. Dismissing a nudge hides it for a while — for the whole team on team-wide issues — and if you dismiss several in a row, Adamko takes the hint and goes quiet for a few days. Nudges alert; they never act. Fixing anything remains your call.
+
+## Quick Actions
+
+The suggestion chips above the input aren't decorative — they're the fastest route to common tasks, and they adapt twice over:
+
+- **To your setup state** — a team without a verified domain sees domain-setup chips; a fully configured team sees campaign and integration chips
+- **To your current page** — on the Domains page you get DNS questions, on Campaigns you get drafting prompts
+
+Chips work even when your team's monthly AI allowance is used up, so the assistant's most common answers stay reachable at zero cost.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="What Adamko records" icon="clock-rotate-left" href="/learn/ai-assistant/activity-log-and-undo">
+    The activity log behind everything he does
+  </Card>
+  <Card title="Troubleshooting with Adamko" icon="stethoscope" href="/learn/ai-assistant/troubleshooting-and-diagnostics">
+    The diagnoses behind the nudges
+  </Card>
+</CardGroup>
