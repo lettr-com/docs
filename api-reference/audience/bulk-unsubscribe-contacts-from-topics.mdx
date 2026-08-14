@@ -3,4 +3,8 @@ title: Bulk unsubscribe contacts from topics
 openapi: DELETE /audience/contacts/topics/bulk
 ---
 
-Remove every combination of `contact_ids × topic_ids`. Pairs that did not exist are ignored. Requires the `audience:write` scope and is blocked for sandbox API keys.
+Remove every combination of `contact_ids × topic_ids`. Pairs that did not exist are ignored, so `unsubscribed` can be lower than `total_pairs`. Requires the `audience:write` scope and is blocked for sandbox API keys.
+
+<Note>
+  This `DELETE` carries a request body. Most HTTP clients support that, but some need it enabled explicitly — the same applies to [bulk detach contacts from lists](/api-reference/audience/bulk-detach-contacts-from-lists).
+</Note>

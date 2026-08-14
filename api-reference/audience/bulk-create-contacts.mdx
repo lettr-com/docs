@@ -3,4 +3,41 @@ title: Bulk create contacts
 openapi: POST /audience/contacts/bulk
 ---
 
-Create up to 1000 contacts in a single request. Send `contacts` to give each row its own properties, lists, and topic subscriptions, or the legacy `emails` array when the whole batch shares one property map. Emails are normalized and deduplicated; contacts that already exist are reported in `already_existed` (set `update_existing: true` to merge their properties instead). The response includes the id of every contact so you can chain into the bulk list and topic endpoints. Requires the `audience:write` scope and is blocked for sandbox API keys.
+Create up to 1000 contacts in a single request. Emails are normalized and deduplicated. Requires the `audience:write` scope and is blocked for sandbox API keys.
+
+Send **either** `emails` (a flat list of addresses that all share the batch-wide `list_ids`, `properties` and `topics`) **or** `contacts` (one row per contact, each with its own properties, lists and topic subscriptions). Row-level values are applied on top of the batch-wide ones: a row's `properties` key overrides the batch-wide value for that key, and a row-level `opt_out` beats a batch-level `opt_in`.
+
+<Warning>
+  **A `201` does not mean every row landed.** Rows that fail validation are skipped and reported in `errors` — the rest of the batch still commits. Always check `error_count` / `errors` rather than treating a 2xx as full success.
+</Warning>
+
+<Note>
+  `already_existed` and `updated` overlap by design. They answer different questions — "was the address already in the audience?" versus "did this request change the contact?" — so they do not sum to the number of submitted rows. A contact that already existed and got attached to a list is counted in both.
+</Note>
+
+By default (`update_existing: false`) existing contacts keep their properties, but they are still attached to the requested lists. Set `update_existing: true` to merge properties instead — submitted keys overwrite, absent keys are preserved — and to let an `opt_out` drop an existing subscription.
+
+The `contacts` array in the response returns `{ id, email, created }` for every contact that exists after the request, in submission order. Feed those ids straight into [bulk attach contacts to lists](/api-reference/audience/bulk-attach-contacts-to-lists) or [bulk subscribe contacts to topics](/api-reference/audience/bulk-subscribe-contacts-to-topics) without a follow-up lookup.
+
+## Limits
+
+| Limit | Value |
+|-|-|
+| Rows per batch (`emails` or `contacts`) | 1000 |
+| Batch-wide `list_ids` | 50 |
+| Batch-wide `topics` | 50 |
+| Property value length | 1000 characters |
+
+## Row error codes
+
+Each entry in `errors` carries the zero-based `index` of the submitted row, the `email`, a human-readable `error`, and one of these `error_code` values:
+
+| Code | Meaning |
+|-|-|
+| `missing_email` | The row had no email address. |
+| `invalid_email` | The address failed validation. |
+| `invalid_property_value` | A property value was the wrong type or too long. |
+| `unknown_property_key` | A property key is not defined for the team. |
+| `unknown_list` | A list id does not exist. |
+| `unknown_topic` | A topic id does not exist. |
+| `invalid_topic_subscription` | A `subscription` value was neither `opt_in` nor `opt_out`. |
