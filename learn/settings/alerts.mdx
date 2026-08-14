@@ -1,9 +1,9 @@
 ---
 title: Monitoring & Alerts
-description: "Set up Lettr alerts that monitor API failure rates and notify you by email or webhook when error spikes or sustained issues occur"
+description: "Set up Lettr alerts that monitor API failure rates and domain DNS health, and notify you in-app, by email, or by webhook when issues occur"
 ---
 
-Lettr monitors your API usage and alerts you when failure rates spike. Alerts help you catch integration issues, misconfigured domains, or unexpected error patterns before they impact your users.
+Lettr monitors your API usage and the DNS health of your verified domains, and alerts you when something breaks. Alerts help you catch integration issues, misconfigured domains, or unexpected error patterns before they impact your users.
 
 ## API Failure Rate Alerts
 
@@ -20,6 +20,33 @@ Detects sustained elevated error rates across lower-traffic periods. Even if ind
 <Note>
   Alert cooldowns are asymmetric — a 15-minute alert suppresses the daily alert for the same issue, but not vice versa. This prevents duplicate notifications while ensuring urgent issues are always surfaced.
 </Note>
+
+## Domain DNS Health Alerts
+
+Once a domain is verified, Lettr keeps watching it. A daily health check runs for every verified domain on your team — sending, tracking, inbound, and storage — and alerts you if a DNS record that used to work stops resolving. This catches the most common silent failure: a record that was deleted or repointed at your DNS provider long after setup.
+
+What each check looks at:
+
+| Domain type | Check |
+|-|-|
+| Tracking | The CNAME still points at Lettr's tracking origin |
+| Storage | The CNAME still points at Lettr's storage origin |
+| Sending | The domain still resolves in DNS |
+| Inbound | The domain still resolves in DNS |
+
+When a check fails:
+
+- **In-app** — a notification appears in the [notification center](/learn/settings/notifications), a red **Not working** badge shows next to the domain in list views, a warning panel appears on the domain's detail page explaining the consequence (for example, broken open/click tracking or images no longer loading), and a critical alert shows on the dashboard.
+- **Email** — if the email channel is enabled, the team owner receives one digest email per check run listing every domain that broke.
+- **Webhook** — if a webhook URL is configured, a `domain_dns_regression` event is delivered with the affected domain, its type, and the failing records. Webhook alerts are HMAC-signed when a signing secret is configured.
+
+A **cooldown** (configurable from 1 to 720 hours, 24 hours by default) suppresses repeat alerts for the same failing record. The cooldown is per record per domain, so a newly broken record always alerts even while another is still failing.
+
+<Note>
+  DNS health monitoring is informational — it never disables a domain or stops your sending. Once you fix the DNS record, the warning clears automatically on the next check; you don't need to re-verify the domain manually.
+</Note>
+
+Enable or disable DNS health alerts and adjust the cooldown under **Settings** → **Alerts** → **Domain DNS Health**.
 
 ## Alert Channels
 

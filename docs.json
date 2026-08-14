@@ -353,7 +353,8 @@
                   "learn/settings/security",
                   "learn/settings/social-login",
                   "learn/settings/billing",
-                  "learn/settings/alerts"
+                  "learn/settings/alerts",
+                  "learn/settings/notifications"
                 ]
               }
             ]
@@ -467,6 +468,8 @@
               "api-reference/audience/bulk-create-contacts",
               "api-reference/audience/bulk-attach-contacts-to-lists",
               "api-reference/audience/bulk-detach-contacts-from-lists",
+              "api-reference/audience/bulk-subscribe-contacts-to-topics",
+              "api-reference/audience/bulk-unsubscribe-contacts-from-topics",
               "api-reference/audience/show-a-contact",
               "api-reference/audience/update-a-contact",
               "api-reference/audience/delete-a-contact",

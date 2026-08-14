@@ -152,6 +152,10 @@ nslookup -type=TXT _dmarc.yourdomain.com
 
 ## Verifying via API
 
+<Note>
+  Verification is not a one-time event: once a domain is verified, Lettr's daily [DNS health check](/learn/settings/alerts#domain-dns-health-alerts) keeps watching it and alerts you if a record later stops resolving. If you see a **Not working** badge on a previously verified domain, fix the DNS record at your provider — the warning clears automatically on the next check.
+</Note>
+
 ### Trigger Verification
 
 Send a POST request to trigger Lettr to re-check your DNS records:

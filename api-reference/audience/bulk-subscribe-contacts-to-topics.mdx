@@ -1,0 +1,6 @@
+---
+title: Bulk subscribe contacts to topics
+openapi: POST /audience/contacts/topics/bulk
+---
+
+Subscribe every combination of `contact_ids × topic_ids` (up to 1000 contacts × 50 topics). Pairs that already exist are reported in `already_subscribed`. Requires the `audience:write` scope and is blocked for sandbox API keys.
