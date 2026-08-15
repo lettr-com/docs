@@ -1,13 +1,17 @@
 ---
 title: FastAPI
-description: "Integrate the Lettr Python SDK into a FastAPI app to send transactional emails, pairing FastAPI's async architecture with the async client."
+description: "Integrate the Lettr Python SDK into a FastAPI app to send transactional emails, running the synchronous client in a worker thread so it never blocks the event loop."
 ---
 
 <Note>
   New to the Lettr Python SDK? Start with the [Python Quickstart](/quickstart/python/quickstart) to learn the basics, then return here for FastAPI-specific integration patterns.
 </Note>
 
-Send transactional emails from your FastAPI applications using the official Lettr Python SDK. FastAPI's async-first architecture pairs perfectly with Lettr's async client for high-performance email delivery in modern Python applications.
+Send transactional emails from your FastAPI applications using the official Lettr Python SDK.
+
+<Warning>
+  The Lettr Python SDK is **synchronous**. Calling it directly inside an `async def` route blocks FastAPI's event loop and will stall every other request in flight. Every example on this page wraps SDK calls in `asyncio.to_thread`, which hands the blocking call to a worker thread and awaits the result.
+</Warning>
 
 ## Prerequisites
 
@@ -53,6 +57,7 @@ Get started in three quick steps: install dependencies, configure FastAPI, and s
   </Step>
   <Step title="Create FastAPI application">
     ```python
+    import asyncio
     import os
     from typing import Dict
     from fastapi import FastAPI
@@ -63,7 +68,7 @@ Get started in three quick steps: install dependencies, configure FastAPI, and s
     load_dotenv()
 
     app = FastAPI()
-    client = lettr.AsyncLettr(os.environ["LETTR_API_KEY"])
+    client = lettr.Lettr(os.environ["LETTR_API_KEY"])
 
     class EmailRequest(BaseModel):
         to: EmailStr
@@ -72,7 +77,8 @@ Get started in three quick steps: install dependencies, configure FastAPI, and s
 
     @app.post("/send-email")
     async def send_email(email: EmailRequest) -> Dict:
-        response = await client.emails.send(
+        response = await asyncio.to_thread(
+            client.emails.send,
             from_email="notifications@yourdomain.com",
             to=[email.to],
             subject=email.subject,
@@ -95,7 +101,7 @@ Get started in three quick steps: install dependencies, configure FastAPI, and s
 </Steps>
 
 <Warning>
-  The sender domain must be verified in your [Lettr dashboard](https://app.lettr.com/domains) before you can send emails. Sending from an unverified domain returns a validation error.
+  The sender domain must be verified in your [Lettr dashboard](https://app.lettr.com/domains) before you can send emails. Sending from an unverified domain returns `400` with `error_code: unconfigured_domain`.
 </Warning>
 
 ## FastAPI Application Structure
@@ -170,20 +176,26 @@ class TemplateEmailRequest(BaseModel):
 Create an email service in `services/email.py`:
 
 ```python
+import asyncio
 import lettr
 from config import get_settings
 
 settings = get_settings()
 
 class EmailService:
-    """Async email service for sending transactional emails."""
+    """Email service for sending transactional emails.
+
+    Wraps the synchronous Lettr client so FastAPI routes can await it
+    without blocking the event loop.
+    """
 
     def __init__(self):
-        self.client = lettr.AsyncLettr(settings.lettr_api_key)
+        self.client = lettr.Lettr(settings.lettr_api_key)
 
     async def send_welcome_email(self, recipient: str, name: str) -> str:
         """Send a welcome email to a new user."""
-        response = await self.client.emails.send(
+        response = await asyncio.to_thread(
+            self.client.emails.send,
             from_email=settings.mail_from_address,
             from_name=settings.mail_from_name,
             to=[recipient],
@@ -199,7 +211,8 @@ class EmailService:
     async def send_password_reset(self, recipient: str, reset_token: str) -> str:
         """Send a password reset email."""
         reset_url = f"https://yourdomain.com/reset-password?token={reset_token}"
-        response = await self.client.emails.send(
+        response = await asyncio.to_thread(
+            self.client.emails.send,
             from_email=settings.mail_from_address,
             to=[recipient],
             subject="Reset your password",
@@ -325,6 +338,7 @@ if __name__ == "__main__":
 Send emails using Lettr-managed templates:
 
 ```python
+import asyncio
 from models.email import TemplateEmailRequest
 
 @app.post("/send-template")
@@ -333,7 +347,8 @@ async def send_template(
     email_service: EmailService = Depends(get_email_service),
 ):
     """Send an email using a template."""
-    response = await email_service.client.emails.send(
+    response = await asyncio.to_thread(
+        email_service.client.emails.send,
         from_email=settings.mail_from_address,
         to=request.to,
         template_slug=request.template_slug,
@@ -351,12 +366,14 @@ async def send_template(
 Use FastAPI's background tasks for async email sending:
 
 ```python
+import asyncio
 from fastapi import BackgroundTasks
 
 async def send_email_background(recipient: str, subject: str, html: str):
     """Background task for sending emails."""
     email_service = EmailService()
-    await email_service.client.emails.send(
+    await asyncio.to_thread(
+        email_service.client.emails.send,
         from_email=settings.mail_from_address,
         to=[recipient],
         subject=subject,
@@ -385,7 +402,7 @@ async def register(
 
 ### Batch Sending with asyncio
 
-Send multiple emails concurrently using asyncio.gather:
+Fan several sends out across worker threads with `asyncio.gather`. Note the API allows 3 requests/second per team, so bound this for large lists — and if every recipient gets identical content, prefer a single call with up to 50 addresses in `to` over N concurrent calls:
 
 ```python
 import asyncio
@@ -403,7 +420,8 @@ async def send_batch(
 ):
     """Send emails to multiple recipients concurrently."""
     async def send_to_recipient(recipient: str):
-        return await email_service.client.emails.send(
+        return await asyncio.to_thread(
+            email_service.client.emails.send,
             from_email=settings.mail_from_address,
             to=[recipient],
             subject=request.subject,
@@ -424,13 +442,14 @@ async def send_batch(
 Implement error handling using FastAPI's HTTPException:
 
 ```python
+import asyncio
 from fastapi import HTTPException, status
 import lettr
 
 @app.post("/send-email")
 async def send_email(request: EmailRequest):
     try:
-        response = await client.emails.send(...)
+        response = await asyncio.to_thread(client.emails.send, ...)
         return {"success": True, "request_id": response.request_id}
     except lettr.ValidationError as e:
         raise HTTPException(
@@ -505,13 +524,14 @@ class EmailRequest(BaseModel):
 Use structured logging for better observability:
 
 ```python
+import asyncio
 import logging
 
 logger = logging.getLogger(__name__)
 
 @app.post("/send-email")
 async def send_email(request: EmailRequest):
-    response = await client.emails.send(...)
+    response = await asyncio.to_thread(client.emails.send, ...)
     logger.info(
         "Email sent successfully",
         extra={"request_id": response.request_id, "to": request.to}

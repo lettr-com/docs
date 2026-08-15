@@ -132,7 +132,7 @@ The response indicates how many recipients were accepted or rejected:
     A batch send can partially succeed — some recipients are accepted while others are rejected (due to suppression or validation). Always check the `accepted` and `rejected` counts in the response and log rejected addresses for investigation rather than silently dropping them.
   </Accordion>
   <Accordion title="Use Webhooks for Delivery Status">
-    With batch sends, polling the API for each email's delivery status is impractical. Set up webhooks to receive `message.delivery`, `message.bounce`, and `engagament.open` events, which let you track outcomes for every recipient asynchronously.
+    With batch sends, polling the API for each email's delivery status is impractical. Set up webhooks to receive `message.delivery`, `message.bounce`, and `engagement.open` events, which let you track outcomes for every recipient asynchronously.
   </Accordion>
 </AccordionGroup>
 

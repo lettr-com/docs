@@ -129,21 +129,28 @@ await lettr.emails.send({
 
 ## Viewing Tracking Data
 
-Tracking data is delivered in real time through [webhooks](/learn/webhooks/introduction). Set up webhook handlers for `engagament.open` and `engagament.click` events to capture engagement data as it happens:
+Tracking data is delivered in real time through [webhooks](/learn/webhooks/introduction). Subscribe to the `engagement.open` and `engagement.click` events, then read them from the payload.
+
+The request body is an **array** of events, and each event is wrapped in a `msys` envelope keyed by category. Read the category key first, then the inner object — its `type` is the **short** event name (`open`, `click`), not the namespaced name you subscribed with:
 
 ```javascript
-app.post('/webhooks/lettr', (req, res) => {
-  const event = req.body;
-
-  if (event.type === 'engagament.open') {
-    console.log('Email opened:', event.data.request_id);
-  }
-
-  if (event.type === 'engagament.click') {
-    console.log('Link clicked:', event.data.target_link_url);
-  }
-
+app.post('/webhooks/lettr', express.json(), (req, res) => {
+  // Acknowledge first, then process — slow handlers cause retries.
   res.sendStatus(200);
+
+  for (const event of req.body) {
+    const category = Object.keys(event.msys ?? {})[0];
+    const data = category ? event.msys[category] : null;
+    if (!data) continue;
+
+    if (data.type === 'open') {
+      console.log('Email opened:', data.transmission_id, data.rcpt_to);
+    }
+
+    if (data.type === 'click') {
+      console.log('Link clicked:', data.transmission_id, data.rcpt_to);
+    }
+  }
 });
 ```
 
