@@ -32,8 +32,8 @@ Webhooks enable powerful real-time integrations:
 |------------|----------|
 | `message.delivery` | Update your database when emails are successfully delivered |
 | `message.bounce` | Remove invalid addresses from your mailing list |
-| `engagament.open` | Track engagement metrics and trigger follow-up sequences |
-| `engagament.click` | Measure link performance and user interest |
+| `engagement.open` | Track engagement metrics and trigger follow-up sequences |
+| `engagement.click` | Measure link performance and user interest |
 | `message.spam_complaint` | Immediately suppress users who mark emails as spam |
 | `relay.relay_delivery` | Process inbound emails, create support tickets, track replies |
 
@@ -194,12 +194,12 @@ Events tracking the delivery lifecycle of emails you send:
 
 Events tracking recipient interaction with your emails:
 
-- `engagament.open` - Recipient opened the email
-- `engagament.initial_open` - First open of the email
-- `engagament.click` - Recipient clicked a link
-- `engagament.amp_open` - Recipient opened an AMP email
-- `engagament.amp_initial_open` - First open of an AMP email
-- `engagament.amp_click` - Recipient clicked a link in an AMP email
+- `engagement.open` - Recipient opened the email
+- `engagement.initial_open` - First open of the email
+- `engagement.click` - Recipient clicked a link
+- `engagement.amp_open` - Recipient opened an AMP email
+- `engagement.amp_initial_open` - First open of an AMP email
+- `engagement.amp_click` - Recipient clicked a link in an AMP email
 
 ### Generation Events
 
@@ -267,7 +267,7 @@ curl -X PUT "https://app.lettr.com/api/webhooks/{webhookId}" \
   -d '{
     "name": "Updated Notifications",
     "target": "https://example.com/webhook-v2",
-    "events": ["message.delivery", "message.bounce", "engagament.click"],
+    "events": ["message.delivery", "message.bounce", "engagement.click"],
     "active": true
   }'
 
