@@ -17,7 +17,7 @@ Email quotas and API rate limits are two independent systems that serve differen
 | **Reset** | At the start of your billing cycle | Sliding window (continuous) |
 | **Solution** | Upgrade plan or wait for reset | Slow down request rate |
 
-A request that sends to 50 recipients counts as 1 API request for rate limiting purposes, but 50 emails for quota purposes. Understanding this distinction matters when planning high-volume sends.
+A request that sends to 50 recipients counts as 1 API request for rate limiting purposes, but 50 emails for quota purposes — and "recipients" here means every address across `to`, `cc`, and `bcc` combined. Understanding this distinction matters when planning high-volume sends.
 
 ## Monthly Email Quotas by Plan
 
@@ -37,9 +37,25 @@ A request that sends to 50 recipients counts as 1 API request for rate limiting 
 
 ## How Usage Is Tracked
 
-Lettr counts each recipient as one email. If you send a single API request with 5 recipients in the `to` field, that counts as 5 emails against your quota. Usage is tracked in real time across your entire team, regardless of which domain, API key, or team member initiated the send.
+Lettr counts each recipient as one email, and **every recipient counts — `to`, `cc`, and `bcc` alike**. A single API request with 5 addresses in `to`, 2 in `cc`, and 1 in `bcc` consumes 8 emails of quota, not 1 and not 5. Usage is tracked in real time across your entire team, regardless of which domain, API key, or team member initiated the send.
+
+<Warning>
+  It's easy to underestimate usage when `cc` or `bcc` is part of your template rather than
+  your recipient list. If you BCC a compliance archive on every send, that archive address
+  doubles your quota consumption — 3,000 customer emails become 6,000 against your plan.
+  Budget for it, or route archival copies through a channel other than BCC.
+</Warning>
 
 Counters reset automatically at the start of each billing cycle. Per-domain usage is also tracked independently for monitoring and abuse detection, but the quota that determines whether you can keep sending is always the team-level monthly counter.
+
+### Quota Is Reserved Before the Send, Then Reconciled
+
+Lettr reserves quota for the full submitted recipient count *before* handing the message off for delivery, then adjusts the reservation down to the number of recipients actually accepted. Two consequences are worth knowing:
+
+- **Enforcement is all-or-nothing.** If a request would push you past your daily or monthly limit, the *entire* request is rejected and the reservation is rolled back. Lettr does not partially send — it will not deliver to the first few recipients and drop the rest. A 20-recipient send against 15 remaining emails fails completely, leaving all 15 available.
+- **Rejected recipients are refunded.** If some addresses are refused at handoff (for example, suppressed addresses), the reservation is reduced to the accepted count, so you are not charged for them.
+
+Because reservation happens up front and atomically, concurrent sends at the limit boundary cannot all slip through — the check and the increment are a single operation.
 
 ## Quota Response Headers
 
