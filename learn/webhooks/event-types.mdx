@@ -56,30 +56,39 @@ Triggered when an email is rejected due to a policy rule before delivery was att
 These events indicate that the recipient interacted with your email. Engagement events require open and/or click tracking to be enabled.
 
 <Note>
-  The engagement event category contains a known typo in the event names: `engagament` (missing an 'e'). This is intentional for backward compatibility and must be used exactly as shown.
+  **If you subscribed before the rename, read this.** Engagement events were originally
+  published under a misspelled prefix, `engagament.*` (missing an 'e'). The canonical
+  prefix is now `engagement.*`, and that is what you should use for new subscriptions.
+
+  The old prefix still works — Lettr rewrites `engagament.*` to `engagement.*` when you
+  create or update a webhook, so existing integrations keep receiving events and there is
+  nothing you must change. Note that the API always *returns* the canonical form: subscribe
+  with `engagament.click` and the `event_types` field on subsequent `GET` responses will
+  read `engagement.click`. If you compare your stored configuration against the API
+  response, expect that rewrite rather than treating it as drift.
 </Note>
 
-### engagament.open
+### engagement.open
 
 Triggered when a recipient opens an email. Open tracking works by embedding a small invisible image in the email. Some email clients block images by default or prefetch them automatically, so open rates are an approximation rather than an exact count.
 
-### engagament.initial_open
+### engagement.initial_open
 
-Triggered on the first open of an email by a recipient. Subsequent opens of the same email generate `engagament.open` events instead.
+Triggered on the first open of an email by a recipient. Subsequent opens of the same email generate `engagement.open` events instead.
 
-### engagament.click
+### engagement.click
 
 Triggered when a recipient clicks a link in an email. Requires click tracking to be enabled. Click data is generally more reliable than open data because it requires deliberate user action.
 
-### engagament.amp_open
+### engagement.amp_open
 
 Triggered when a recipient opens an email delivered in AMP format.
 
-### engagament.amp_initial_open
+### engagement.amp_initial_open
 
 Triggered on the first open of an AMP email by a recipient.
 
-### engagament.amp_click
+### engagement.amp_click
 
 Triggered when a recipient clicks a link within an AMP email.
 
@@ -150,12 +159,12 @@ Triggered when delivery of an inbound email to your endpoint permanently fails a
 | Message | `message.out_of_band` | Out of Band |
 | Message | `message.spam_complaint` | Spam Complaint |
 | Message | `message.policy_rejection` | Policy Rejection |
-| Engagement | `engagament.open` | Open |
-| Engagement | `engagament.initial_open` | Initial Open |
-| Engagement | `engagament.click` | Click |
-| Engagement | `engagament.amp_open` | AMP Open |
-| Engagement | `engagament.amp_initial_open` | AMP Initial Open |
-| Engagement | `engagament.amp_click` | AMP Click |
+| Engagement | `engagement.open` | Open |
+| Engagement | `engagement.initial_open` | Initial Open |
+| Engagement | `engagement.click` | Click |
+| Engagement | `engagement.amp_open` | AMP Open |
+| Engagement | `engagement.amp_initial_open` | AMP Initial Open |
+| Engagement | `engagement.amp_click` | AMP Click |
 | Generation | `generation.generation_failure` | Generation Failure |
 | Generation | `generation.generation_rejection` | Generation Rejection |
 | Unsubscribe | `unsubscribe.list_unsubscribe` | List Unsubscribe |
