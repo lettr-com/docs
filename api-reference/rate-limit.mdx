@@ -38,6 +38,8 @@ Every API response includes rate limit headers:
 
 The [Send Email](/api-reference/emails/send-email) endpoint returns additional headers that track your email sending quotas. These headers are present for **free tier** teams.
 
+These counters are denominated in **recipients, not requests** — every address across `to`, `cc`, and `bcc` decrements them by one. A single request with 8 addresses moves `X-Daily-Remaining` by 8. Quota is also enforced all-or-nothing: a request that would exceed a limit is rejected in full rather than partially delivered. See [Email Usage & Quotas](/learn/sending/usage-quotas) for details.
+
 ### Daily Quota
 
 | Header | Type | Description |

@@ -98,6 +98,12 @@ The recipient will see: `Acme Inc <notifications@example.com>`
   Sending to more than 50 recipients requires multiple API calls. For bulk sending, see [Batch Sending](/learn/sending/batch-sending).
 </Warning>
 
+## Recipients and Your Quota
+
+Every address you list consumes one email of your monthly quota — CC and BCC recipients are counted exactly like To recipients. An order confirmation sent to one customer, CC'd to their account manager, and BCC'd to an archive address costs **3 emails**, not 1.
+
+This matters most for the archival pattern above: a compliance BCC that rides along on every message doubles your quota consumption for the whole account. See [Email Usage & Quotas](/learn/sending/usage-quotas) for how the counters work and what happens at the limit.
+
 ## Email Address Validation
 
 Lettr validates all email addresses before accepting a send request. Each address must pass three checks:
