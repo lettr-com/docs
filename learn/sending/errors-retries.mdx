@@ -33,7 +33,7 @@ All API errors return a JSON object with a consistent structure. The `error_code
 
 ## Validation Errors
 
-Validation errors (`422`) mean the request was well-formed but contained invalid data — a missing required field, an unverified sender domain, or a subject line exceeding the character limit. The `errors` object in the response maps each invalid field to an array of error messages:
+Validation errors (`422`) mean the request was well-formed but contained invalid data — a missing required field, a malformed recipient address, or a subject line exceeding the character limit. The `errors` object in the response maps each invalid field to an array of error messages:
 
 ```javascript
 try {
@@ -52,6 +52,14 @@ try {
   }
 }
 ```
+
+<Note>
+  An unverified or misconfigured sending domain is **not** a validation error. It returns `400` with
+  `invalid_domain` or `unconfigured_domain`, so a handler scoped to `422` will miss the most common
+  first-send failure. SDKs that map only `422` to a validation exception — `lettr-php` raises a
+  generic `ApiException` here — will not route it to a validation `catch` block either. See
+  [Domain Errors](#domain-errors) below.
+</Note>
 
 ## Domain Errors
 
