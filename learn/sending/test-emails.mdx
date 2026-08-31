@@ -5,6 +5,15 @@ description: "Send test emails through Lettr's full delivery pipeline to check r
 
 Before sending emails to real recipients, you should verify that your templates render correctly, merge tags resolve to the expected values, and links point to the right destinations. Test emails let you send a real email through the full delivery pipeline — including template rendering and merge tag substitution — to your own inbox, without affecting your analytics or engagement metrics.
 
+## Two Ways to Test
+
+Lettr gives you two complementary testing tools:
+
+- **Test emails** (this page) — real sends from your verified domain to addresses you choose, with tracking disabled and analytics excluded. Best for reviewing rendering across email clients and sharing previews with your team.
+- **[Sandbox API keys](/learn/api-keys/sandbox)** — a separate key type (`lttr_sandbox_` prefix) that redirects *every* email to your own inbox regardless of the recipients in the request, sends from a pre-verified sandbox domain, and has no billing impact. Best for local development, CI pipelines, and testing before your domain is verified.
+
+Sandbox keys support the same sending features as live keys — HTML, plain text, and AMP content, attachments, template sends with `substitution_data`, tags, metadata, and scheduled emails — so your test requests exercise the exact payloads you'll use in production.
+
 ## Send a Test Email
 
 You can send test emails from the Lettr dashboard or via the regular send API. Test emails use the same rendering pipeline as production sends, so what you see in your inbox is exactly what your recipients will receive:
@@ -138,7 +147,9 @@ The Lettr dashboard provides a visual test email feature:
 
 ## Staging Environment
 
-For automated integration tests or CI pipelines, redirect all emails to a staging inbox rather than sending to real recipients. This lets your test suite exercise the full send path without risk of reaching customers:
+For automated integration tests or CI pipelines, the simplest option is a [sandbox API key](/learn/api-keys/sandbox): configure your staging environment with a sandbox key instead of a live one, and every email is automatically contained — recipients are overridden to the key owner's inbox, so no code changes are needed and nothing can reach customers.
+
+Alternatively, you can keep a live key and redirect recipients yourself:
 
 ```javascript
 const isProduction = process.env.NODE_ENV === 'production';

@@ -5,6 +5,10 @@ description: "Test Lettr webhooks locally with ngrok tunnels and verify event ha
 
 Testing webhooks requires a different approach than testing typical API integrations. Since webhooks are push-based, your local development server isn't directly accessible from Lettr's servers. This guide covers strategies for testing webhooks at every stage of development.
 
+<Note>
+  Emails sent with a [sandbox API key](/learn/api-keys/sandbox) run on an isolated subaccount and do **not** trigger your team's webhooks. To generate real webhook events, send with a live API key — [test emails](/learn/sending/test-emails) work well for this, since their events still fire while staying out of your analytics.
+</Note>
+
 ## Local Development
 
 During local development, you need a way to receive webhooks on your machine. There are several approaches.

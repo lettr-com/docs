@@ -63,6 +63,10 @@ Response with DNS records to configure:
 }
 ```
 
+<Tip>
+  Working in an AI-powered editor like Claude Code or Cursor? The [local Lettr MCP server](/learn/mcp/local-setup) can handle this whole flow for you — its `create-domain` and `verify-domain` tools let your assistant add the domain, hand you the exact DNS records, and re-run verification until everything passes.
+</Tip>
+
 ## DNS Records Configuration
 
 After adding your domain, configure these DNS records with your DNS provider:
@@ -142,6 +146,10 @@ Response:
 <Tip>
   If verification keeps failing, [Adamko](/learn/ai-assistant/troubleshooting-and-diagnostics#domain-verification-problems) can diagnose it for you: ask *"why isn't my domain verifying?"* and he runs live DNS lookups, compares each record against what Lettr expects, and tells you exactly which record is wrong and how to fix it.
 </Tip>
+
+<Note>
+  You don't have to wait for DNS propagation or domain approval to start building. Create a [sandbox API key](/learn/api-keys/sandbox) and test your sending integration right away — sandbox sends use a pre-verified sandbox domain and deliver to your own inbox, so no verified sending domain is required.
+</Note>
 
 ## Domain Status
 

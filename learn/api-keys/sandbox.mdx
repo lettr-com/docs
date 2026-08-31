@@ -142,6 +142,14 @@ curl https://app.lettr.com/api/emails \
 
 The email above will be delivered to **your account email address**, not to `customer@example.com`. The `from` address will be rewritten to `noreply@dev.uselettr.com`.
 
+### Sandbox over SMTP
+
+Sandbox keys also work as the password for [SMTP sending](/quickstart/smtp/introduction). SMTP messages are processed through the same pipeline as API sends, so the same sandbox behavior applies: recipients are redirected to your inbox and the sender domain is replaced with the sandbox domain.
+
+<Note>
+  Sandbox sends run on an isolated subaccount, so they do **not** trigger your team's webhooks. To verify sandbox activity, use the **Sandbox** toggle on the Events page in the dashboard instead.
+</Note>
+
 ## When to Use Sandbox Keys
 
 <CardGroup cols={2}>

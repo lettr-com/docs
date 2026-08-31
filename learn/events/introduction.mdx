@@ -23,6 +23,10 @@ Events and webhooks are two ways to observe the same underlying data. The Events
 
 For a full reference of event types and their webhook payloads, see [Webhook Event Types](/learn/webhooks/event-types). The event types you see in the Events dashboard correspond directly to the same set of events that webhooks deliver.
 
+<Tip>
+  There's a third way to explore events: ask an AI assistant. The [remote Lettr MCP server](/learn/mcp/setup) has a `browse_email_events` tool, so a prompt like *"show me all bounces from the last week"* in Claude.ai or ChatGPT queries the same event data without opening the dashboard.
+</Tip>
+
 ## Searching for a Specific Email
 
 If you need to track down what happened to a particular message, enter the recipient's email address in the search field and hit Search. Lettr will return all events associated with emails sent to that address within your selected date range. From there, click **View Details** on the relevant row to see the full timeline of that message, including delivery status, any bounces or deferrals, and engagement like opens and clicks.

@@ -58,6 +58,10 @@ The address in your message's `From:` header must belong to a [verified sending 
 
 If the address isn't on a verified domain, authentication still succeeds and the message is rejected afterwards, at the point your client sends the message body.
 
+<Tip>
+  To test your SMTP setup before your domain is verified, use a [sandbox API key](/learn/api-keys/sandbox) as the password. Sandbox keys work over SMTP exactly like they do with the API: the domain requirement is waived, and every message is redirected to your own inbox instead of the real recipients.
+</Tip>
+
 ## Ports & Security
 
 The port you choose determines the security protocol for your SMTP connection:
