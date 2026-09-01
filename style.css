@@ -1,0 +1,107 @@
+/*
+ * Lettr documentation — global styling overrides.
+ *
+ * Mintlify automatically includes every .css file in the content directory
+ * (the folder holding docs.json) on every page. This file does not need to be
+ * referenced from docs.json or from any MDX page.
+ *
+ * https://www.mintlify.com/docs/customize/custom-scripts
+ */
+
+/* ===========================================================================
+ * Sharp corners
+ *
+ * Lettr's brand and the lettr.com site use square corners, so the docs carry
+ * no border radius on any element. This mirrors the global reset in
+ * lettr-web/src/styles/app.css, including its exception: small deliberate
+ * circles (list bullets, step markers, avatars) stay round there and stay
+ * round here.
+ *
+ * There is no docs.json option for this — `rounded` / `sharp` do not appear
+ * anywhere in the Mintlify `mint` theme schema, so a config key cannot do it.
+ * ======================================================================== */
+
+/* ---------------------------------------------------------------------------
+ * 1. The theme's own radius tokens.
+ *
+ * Mintlify reads every radius through a `--rounded-*` scale, e.g.
+ * `border-radius: var(--rounded-xl, .75rem)`. The variables ship undefined, so
+ * the fallbacks apply; defining them as 0 flattens the theme through its own
+ * token system.
+ *
+ * This tier does the heavy lifting, and it is deliberately the first line of
+ * attack rather than a more forceful selector. Every `!important` radius rule
+ * the theme ships resolves a token, and those rules live in `@layer utilities`
+ * / `@layer components`. Cascade layers invert for `!important` — a layered
+ * important declaration beats an unlayered one regardless of specificity — so
+ * no selector written here could override them. Redefining the token they read
+ * sidesteps that contest entirely. Custom property definitions also inherit
+ * across shadow DOM boundaries, which reaches the bundled consent widget.
+ *
+ * `--rounded-full` is intentionally left at its default: see section 3.
+ * ------------------------------------------------------------------------ */
+:root {
+  --rounded: 0px;
+  --rounded-sm: 0px;
+  --rounded-md: 0px;
+  --rounded-lg: 0px;
+  --rounded-xl: 0px;
+  --rounded-2xl: 0px;
+  --rounded-3xl: 0px;
+  --rounded-search: 0px;
+
+  /* Bundled cookie-consent widget (c15t), which ships its own scale. */
+  --c15t-radius-sm: 0px;
+  --c15t-radius-md: 0px;
+  --c15t-radius-lg: 0px;
+  --cdt-radius: 0px;
+  --accordion-radius: 0px;
+  --button-border-radius: 0px;
+  --consent-banner-border-radius: 0px;
+  --consent-dialog-card-radius: 0px;
+  --consent-widget-radius: 0px;
+  --consent-widget-accordion-radius: 0px;
+  --frame-placeholder-border-radius: 0px;
+
+  /* Scrollbars. */
+  --scrollbar-track-radius: 0px;
+  --scrollbar-thumb-radius: 0px;
+  --scrollbar-corner-radius: 0px;
+}
+
+/* ---------------------------------------------------------------------------
+ * 2. Everything else.
+ *
+ * Catches radii written as literal values rather than read from a token —
+ * prose `<pre>` and `<kbd>`, LaTeX blocks, and third-party widget CSS.
+ * ------------------------------------------------------------------------ */
+*,
+*::before,
+*::after,
+::backdrop,
+::file-selector-button {
+  border-radius: 0 !important;
+}
+
+/* ---------------------------------------------------------------------------
+ * 3. Circles that are meant to be circles.
+ *
+ * lettr.com is sharp everywhere but keeps small round dots — list bullets,
+ * status dots and avatars are all `rounded-full` in lettr-web. Section 2 is a
+ * blunt instrument and would square them off, so restore them here. Class
+ * specificity (0,1,0) outranks the universal selector in section 2.
+ *
+ * This covers the numbered markers in <Steps>, avatars, and the assistant's
+ * send button, all of which the theme draws with `rounded-full`.
+ * ------------------------------------------------------------------------ */
+[class~="rounded-full"],
+[class~="rounded-full!"] {
+  border-radius: 9999px !important;
+}
+
+/* Prose and LaTeX list bullets, drawn as `::before` dots rather than markers. */
+.prose :where(ul > li)::before,
+.prose-sm :where(ul > li)::before,
+.latex-style ul > li::before {
+  border-radius: 50% !important;
+}
