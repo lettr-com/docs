@@ -21,7 +21,6 @@
     "light": "#F04070",
     "dark": "#D00E43"
   },
-  "rounded": "sharp",
   "fonts": {
     "heading": {
       "family": "Manrope",
