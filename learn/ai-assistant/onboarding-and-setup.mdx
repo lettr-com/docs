@@ -51,6 +51,10 @@ The brand kit is what makes Adamko's output look like *yours* instead of a gener
 
 You can review and fine-tune everything under **Settings → Brand kit**. If you later ask Adamko to regenerate the brand kit from a *different* website, he asks for explicit confirmation before overwriting a completed kit.
 
+<Note>
+  **If your website can't be read**, brand detection stops with a plain-language explanation naming the host and what to try next, rather than a raw HTTP error. Typical causes are bot protection returning a 403, a mistyped address, a host that doesn't respond, or a page that serves an empty JavaScript shell to crawlers. The setup wizard offers to try another URL and will not scaffold emails until a brand kit has actually completed, so you never end up with a set of templates styled around a kit that doesn't exist.
+</Note>
+
 ## The Transactional Email Catalog
 
 Adamko scaffolds from a curated catalog of eleven transactional email types, each mapped to a professionally designed base:

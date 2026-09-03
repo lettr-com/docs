@@ -1,0 +1,89 @@
+---
+title: "Email Preferences Page"
+description: "The hosted Manage Email Preferences page every unsubscribe link opens: topic choices, a 30/60/90-day pause, a global unsubscribe with reasons, and recent emails"
+---
+
+Every `{{unsubscribe_link}}` in a campaign opens a hosted **Manage email preferences** page instead of a one-click "you're unsubscribed" screen. Recipients see where they stand, choose which topics they want, pause marketing email for a while, or leave entirely. The page is built in, so there is nothing to host or design yourself.
+
+<Info>
+  The page applies to marketing campaigns only. Transactional emails sent through the API or SMTP are not affected by anything a recipient does here. See [Complaints & Unsubscribes](/learn/suppressions/complaints-unsubscribes) for how unsubscribes work on the transactional side.
+</Info>
+
+## What Recipients See
+
+The page is addressed to one contact and opens from the signed link in the email they received.
+
+| Section | What it does |
+|-|-|
+| **Status** | A pill in the header showing **Subscribed**, **Paused** (with the end date), **Unsubscribed**, or **Not receiving emails**. The last one appears for bounced, complained, or unverified contacts, who cannot change anything from this page because no delivery is happening. |
+| **Choose what you receive** | One checkbox per topic. Every [public topic](/learn/audience/topics#public-vs-private-topics) on the team is listed, plus any private topic the contact currently holds. |
+| **Pause marketing emails** | Pause for **30**, **60**, or **90 days**. A paused contact sees the end date and a **Resume now** button. |
+| **Recent emails** | Up to the ten most recent campaigns this contact received, each linking to its web version, with the subject rendered exactly as it was delivered. |
+| **Update preferences** | The single button that commits the topic selection. |
+
+The page renders in the contact's communication language, so a Czech recipient of a Czech-language team sees it in Czech.
+
+## How Choices Are Applied
+
+**Ticking and unticking topics** changes only topic subscriptions. A recipient who unticks "Product updates" but leaves "Newsletter" ticked stays `subscribed` and keeps receiving the newsletter. Topic opt-outs genuinely suppress sends: consent is re-checked when the campaign's recipients are resolved and again for every batch, not read once from an earlier snapshot.
+
+**Unticking every box** unsubscribes the contact from all marketing email. Committing an empty selection opens a short dialog asking for an optional reason before it goes through. The contact's status becomes `unsubscribed`, every topic is detached (private topics included, so they do not quietly reappear later), any active pause is cleared, and the `unsubscribe.link_unsubscribe` webhook event fires.
+
+| Reason offered | |
+|-|-|
+| I get too many emails | I never read these emails |
+| The content is not relevant to me | Too promotional |
+| I never signed up for this | These emails look like spam |
+| I'm no longer interested | I'm changing my email address |
+| Other (free text) | |
+
+**Coming back** is the same button in reverse. An unsubscribed recipient ticks the topics they want and presses **Update preferences**. Their status returns to `subscribed` with exactly those topics. Resubscribing is always an explicit act; nothing else on the page, a pause included, can turn an opt-out back into an opt-in.
+
+**Pausing** keeps the contact `subscribed` but sets a `paused_until` date. Campaigns skip the contact until that date passes, after which sends resume on their own. There is no scheduled job involved, so a pause cannot fail to expire. Pausing is only available to subscribed contacts.
+
+## What You See on Your Side
+
+Paused contacts are visible everywhere you look at your audience:
+
+- **Audiences** shows a violet **Paused** badge with "until *date*" on each paused contact, and a **Paused** filter whose count matches the badges.
+- **CSV exports** carry a `paused_until` column alongside `status`.
+- **The API** returns a nullable `paused_until` field on contacts. Nothing you already parse changes; contacts that are not paused return `null`.
+
+A pause is owned by the recipient. Contacts cannot be created or edited into a paused state from the app or the API. If you need to stop mail to someone yourself, change their [status](/learn/audience/contacts#contact-status) instead.
+
+Unsubscribe reasons land in the contact's [activity log](/learn/audience/contacts#activity-log) together with the status change.
+
+## Redirects and Single-Topic Links
+
+The `redirect` form of the merge tag still works. After the recipient unsubscribes from all email, Lettr sends them to your URL:
+
+```html
+<a href="{{unsubscribe_link:redirect=https://yourdomain.com/unsubscribed}}">Unsubscribe</a>
+```
+
+Topic toggles and pauses do not redirect, since the recipient is expected to stay on the page.
+
+The one-click unsubscribe used by mail clients through the `List-Unsubscribe` header bypasses the page entirely and unsubscribes immediately, as the RFC requires. See [List-Unsubscribe](/learn/suppressions/complaints-unsubscribes#list-unsubscribe).
+
+## Reliability Notes
+
+- **The page never fails closed.** A malformed or missing optional parameter is dropped rather than turned into an error, because refusing to render an unsubscribe page is worse than ignoring a bad query string.
+- **Rate limits are per contact, not per IP.** Corporate security gateways that prefetch every link in an email cannot exhaust a shared limit and lock a real recipient out of unsubscribing.
+- **Test emails open a preview.** Links in test sends open the same page in preview mode with a banner explaining that nothing will be recorded.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Topics" icon="tags" href="/learn/audience/topics">
+    Decide which topics are public and appear on the page
+  </Card>
+  <Card title="The Unsubscribe Link" icon="link" href="/learn/campaigns/content-and-design#the-unsubscribe-link">
+    Add the merge tag to your campaign footer
+  </Card>
+  <Card title="Contact Status" icon="user" href="/learn/audience/contacts#contact-status">
+    How statuses and pauses decide who receives a campaign
+  </Card>
+  <Card title="Unsubscribe Best Practices" icon="shield-check" href="/knowledge-base/compliance/unsubscribe-best-practices">
+    Keep opt-outs easy and compliant
+  </Card>
+</CardGroup>

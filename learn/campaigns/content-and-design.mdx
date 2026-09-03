@@ -101,7 +101,7 @@ If a recipient doesn't have a value set for a property, the [fallback value](/le
 
 ### The Unsubscribe Link
 
-Every campaign you send through Lettr must include an unsubscribe mechanism. Lettr exposes this as a merge tag: `{{unsubscribe_link}}`. At send time it's replaced with a unique per-recipient URL that, when clicked, marks the contact as `unsubscribed` and fires the corresponding webhook event.
+Every campaign you send through Lettr must include an unsubscribe mechanism. Lettr exposes this as a merge tag: `{{unsubscribe_link}}`. At send time it's replaced with a unique signed per-recipient URL that opens the hosted [Manage email preferences](/learn/audience/email-preferences) page, where the recipient can untick topics, pause marketing email for 30, 60, or 90 days, or unsubscribe from everything. A full unsubscribe marks the contact as `unsubscribed` and fires the corresponding webhook event.
 
 A typical footer looks like:
 
