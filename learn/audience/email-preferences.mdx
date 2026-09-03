@@ -3,7 +3,7 @@ title: "Email Preferences Page"
 description: "The hosted Manage Email Preferences page every unsubscribe link opens: topic choices, a 30/60/90-day pause, a global unsubscribe with reasons, and recent emails"
 ---
 
-Every `{{unsubscribe_link}}` in a campaign opens a hosted **Manage email preferences** page instead of a one-click "you're unsubscribed" screen. Recipients see where they stand, choose which topics they want, pause marketing email for a while, or leave entirely. The page is built in, so there is nothing to host or design yourself.
+**Manage email preferences** is the hosted page that every `{{unsubscribe_link}}` in a campaign opens. Recipients see their current status, choose which topics they want, pause marketing email for a while, or leave entirely. The page is built in, so there is nothing to host or design yourself.
 
 <Info>
   The page applies to marketing campaigns only. Transactional emails sent through the API or SMTP are not affected by anything a recipient does here. See [Complaints & Unsubscribes](/learn/suppressions/complaints-unsubscribes) for how unsubscribes work on the transactional side.
@@ -25,9 +25,9 @@ The page renders in the contact's communication language, so a Czech recipient o
 
 ## How Choices Are Applied
 
-**Ticking and unticking topics** changes only topic subscriptions. A recipient who unticks "Product updates" but leaves "Newsletter" ticked stays `subscribed` and keeps receiving the newsletter. Topic opt-outs genuinely suppress sends: consent is re-checked when the campaign's recipients are resolved and again for every batch, not read once from an earlier snapshot.
+**Ticking and unticking topics** changes only topic subscriptions. A recipient who unticks "Product updates" but leaves "Newsletter" ticked stays `subscribed` and keeps receiving the newsletter. Topic opt-outs genuinely suppress sends: consent is re-checked when the campaign's recipients are resolved and again for every batch.
 
-**Unticking every box** unsubscribes the contact from all marketing email. Committing an empty selection opens a short dialog asking for an optional reason before it goes through. The contact's status becomes `unsubscribed`, every topic is detached (private topics included, so they do not quietly reappear later), any active pause is cleared, and the `unsubscribe.link_unsubscribe` webhook event fires.
+**Unticking every box** unsubscribes the contact from all marketing email. Committing an empty selection opens a short dialog asking for an optional reason before it goes through. The contact's status becomes `unsubscribed`, every topic is detached (private topics included), any active pause is cleared, and the `unsubscribe.link_unsubscribe` webhook event fires.
 
 | Reason offered | |
 |-|-|
@@ -37,9 +37,9 @@ The page renders in the contact's communication language, so a Czech recipient o
 | I'm no longer interested | I'm changing my email address |
 | Other (free text) | |
 
-**Coming back** is the same button in reverse. An unsubscribed recipient ticks the topics they want and presses **Update preferences**. Their status returns to `subscribed` with exactly those topics. Resubscribing is always an explicit act; nothing else on the page, a pause included, can turn an opt-out back into an opt-in.
+**Coming back** uses the same button. An unsubscribed recipient ticks the topics they want and presses **Update preferences**, and their status returns to `subscribed` with exactly those topics. This is the only action on the page that resubscribes a contact; a pause never does.
 
-**Pausing** keeps the contact `subscribed` but sets a `paused_until` date. Campaigns skip the contact until that date passes, after which sends resume on their own. There is no scheduled job involved, so a pause cannot fail to expire. Pausing is only available to subscribed contacts.
+**Pausing** keeps the contact `subscribed` but sets a `paused_until` date. Campaigns skip the contact until that date passes, after which sends resume on their own. Expiry is checked at send time, with no scheduled job that could fail. Pausing is only available to subscribed contacts.
 
 ## What You See on Your Side
 
@@ -49,7 +49,7 @@ Paused contacts are visible everywhere you look at your audience:
 - **CSV exports** carry a `paused_until` column alongside `status`.
 - **The API** returns a nullable `paused_until` field on contacts. Nothing you already parse changes; contacts that are not paused return `null`.
 
-A pause is owned by the recipient. Contacts cannot be created or edited into a paused state from the app or the API. If you need to stop mail to someone yourself, change their [status](/learn/audience/contacts#contact-status) instead.
+**A pause is owned by the recipient.** Contacts cannot be created or edited into a paused state from the app or the API. To stop mail to a contact from your side, change their [status](/learn/audience/contacts#contact-status).
 
 Unsubscribe reasons land in the contact's [activity log](/learn/audience/contacts#activity-log) together with the status change.
 
@@ -67,7 +67,7 @@ The one-click unsubscribe used by mail clients through the `List-Unsubscribe` he
 
 ## Reliability Notes
 
-- **The page never fails closed.** A malformed or missing optional parameter is dropped rather than turned into an error, because refusing to render an unsubscribe page is worse than ignoring a bad query string.
+- **The page never fails closed.** A malformed or missing optional parameter is dropped and the page renders anyway, because refusing to show an unsubscribe page is worse than ignoring a bad query string.
 - **Rate limits are per contact, not per IP.** Corporate security gateways that prefetch every link in an email cannot exhaust a shared limit and lock a real recipient out of unsubscribing.
 - **Test emails open a preview.** Links in test sends open the same page in preview mode with a banner explaining that nothing will be recorded.
 

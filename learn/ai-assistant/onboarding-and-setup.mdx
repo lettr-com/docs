@@ -37,12 +37,12 @@ If anything in the flow fails — say, your domain is already registered elsewhe
 
 ## Keys and Domains from Ordinary Chat
 
-The setup flow is not the only place Adamko can create things. Ask him in any conversation, at any point in your account's life:
+Ask Adamko for an API key or a sending domain in any conversation, at any point in your account's life, and he creates it on the spot:
 
 - *"Create an API key called production"* creates the key and shows the secret once, in the same copy-once card the setup flow uses.
 - *"Add mail.example.com as a sending domain"* registers the domain and shows the DNS records to add.
 
-Registering a domain in Lettr never touches your registrar, so there is nothing for Adamko to log in to. If a domain is already registered by another team or is on a blocklist, he relays the actual reason rather than guessing. And if you would rather be walked through the domain page than have it done for you, say so and he hands off to the [guided walkthrough](/learn/ai-assistant/guided-tours-and-nudges) instead.
+Registering a domain in Lettr never touches your registrar, so there is nothing for Adamko to log in to. If a domain is already registered by another team or is on a blocklist, he relays the actual reason. Ask to be walked through the domain page instead and he hands off to the [guided walkthrough](/learn/ai-assistant/guided-tours-and-nudges).
 
 ## The Brand Kit
 
@@ -61,7 +61,7 @@ The brand kit is what makes Adamko's output look like *yours* instead of a gener
 You can review and fine-tune everything under **Settings → Brand kit**. If you later ask Adamko to regenerate the brand kit from a *different* website, he asks for explicit confirmation before overwriting a completed kit.
 
 <Note>
-  **If your website can't be read**, brand detection stops with a plain-language explanation naming the host and what to try next, rather than a raw HTTP error. Typical causes are bot protection returning a 403, a mistyped address, a host that doesn't respond, or a page that serves an empty JavaScript shell to crawlers. The setup wizard offers to try another URL and will not scaffold emails until a brand kit has actually completed, so you never end up with a set of templates styled around a kit that doesn't exist.
+  **If your website can't be read**, brand detection stops with a plain-language explanation naming the host and what to try next. Typical causes are bot protection returning a 403, a mistyped address, a host that doesn't respond, or a page that serves an empty JavaScript shell to crawlers. The setup wizard offers to try another URL and will not scaffold emails until a brand kit has completed.
 </Note>
 
 ## The Transactional Email Catalog

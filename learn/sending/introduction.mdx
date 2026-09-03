@@ -145,7 +145,7 @@ The unsubscribe URL should point to a simple "Sorry to see you go" confirmation 
 </Tip>
 
 <Warning>
-  Because `transactional` defaults to `true`, every API send bypasses unsubscribe suppression unless you set it to `false`. A recipient who unsubscribed from your marketing email will still receive an API send that leaves the option at its default. If what you are sending through the API is marketing-shaped (a newsletter, a promotion, a product announcement), set `transactional: false` so suppressions are honoured.
+  Because `transactional` defaults to `true`, every API send bypasses unsubscribe suppression unless you set it to `false`. A recipient who unsubscribed from your marketing email will still receive an API send that leaves the option at its default. Set `transactional: false` on marketing-shaped API sends (newsletters, promotions, product announcements) so suppressions are honoured.
 </Warning>
 
 ## Common Sending Patterns
