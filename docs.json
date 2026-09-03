@@ -282,6 +282,7 @@
                   "learn/audience/contacts",
                   "learn/audience/lists",
                   "learn/audience/topics",
+                  "learn/audience/email-preferences",
                   "learn/audience/segments",
                   "learn/audience/importing-and-exporting",
                   "learn/audience/double-opt-in"

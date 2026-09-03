@@ -144,6 +144,10 @@ The unsubscribe URL should point to a simple "Sorry to see you go" confirmation 
   You do not need to handle unsubscribe for transactional emails (`transactional: true`, the default). Unsubscribe headers and tracking only apply to marketing emails.
 </Tip>
 
+<Warning>
+  Because `transactional` defaults to `true`, every API send bypasses unsubscribe suppression unless you set it to `false`. A recipient who unsubscribed from your marketing email will still receive an API send that leaves the option at its default. Set `transactional: false` on marketing-shaped API sends (newsletters, promotions, product announcements) so suppressions are honoured.
+</Warning>
+
 ## Common Sending Patterns
 
 ### Personalized Emails with Merge Tags

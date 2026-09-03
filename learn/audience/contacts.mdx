@@ -23,6 +23,10 @@ Every contact has exactly one of five statuses. The status determines whether th
   Only contacts with status `subscribed` are eligible to receive campaigns. Lettr applies this filter automatically when a campaign is sent — you don't need to manage suppression manually.
 </Warning>
 
+### Paused Contacts
+
+A pause is not a sixth status. A contact who pauses marketing email from the [preferences page](/learn/audience/email-preferences) stays `subscribed` but carries a `paused_until` date, and campaigns skip them until that date passes. Paused contacts show a violet **Paused** badge in Audiences, can be isolated with the **Paused** filter, and appear in exports and on the API with their `paused_until` value. Pauses are set by recipients only; they can't be created or edited from the app or the API.
+
 ### Statuses and Your Marketing Plan
 
 Your marketing plan has a contact limit (for example, the free tier allows 500 contacts). The limit is checked against the **total** count of contacts in your audience, regardless of status. Unsubscribed, bounced, and complained contacts still count toward the limit. If your audience exceeds your plan's limit, you cannot send new campaigns until you upgrade your plan or remove contacts.
@@ -145,6 +149,8 @@ The activity log is permanent for the life of the contact and is the easiest way
 <Note>
   Contacts added through CSV imports do not generate a "Created" event in the activity log — imports use a faster bulk-insert path that skips per-contact logging. Their list and topic memberships from the import are also not individually logged. All later changes (status, properties, manual list edits) are logged as normal.
 </Note>
+
+Topic changes made over the API, including the [bulk subscribe](/api-reference/audience/bulk-subscribe-contacts-to-topics) and [bulk unsubscribe](/api-reference/audience/bulk-unsubscribe-contacts-from-topics) endpoints and row-level `opt_out` entries in a [bulk contact import](/api-reference/audience/bulk-create-contacts), are logged as **Topic opted in** / **Topic opted out** events, so consent history stays complete however the change was made.
 
 ## Next Steps
 

@@ -95,7 +95,7 @@ The recipient will see: `Acme Inc <notifications@example.com>`
 | Max email address length | 255 characters |
 
 <Warning>
-  Sending to more than 50 recipients requires multiple API calls. For bulk sending, see [Batch Sending](/learn/sending/batch-sending).
+  The cap counts `to`, `cc`, and `bcc` together. A request with more than 50 addresses across the three fields is rejected with a `422` before anything is sent, so check your fan-out on the client side. Sending to more than 50 recipients requires multiple API calls; for bulk sending, see [Batch Sending](/learn/sending/batch-sending).
 </Warning>
 
 ## Recipients and Your Quota
