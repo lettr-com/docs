@@ -150,6 +150,8 @@ The activity log is permanent for the life of the contact and is the easiest way
   Contacts added through CSV imports do not generate a "Created" event in the activity log — imports use a faster bulk-insert path that skips per-contact logging. Their list and topic memberships from the import are also not individually logged. All later changes (status, properties, manual list edits) are logged as normal.
 </Note>
 
+Topic changes made over the API, including the [bulk subscribe](/api-reference/audience/bulk-subscribe-contacts-to-topics) and [bulk unsubscribe](/api-reference/audience/bulk-unsubscribe-contacts-from-topics) endpoints and row-level `opt_out` entries in a [bulk contact import](/api-reference/audience/bulk-create-contacts), are logged as **Topic opted in** / **Topic opted out** events, so consent history stays complete however the change was made.
+
 ## Next Steps
 
 <CardGroup cols={2}>
