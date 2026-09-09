@@ -141,26 +141,21 @@ Building a reliable email integration means handling failures gracefully, avoidi
 
 ### Implement Idempotency
 
-Network failures and retries can cause the same email to be sent more than once. Use a database flag or distributed cache to track whether an email has already been sent for a given business event before calling the API:
+Network failures and platform retries can send the same email twice. Send an `Idempotency-Key` header derived from the business event; reusing the same key and payload within 24 hours returns the original result instead of sending again. Setting `metadata.idempotency_key` does not deduplicate:
 
 ```javascript
-async function sendOnce(emailData, idempotencyKey) {
-  // Check local database or cache
-  const alreadySent = await cache.get(idempotencyKey);
-  if (alreadySent) {
-    return { alreadySent: true, request_id: alreadySent };
-  }
-
-  const response = await lettr.emails.send({
-    ...emailData,
-    metadata: { ...emailData.metadata, idempotency_key: idempotencyKey }
-  });
-
-  // Record the send
-  await cache.set(idempotencyKey, response.data.request_id, { ttl: 86400 });
-  return response;
-}
+await fetch('https://app.lettr.com/api/emails', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${process.env.LETTR_API_KEY}`,
+    'Content-Type': 'application/json',
+    'Idempotency-Key': `order-confirmation-${order.id}`,
+  },
+  body: JSON.stringify(emailData),
+});
 ```
+
+See [Idempotency](/learn/sending/idempotency) for key rules and the retry pattern.
 
 ### Use Webhooks Instead of Polling
 

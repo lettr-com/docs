@@ -3,11 +3,11 @@ title: Errors & Retries
 description: "Understand Lettr API error responses and codes, learn which failures are safe to retry, and build resilient send logic with backoff"
 ---
 
-API calls can fail for many reasons — invalid parameters, unverified domains, rate limits, or transient server issues. How your integration handles these failures determines whether emails are silently lost or reliably delivered. This page covers Lettr's error response format, common error codes, which errors are safe to retry, and patterns for building resilient send logic.
+A send request can fail on invalid parameters, an unverified domain, a rate limit, or a transient server problem, and each of those wants a different response from the caller. This page covers the error format, the codes worth handling by name, which responses are safe to retry, and a retry pattern that respects `Retry-After` and the `Idempotency-Key` header.
 
-## Error Response Format
+## Error response format
 
-All API errors return a JSON object with a consistent structure. The `error_code` field identifies the category of failure, `message` provides a human-readable description, and `errors` (present on validation failures) lists problems for specific fields:
+Every error is a JSON object with the same shape. **`error_code` identifies the category of failure**, `message` is a human-readable description, and `errors` (present on validation failures only) maps each invalid field to its problems:
 
 ```json
 {
@@ -20,20 +20,24 @@ All API errors return a JSON object with a consistent structure. The `error_code
 }
 ```
 
-## Common Error Codes
+## Common error codes
 
-| Error Code | HTTP Status | Description |
-|------------|-------------|-------------|
-| `validation_error` | 422 | Invalid request parameters |
+| Error code | HTTP status | Description |
+|-|-|-|
+| `validation_error` | 422 | Invalid request parameters or an invalid `Idempotency-Key` |
 | `invalid_domain` | 400 | Sender domain not verified |
 | `unconfigured_domain` | 400 | Domain not ready for sending |
 | `template_not_found` | 404 | Template slug not found |
+| `idempotency_in_progress` | 409 | The original request with this `Idempotency-Key` is still being processed |
+| `idempotency_key_conflict` | 409 | The `Idempotency-Key` was reused with a different payload |
+| `rate_limit_exceeded` | 429 | Too many requests; wait for `Retry-After` |
+| `quota_exceeded` | 429 | Monthly or daily sending quota reached |
 | `send_error` | 500 | Email sending error |
 | `transmission_failed` | 502 | Email delivery to upstream provider failed |
 
-## Validation Errors
+## Validation errors
 
-Validation errors (`422`) mean the request was well-formed but contained invalid data — a missing required field, a malformed recipient address, or a subject line exceeding the character limit. The `errors` object in the response maps each invalid field to an array of error messages:
+A `422` means the request was well-formed but carried invalid data: a missing required field, a malformed recipient address, or a subject over the length limit. The `errors` object names the field, so a handler can report the specific problem:
 
 ```javascript
 try {
@@ -42,7 +46,6 @@ try {
   if (error.status === 422) {
     console.log('Validation errors:', error.errors);
 
-    // Handle specific field errors
     if (error.errors.to) {
       console.log('Invalid recipients:', error.errors.to);
     }
@@ -55,15 +58,15 @@ try {
 
 <Note>
   An unverified or misconfigured sending domain is **not** a validation error. It returns `400` with
-  `invalid_domain` or `unconfigured_domain`, so a handler scoped to `422` will miss the most common
-  first-send failure. SDKs that map only `422` to a validation exception — `lettr-php` raises a
-  generic `ApiException` here — will not route it to a validation `catch` block either. See
-  [Domain Errors](#domain-errors) below.
+  `invalid_domain` or `unconfigured_domain`, so a handler scoped to `422` misses the most common
+  first-send failure. SDKs that map only `422` to a validation exception (`lettr-php` raises a
+  generic `ApiException` here) will not route it to a validation `catch` block either. See
+  [Domain errors](#domain-errors) below.
 </Note>
 
-## Domain Errors
+## Domain errors
 
-Domain-related errors occur when the `from` address uses a domain that hasn't been verified or whose DNS records aren't properly configured. These are the most common errors during initial integration setup:
+The `from` address must use a verified domain with its DNS records in place. **These are the most common errors during initial setup**, and they are not retryable until the domain is fixed:
 
 ```javascript
 try {
@@ -83,76 +86,104 @@ try {
 }
 ```
 
-## Retry Logic
+## Retryable and non-retryable errors
 
-A well-designed retry function should distinguish between retryable errors (server failures, rate limits) and non-retryable errors (validation, authentication). The following pattern uses exponential backoff and respects the `retry_after` value from rate limit responses:
+Retrying a validation error or an unauthorized request produces the same result every time, so the retry path should only see server failures, rate limits, and an idempotent request that is still in flight. Two `409` codes exist only for requests that carry an `Idempotency-Key`; the [Idempotency guide](/learn/sending/idempotency) covers the header itself.
+
+| Response | Retryable | Meaning and action |
+|-|-|-|
+| `429` `rate_limit_exceeded` | Yes | Wait for `Retry-After`, then retry. Rate limits and quotas apply to retries too. |
+| `409` `idempotency_in_progress` | Yes | The original request is still processing. Retry the same request after `Retry-After`. |
+| `500` Server error | Yes | Retry with backoff |
+| `502/503/504` Gateway errors | Yes | Retry with backoff |
+| `409` `idempotency_key_conflict` | No | The key was reused with a different payload. Use a new key for a new email. |
+| `422` `validation_error` | No | Correct the invalid key or payload |
+| `401` Unauthorized | No | Check the API key |
+| `403` Forbidden | No | Check the API key's permissions |
+| `404` Not found | No | Check that the template or resource exists |
+
+## Retry logic
+
+A retry helper needs three things: **a stable `Idempotency-Key` so a retried send cannot deliver twice**, a check that rejects non-retryable errors before backing off, and a delay that honours `Retry-After` when the response carries one. The pattern below uses exponential backoff as the fallback delay:
 
 ```javascript
-async function sendEmailWithRetry(emailData, options = {}) {
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function sendEmailWithRetry(emailData, idempotencyKey, options = {}) {
   const {
     maxRetries = 3,
     baseDelay = 1000,
     maxDelay = 30000
   } = options;
 
+  const body = JSON.stringify(emailData);
   let lastError;
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    let response;
     try {
-      return await lettr.emails.send(emailData);
+      response = await fetch('https://app.lettr.com/api/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.LETTR_API_KEY}`,
+          'Content-Type': 'application/json',
+          'Idempotency-Key': idempotencyKey,
+        },
+        body,
+      });
     } catch (error) {
+      // Network failure or timeout. Retrying with the same key is safe either way.
       lastError = error;
-
-      // Don't retry client errors (except rate limits)
-      if (error.status >= 400 && error.status < 500 && error.status !== 429) {
-        throw error;
-      }
-
-      // Calculate delay with exponential backoff
-      const delay = Math.min(
-        baseDelay * Math.pow(2, attempt - 1),
-        maxDelay
-      );
-
-      // Use retry-after header if provided
-      const retryAfter = error.retryAfter
-        ? error.retryAfter * 1000
-        : delay;
-
-      console.log(`Attempt ${attempt} failed. Retrying in ${retryAfter}ms...`);
-      await sleep(retryAfter);
+      await sleep(Math.min(baseDelay * Math.pow(2, attempt - 1), maxDelay));
+      continue;
     }
+
+    const data = await response.json();
+    if (response.ok) {
+      return data;
+    }
+
+    const error = Object.assign(new Error(data.message), {
+      status: response.status,
+      error_code: data.error_code,
+      errors: data.errors,
+      retryAfter: Number(response.headers.get('Retry-After')) || null,
+    });
+
+    const retryable =
+      response.status >= 500 ||
+      response.status === 429 ||
+      data.error_code === 'idempotency_in_progress';
+
+    if (!retryable) {
+      throw error;
+    }
+
+    lastError = error;
+
+    const delay = Math.min(baseDelay * Math.pow(2, attempt - 1), maxDelay);
+    const wait = error.retryAfter ? error.retryAfter * 1000 : delay;
+
+    console.log(`Attempt ${attempt} failed. Retrying in ${wait}ms...`);
+    await sleep(wait);
   }
 
   throw lastError;
 }
 ```
 
-## Retryable vs Non-Retryable Errors
+A network timeout is retryable with the same key and payload. If the first attempt reached Lettr, the retry returns the original result with `Idempotency-Replayed: true`; if it did not, the retry sends the email.
 
-Not all errors should be retried. Retrying a validation error or an unauthorized request will produce the same result every time. The table below summarizes which errors are safe to retry and what action to take for each:
+## Handling the result
 
-| Error Type | Retryable | Action |
-|------------|-----------|--------|
-| `429` Rate limit | Yes | Wait and retry with backoff |
-| `500` Server error | Yes | Retry with backoff |
-| `502/503/504` Gateway errors | Yes | Retry with backoff |
-| `401` Unauthorized | No | Check API key |
-| `403` Forbidden | No | Check API key permissions |
-| `422` Validation | No | Fix request data |
-| `404` Not found | No | Check template/resource exists |
-
-## Error Handling Best Practices
-
-Wrapping the retry function with error-specific handling gives you a clean interface for your application code. Log errors with enough context to debug later, and return structured results so calling code can decide how to proceed:
+Wrapping the retry helper gives application code a structured result instead of an exception. Log enough context to debug later, and map the codes the caller can act on:
 
 ```javascript
-async function sendEmail(emailData) {
+async function sendEmail(emailData, idempotencyKey) {
   try {
-    const response = await sendEmailWithRetry(emailData);
+    const response = await sendEmailWithRetry(emailData, idempotencyKey);
     return { success: true, data: response.data };
   } catch (error) {
-    // Log error for debugging
     console.error('Email send failed:', {
       error_code: error.error_code,
       message: error.message,
@@ -160,13 +191,15 @@ async function sendEmail(emailData) {
       timestamp: new Date().toISOString()
     });
 
-    // Handle specific errors
     switch (error.error_code) {
       case 'validation_error':
         return { success: false, error: 'Invalid email data', details: error.errors };
 
       case 'invalid_domain':
         return { success: false, error: 'Sender domain not verified' };
+
+      case 'idempotency_key_conflict':
+        return { success: false, error: 'Idempotency key reused with a different payload' };
 
       case 'rate_limit_exceeded':
         return { success: false, error: 'Rate limit exceeded', retryAfter: error.retryAfter };
@@ -178,19 +211,19 @@ async function sendEmail(emailData) {
 }
 ```
 
-## Soft Bounce Retries
+## Soft bounce retries
 
-After Lettr accepts an email for delivery, the receiving mail server may reject it with a temporary error (soft bounce). Lettr automatically retries soft bounces on your behalf — you don't need to implement retry logic for these. Hard bounces are permanent failures and are never retried:
+Retries on the API side end once Lettr accepts the message. From there, **Lettr retries soft bounces from the receiving mail server itself**, so the integration needs no logic for them. Hard bounces are permanent and are never retried:
 
-| Bounce Type | Auto-Retry | Max Attempts |
-|-------------|------------|--------------|
+| Bounce type | Auto-retry | Max attempts |
+|-|-|-|
 | Soft bounce (mailbox full) | Yes | 3 |
 | Soft bounce (server error) | Yes | 3 |
 | Hard bounce (invalid address) | No | - |
 
-## Circuit Breaker Pattern
+## Circuit breaker pattern
 
-In high-volume sending scenarios, repeated failures to the API can indicate a systemic issue (service degradation, network problem). A circuit breaker stops sending attempts after a threshold of failures, waits for a cooldown period, then allows a single test request through. If the test succeeds, normal traffic resumes. This prevents your application from wasting resources on requests that are likely to fail:
+In high-volume sending, a run of failures usually means a systemic problem rather than a bad request. A circuit breaker stops sending after a threshold of failures, waits out a cooldown, then lets a single test request through before resuming normal traffic:
 
 ```javascript
 class EmailCircuitBreaker {
@@ -236,17 +269,15 @@ class EmailCircuitBreaker {
 }
 ```
 
-## Monitoring Errors
+## Monitoring errors
 
-Beyond handling errors in your send logic, set up webhook-based monitoring to catch delivery failures that occur after the API accepts the email. This lets you alert your team about bounces, failures, and other delivery problems in real time:
+Failures after the API accepts an email never surface in the send response. A webhook handler for bounce and generation-failure events is the place to catch them:
 
 ```javascript
-// Webhook handler for delivery failures
 app.post('/webhooks/lettr', (req, res) => {
   const event = req.body;
 
   if (event.type === 'generation.generation_failure' || event.type === 'message.bounce') {
-    // Alert your team
     alertTeam({
       type: event.type,
       email_id: event.data.email_id,
