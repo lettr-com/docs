@@ -110,6 +110,7 @@ async function sendEmail({ to, subject, html, idempotencyKey }) {
           'Idempotency-Key': idempotencyKey,
         },
         body,
+        signal: AbortSignal.timeout(30_000),
       });
     } catch (error) {
       // Network failure or timeout. The same key makes the retry safe either way.
@@ -119,7 +120,8 @@ async function sendEmail({ to, subject, html, idempotencyKey }) {
       continue;
     }
 
-    const data = await response.json();
+    // Gateway errors can carry a non-JSON body. Decide from the status either way.
+    const data = await response.json().catch(() => ({}));
 
     if (response.ok) {
       if (response.headers.get('Idempotency-Replayed') === 'true') {
@@ -228,7 +230,7 @@ FROM_EMAIL=noreply@yourdomain.com
 
 ## Serverless-specific practices
 
-**Function timeout.** A send call normally completes in under a second, but the retry loop above can wait through several backoff intervals. Set the function timeout to cover the worst case rather than the happy path:
+**Function timeout.** A send call normally completes in under a second, but the retry loop above caps each request at 30 seconds and waits through several backoff intervals. Set the function timeout to cover the worst case rather than the happy path:
 
 ```javascript
 export const config = {
