@@ -84,23 +84,35 @@ Serverless platforms retry failed invocations, and a function that times out mid
 const idempotencyKey = `order-confirmation-${orderId}`;
 ```
 
-The helper below retries network failures, server errors, rate limits, and an in-progress idempotent request. Validation errors and other client errors are thrown before the retry path, so they fail immediately:
+The helper below retries network failures, unreadable success bodies, server errors, rate limits, and an in-progress idempotent request. Validation errors and other client errors are thrown before the retry path, so they fail immediately. Between attempts it honours `Retry-After` when present and otherwise sleeps a random interval under a capped exponential ceiling, so many clients recovering from the same outage do not retry in lockstep:
 
 ```javascript
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+// Retry-After carries seconds or an HTTP date. Without it, back off exponentially with full jitter.
+function retryDelay(attempt, retryAfter) {
+  if (retryAfter) {
+    const seconds = Number(retryAfter);
+    const ms = Number.isFinite(seconds) ? seconds * 1000 : Date.parse(retryAfter) - Date.now();
+    if (ms > 0) return ms;
+  }
+  const capMs = Math.min(30_000, 1_000 * 2 ** attempt);
+  return Math.random() * capMs;
+}
+
 async function sendEmail({ to, subject, html, idempotencyKey }) {
-  const MAX_RETRIES = 3;
-  const body = JSON.stringify({
+  const payload = {
     from: process.env.FROM_EMAIL || 'noreply@yourdomain.com',
     to: Array.isArray(to) ? to : [to],
     subject,
     html,
-  });
+  };
+  const maxAttempts = 3;
+  const body = JSON.stringify(payload);
   let lastError;
 
-  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-    let response;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    let response = null;
     try {
       response = await fetch('https://app.lettr.com/api/emails', {
         method: 'POST',
@@ -115,48 +127,48 @@ async function sendEmail({ to, subject, html, idempotencyKey }) {
     } catch (error) {
       // Network failure or timeout. The same key makes the retry safe either way.
       lastError = error;
-      console.error(`Attempt ${attempt} failed:`, error.message);
-      await sleep(Math.pow(2, attempt) * 1000);
-      continue;
     }
 
-    // Gateway errors can carry a non-JSON body. Decide from the status either way.
-    const data = await response.json().catch(() => ({}));
+    let retryAfter = null;
+    if (response) {
+      // Gateway errors can carry a non-JSON body. Decide from the status either way.
+      const data = await response.json().catch(() => ({}));
 
-    if (response.ok) {
-      if (!data.data?.request_id) {
+      if (response.ok && data.data?.request_id) {
+        if (response.headers.get('Idempotency-Replayed') === 'true') {
+          console.log(`Replayed earlier send. Request ID: ${data.data.request_id}`);
+        } else {
+          console.log(`Email sent. Request ID: ${data.data.request_id}`);
+        }
+        return data;
+      }
+
+      if (response.ok) {
         // A 2xx with a truncated or malformed body. The same key replays the original result.
         lastError = new Error('Success response could not be parsed');
-        console.error(`Attempt ${attempt} failed:`, lastError.message);
-        await sleep(Math.pow(2, attempt) * 1000);
-        continue;
-      }
-      if (response.headers.get('Idempotency-Replayed') === 'true') {
-        console.log(`Replayed earlier send. Request ID: ${data.data.request_id}`);
       } else {
-        console.log(`Email sent. Request ID: ${data.data.request_id}`);
+        const retryable =
+          response.status >= 500 ||
+          response.status === 429 ||
+          data.error_code === 'idempotency_in_progress';
+
+        if (!retryable) {
+          // 422 validation_error, 409 idempotency_key_conflict, 4xx in general
+          throw new Error(`${data.error_code}: ${data.message}`);
+        }
+
+        lastError = new Error(`${response.status} ${data.error_code}: ${data.message}`);
+        retryAfter = response.headers.get('Retry-After');
       }
-      return data;
     }
 
-    const retryable =
-      response.status >= 500 ||
-      response.status === 429 ||
-      data.error_code === 'idempotency_in_progress';
-
-    if (!retryable) {
-      // 422 validation_error, 409 idempotency_key_conflict, 4xx in general
-      throw new Error(`${data.error_code}: ${data.message}`);
+    if (attempt < maxAttempts) {
+      console.error(`Attempt ${attempt} failed:`, lastError.message);
+      await sleep(retryDelay(attempt, retryAfter));
     }
-
-    lastError = new Error(`${response.status} ${data.error_code}: ${data.message}`);
-    console.error(`Attempt ${attempt} failed:`, lastError.message);
-
-    const retryAfter = Number(response.headers.get('Retry-After'));
-    await sleep(retryAfter ? retryAfter * 1000 : Math.pow(2, attempt) * 1000);
   }
 
-  throw new Error(`Failed to send email after ${MAX_RETRIES} attempts: ${lastError.message}`);
+  throw new Error(`Failed to send email after ${maxAttempts} attempts: ${lastError.message}`);
 }
 
 export async function handler(event) {
