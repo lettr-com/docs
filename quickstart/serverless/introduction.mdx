@@ -124,6 +124,13 @@ async function sendEmail({ to, subject, html, idempotencyKey }) {
     const data = await response.json().catch(() => ({}));
 
     if (response.ok) {
+      if (!data.data?.request_id) {
+        // A 2xx with a truncated or malformed body. The same key replays the original result.
+        lastError = new Error('Success response could not be parsed');
+        console.error(`Attempt ${attempt} failed:`, lastError.message);
+        await sleep(Math.pow(2, attempt) * 1000);
+        continue;
+      }
       if (response.headers.get('Idempotency-Replayed') === 'true') {
         console.log(`Replayed earlier send. Request ID: ${data.data.request_id}`);
       } else {

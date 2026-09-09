@@ -141,8 +141,15 @@ async function sendEmailWithRetry(emailData, idempotencyKey, options = {}) {
 
     // Gateway errors can carry a non-JSON body. Decide from the status either way.
     const data = await response.json().catch(() => ({}));
+
     if (response.ok) {
-      return data;
+      if (data.data?.request_id) {
+        return data;
+      }
+      // A 2xx with a truncated or malformed body. The same key replays the original result.
+      lastError = new Error('Success response could not be parsed');
+      await sleep(Math.min(baseDelay * Math.pow(2, attempt - 1), maxDelay));
+      continue;
     }
 
     const error = Object.assign(new Error(data.message || response.statusText), {
