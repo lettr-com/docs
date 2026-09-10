@@ -111,8 +111,12 @@ The `options` object controls tracking and email classification:
 | Option | Type | Default | Description |
 |-|-|-|-|
 | `transactional` | boolean | `true` | Whether this is a transactional email. Set to `false` for marketing emails. |
-| `open_tracking` | boolean | `false` | Track email opens |
-| `click_tracking` | boolean | `false` | Track link clicks |
+| `open_tracking` | boolean | `true` | Track email opens |
+| `click_tracking` | boolean | `true` | Track link clicks |
+
+To disable tracking through the HTTP API, set `options.open_tracking` and `options.click_tracking` to `false` in the JSON request body. These options work independently; omitting either keeps that setting enabled.
+
+The `X-Lettr-Track-Opens` and `X-Lettr-Track-Clicks` headers control tracking only when sending over SMTP. For API requests, use the `options` fields rather than HTTP headers or the custom email `headers` object. See [Tracking](/learn/sending/tracking) for API and SMTP examples.
 
 <Note>
   Since `transactional` defaults to `true`, you only need to explicitly set it when sending marketing emails (`transactional: false`).

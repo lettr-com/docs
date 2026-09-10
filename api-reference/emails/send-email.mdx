@@ -5,4 +5,6 @@ openapi: POST /emails
 
 Sends an email to one or more recipients. Supports HTML, plain text, AMP content, templates, merge tags, attachments, and tracking options.
 
+Open and click tracking are enabled by default. Set `options.open_tracking` or `options.click_tracking` to `false` in the request body to disable either. The `X-Lettr-Track-*` control headers are SMTP-only; see [Tracking](/learn/sending/tracking) for examples.
+
 Available to [sandbox API keys](/learn/api-keys/sandbox): all recipients are redirected to the key owner's inbox and the sender domain is replaced with the pre-verified sandbox domain.
