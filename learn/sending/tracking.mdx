@@ -21,7 +21,7 @@ await lettr.emails.send({
 
 ## Customize Tracking Options
 
-You can override the default tracking behavior on a per-email basis using the `options` object. This is useful for privacy-sensitive emails like password resets or data exports where tracking would be inappropriate:
+When sending through the API or an SDK, you can override the default tracking behavior on a per-email basis using the `options` object. This is useful for privacy-sensitive emails like password resets or data exports where tracking would be inappropriate:
 
 ```javascript
 await lettr.emails.send({
@@ -35,6 +35,34 @@ await lettr.emails.send({
   }
 });
 ```
+
+## SMTP Tracking Headers
+
+When sending over SMTP, add these message headers to disable open and click tracking:
+
+```text
+X-Lettr-Track-Opens: false
+X-Lettr-Track-Clicks: false
+```
+
+| Header | Accepted values | Default when omitted |
+|-|-|-|
+| `X-Lettr-Track-Opens` | `true` or `false` | `true` |
+| `X-Lettr-Track-Clicks` | `true` or `false` | `true` |
+
+The headers work independently. For example, setting only `X-Lettr-Track-Opens: false` disables the open tracking pixel while keeping click tracking enabled. Header names and values are case-insensitive, and surrounding whitespace is ignored.
+
+Each setting applies to every recipient of that message. It does not change the defaults for later messages, even on the same SMTP connection. Lettr consumes these control headers; they are not included in the delivered email.
+
+Add each header at most once. An empty value, a value other than `true` or `false`, or a duplicate header causes Lettr to reject the message after `DATA` with **`554 5.6.0`**. The error identifies the invalid header. Correct it before retrying; the rejected message is not sent.
+
+See the [Laravel example](/quickstart/smtp/laravel#disable-open-and-click-tracking) or [PHPMailer example](/quickstart/smtp/phpmailer#open-and-click-tracking) for adding these headers with your mail library.
+
+<Note>
+  `X-MSYS-API` is a SparkPost-specific header, not a standard SMTP setting. Lettr does not support it. When migrating, use the two `X-Lettr-*` headers above to control tracking.
+</Note>
+
+Disabling tracking prevents Lettr from adding its open tracking pixel or rewriting links for that message. It does not remove tracking pixels or tracking URLs already present in the HTML you submit, or change emails already sent. Delivery and bounce events remain available.
 
 ## How Open Tracking Works
 
@@ -76,6 +104,8 @@ await lettr.emails.send({
 ```
 
 Links will use your configured tracking domain (e.g., `track.yourdomain.com`) if set up in your domain settings.
+
+A custom tracking domain changes the hostname used for tracking; it does not enable or disable tracking. There is no sending-domain-wide tracking toggle. Use the per-message API options or SMTP headers to disable tracking. To disable it for every message, apply those settings in your application's shared mail configuration or message-building code.
 
 <Card title="Set Up Tracking Domain" icon="globe" href="/learn/domains/tracking-domains">
   Learn how to configure a custom tracking domain

@@ -99,6 +99,21 @@ If the connection succeeds, you'll see output showing the SMTP conversation and 
   `swaks` is available via package managers: `brew install swaks` (macOS), `apt-get install swaks` (Ubuntu/Debian), or download from [jetmore.org/john/code/swaks](http://www.jetmore.org/john/code/swaks/).
 </Tip>
 
+## Open and Click Tracking
+
+Open and click tracking are enabled by default. To disable both for a message, add these headers using your mail library:
+
+```text
+X-Lettr-Track-Opens: false
+X-Lettr-Track-Clicks: false
+```
+
+Each header is optional and controls its own setting. Use `true` to explicitly enable tracking, or omit the header to keep the default. See [SMTP tracking headers](/learn/sending/tracking#smtp-tracking-headers) for validation rules and examples.
+
+## HTML and Text Encoding
+
+Use UTF-8 for your HTML and plain text, and let your mail library generate the MIME message and its transfer encoding. Lettr supports quoted-printable and base64 content, including multipart messages with attachments. Do not manually encode content before passing it to a library that already handles transfer encoding.
+
 ## BCC Is Not Private Over SMTP
 
 <Warning>
@@ -176,7 +191,9 @@ Choose your framework or library for specific setup instructions:
     - The message exceeds 50 recipients (`452 Too many recipients`) or 50 MB
     - Your account has reached its [sending quota](/learn/sending/usage-quotas)
 
-    Errors at this stage return `451` with the reason from the API. Sends are recorded in the [dashboard](https://app.lettr.com) alongside API sends, so check there for the full error.
+    An invalid or duplicate [tracking header](/learn/sending/tracking#smtp-tracking-headers) returns `554 5.6.0`. Correct the header before retrying.
+
+    API forwarding errors return `451` with the reason from the API. Sends are recorded in the [dashboard](https://app.lettr.com) alongside API sends, so check there for the full error.
   </Accordion>
 
   <Accordion title="TLS/SSL Errors">
@@ -198,6 +215,7 @@ Here's a quick comparison to help you decide:
 | **Error handling** | Limited — SMTP status codes only | Rich — detailed JSON error responses |
 | **Request tracking** | No request ID returned | Returns `request_id` for tracking |
 | **Attachments** | Standard MIME encoding | Base64 in JSON payload |
+| **Open and click tracking** | Per-message tracking headers | Per-message `options` object |
 | **BCC** | Not private — BCC recipients are visible | Kept private |
 | **Templates** | Not supported | Full template support |
 | **Metadata** | Not supported | Custom metadata supported |

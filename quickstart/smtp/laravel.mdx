@@ -123,6 +123,28 @@ Mail::html('<h1>Hello!</h1><p>This is an HTML email.</p>', function ($message) {
 });
 ```
 
+## Disable Open and Click Tracking
+
+Add a `headers()` method to your Mailable to disable tracking for that message. Import `Headers` at the top of the file and place the method inside your existing Mailable class:
+
+```php
+use Illuminate\Mail\Mailables\Headers;
+
+public function headers(): Headers
+{
+    return new Headers(
+        text: [
+            'X-Lettr-Track-Opens' => 'false',
+            'X-Lettr-Track-Clicks' => 'false',
+        ],
+    );
+}
+```
+
+If your Mailable already defines `headers()`, add these entries to its `text` array. Use the strings `'true'` or `'false'`, and add each header only once. Omitting either header leaves that tracking setting enabled by default.
+
+See [SMTP tracking headers](/learn/sending/tracking#smtp-tracking-headers) for validation rules and how the settings apply to each message.
+
 ## Testing Your Setup
 
 ### Quick Test with Tinker

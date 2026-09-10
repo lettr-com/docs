@@ -123,14 +123,18 @@ $mail->addAddress('user1@example.com');
 $mail->addAddress('user2@example.com');
 ```
 
-## Custom Headers
+## Open and Click Tracking
 
-Add custom headers for tracking or additional metadata:
+Open and click tracking are enabled by default. Add these headers before calling `$mail->send()` to disable both for a message:
 
 ```php
-$mail->addCustomHeader('X-Campaign-ID', 'newsletter-2024-01');
-$mail->addCustomHeader('X-Customer-ID', '12345');
+$mail->addCustomHeader('X-Lettr-Track-Opens', 'false');
+$mail->addCustomHeader('X-Lettr-Track-Clicks', 'false');
 ```
+
+Use the strings `'true'` or `'false'`, and add each header only once. Omitting either header leaves that tracking setting enabled by default. If you reuse a PHPMailer instance, clear its custom headers with `$mail->clearCustomHeaders()` before configuring the next message's headers.
+
+See [SMTP tracking headers](/learn/sending/tracking#smtp-tracking-headers) for validation rules. These are Lettr control headers; arbitrary metadata headers and `X-MSYS-API` are not supported.
 
 ## WordPress Integration
 
