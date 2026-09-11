@@ -6,3 +6,19 @@ openapi: PUT /templates/{slug}
 Updates an existing template by its slug. You can update the template name, project assignment, or content. Providing new `html` or `json` content creates a new version of the template automatically.
 
 The `html` and `json` fields are mutually exclusive. If neither is provided, only metadata (name, project) is updated without creating a new version.
+
+## What you cannot change
+
+<Warning>
+  **`purpose` is not updatable.** It is set when the template is created and fixed from then on.
+
+  Sending `purpose` here is silently ignored — the request returns `200` with `Template updated successfully.` and the template keeps the mode it already had. Read `purpose` back from the response if you need to be sure.
+
+  To move a design into the other mode, use the **Copy to Transactional** / **Copy to Marketing** action in the app. It creates a new template carrying the versions and merge tags across; see [Transactional vs. Marketing Templates](/learn/templates/projects#transactional-vs-marketing-templates).
+</Warning>
+
+## Preparation after an update
+
+An update that supplies new `json` is rendered by a background job, so the response comes back `preparation_status: "pending"`.
+
+The previous render stays in place while that runs. The template is still sendable during the window — but it is serving the **old** content until `preparation_status` reads `ready`. A send in between succeeds and quietly delivers the previous version, so poll [Get Template](/api-reference/templates/get-template) before sending if the new content matters.

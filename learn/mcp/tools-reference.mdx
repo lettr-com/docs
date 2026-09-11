@@ -144,6 +144,12 @@ Creates a new Custom HTML email template.
 
 **Example prompt:** "Create a new template called 'Invoice Reminder' in folder 1 with a basic HTML layout"
 
+<Warning>
+  **This tool creates transactional templates only.** It does not take a `purpose`, so templates it creates cannot be picked by a [campaign](/learn/campaigns/introduction), and the mode cannot be changed afterwards.
+
+  To create a marketing template from an AI agent, use the [remote MCP server](/learn/mcp/introduction) (`create-template` with `purpose: "campaign"`) or the API directly. To rescue one already created here, use the **Copy to Marketing** action in the app.
+</Warning>
+
 ---
 
 ### update_template

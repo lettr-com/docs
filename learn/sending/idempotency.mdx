@@ -147,3 +147,65 @@ Two `409` responses are specific to idempotent requests. The rest of the retry r
 | `409` `idempotency_key_conflict` | The key was reused with a different payload. Use a new key for a new email, or send the original payload. |
 | `422` `validation_error` | Correct the invalid key or payload. |
 | `429` | Rate limits and quotas still apply, including to retries. |
+
+## Using an SDK
+
+Every official SDK takes the key as an argument, so you do not have to set the header yourself. The response carries a replay flag alongside the usual fields.
+
+<CodeGroup>
+
+```javascript Node.js
+const result = await lettr.emails.send(
+  { from, to, subject, html },
+  { idempotencyKey: `order-confirmation-${order.id}` },
+);
+
+result.replayed; // true → replayed an earlier send, no second email went out
+```
+
+```php PHP
+$response = $lettr->emails()->send($data, new IdempotencyKey("order-confirmation-{$order->id}"));
+
+$response->replayed; // true → replayed an earlier send
+```
+
+```python Python
+response = lettr.emails.send(
+    from_email="orders@example.com",
+    to=[order.customer_email],
+    subject=f"Order #{order.id} confirmed",
+    template_slug="order-confirmation",
+    idempotency_key=f"order-confirmation-{order.id}",
+)
+
+response.replayed  # True → replayed an earlier send
+```
+
+```go Go
+resp, err := client.Emails.Send(ctx, params,
+    lettr.WithIdempotencyKey(fmt.Sprintf("order-confirmation-%d", order.ID)))
+
+resp.Data.Replayed // true → replayed an earlier send
+```
+
+```rust Rust
+let options = CreateEmailOptions::new(from, to, subject)
+    .with_idempotency_key(format!("order-confirmation-{}", order.id));
+
+let response = client.emails.send(options).await?;
+response.replayed; // true → replayed an earlier send
+```
+
+```java Java
+CreateEmailResponse response = lettr.emails().send(request, "order-confirmation-" + order.getId());
+
+response.isReplayed(); // true → replayed an earlier send
+```
+
+</CodeGroup>
+
+A replay is a **success**, not an error — the original transmission is returned verbatim. Log it differently if you want the visibility, but do not treat it as a failure.
+
+<Note>
+  **Laravel is the exception: it does this for you.** `lettr-laravel` derives a key for every *queued* mail automatically, from the queue job's UUID plus the payload, so a job retry cannot deliver twice. Pass your own key with `Mail::lettr()->idempotencyKey(...)` to override it, or set `LETTR_IDEMPOTENCY_ENABLED=false` to turn the automatic behaviour off. Synchronous sends have no job UUID and so get no automatic key.
+</Note>

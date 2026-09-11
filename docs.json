@@ -418,7 +418,8 @@
               "api-reference/templates/get-template",
               "api-reference/templates/update-template",
               "api-reference/templates/delete-template",
-              "api-reference/templates/get-merge-tags"
+              "api-reference/templates/get-merge-tags",
+                  "api-reference/templates/list-folders"
             ]
           },
           {

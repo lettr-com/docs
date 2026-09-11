@@ -27,7 +27,38 @@ Every team has a default project created automatically. Templates are organized 
 
 Every template belongs to one of Lettr's two modes: **Transactional** (sent via the API or SMTP) or **Marketing** (used by [campaigns](/learn/campaigns/introduction)). Folders are mode-scoped too — a folder holds templates of one mode, and the folder pickers in the move and duplicate dialogs only show folders of the mode you're browsing, so you can't accidentally move a marketing email into a transactional folder.
 
-A few behaviors that follow from this:
+### Choosing the mode over the API
+
+The API can create a template in either mode. Pass `purpose` when you create one:
+
+- `"transactional"` — the default, used when you omit the field
+- `"campaign"` — a marketing template, the only kind a campaign can pick
+
+```bash
+curl -X POST https://app.lettr.com/api/templates \
+  -H "Authorization: Bearer $LETTR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "March newsletter", "html": "<p>Hello {{FIRST_NAME}}</p>", "purpose": "campaign"}'
+```
+
+<Warning>
+  **`purpose` is set once and cannot be changed.** It is not an updatable field — sending it to `PUT /templates/{slug}` returns `200 Template updated successfully.` and leaves the mode exactly as it was. If you create a newsletter without `purpose`, you get a transactional template that campaigns cannot use, and the only way out is to copy it (below).
+
+  Decide the mode at creation time.
+</Warning>
+
+To pick the folder deliberately rather than letting the API choose, list folders first — `GET /folders` is the only call that returns a folder ID, and it reports each folder's mode:
+
+```bash
+curl "https://app.lettr.com/api/folders?purpose=campaign" \
+  -H "Authorization: Bearer $LETTR_API_KEY"
+```
+
+A folder's mode does not set the template's. Filing a template in a marketing folder does **not** make it a marketing template — only `purpose` does, and the two must agree.
+
+### Other behaviors
+
+A few more things that follow from mode-scoping:
 
 - **Copying to the other mode** — Use the **Copy to Transactional** / **Copy to Marketing** action on a template to create a copy in the other mode. The copy is named "*name* (Copy)", gets a new unique slug, and carries over all versions and merge tags. It lands in your current folder if that folder already belongs to the target mode, otherwise in the project's default folder for that mode.
 - **Duplicating into a folder** — A duplicated template takes on the mode of the folder you duplicate it into, not the mode of the original.
