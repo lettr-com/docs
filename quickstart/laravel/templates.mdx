@@ -83,6 +83,30 @@ By default, templates are saved as Blade files to `resources/views/emails/lettr/
   Use `--with-mailables` to generate ready-to-use Mailable classes alongside the templates. This is the fastest way to scaffold email classes from your existing Lettr templates.
 </Tip>
 
+## Push Templates to Lettr
+
+Upload local Blade templates to Lettr, creating them if they do not exist:
+
+```bash
+php artisan lettr:push
+```
+
+Options:
+- `--path=` - Custom path to the templates directory
+- `--template=filename` - Push only one template
+- `--purpose=` - Module to create the templates in: `transactional` (default) or `campaign`
+- `--dry-run` - Preview what would be created without pushing
+
+To push marketing templates that campaigns can pick:
+
+```bash
+php artisan lettr:push --purpose=campaign
+```
+
+<Warning>
+  **`purpose` applies to templates being created, and cannot be changed afterwards.** Push without it and you get transactional templates, which a [campaign](/learn/campaigns/introduction) cannot use — the update endpoint does not accept `purpose`, so the only remedy is to copy each one in the app. Pushing a newsletter set? Pass `--purpose=campaign` the first time. See [Transactional vs. Marketing Templates](/learn/templates/projects#transactional-vs-marketing-templates).
+</Warning>
+
 ## Listing Templates
 
 Retrieve available templates via the API:

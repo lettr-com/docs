@@ -6,3 +6,24 @@ openapi: POST /templates
 Creates a new email template with either HTML or JSON content. Provide `html` for raw HTML templates or `json` for visual editor (Topol) templates — these fields are mutually exclusive.
 
 The template is automatically assigned a URL-friendly slug based on its name. You can optionally assign it to a specific project and folder using `project_id` and `folder_id`. If omitted, the template is added to your team's default project.
+
+## Choosing the mode
+
+`purpose` decides which of Lettr's two modes the template belongs to:
+
+- **`transactional`** (default) — receipts, password resets, alerts; the templates you send single emails with
+- **`campaign`** — marketing content, and the only kind a [campaign](/learn/campaigns/introduction) can pick
+
+<Warning>
+  **`purpose` cannot be changed afterwards.** It is not accepted by [Update Template](/api-reference/templates/update-template) — sending it there returns `200` and leaves the mode untouched. A newsletter created without `purpose` becomes a transactional template that campaigns cannot use, and the only remedy is the **Copy to Marketing** action in the app.
+
+  If the template is going to an audience rather than to one person, pass `purpose: "campaign"` now.
+</Warning>
+
+Folders are mode-scoped, so `folder_id` must name a folder of the same mode as `purpose`. Use [List Folders](/api-reference/templates/list-folders) to find one — it is the only endpoint that returns folder IDs, and it reports each folder's mode.
+
+## Preparation
+
+Templates created from `json` are rendered by a background job, so the response comes back with `preparation_status: "pending"` and no HTML yet. It normally settles within seconds — poll [Get Template](/api-reference/templates/get-template) until `preparation_status` is `ready` before sending.
+
+Templates created from raw `html` are `ready` immediately.

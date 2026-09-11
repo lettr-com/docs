@@ -1,0 +1,27 @@
+---
+title: List Folders
+openapi: GET /folders
+---
+
+Lists the folders templates are filed into, with each folder's mode and how many templates it holds.
+
+This is the only endpoint that returns folder IDs. Without it, `folder_id` on [Create Template](/api-reference/templates/create-template) can only be omitted — letting the API pick a folder — or guessed from an integer read out of an app URL.
+
+## Modes
+
+Folders are mode-scoped, matching the [transactional / marketing split](/learn/templates/projects#transactional-vs-marketing-templates). Filter with `purpose` to get just one side:
+
+```bash
+curl "https://app.lettr.com/api/folders?purpose=campaign" \
+  -H "Authorization: Bearer $LETTR_API_KEY"
+```
+
+A template's `folder_id` must name a folder of the same mode as its `purpose`.
+
+<Note>
+  A folder's mode does not set its templates'. Filing a template in a marketing folder does **not** make it a marketing template — only `purpose` on the template does.
+</Note>
+
+## Read-only
+
+Folders are created and managed in the app. There is no API to create, rename or delete one, because deleting a folder moves or deletes the templates inside it.
