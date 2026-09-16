@@ -1,0 +1,62 @@
+---
+title: "Template Languages"
+description: "Add languages to a marketing template in the email editor, understand primary and secondary languages, and see which languages a campaign can send."
+---
+
+A campaign can only send the languages its template has. Everything starts in the [visual editor](/learn/templates/topol-editor), where one template holds several language versions of the same design.
+
+## Adding Languages in the Editor
+
+Open a marketing template and use the **Multilingual** control in the editor's top bar. It adds a language, switches between the existing versions, and removes one.
+
+- The language you started the template in is the **primary language**.
+- Every language added afterwards is a **secondary language**.
+- All versions share one layout. Structures, columns, images and block positions are the same everywhere. Only the text inside blocks is separate per language.
+
+Pick the primary language deliberately. It is the version every recipient gets when Lettr cannot tell which language they want, so it is usually the language most of your audience reads. See [What happens with no match](/learn/multilingual-campaigns/contact-language#what-happens-with-no-match).
+
+<Tip>
+  Finish the layout before adding languages. A structural change made in any version applies to every version, so adding a block after translating means checking the text in each language again.
+</Tip>
+
+For the editor's own walkthrough of the control, see [Multilingual Templates](https://support.topol.io/en/articles/12665820-multilingual-templates) in the Topol help center.
+
+### Language keys
+
+Each version is identified by the language key you chose when adding it, such as `cs`, `de` or `en-GB`. Lettr compares keys without caring about case or whether you used `_` or `-`, so `en_GB` and `en-gb` are the same language. The key is what campaigns match contact values against, so use standard codes rather than names. A version keyed `czech` still works, because names are matched through the alias table, but `cs` is the safer choice.
+
+## Seeing a Template's Languages
+
+Once a template has more than one language, it is marked as multilingual in three places:
+
+- **Template grids and list**: a language badge such as `EN · SK · CS` on the card. When a template has more than three languages the badge shows the first three and `+N`, and hovering lists them all with the primary first.
+- **Template detail page**: a language picker above the preview. Switch it to read any version without opening the editor.
+- **Campaign template picker**: the same badge on each card in the Compose step, so you can tell a multilingual template from a single-language one before you link it.
+
+<img src="/images/multilingual-template-badge.png" alt="Template cards in the Emails grid, one showing a language badge with three language codes" />
+
+## What a Campaign Can Send
+
+When you link a multilingual template, the campaign becomes multilingual for exactly those languages. If the template is Czech and English, a German contact receives the primary language. To send German, add a German version to the template. There is no per-campaign language list to maintain, and no way to send a language the template does not have.
+
+A campaign reads the template's languages the moment the template is picked in the Compose step, with no need to save the draft first. A language added to the template while the campaign is still a draft appears in the campaign the next time it is opened.
+
+## Which Templates Qualify
+
+- **Marketing templates** built in the visual editor. Campaigns link marketing templates only. A transactional template needs the **Copy to Marketing** action first; see [Transactional vs. Marketing Templates](/learn/templates/projects#transactional-vs-marketing-templates).
+- **Raw HTML templates** and content written directly in the campaign's HTML editor are single-language. The multilingual mechanism needs the editor's language versions.
+
+<Note>
+  Campaigns sent before multilingual campaigns existed keep working exactly as they did. Their content was stored in a single language, and Lettr does not rebuild it in other languages after the fact.
+</Note>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Contact language" icon="user-tag" href="/learn/multilingual-campaigns/contact-language">
+    Tell Lettr which contact property holds each person's language
+  </Card>
+  <Card title="Campaign setup" icon="bullhorn" href="/learn/multilingual-campaigns/campaign-setup">
+    Per-language subject and sender, the review panel, and test sends
+  </Card>
+</CardGroup>

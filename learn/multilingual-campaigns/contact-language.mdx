@@ -1,0 +1,145 @@
+---
+title: "Contact Language"
+description: "Store each contact's language in a property, designate it as the communication language, and learn exactly how Lettr matches values like cs, en-US, czech or Deutsch to a template language."
+---
+
+Lettr needs to know which language each contact wants. That information lives in a [custom property](/learn/audience/contacts#custom-properties) on the contact, and Lettr reads it at send time to pick the right version. This page covers where Lettr looks for the property, how it interprets the values, and what happens when a value is missing or unrecognised.
+
+## Which Property Holds the Language
+
+There are two ways to tell Lettr where the language is. Use the first one whenever you can.
+
+### Designate a property
+
+When you create or edit a property under **Audience** → **Properties**, tick **Use as communication language**. The property then shows a **Communication language** badge in the list, and campaigns read the language from it and nothing else.
+
+<img src="/images/multilingual-property-dialog.png" alt="The Add property dialog with the Use as communication language switch turned on" />
+
+A team can designate only one property. Ticking the switch on a second property moves the role to that property. The first one keeps its values and simply stops being the language source.
+
+The designated property also drives the language of the hosted [Manage email preferences](/learn/audience/email-preferences) page and the unsubscribe and web-version pages, so one setting covers every recipient-facing surface.
+
+### Or let Lettr find it by name
+
+If no property is designated, Lettr looks through your defined properties for one of these names, in this order, and uses the first one it finds:
+
+1. `communication_language`
+2. `communication_lang`
+3. `language`
+4. `lang`
+5. `locale`
+
+This is why a CSV imported with a `lang` column routes campaigns correctly without any setup. The Review & Send panel tells you which case you are in: **designated language property** or **matched by property name**.
+
+<Tip>
+  Name matching is a convenience for getting started. Designate the property once you rely on it. It removes the ambiguity when you later add a second property with a language-like name, and it makes the review panel unambiguous for everyone on the team.
+</Tip>
+
+The property must be a `string` property. Values stored in a `number`, `boolean`, `date` or `json` property are ignored for language matching.
+
+## How Values Are Matched
+
+Language values in real audiences are messy. One import has `cs`, another has `cs_CZ`, a signup form wrote `Czech`, and someone typed `česky` by hand. Lettr accepts all of them.
+
+For each recipient, Lettr takes the property value and compares it with the languages the template has, from the strictest rule to the loosest. The first rule that matches wins.
+
+| Rule | What it does | Example with a template in `cs` and `en` |
+|-|-|-|
+| **1. Same tag** | Case, surrounding spaces and `_` versus `-` are ignored | `CS`, `cs `, `Cs` all match `cs` |
+| **2. Same base language** | The region part is dropped, in both directions | `cs-CZ` and `cs_cz` match `cs`. A contact with `en` matches a template language `en-GB` |
+| **3. Same language by name** | The value and the template language are looked up in the alias table below | `czech`, `cz`, `česky` match `cs`. `Deutsch` matches a template language `de-AT` |
+
+Rule 2 means regional variants are interchangeable with their base language. If the template has both `pt` and `pt-BR`, a contact with `pt-BR` gets `pt-BR` under rule 1 and a contact with `pt-PT` gets `pt` under rule 2.
+
+### Accepted spellings
+
+Rule 3 uses this table. Matching is case-insensitive. A value that is not in the table and is not a language tag with a matching base falls through to the primary language.
+
+| Language | Code | Accepted spellings |
+|-|-|-|
+| Chinese | `zh` | `zh`, `zho`, `chi`, `chinese`, `mandarin`, `zh-cn`, `zh-hans`, `中文`, `简体中文` |
+| Czech | `cs` | `cs`, `cz`, `cze`, `ces`, `czech`, `cesky`, `česky`, `čeština` |
+| Dutch | `nl` | `nl`, `nld`, `dut`, `dutch`, `nederlands`, `flemish` |
+| English | `en` | `en`, `eng`, `english` |
+| Finnish | `fi` | `fi`, `fin`, `finnish`, `suomi` |
+| French | `fr` | `fr`, `fra`, `fre`, `french`, `francais`, `français` |
+| German | `de` | `de`, `deu`, `ger`, `german`, `deutsch`, `germany` |
+| Italian | `it` | `it`, `ita`, `italian`, `italiano` |
+| Japanese | `ja` | `ja`, `jpn`, `jp`, `japanese`, `nihongo`, `日本語` |
+| Korean | `ko` | `ko`, `kor`, `korean`, `hangul`, `한국어` |
+| Polish | `pl` | `pl`, `pol`, `polish`, `polski` |
+| Portuguese | `pt` | `pt`, `por`, `portuguese`, `portugues`, `português`, `pt-br`, `pt-pt`, `brazilian` |
+| Romanian | `ro` | `ro`, `ron`, `rum`, `romanian`, `romana`, `română` |
+| Russian | `ru` | `ru`, `rus`, `russian`, `русский` |
+| Slovak | `sk` | `sk`, `slk`, `slo`, `slovak`, `slovencina`, `slovenčina`, `slovensky` |
+| Spanish | `es` | `es`, `spa`, `spanish`, `espanol`, `español`, `castellano` |
+| Swedish | `sv` | `sv`, `swe`, `swedish`, `svenska` |
+| Turkish | `tr` | `tr`, `tur`, `turkish`, `turkce`, `türkçe` |
+| Vietnamese | `vi` | `vi`, `vie`, `vietnamese`, `tieng viet`, `tiếng việt` |
+
+These are also the 19 languages the automatic unsubscribe footer is translated into. See [What recipients get](/learn/multilingual-campaigns/sending-and-results#what-each-recipient-gets).
+
+Languages outside this table still work under rules 1 and 2. A template with a `hu` version and contacts with `hu` or `hu-HU` route correctly. Only the name-based spellings such as `hungarian` are unavailable for them.
+
+## What Happens With No Match
+
+A recipient receives the **primary language** of the template when:
+
+- the language property is empty or missing on their contact, or
+- the value matches none of the template's languages under the three rules, for example `klingon` or a typo like `czec`.
+
+Nobody is skipped. Every recipient gets an email, and the Review & Send panel counts these two cases separately and shows them before sending: how many have no value, and which unmatched values appear and how often. See [The review panel](/learn/multilingual-campaigns/campaign-setup#the-review-panel).
+
+<Note>
+  This is different from the contact's [fallback value](/learn/audience/contacts#fallback-values). A property fallback fills in a merge tag when a contact has no value. The primary-language fallback decides which version of the email a contact receives. Setting a fallback value of `en` on your language property does not route contacts to English. Only the contact's own value counts.
+</Note>
+
+## Setting the Value
+
+The language is an ordinary property value, so every way of writing contact data works:
+
+- **Dashboard**: edit the contact and set the property.
+- **CSV import**: map the column to your language property in the [import flow](/learn/audience/importing-and-exporting). A column named `lang` or `language` can be mapped to a property of the same name and needs no further setup.
+- **API**: pass it in `properties` when you [create](/api-reference/audience/create-a-contact), [update](/api-reference/audience/update-a-contact) or [bulk create](/api-reference/audience/bulk-create-contacts) contacts.
+
+```bash
+curl -X POST https://app.lettr.com/api/audience/contacts \
+  -H "Authorization: Bearer lttr_your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "jana@example.com",
+    "properties": {
+      "language": "cs"
+    }
+  }'
+```
+
+### Designating the property through the API
+
+The **Use as communication language** switch is the `purpose` field on the property. Pass `"communication_language"` when you [create](/api-reference/audience/create-a-property) or [update](/api-reference/audience/update-a-property) a property. Send `null` to remove the designation.
+
+```bash
+curl -X POST https://app.lettr.com/api/audience/properties \
+  -H "Authorization: Bearer lttr_your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "language",
+    "type": "string",
+    "purpose": "communication_language"
+  }'
+```
+
+## Finding Contacts Without a Language
+
+[Segments](/learn/audience/segments) have **is empty** and **is not empty** operators. A segment with the condition `language is empty` lists every contact who would receive the primary language for lack of a value. Fix them before the send, or use the segment to exclude them, or accept the fallback. The review panel shows the count either way.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Campaign setup" icon="bullhorn" href="/learn/multilingual-campaigns/campaign-setup">
+    Per-language subject and sender, the review panel, and test sends
+  </Card>
+  <Card title="Custom properties" icon="tag" href="/learn/audience/contacts#custom-properties">
+    Property types, fallback values, and how properties become merge tags
+  </Card>
+</CardGroup>

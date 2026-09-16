@@ -1,0 +1,82 @@
+---
+title: "Multilingual Campaigns"
+description: "Send one campaign in several languages. Each contact receives the version that matches their language, with its own subject, sender, unsubscribe footer, and web version."
+---
+
+A multilingual campaign is one campaign that goes out in more than one language. One template holds a Czech and an English version, one audience is selected, and every contact receives the language they asked for. There is no second campaign, no second segment, and no second report to reconcile.
+
+Multilingual campaigns are automatic. If the template a campaign links to has more than one language, the campaign is multilingual. There is no switch to turn on.
+
+<img src="/images/multilingual-review-panel.png" alt="The Multi-language send panel on the Review & Send step, listing each language with its recipient count, subject and sender, and the primary-language fallback summary" />
+
+## The Three Pieces
+
+Three things work together. Each has its own page in this section.
+
+<CardGroup cols={3}>
+  <Card title="A template with languages" icon="languages" href="/learn/multilingual-campaigns/template-languages">
+    Add languages to a template in the email editor. One is primary, the rest are secondary.
+  </Card>
+  <Card title="A contact language property" icon="user-tag" href="/learn/multilingual-campaigns/contact-language">
+    A property on each contact that says which language they want. Designate one, or let Lettr find it by name.
+  </Card>
+  <Card title="The campaign" icon="bullhorn" href="/learn/multilingual-campaigns/campaign-setup">
+    Optional per-language subject and sender, a review panel that shows who gets what, and test sends in any language.
+  </Card>
+</CardGroup>
+
+## How a Send Works
+
+When a multilingual campaign starts, Lettr reads each recipient's language property and matches it against the languages the template has:
+
+1. A contact with `cs` gets the Czech version. A contact with `cs-CZ` or `czech` gets it too. Matching is forgiving; see [how values are matched](/learn/multilingual-campaigns/contact-language#how-values-are-matched).
+2. A contact with no value, or a value that matches no template language, gets the **primary language**. Everyone receives an email.
+3. Each recipient gets their language's content, subject, sender and reply-to, an unsubscribe footer translated into their language, and a web version in the same language.
+
+Content is locked in every language the moment you schedule or start the campaign. Editing or deleting the template afterwards does not change what goes out.
+
+## Quick Start
+
+<Steps>
+  <Step title="Add a second language to a template">
+    Open a marketing template in the editor and use the **Multilingual** control in the top bar to add a language. Translate the text. See [Template languages](/learn/multilingual-campaigns/template-languages).
+  </Step>
+  <Step title="Tell Lettr where each contact's language lives">
+    Go to **Audience** → **Properties**, edit the property that holds the language, and tick **Use as communication language**. If your property is already named `language`, `lang` or `locale`, this step is optional. See [Contact language](/learn/multilingual-campaigns/contact-language).
+  </Step>
+  <Step title="Create the campaign">
+    Link the template in the Compose step. The languages show up immediately. Optionally set a translated subject and sender per language. See [Campaign setup](/learn/multilingual-campaigns/campaign-setup).
+  </Step>
+  <Step title="Check the Review & Send panel">
+    The **Multi-language send** panel shows how many recipients get each language and how many fall back to the primary language, with the values that did not match.
+  </Step>
+  <Step title="Send a test in each language, then send">
+    The test email box has a language picker. After sending, the campaign detail page shows the same panel with final counts. See [Sending and results](/learn/multilingual-campaigns/sending-and-results).
+  </Step>
+</Steps>
+
+## What Recipients Get
+
+| Part of the email | Where it comes from |
+|-|-|
+| Content | The template's version in the recipient's language |
+| Subject, from name, from email, reply-to | The per-language values when set, otherwise the campaign's primary values |
+| Unsubscribe footer | Translated into the recipient's language (19 languages, English for anything else) |
+| Web version link | Opens the same language the recipient received |
+| Merge tags | The recipient's own contact properties, in every language |
+
+## Where It Fits
+
+Multilingual campaigns build on three existing features. If you are new to any of them, read those pages first.
+
+<CardGroup cols={3}>
+  <Card title="Templates" icon="paintbrush" href="/learn/templates/topol-editor">
+    The visual editor where languages are added
+  </Card>
+  <Card title="Audience" icon="users" href="/learn/audience/contacts">
+    Contacts and the custom properties they carry
+  </Card>
+  <Card title="Campaigns" icon="bullhorn" href="/learn/campaigns/introduction">
+    The four-step campaign builder
+  </Card>
+</CardGroup>
