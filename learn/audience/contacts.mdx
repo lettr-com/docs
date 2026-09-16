@@ -119,6 +119,10 @@ Each property has a type that affects how it can be filtered in segments and how
 
 Each property can have an optional fallback value, used whenever a contact doesn't have a value of their own for that property. Fallbacks are handy when you want to safely personalize emails without leaving variables blank — for example, a `first_name` property with the fallback `there` will render as "Hi there" for contacts whose first name you don't know.
 
+### Communication Language
+
+One property per team can hold each contact's language. Tick **Use as communication language** when you create or edit the property, and it shows a **Communication language** badge in the list. Campaigns built on a template with more than one language read the recipient's language from this property and send each person the matching version. The hosted [preferences page](/learn/audience/email-preferences) renders in that language too. If no property is designated, Lettr falls back to a property named `communication_language`, `language`, `lang` or `locale`. See [Contact language](/learn/multilingual-campaigns/contact-language) for the matching rules.
+
 ### Managing Properties
 
 Go to **Audience** → **Properties** to view, create, edit, and delete your team's property schema.

@@ -19,6 +19,7 @@ A bit of preparation saves time:
 
 - **Define your custom properties first.** If you want to import data like `first_name`, `plan`, or `signup_date`, create those [properties](/learn/audience/contacts#custom-properties) in **Audience** → **Properties** before importing. The import flow can then map your CSV columns directly to existing properties.
 - **Have your file ready.** A CSV with one contact per row. The only column the import truly needs is the email address; everything else is optional.
+- **Importing a language column?** Map it to a property named `language`, `lang` or `locale` (or one you've marked **Use as communication language**) and [multilingual campaigns](/learn/multilingual-campaigns/contact-language) will route each contact to their language with no further setup. Values like `cs`, `cs_CZ` and `Czech` all work.
 - **Decide how you want to handle duplicates.** If a contact in your CSV already exists in your audience, you can either skip them entirely or update them with the new values from the file.
 
 ### The Import Flow
