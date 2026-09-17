@@ -29,7 +29,7 @@ As soon as the template has a language, the label changes. From then on the drop
 
 ### What the Language settings panel shows
 
-<img src="/images/multilingual-language-settings.png" alt="Language settings panel with a Translate all button in its header, English outlined in green with a Primary badge as the language being edited, Czech and German rows each with Set as primary, a translate icon and a red delete button, and an Add language button at the bottom" />
+<img src="/images/multilingual-language-settings.png" alt="Language settings panel opened from the English dropdown: a Translate all button in the header, English outlined in green with a check mark and a Primary badge, Czech and German rows each with Set as primary, a translate icon with an arrow and a red delete button, and an Add language button at the bottom" />
 
 | Element | Meaning |
 |-|-|
@@ -89,11 +89,11 @@ The panel stays open while you add, switch, delete and set languages. Click anyw
   <Step title="Preview every version and save">
     Click **Preview**. The language dropdown stays in the top bar, so you can flip between versions without leaving the preview. In preview it only switches languages. Adding, deleting and **Set as primary** are available in edit mode only.
 
-    <img src="/images/multilingual-preview-switcher.png" alt="Preview mode with the language dropdown open, listing English, Czech and German with no edit controls, English selected and the English email shown" />
+    <img src="/images/multilingual-preview-switcher.png" alt="Preview mode with the English dropdown open, listing English, Czech and German with no edit controls, English outlined in green and the English Happy Donuts email shown on the desktop view" />
 
     Pick another language and the preview re-renders in that version.
 
-    <img src="/images/multilingual-preview-translated.png" alt="Preview mode with Czech selected in the language dropdown and the Czech version of the Happy Donuts email shown" />
+    <img src="/images/multilingual-preview-translated.png" alt="Preview mode with the dropdown switched to Czech, Czech outlined in green in the open list, and the Czech version of the email shown with the heading Šťastné donuty and the button Lákavá nabídka" />
 
     Check desktop and mobile. Translated text is often longer than the original, and a button label that fits in English may wrap in German. Then click **Save**.
   </Step>
@@ -119,7 +119,7 @@ Open the dropdown and click a language row. The canvas shows that version, and t
 
 Click **Set as primary** on a secondary language. The editor switches to it, and the **Primary** badge moves.
 
-<img src="/images/multilingual-set-as-primary.png" alt="Language settings panel after setting Czech as primary: Czech is outlined in green with the Primary badge and the dropdown is labelled Czech, while English and German below it each show Set as primary and a red delete button" />
+<img src="/images/multilingual-set-as-primary.png" alt="Language settings panel with English outlined in green as the Primary language, and the Set as primary button highlighted on the Czech row below it, next to its translate icon and red delete button" />
 
 Nothing is lost. Any content the new primary was missing is filled in from the old primary, so the new primary is always complete. This also means blocks you never translated now hold text in the old primary's language. Read through the new primary after the switch.
 
@@ -130,6 +130,8 @@ Changing the primary also changes the campaign fallback. From then on, contacts 
 ### Delete a language
 
 Click the trash icon on a secondary language and confirm **Do you really want to delete this language?**. All translations for that language are removed. If it was the language you were editing, the editor switches back to the primary.
+
+<img src="/images/multilingual-delete-language.png" alt="Warning dialog asking Do you really want to delete this language? with a Cancel button and a red Delete button" />
 
 Two languages cannot be deleted:
 
@@ -146,15 +148,17 @@ The translate icon on a language row and the **Translate all** button fill langu
 
 ## Seeing a Template's Languages
 
-Once a saved template has more than one language, it is marked as multilingual in three places:
+Once a saved template has more than one language, it is marked as multilingual in three places.
 
-- **Template grids and list**: a language badge such as `EN · ES · FR` on the card. Up to three languages are shown in full. With more, the badge shows the first two and `+N`, such as `EN · ES +2`. Hovering lists them all, one per line, with the primary first. The card thumbnail always shows the primary language.
-- **Template detail page**: a language picker above the preview. Switch it to read any version without opening the editor.
-- **Campaign template picker**: the same badge on each card in the Compose step, so you can tell a multilingual template from a single-language one before you link it.
+**Template grids and list** show a language badge such as `EN · ES · FR` on the card. Up to three languages are shown in full. With more, the badge shows the first two and `+N`, such as `EN · ES +2`. Hovering lists them all, one per line, with the primary first. The card thumbnail always shows the primary language.
 
 <img src="/images/multilingual-template-badge.png" alt="The Emails list with the Payment Declined template showing an EN · ES · FR language badge next to its name" />
 
+**The template detail page** has a language picker above the preview. Switch it to read any version without opening the editor.
+
 <img src="/images/multilingual-template-detail-picker.png" alt="Template detail page for the Payment Declined template with the language picker next to Edit email open, listing English (Primary) with a check mark, Spanish and French above the English preview" />
+
+**The campaign template picker** shows the same badge on each card in the Compose step, so you can tell a multilingual template from a single-language one before you link it.
 
 ## What a Campaign Can Send
 
