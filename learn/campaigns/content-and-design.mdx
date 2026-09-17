@@ -81,6 +81,8 @@ Linking does two things:
 
 While the campaign is still in Draft, future edits to the template's HTML automatically propagate to the campaign. Once the campaign moves out of Draft (when you schedule or send it), the HTML is frozen — later template edits don't affect it.
 
+If the template has more than one language, linking it makes the campaign a [multilingual campaign](/learn/multilingual-campaigns/introduction). Each recipient receives the language that matches their contact's language property, and a **Per-language subject and sender** section appears below the sender fields so you can translate the subject or change the sender per language. See [Campaign setup](/learn/multilingual-campaigns/campaign-setup) for the full walkthrough.
+
 <Warning>
   If you link a template and then make edits directly in the campaign's HTML editor while still in Draft, the next time the source template is saved your changes will be overwritten with the template's version. If you want to diverge from the template, **unlink** the template from the campaign before editing, or finish your campaign customizations after you've stopped editing the template.
 </Warning>
@@ -137,6 +139,8 @@ You'll see this surfaced as a warning in the campaign builder in two places:
 
 Neither warning blocks you from saving the template or sending the test. The fallback is a safety net, not a gate. If you want full control over the styling and copy, add `{{unsubscribe_link}}` to your own footer and the auto-append is skipped.
 
+In a [multilingual campaign](/learn/multilingual-campaigns/sending-and-results#the-unsubscribe-footer), the default footer matches the language version each recipient receives, so a German recipient sees "Abmelden" rather than "Unsubscribe".
+
 <Warning>
   Even with the automatic fallback, you should include your own unsubscribe link. The default footer is intentionally plain so it doesn't clash with your design, and recipients are more likely to use a clearly branded unsubscribe link than a generic one. Without a visible unsubscribe path you also risk:
 
@@ -183,6 +187,8 @@ The preview and screenshot are useful for layout checks. Test emails are the onl
 From the Compose or Review step, click **Send test email** and enter one or more recipient addresses (yourself, teammates, a QA address). The test arrives as a transactional email; tracking is disabled on tests to keep them out of campaign analytics. Tests are rate-limited to prevent accidents.
 
 Tests use sample data for merge tags rather than real recipient values — they're for checking layout and merge tag syntax, not for confirming personalization for a specific contact.
+
+When the campaign links a template with more than one language, the test box has a language picker. Send one test per language to check each translated subject and sender. See [Sending a test email](/learn/multilingual-campaigns/campaign-setup#sending-a-test-email) in the multilingual guide.
 
 ## Editing Sent Campaigns
 

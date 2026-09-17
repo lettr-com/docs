@@ -300,6 +300,18 @@
                 ]
               },
               {
+                "group": "Multilingual Campaigns",
+                "pages": [
+                  "learn/multilingual-campaigns/introduction",
+                  "learn/multilingual-campaigns/template-languages",
+                  "learn/multilingual-campaigns/template-translation",
+                  "learn/multilingual-campaigns/how-template-languages-work",
+                  "learn/multilingual-campaigns/contact-language",
+                  "learn/multilingual-campaigns/campaign-setup",
+                  "learn/multilingual-campaigns/sending-and-results"
+                ]
+              },
+              {
                 "group": "Webhooks",
                 "pages": [
                   "learn/webhooks/introduction",
@@ -584,7 +596,8 @@
               "knowledge-base/best-practices/batch-bulk-sending",
               "knowledge-base/best-practices/email-accessibility",
               "knowledge-base/best-practices/dark-mode-design",
-              "knowledge-base/best-practices/personalization-dynamic-content"
+              "knowledge-base/best-practices/personalization-dynamic-content",
+              "knowledge-base/best-practices/multilingual-campaigns"
             ]
           },
           {
@@ -626,7 +639,8 @@
               "knowledge-base/use-cases/welcome-onboarding-emails",
               "knowledge-base/use-cases/two-factor-authentication-emails",
               "knowledge-base/use-cases/invoice-billing-emails",
-              "knowledge-base/use-cases/adamko-in-action"
+              "knowledge-base/use-cases/adamko-in-action",
+              "knowledge-base/use-cases/multilingual-newsletter"
             ]
           },
           {

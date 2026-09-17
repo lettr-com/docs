@@ -1,0 +1,118 @@
+---
+title: "Multilingual Email Campaigns"
+description: "How to collect, store and clean each contact's language, choose a fallback deliberately, translate more than the body, and test and measure a campaign that goes out in several languages."
+---
+
+Sending one campaign in several languages is a data problem before it is a translation problem. The email itself is the easy part: translators are good at their job and the editor keeps the layout in step across versions. What decides whether a German customer actually receives German is the value sitting in their contact record, and that value was written by a signup form, an import, or a colleague months ago. This guide covers the habits that make language data trustworthy, and then the sending practices that build on it.
+
+The mechanics live in the [Multilingual Campaigns](/learn/multilingual-campaigns/introduction) section. This page is about doing it well.
+
+---
+
+## Collect the Language, Don't Guess It
+
+The most reliable language value is one the contact gave you.
+
+- **Ask at signup.** A language selector on the form, defaulted to the page's language, costs nothing and produces clean codes.
+- **Capture the page language.** If the person signed up on `/de/`, store `de`. Country is a weaker signal: Switzerland, Belgium and Canada each have several languages, and expats read their own.
+- **Read the browser locale as a last resort.** `Accept-Language` gives you `de-AT` or `en-GB`, which Lettr matches on the base language, so it is a fine fallback when nothing better exists.
+
+Avoid deriving language from a name, a phone prefix, or a billing address. Those guesses are wrong often enough that recipients notice, and a wrongly guessed language reads worse than the primary language would have.
+
+## Keep One Property as the Source of Truth
+
+Teams accumulate language-shaped properties: `lang` from a CRM export, `locale` from the app database, `language` from a newsletter form. Each may be right for a subset of contacts. Pick one, backfill it from the others, and [designate it](/learn/multilingual-campaigns/contact-language#designate-a-property) as the communication language in **Audience** → **Properties**.
+
+Designating matters even when Lettr would find the property by name. Name matching picks the first defined property from a fixed list, so a property named `communication_language` added later for another purpose would silently take over routing. The designated property is explicit, shows a badge in the list, and is named in the review panel so nobody has to remember the rule.
+
+## Standardise on Language Codes
+
+Lettr accepts `ger`, `German`, `Deutsch` and `de_DE` and routes them all to `de`. That tolerance is there to make messy data work on day one, not as a permanent state. Codes still win:
+
+- **Use ISO 639-1 codes** (`en`, `de`, `fr`) in your systems. Template languages use these two-letter codes, so a region in contact data (`de-AT`) adds nothing for routing.
+- **Store the same codes the template uses.** A template language `de` and contacts stored as `de` match on the strictest rule, and there is nothing to debug.
+- **Clean up on the way in.** If an import carries `Français` and `french`, map them to `fr` in the CSV before importing, or right after with a bulk update. The alias table catches them either way, but a clean property is easier to segment on and to export.
+
+Build a segment with `language is not empty` and scan the distinct values once a quarter. Anything that is not a code is a candidate for cleanup, and anything you do not recognise is a candidate for the fallback bucket.
+
+## Decide the Fallback Deliberately
+
+Every contact without a usable value receives the template's **primary language**. That choice deserves attention:
+
+- Make the primary language the one most of your audience reads, or the one that offends the fewest people when it is wrong. For a Central European brand that often means English rather than the home-market language.
+- Watch the fallback count in the [review panel](/learn/multilingual-campaigns/campaign-setup#the-review-panel). It shows how many recipients have no value and which unmatched values appear. A large "no value" number is a data-collection problem. A recurring unmatched value such as `klingon` or `n/a` is a form or import problem.
+- Decide whether to send at all. If a large share of the audience would get the fallback, consider a segment of `language is empty` contacts and a short campaign asking them to set their preference on the [preferences page](/learn/audience/email-preferences) first.
+
+<Tip>
+  A fallback is not a failure. Some contacts genuinely have no preference, and the primary language reaches them fine. The goal is to know the number and be comfortable with it, not to drive it to zero.
+</Tip>
+
+## Translate More Than the Body
+
+A translated body under an English subject line is the most common half-finished multilingual email. The subject and sender are what people see in the inbox list before opening.
+
+- **Subject** per language, always. It is one field per language in the Compose step.
+- **From name** when your brand or team name is written differently by market, or when the local team signs the email.
+- **Reply-to** when replies should reach someone who reads that language. A French reply landing in an English-only support queue is a bad experience on both sides.
+- **Preheader and footer text** live in the template's language versions. Check them; they are easy to forget because they are small.
+
+Lettr translates the automatic unsubscribe footer into 19 languages. A custom footer needs translating in every version.
+
+## Keep Layout Shared, Content Local
+
+The editor shares layout and styling across language versions and keeps content separate: text, button labels and links, images and HTML blocks. Work with that:
+
+- Finish the design in the primary language before adding versions. A block added later shows primary content in every version until someone translates it.
+- Leave room for expansion. German and Finnish run noticeably longer than English, and a button label that fits in English may wrap in German. Test the longest language at mobile width.
+- Keep images language-neutral where you can. An image with baked-in text has to be exported and uploaded again for every language. When one must be localised, replace the image file in each language version, and translate its alt text too.
+- Localise links, not just labels. A button that says "Zum Shop" should point at the German store. Button and image links can be set per language.
+- Treat machine translation as a draft. The editor's AI translation is a fast start, but **Translate all** overwrites existing translations, so run it before a translator edits the text, never after.
+
+## Test Every Language Before Sending
+
+Send one test per language from the review step, to an inbox you actually read. Check:
+
+- the subject and from name in the inbox list,
+- the body in the right language with no untranslated blocks (a block nobody translated shows primary text, not an empty space),
+- the unsubscribe footer language,
+- the web version link opening the same language.
+
+Then use the preview dialog with a real contact from each language group to confirm merge values render the way you expect. A first name works the same in every language, but a date or currency property may need formatting per market.
+
+## Measure by Language
+
+Engagement metrics are campaign-wide, so comparing languages takes one extra step. Recipients of secondary languages carry a language badge in the activity feed, which is enough to spot a version that underperforms: many badges under deliveries and few under opens.
+
+If you want per-language rates over time, keep the language in your own analytics: the [engagement events API](/api-reference/campaigns/list-campaign-engagement-events) gives you every event per recipient, and your contact data tells you the language.
+
+## Mind the Legal Side
+
+Consent text, the identity of the sender and the unsubscribe mechanism must be understandable to the recipient. Several jurisdictions expect commercial email in a language the consumer understands, and a translated body with an English-only legal footer undercuts that. Keep the mandatory parts in the same language as the rest of the email. See [Unsubscribe Best Practices](/knowledge-base/compliance/unsubscribe-best-practices) and [GDPR and Email](/knowledge-base/compliance/gdpr-email).
+
+## Common Mistakes
+
+| Mistake | What happens | Fix |
+|-|-|-|
+| Language stored in a `number` or `boolean` property | Ignored; everyone gets the primary language | Use a `string` property |
+| Two properties with language-like names, none designated | Routing follows the first name in Lettr's list, which may be the wrong one | Designate the right property |
+| Setting a property fallback value of `en` and expecting routing | Fallback values fill merge tags, they do not route | Store the real value on each contact |
+| Template keyed `english` and contacts stored as `en` | Works through the alias table, but only for the 19 supported languages | Key template languages by code |
+| Translated body, untranslated subject | Low opens in the secondary language | Fill the per-language subject |
+| Editing the template after scheduling | Nothing changes; the campaign sends the locked copy | Unschedule, edit, review, reschedule |
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Multilingual Campaigns" icon="language" href="/learn/multilingual-campaigns/introduction">
+    How the feature works, step by step
+  </Card>
+  <Card title="Contact Language" icon="user-tag" href="/learn/multilingual-campaigns/contact-language">
+    Designating the property and the full matching rules
+  </Card>
+  <Card title="Multilingual Newsletter" icon="newspaper" href="/knowledge-base/use-cases/multilingual-newsletter">
+    A worked example from messy data to a three-language send
+  </Card>
+  <Card title="List Hygiene" icon="broom" href="/knowledge-base/best-practices/list-hygiene">
+    Keeping contact data clean and current
+  </Card>
+</CardGroup>

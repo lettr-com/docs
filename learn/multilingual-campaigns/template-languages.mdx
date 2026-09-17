@@ -1,0 +1,229 @@
+---
+title: "Multilingual Templates"
+description: "Use the Create mutation dropdown in the email editor to add languages to a template, translate each version, switch between them, and manage the primary language."
+---
+
+A campaign can only send the languages its template has, so a multilingual campaign starts in the [email editor](/learn/templates/topol-editor). Make the template multilingual before you set up the campaign. There is nothing to enable in the campaign itself.
+
+A multilingual template is a normal template that holds several language versions of the same email. The editor calls these versions **mutations**, and this documentation calls them **language versions**. All of them share one design. Each one can have its own text, links, images and HTML.
+
+This page shows how to operate the language controls. For what exactly is saved per language and what is shared, read [How template languages work](/learn/multilingual-campaigns/how-template-languages-work).
+
+## The Create Mutation Dropdown
+
+Everything about a template's languages is controlled from one place: the globe dropdown in the editor's top bar, next to **Preview**.
+
+<img src="/images/multilingual-create-mutation-button.png" alt="Editor top bar with the undo and redo buttons, Preview, and the Create mutation dropdown with a globe icon" />
+
+On a template that has no languages yet, the dropdown is labelled **Create mutation**. Clicking it opens the **Language settings** panel, which at this point contains only an **Add language** button.
+
+<img src="/images/multilingual-create-mutation.png" alt="Editor top bar with the Create mutation dropdown open, showing the empty Language settings panel with an Add language button" />
+
+As soon as the template has a language, the label changes. From then on the dropdown shows **the name of the language you are currently editing**, such as **English** or **German**.
+
+<img src="/images/multilingual-language-label.png" alt="Editor with the Happy Donuts template open and the globe dropdown in the top bar labelled English instead of Create mutation" />
+
+<Tip>
+  Read the dropdown label before you type. It is the only indicator of which language version your edits go to.
+</Tip>
+
+### What the Language settings panel shows
+
+<img src="/images/multilingual-language-settings.png" alt="Language settings panel with a Translate all button in its header, English outlined in green with a Primary badge as the language being edited, Czech and German rows each with Set as primary, a translate icon and a red delete button, and an Add language button at the bottom" />
+
+| Element | Meaning |
+|-|-|
+| Language row | One row per language version, with the language name and its two-letter code. Click a row to switch to that language. |
+| Green outline and check mark | The language you are editing right now. The same name is shown on the dropdown itself. |
+| **Primary** badge | The primary language: the base content and the fallback. It has no delete button. |
+| **Set as primary** | Makes that language the primary one. See [Change the primary language](#change-the-primary-language). |
+| Translate icon and arrow | Fills that language with an AI translation. The arrow, shown once there is more than one language, picks the language to translate from. On the **Primary** row the button rewrites the primary content itself, so leave it alone. See [Template translation](/learn/multilingual-campaigns/template-translation). |
+| Trash icon | Deletes that language version after a confirmation. |
+| **Translate all** | Appears once the template has more than one language. Translates every secondary language from the primary. |
+| **Add language** | Opens the language search to add another version. |
+
+The panel stays open while you add, switch, delete and set languages. Click anywhere outside or press **Esc** to close it. Starting an AI translation closes it for you.
+
+## Creating a Multilingual Template
+
+<Steps>
+  <Step title="Finish the design first">
+    Build the template in one language and get the layout right: structures, images, buttons and styles. The layout is shared by all languages, so layout work after translating means re-checking each version.
+  </Step>
+  <Step title="Add the primary language">
+    Click **Create mutation**, then **Add language**. The panel lists every available language with its native name and two-letter code.
+
+    <img src="/images/multilingual-language-list.png" alt="Language settings panel with an empty Search language field above a scrollable list starting with Afar, Abkhaz, Avestan and Afrikaans, each with its code, and a Cancel button" />
+
+    Type in **Search language** to find a language by its name, native name or code, and click it.
+
+    <img src="/images/multilingual-add-language-search.png" alt="Language settings panel with engli typed in the search field and English (English) en as the only result" />
+
+    The first language you add becomes the **Primary** language, and the content already in the template becomes that language's content. Choose the language the template is actually written in. If your template is in German, add German first, not the language you plan to translate into.
+
+    <img src="/images/multilingual-primary-language.png" alt="Language settings panel showing English as the only language, outlined in green with the Primary badge, and the dropdown label changed from Create mutation to English" />
+  </Step>
+  <Step title="Add each translation">
+    Click **Add language** again and pick the next language. The editor **switches to the new language immediately**, and the dropdown label changes to its name.
+
+    <img src="/images/multilingual-new-language-untranslated.png" alt="Language settings panel with English as primary, Czech selected and outlined in green, and German below it. The dropdown is labelled Czech, but the canvas still shows the English Happy Donuts content" />
+
+    The canvas looks the same as before. That is expected: a new language has no content of its own yet, so every block shows the primary content until you translate it. Repeat for every language you want to send. Languages already in the template are hidden from the search, so each one can be added only once.
+  </Step>
+  <Step title="Translate the content">
+    Check that the dropdown shows the language you want to translate. Then click into each block and replace the content: text, button labels, links, and where needed image files and alt text. Your changes are stored for that language only, and the primary version stays untouched.
+
+    You can type the translations yourself or let the editor's AI write a first draft for one block, one language, or all languages at once. See [Template translation](/learn/multilingual-campaigns/template-translation).
+
+    <img src="/images/multilingual-editing-translation.png" alt="Editor with Czech selected in the dropdown and the whole email in Czech: a Czech logo image, the heading Šťastné donuty, the button Lahodná nabídka and the translated body text" />
+
+    Work through one language completely before moving to the next.
+  </Step>
+  <Step title="Find the blocks you missed">
+    A block you have not translated does not look empty. It shows the primary text. If the Czech version has a translated heading and button but its subheading still says "Taste the most popular flavors", that is exactly what Czech contacts would receive.
+
+    <img src="/images/multilingual-untranslated-fallback.png" alt="Editor with Czech selected in the dropdown: the logo, the heading Šťastné donuty and the button Lahodná nabídka are in Czech, but the selected subheading still shows the English text Taste the most popular flavors" />
+
+    The editor does not mark untranslated blocks, so go through every secondary language block by block.
+  </Step>
+  <Step title="Preview every version and save">
+    Click **Preview**. The language dropdown stays in the top bar, so you can flip between versions without leaving the preview. In preview it only switches languages. Adding, deleting and **Set as primary** are available in edit mode only.
+
+    <img src="/images/multilingual-preview-switcher.png" alt="Preview mode with the language dropdown open, listing English, Czech and German with no edit controls, English selected and the English email shown" />
+
+    Pick another language and the preview re-renders in that version.
+
+    <img src="/images/multilingual-preview-translated.png" alt="Preview mode with Czech selected in the language dropdown and the Czech version of the Happy Donuts email shown" />
+
+    Check desktop and mobile. Translated text is often longer than the original, and a button label that fits in English may wrap in German. Then click **Save**.
+  </Step>
+</Steps>
+
+<Warning>
+  Adding, translating and deleting languages all happen in your editing session. Nothing reaches the saved template, its language badge, or any campaign until you click **Save**. Until then, **Undo** reverts language changes like any other edit. The editor's [autosave history](/learn/templates/topol-editor#autosave-and-version-history) keeps snapshots of your session, languages included, but an autosave is a restore point, not a save.
+</Warning>
+
+Once the template is saved, its cards show a language badge such as `EN · ES · FR`, and any campaign that links it becomes multilingual. See [Seeing a template's languages](#seeing-a-templates-languages).
+
+<Tip>
+  Any existing template built in the visual editor can be turned into a multilingual one this way, including templates already used by past campaigns. A multilingual template also still works anywhere a single-language template does. Only campaigns pick a language per recipient. Everything else, including emails sent through the API with `template_slug`, always gets the primary version, and there is no language parameter to change that.
+</Tip>
+
+## Managing Languages
+
+### Switch the language you are editing
+
+Open the dropdown and click a language row. The canvas shows that version, and the dropdown label changes to its name. Undo and redo also restore the language that was selected at that point, so check the label again after undoing.
+
+### Change the primary language
+
+Click **Set as primary** on a secondary language. The editor switches to it, and the **Primary** badge moves.
+
+<img src="/images/multilingual-set-as-primary.png" alt="Language settings panel after setting Czech as primary: Czech is outlined in green with the Primary badge and the dropdown is labelled Czech, while English and German below it each show Set as primary and a red delete button" />
+
+Nothing is lost. Any content the new primary was missing is filled in from the old primary, so the new primary is always complete. This also means blocks you never translated now hold text in the old primary's language. Read through the new primary after the switch.
+
+In a draft campaign that links this template, the main **Subject**, sender and **Reply-to** fields always belong to whichever language is primary. After the switch they apply to the new primary, the old primary inherits them like any other language, and per-language values you had entered for the new primary are no longer used. Open the draft and rewrite the subjects; see [Per-language subject and sender](/learn/multilingual-campaigns/campaign-setup#per-language-subject-and-sender).
+
+Changing the primary also changes the campaign fallback. From then on, contacts with no matching language receive the new primary. A campaign that is already scheduled or sending is not affected, because its content is locked when it is scheduled or started.
+
+### Delete a language
+
+Click the trash icon on a secondary language and confirm **Do you really want to delete this language?**. All translations for that language are removed. If it was the language you were editing, the editor switches back to the primary.
+
+Two languages cannot be deleted:
+
+- **The primary language.** It has no trash icon. Set another language as primary first, then delete it.
+- **The last remaining language.** Once a template has a language, it always keeps at least one. A template with a single language behaves like a normal single-language template, and campaigns treat it as one.
+
+<Note>
+  Languages cannot be renamed or re-keyed. To replace one, add the correct language, copy the translations over, and delete the wrong one.
+</Note>
+
+### Translate with AI
+
+The translate icon on a language row and the **Translate all** button fill language versions with an AI translation, and single blocks can be translated from the AI menu. Both overwrite translations that already exist. [Template translation](/learn/multilingual-campaigns/template-translation) covers the whole workflow.
+
+## Seeing a Template's Languages
+
+Once a saved template has more than one language, it is marked as multilingual in three places:
+
+- **Template grids and list**: a language badge such as `EN · ES · FR` on the card. Up to three languages are shown in full. With more, the badge shows the first two and `+N`, such as `EN · ES +2`. Hovering lists them all, one per line, with the primary first. The card thumbnail always shows the primary language.
+- **Template detail page**: a language picker above the preview. Switch it to read any version without opening the editor.
+- **Campaign template picker**: the same badge on each card in the Compose step, so you can tell a multilingual template from a single-language one before you link it.
+
+<img src="/images/multilingual-template-badge.png" alt="The Emails list with the Payment Declined template showing an EN · ES · FR language badge next to its name" />
+
+<img src="/images/multilingual-template-detail-picker.png" alt="Template detail page for the Payment Declined template with the language picker next to Edit email open, listing English (Primary) with a check mark, Spanish and French above the English preview" />
+
+## What a Campaign Can Send
+
+When you link a multilingual template, the campaign becomes multilingual for exactly those languages. If the template is English and German, a French contact receives the primary language. To send French, add a French version to the template. There is no per-campaign language list to maintain, and no way to send a language the template does not have.
+
+A campaign reads the template's languages the moment the template is picked in the Compose step, with no need to save the draft first. A language added to the template while the campaign is still a draft appears in the campaign the next time it is opened.
+
+The subject line, sender and reply-to are not part of the template. Translate them per language in the campaign; see [Campaign setup](/learn/multilingual-campaigns/campaign-setup).
+
+## Which Templates Qualify
+
+- **Templates built in the visual editor** can hold languages. Campaigns link marketing templates only, so a transactional template needs the **Copy to Marketing** action first; see [Transactional vs. Marketing Templates](/learn/templates/projects#transactional-vs-marketing-templates).
+- **Custom HTML templates** and content written directly in the campaign's HTML editor are single-language. The multilingual mechanism needs the editor's language versions.
+
+<Note>
+  Campaigns sent before multilingual campaigns existed keep working exactly as they did. Their content was stored in a single language, and Lettr does not rebuild it in other languages after the fact.
+</Note>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="I cannot find the Create mutation dropdown">
+    If the template already has a language, the dropdown shows that language's name instead, for example **English**. Look for the globe icon next to **Preview**. If there is no globe at all, you are not in the visual editor: Custom HTML templates and a campaign's own HTML editor do not support languages.
+  </Accordion>
+  <Accordion title="I added a language and nothing changed on the canvas">
+    The editor did switch to the new language; the dropdown label shows its name. A new language has no content of its own, so it displays the primary content until you translate each block.
+  </Accordion>
+  <Accordion title="A translated email still contains primary-language text">
+    Those blocks were never edited in that language, so they fall back to the primary content. Select the language in the editor, find the blocks, and translate them. Blocks added to the layout after translating are the usual cause.
+  </Accordion>
+  <Accordion title="I translated a block, but the primary language changed instead">
+    The dropdown was showing the primary language while you typed. Undo, select the secondary language, and translate again.
+  </Accordion>
+  <Accordion title="I changed an image in one language and it changed everywhere">
+    You changed a shared setting, such as the image width or padding, or you were editing the primary language, which untranslated versions follow. Select the secondary language first, then replace the image file itself.
+  </Accordion>
+  <Accordion title="The template's original content ended up under the wrong language">
+    The first language you add takes over the existing content. Add the language the content is really in, click **Set as primary** on it, then delete the wrong one. Check the text of the new primary afterwards.
+  </Accordion>
+  <Accordion title="I cannot delete a language">
+    It is the primary language, or it is the only language left. Set another language as primary first. The last remaining language cannot be removed.
+  </Accordion>
+  <Accordion title="I cannot add, remove or reorder items in a Products block">
+    Items of a Products block can only be changed while the primary language is selected. Switch to the primary, change the items, then switch back and translate their texts.
+  </Accordion>
+  <Accordion title="A saved block asks me to select a preferred language">
+    A saved block keeps the language versions it was saved with. When the editor shows **Select preferred language**, the block has several versions. Pick the one you want to work with, and your changes are stored in that version only. After inserting a saved block into a template, check it in each of the template's languages.
+  </Accordion>
+  <Accordion title="A language is missing from the Add language search">
+    It is already in the template. Each language can be added once.
+  </Accordion>
+  <Accordion title="The template card shows no language badge">
+    The badge appears for saved templates with more than one language. Click **Save** in the editor after adding languages.
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Template translation" icon="language" href="/learn/multilingual-campaigns/template-translation">
+    Translate a block, a language, or the whole template with AI
+  </Card>
+  <Card title="How template languages work" icon="layer-group" href="/learn/multilingual-campaigns/how-template-languages-work">
+    What is stored per language, what is shared, and how fallback works
+  </Card>
+  <Card title="Contact language" icon="user-tag" href="/learn/multilingual-campaigns/contact-language">
+    Tell Lettr which contact property holds each person's language
+  </Card>
+  <Card title="Campaign setup" icon="bullhorn" href="/learn/multilingual-campaigns/campaign-setup">
+    Per-language subject and sender, the review panel, and test sends
+  </Card>
+</CardGroup>

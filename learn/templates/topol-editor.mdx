@@ -177,7 +177,7 @@ The top toolbar provides access to editing controls and workflow tools:
 | Tool | Function |
 |---|---|
 | **Undo / Redo** | Step backward or forward through changes within the current session. History is cleared when the editor is closed. |
-| **Multilingual** | Switch between language versions of the template. All versions share the same structure; text content is independent per language. See [Multilingual Templates](https://support.topol.io/en/articles/12665820-multilingual-templates). |
+| **Create mutation** (language dropdown) | Add, switch between, and delete language versions of the template, and set the primary language. Shows the current language's name once a language exists. See [Multilingual Templates](/learn/multilingual-campaigns/template-languages). |
 | **Desktop / Mobile** | Toggle between desktop and mobile preview modes |
 | **Show hidden** | Reveal content hidden on the current viewport (desktop or mobile) for editing |
 | **Autosave history** | View and restore automatically saved versions. See [Autosave with version history](https://support.topol.io/en/articles/10760052-autosave-with-version-history). |
@@ -186,9 +186,11 @@ The top toolbar provides access to editing controls and workflow tools:
 
 ### Multilingual templates
 
-The multilingual system allows a single template to contain multiple language versions. All versions share the same structural layout (structures, columns, block positions) while maintaining independent text content per language.
+The multilingual system allows a single template to contain multiple language versions. All versions share the same layout and styling, while text, button labels and links, images, HTML blocks and the preheader can differ per language. The first language you add is the primary; the others start empty and show its content in every block you have not translated. See [How template languages work](/learn/multilingual-campaigns/how-template-languages-work).
 
-Structural changes (adding, removing, or rearranging structures) made in any language version are applied to all versions. Only text content within blocks is language-specific.
+Structural changes (adding, removing, or rearranging blocks and structures) and style changes made in any language version are applied to all versions. For the full walkthrough, see [Multilingual Templates](/learn/multilingual-campaigns/template-languages).
+
+Campaigns use these versions automatically. Link a template with more than one language to a campaign and each recipient receives the version that matches their contact's language property, with a translated subject and sender if you set them. See [Multilingual Campaigns](/learn/multilingual-campaigns/introduction).
 
 ### Autosave and version history
 

@@ -1,0 +1,153 @@
+---
+title: "Multilingual Newsletter"
+description: "A worked example: a German online shop expanding to France and Belgium sends one newsletter in German, French and English to an audience with messy language data, using a single campaign."
+---
+
+The [Multilingual Campaigns](/learn/multilingual-campaigns/introduction) section explains the feature piece by piece. This article follows one team through a real send, including the parts that are usually messy: language values in four different spellings, a property nobody designated, and a group of contacts with no language at all.
+
+---
+
+## The Situation
+
+Blütenhaus is a German online flower shop. For three years it sent a monthly newsletter in German to about 12,000 subscribers. This spring it opened shipping to France and Belgium, and about 3,000 French-speaking customers have signed up since. There is also a long tail of expats in Berlin who signed up on the English version of the site.
+
+Until now the team ran two campaigns per month, one German and one French, each to a hand-maintained list. The English speakers got the German one. Nobody was happy with it: the two campaigns fell out of sync, the French one always went out a day late, and the English speakers kept unsubscribing.
+
+The goal for the June newsletter: one campaign, three languages, one audience.
+
+## Step 1: Look at the Data
+
+The team opens **Audience** → **Properties** and finds three properties that look like a language:
+
+| Property | Where it came from | Sample values |
+|-|-|-|
+| `lang` | The original German signup form | `de`, empty |
+| `language` | The French site's form, added this spring | `fr`, `fr-BE`, `Français` |
+| `locale` | An export from the shop's database | `de_DE`, `fr_FR`, `en_US` |
+
+None of them is complete, and no property is designated. Before touching the campaign, they consolidate.
+
+They keep `language` as the single source of truth, because it is the property the current forms write to. A [bulk update through the API](/api-reference/audience/bulk-create-contacts) copies `lang` and `locale` values into `language` for every contact where `language` is empty, using the raw value as it is. That leaves `language` holding a mix: `de`, `de_DE`, `fr`, `fr-BE`, `fr_FR`, `Français`, `en_US`, and about 900 empty values from the earliest signups.
+
+They do not clean the spellings yet. Lettr will [match them](/learn/multilingual-campaigns/contact-language#how-values-are-matched) anyway, and the review panel will show whether anything falls through.
+
+Then they edit `language`, tick **Use as communication language**, and save. The property now carries a **Communication language** badge.
+
+<Tip>
+  Designating the property is the one step that removes ambiguity. Without it, Lettr would have picked `language` by name anyway, because it comes before `lang` and `locale` in the list of names it checks. But the next person on the team would have had to know that. Now the review panel says "designated language property" and nobody has to remember.
+</Tip>
+
+## Step 2: Add Languages to the Template
+
+The June newsletter already exists as a German marketing template. The designer opens it in the editor and clicks **Create mutation** in the top bar. They add German first, so the existing content becomes the primary German version, then add French and English. Each new version opens showing the German content, and they paste the translations block by block. The layout is shared, so the product grid and the footer stay identical. The hero banner has German text baked into the image, so they upload a French and an English banner in those versions, and point the French **Shop now** button at the French store.
+
+Two things get checked at this point:
+
+- The French version at mobile width, because "Jetzt bestellen" became "Commander maintenant" and the button label wraps. They shorten it to "Commander".
+- The template's own unsubscribe line. The template has `{{unsubscribe_link}}` in its footer, so the label around it needs translating in each version. They do it now rather than discovering it in a test.
+
+Back in the template list, the card now shows a `DE · FR · EN` badge.
+
+## Step 3: Build the Campaign
+
+**Compose.** They create the campaign, choose **Use template**, and pick the newsletter. The header confirms `3 languages: German (DE, primary), French (FR), English (EN)`.
+
+The primary subject and sender are German: subject "Juni-Sträuße und kostenloser Versand", from name "Blütenhaus", from `hello@bluetenhaus.de`, reply-to `service@bluetenhaus.de`.
+
+In **Per-language subject and sender** they expand the French row and set:
+
+- Subject: "Bouquets de juin et livraison offerte"
+- From name: "Blütenhaus Fleurs"
+- Reply-to: `bonjour@bluetenhaus.fr`, which reaches the new French-speaking support agent
+
+The from email stays empty, so French sends from `hello@bluetenhaus.de` like everything else. The row collapses showing `3 custom fields`.
+
+For English they set only the subject, "June bouquets and free shipping". Replies go to the German support address, which handles English fine.
+
+**Audience.** They select the full subscribed audience, no segment. The estimate loads and no warning appears, because a language property is designated.
+
+**Schedule.** Thursday, 9:00 local time, as always.
+
+## Step 4: Read the Review Panel
+
+The **Multi-language send** panel on Review & Send is where the data work pays off.
+
+**Language taken from** `language`, tagged **designated language property**.
+
+| Language | Recipients | Subject | From |
+|-|-|-|-|
+| DE · Primary | 11,140 | Juni-Sträuße und kostenloser Versand | Blütenhaus \<hello@bluetenhaus.de\> |
+| FR | 3,010 | Bouquets de juin et livraison offerte **Custom** | Blütenhaus Fleurs \<hello@bluetenhaus.de\> **Custom** |
+| EN | 412 | June bouquets and free shipping **Custom** | Blütenhaus \<hello@bluetenhaus.de\> |
+
+Below that, **Fallback**: `1,438 of 14,562 recipients will get German (DE), the primary language`, broken down into:
+
+- 903 have no language value
+- 535 have a value that matches no template language: `frz ×12`, `nl ×498`, `n/a ×25`
+
+The 1,438 are already counted in the German row. The panel tells you why they are there.
+
+Three findings, each with an obvious next step:
+
+1. **`nl ×498`**: half a thousand Dutch-speaking customers, mostly from Flanders, whom nobody had thought about when shipping to Belgium opened. Many of them read German well enough, so the fallback is acceptable for June, and the team notes to add a Dutch version for July.
+2. **`dt ×12`** and **`n/a ×25`**: leftovers from an old form with a free-text field. `frz` was someone's abbreviation for Französisch and is not in the alias table, so those twelve get German this month. They fix the 37 records by hand after the send.
+3. **903 with no value**: the earliest German subscribers, from before the form asked. German is right for nearly all of them. They leave it.
+
+Nothing needs to change in the campaign. The French and English counts match what the team expected from the signup numbers, which is the real reassurance.
+
+## Step 5: Test Each Language
+
+From **Send a test email** they send three tests, switching the language picker each time: **Primary (de)**, **fr**, **en**. In the inbox:
+
+- German: subject and body correct, footer "Abmelden".
+- French: subject "Bouquets de juin…", from name "Blütenhaus Fleurs", the shortened button, footer "Se désabonner".
+- English: subject "June bouquets…", footer "Unsubscribe", from name still "Blütenhaus", as intended.
+
+They also open the campaign's detail page, click the thumbnail, choose **Audience contact**, and search for a French customer they know. The preview shows the French version with that customer's first name in the greeting. Done.
+
+They schedule the campaign.
+
+## Step 6: After the Send
+
+Thursday at 9:00 the campaign moves to Preparing, each recipient is matched to a language, and three batches go out. The detail page now shows the panel in the past tense: 11,140 got German, 1,438 of them as the fallback, 3,010 got French, 412 got English.
+
+In the activity feed the French and English recipients carry **FR** and **EN** badges next to their addresses. Filtering the feed to opens and scanning the badges gives a rough per-language picture within the hour. French opens are in line with German. English opens are noticeably better than before, which is what you would expect when people stop receiving a newsletter they cannot read.
+
+Two French recipients reply. Both replies land with the French support agent, because of the per-language reply-to.
+
+## What Changed for the Team
+
+| Before | After |
+|-|-|
+| Two campaigns per month, two lists to maintain | One campaign, the full audience |
+| English speakers received German | English speakers receive English |
+| Replies from French customers reached German support | Replies reach the French agent |
+| Nobody knew how many contacts lacked a language | The review panel shows 903, and the unmatched values by count |
+| Dutch-speaking customers invisible in the data | 498 identified, Dutch version planned |
+
+The whole change took one afternoon, most of it consolidating the three properties. The campaign itself took no longer to build than a single-language one.
+
+## Variations
+
+**A SaaS product with British and American users.** A template holds one version per language, identified by a two-letter code, so `en-US` and `en-GB` contacts both receive the single `en` version. Write that version in a neutral English. If spelling or date formats really must differ, keep the regional detail in merge tags or a conditional block on the contact's `locale` property rather than in a second English version.
+
+**A bank with a mandated customer language.** The language is set once in the core system and must not change with the recipient's browser. Sync it to a designated property through the API on every profile update, and never let the marketing form write to that property. The web version and the preferences page follow the same value, so the whole recipient experience stays in the mandated language.
+
+**A marketplace with sellers in ten countries.** Not every language needs its own version. Build the template in the four languages that cover 90 percent of the audience, make English the primary, and let the rest fall back. The review panel's unmatched-values list tells you which language to add next.
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Multilingual Campaigns" icon="language" href="/learn/multilingual-campaigns/introduction">
+    The feature, step by step
+  </Card>
+  <Card title="Best practices" icon="star" href="/knowledge-base/best-practices/multilingual-campaigns">
+    Collecting, storing and cleaning language data
+  </Card>
+  <Card title="Importing and Exporting" icon="file-import" href="/learn/audience/importing-and-exporting">
+    Mapping a CSV language column to a property
+  </Card>
+  <Card title="Segments" icon="filter" href="/learn/audience/segments">
+    Find contacts with an empty language property
+  </Card>
+</CardGroup>
