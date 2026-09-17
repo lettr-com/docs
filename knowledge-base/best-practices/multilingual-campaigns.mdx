@@ -3,7 +3,7 @@ title: "Multilingual Email Campaigns"
 description: "How to collect, store and clean each contact's language, choose a fallback deliberately, translate more than the body, and test and measure a campaign that goes out in several languages."
 ---
 
-Sending one campaign in several languages is a data problem before it is a translation problem. The email itself is the easy part: translators are good at their job and the editor keeps the layout in step across versions. What decides whether a Czech customer actually receives Czech is the value sitting in their contact record, and that value was written by a signup form, an import, or a colleague months ago. This guide covers the habits that make language data trustworthy, and then the sending practices that build on it.
+Sending one campaign in several languages is a data problem before it is a translation problem. The email itself is the easy part: translators are good at their job and the editor keeps the layout in step across versions. What decides whether a German customer actually receives German is the value sitting in their contact record, and that value was written by a signup form, an import, or a colleague months ago. This guide covers the habits that make language data trustworthy, and then the sending practices that build on it.
 
 The mechanics live in the [Multilingual Campaigns](/learn/multilingual-campaigns/introduction) section. This page is about doing it well.
 
@@ -27,11 +27,11 @@ Designating matters even when Lettr would find the property by name. Name matchi
 
 ## Standardise on Language Codes
 
-Lettr accepts `cz`, `Czech`, `česky` and `cs_CZ` and routes them all to `cs`. That tolerance is there to make messy data work on day one, not as a permanent state. Codes still win:
+Lettr accepts `ger`, `German`, `Deutsch` and `de_DE` and routes them all to `de`. That tolerance is there to make messy data work on day one, not as a permanent state. Codes still win:
 
-- **Use ISO 639-1 codes** (`cs`, `de`, `en`) in your systems, with a region only when different content goes out per region (`pt-BR` and `pt-PT`).
-- **Match your template language keys to the same codes.** A template keyed `cs` and contacts stored as `cs` match on the strictest rule, and there is nothing to debug.
-- **Clean up on the way in.** If an import carries `Deutsch` and `german`, map them to `de` in the CSV before importing, or right after with a bulk update. The alias table catches them either way, but a clean property is easier to segment on and to export.
+- **Use ISO 639-1 codes** (`en`, `de`, `fr`) in your systems. Template languages use these two-letter codes, so a region in contact data (`de-AT`) adds nothing for routing.
+- **Store the same codes the template uses.** A template language `de` and contacts stored as `de` match on the strictest rule, and there is nothing to debug.
+- **Clean up on the way in.** If an import carries `Français` and `french`, map them to `fr` in the CSV before importing, or right after with a bulk update. The alias table catches them either way, but a clean property is easier to segment on and to export.
 
 Build a segment with `language is not empty` and scan the distinct values once a quarter. Anything that is not a code is a candidate for cleanup, and anything you do not recognise is a candidate for the fallback bucket.
 
@@ -53,25 +53,27 @@ A translated body under an English subject line is the most common half-finished
 
 - **Subject** per language, always. It is one field per language in the Compose step.
 - **From name** when your brand or team name is written differently by market, or when the local team signs the email.
-- **Reply-to** when replies should reach someone who reads that language. A German reply landing in a Czech-only support queue is a bad experience on both sides.
+- **Reply-to** when replies should reach someone who reads that language. A French reply landing in an English-only support queue is a bad experience on both sides.
 - **Preheader and footer text** live in the template's language versions. Check them; they are easy to forget because they are small.
 
 Lettr translates the automatic unsubscribe footer into 19 languages. A custom footer needs translating in every version.
 
-## Keep Layout Shared, Text Local
+## Keep Layout Shared, Content Local
 
-The editor shares structure across language versions and keeps only text separate. Work with that:
+The editor shares layout and styling across language versions and keeps content separate: text, button labels and links, images and HTML blocks. Work with that:
 
-- Finish the design in the primary language before adding versions. A block added later has to be translated in every version.
+- Finish the design in the primary language before adding versions. A block added later shows primary content in every version until someone translates it.
 - Leave room for expansion. German and Finnish run noticeably longer than English, and a button label that fits in English may wrap in German. Test the longest language at mobile width.
-- Keep images language-neutral where you can. An image with baked-in English text is the same in every version. If an image must be localised, use a merge tag or a conditional block on the language property rather than a separate template.
+- Keep images language-neutral where you can. An image with baked-in text has to be exported and uploaded again for every language. When one must be localised, replace the image file in each language version, and translate its alt text too.
+- Localise links, not just labels. A button that says "Zum Shop" should point at the German store. Button and image links can be set per language.
+- Treat machine translation as a draft. The editor's AI translation is a fast start, but **Translate all** overwrites existing translations, so run it before a translator edits the text, never after.
 
 ## Test Every Language Before Sending
 
 Send one test per language from the review step, to an inbox you actually read. Check:
 
 - the subject and from name in the inbox list,
-- the body in the right language with no untranslated blocks,
+- the body in the right language with no untranslated blocks (a block nobody translated shows primary text, not an empty space),
 - the unsubscribe footer language,
 - the web version link opening the same language.
 

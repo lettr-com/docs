@@ -11,7 +11,7 @@ A multilingual campaign uses the same [four-step builder](/learn/campaigns/creat
 
 Choose **Use template** and pick a template that carries a language badge. The campaign reads the template's languages immediately, so there is no need to save the draft first.
 
-The linked-template header confirms the choice. The template name is followed by the language badge, and the subtitle lists every language with the primary one marked, for example `2 languages: English (EN, primary), Slovak (SK)`.
+The linked-template header confirms the choice. The template name is followed by the language badge, and the subtitle lists every language with the primary one marked, for example `2 languages: English (EN, primary), German (DE)`.
 
 ### Subject and sender
 
@@ -21,7 +21,7 @@ The **Subject**, **From email**, **From name** and **Reply-to** fields at the to
 
 Below the sender fields, a **Per-language subject and sender** section appears with one collapsible row per secondary language. Each row shows the language code, the language name, and, once you have filled something in, a count such as `2 custom fields`. Click **Edit** to expand it.
 
-<img src="/images/multilingual-per-language-rows.png" alt="The Per-language subject and sender section in the Compose step with the Slovak row expanded, showing subject, from email, from name and reply-to fields" />
+<img src="/images/multilingual-per-language-rows.png" alt="The Per-language subject and sender section in the Compose step with the German row expanded, showing subject, from email, from name and reply-to fields" />
 
 Every field in a row is optional:
 
@@ -61,7 +61,7 @@ Nothing changes in this step. The moment you schedule or send, Lettr saves a cop
 
 The **Multi-language send** panel is the place to confirm who gets what before anything goes out.
 
-<img src="/images/multilingual-review-panel.png" alt="The Multi-language send panel listing English as primary with 101 recipients, Slovak with 40 and Czech with 39, each with subject, from and reply-to, and a fallback block below" />
+<img src="/images/multilingual-review-panel.png" alt="The Multi-language send panel listing English as primary with 101 recipients, German with 40 and French with 39, each with subject, from and reply-to, and a fallback block below" />
 
 From top to bottom:
 
@@ -78,7 +78,7 @@ From top to bottom:
 **Fallback.** Shown when at least one recipient will get the primary language for lack of a match, for example `85 of 97 recipients will get English (EN), the primary language`, broken down into:
 
 - how many contacts have no language value at all,
-- how many have a value that matches no template language, listed as chips with counts such as `klingon ×3`.
+- how many have a value that matches no template language, listed as chips with counts such as `it ×6` or `nl ×3`.
 
 If every recipient matches a template language, the panel says so instead.
 
@@ -94,7 +94,7 @@ If every recipient matches a template language, the panel says so instead.
 
 The **Send a test email** box gains a language picker when the template is multilingual. Choose **Primary** or any secondary language, enter an address, and send. The test uses that language's content, subject, from address, from name and reply-to, exactly as a matching recipient would receive them.
 
-<img src="/images/multilingual-test-email.png" alt="The Send a test email box with a language picker showing Primary (en) next to the recipient address field" />
+<img src="/images/multilingual-test-email.png" alt="The Send a test email box with the language picker open, listing Primary (en), de and fr, next to the recipient address field" />
 
 Test emails use sample contact details for merge tags, and any conditional sections in the template follow the selected language. Send one test per language before a real send. A translated subject with a typo is much easier to catch in your own inbox.
 

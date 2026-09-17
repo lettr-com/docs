@@ -23,7 +23,7 @@ Every recipient is matched to one language during preparation, using the rules o
 
 If your template includes its own `{{unsubscribe_link}}`, the footer is whatever you wrote in each language version, and Lettr adds nothing. If the template has no unsubscribe tag, Lettr appends its [automatic fallback footer](/learn/campaigns/content-and-design#automatic-fallback-footer), and for a multilingual campaign that footer is translated into the recipient's language. Translations exist for 19 languages, the same 19 listed under [Accepted spellings](/learn/multilingual-campaigns/contact-language#accepted-spellings). Any other language gets the English footer.
 
-Test emails get the same treatment. A test sent in Slovak carries the Slovak footer.
+Test emails get the same treatment. A test sent in German carries the German footer.
 
 ### The web version
 
@@ -53,11 +53,15 @@ What you reviewed is what goes out. This matters most for scheduled campaigns, w
 
 The campaign's detail page shows the same **Multi-language send** panel you saw on Review & Send, now in the past tense: how many recipients got each language, which subject and sender each language used, and how many got the primary language as a fallback, with the unmatched values that caused it.
 
+<img src="/images/multilingual-sent-panel.png" alt="The Multi-language send panel on a sent campaign, showing that 101 recipients got English, 40 German and 39 French, and that 42 of 180 recipients got English as the primary-language fallback" />
+
 Engagement metrics such as opens, clicks and bounces are aggregated for the whole campaign, not split by language.
 
 ### Language badges in the activity feed
 
-In the [activity feed](/learn/campaigns/analytics-and-reporting#per-event-activity-feed), recipients who received a secondary language have a small badge with the language code next to their email address, for example `jana@example.com` **SK**. Hover it to see "Sent in sk". Recipients of the primary language have no badge, so the badges point straight at the smaller groups.
+In the [activity feed](/learn/campaigns/analytics-and-reporting#per-event-activity-feed), recipients who received a secondary language have a small badge with the language code next to their email address, for example `anna@example.com` **DE**. Hover it to see "Sent in de". Recipients of the primary language have no badge, so the badges point straight at the smaller groups.
+
+<img src="/images/multilingual-activity-feed.png" alt="Campaign metrics above the Recipients activity feed, where recipients who received German or French carry a DE or FR badge next to their email address and English recipients have none" />
 
 The badge shows the language at the time of sending. If a contact changes their language property later, the history keeps the language they actually received.
 

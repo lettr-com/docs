@@ -3,7 +3,7 @@ title: "Multilingual Campaigns"
 description: "Send one campaign in several languages. Each contact receives the version that matches their language, with its own subject, sender, unsubscribe footer, and web version."
 ---
 
-A multilingual campaign is one campaign that goes out in more than one language. One template holds a Czech and an English version, one audience is selected, and every contact receives the language they asked for. There is no second campaign, no second segment, and no second report to reconcile.
+A multilingual campaign is one campaign that goes out in more than one language. One template holds an English and a German version, one audience is selected, and every contact receives the language they asked for. There is no second campaign, no second segment, and no second report to reconcile.
 
 Multilingual campaigns are automatic. If the template a campaign links to has more than one language, the campaign is multilingual. There is no switch to turn on.
 
@@ -15,7 +15,7 @@ Three things work together. Each has its own page in this section.
 
 <CardGroup cols={3}>
   <Card title="A template with languages" icon="languages" href="/learn/multilingual-campaigns/template-languages">
-    Add languages to a template in the email editor. One is primary, the rest are secondary.
+    Add languages to a template in the email editor. Do this first: a campaign can only send the languages its template has.
   </Card>
   <Card title="A contact language property" icon="user-tag" href="/learn/multilingual-campaigns/contact-language">
     A property on each contact that says which language they want. Designate one, or let Lettr find it by name.
@@ -29,7 +29,7 @@ Three things work together. Each has its own page in this section.
 
 When a multilingual campaign starts, Lettr reads each recipient's language property and matches it against the languages the template has:
 
-1. A contact with `cs` gets the Czech version. A contact with `cs-CZ` or `czech` gets it too. Matching is forgiving; see [how values are matched](/learn/multilingual-campaigns/contact-language#how-values-are-matched).
+1. A contact with `de` gets the German version. A contact with `de-AT` or `german` gets it too. Matching is forgiving; see [how values are matched](/learn/multilingual-campaigns/contact-language#how-values-are-matched).
 2. A contact with no value, or a value that matches no template language, gets the **primary language**. Everyone receives an email.
 3. Each recipient gets their language's content, subject, sender and reply-to, an unsubscribe footer translated into their language, and a web version in the same language.
 
@@ -38,8 +38,8 @@ Content is locked in every language the moment you schedule or start the campaig
 ## Quick Start
 
 <Steps>
-  <Step title="Add a second language to a template">
-    Open a marketing template in the editor and use the **Multilingual** control in the top bar to add a language. Translate the text. See [Template languages](/learn/multilingual-campaigns/template-languages).
+  <Step title="Make the template multilingual">
+    Open a marketing template in the editor and click **Create mutation** in the top bar. Add the language the template is written in first (it becomes the primary), then add each translation and translate its blocks by hand or with AI. See [Multilingual templates](/learn/multilingual-campaigns/template-languages) and [Template translation](/learn/multilingual-campaigns/template-translation).
   </Step>
   <Step title="Tell Lettr where each contact's language lives">
     Go to **Audience** → **Properties**, edit the property that holds the language, and tick **Use as communication language**. If your property is already named `language`, `lang` or `locale`, this step is optional. See [Contact language](/learn/multilingual-campaigns/contact-language).

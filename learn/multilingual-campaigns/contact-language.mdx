@@ -1,6 +1,6 @@
 ---
 title: "Contact Language"
-description: "Store each contact's language in a property, designate it as the communication language, and learn exactly how Lettr matches values like cs, en-US, czech or Deutsch to a template language."
+description: "Store each contact's language in a property, designate it as the communication language, and learn exactly how Lettr matches values like de, en-US, german or Français to a template language."
 ---
 
 Lettr needs to know which language each contact wants. That information lives in a [custom property](/learn/audience/contacts#custom-properties) on the contact, and Lettr reads it at send time to pick the right version. This page covers where Lettr looks for the property, how it interprets the values, and what happens when a value is missing or unrecognised.
@@ -39,17 +39,17 @@ The property must be a `string` property. Values stored in a `number`, `boolean`
 
 ## How Values Are Matched
 
-Language values in real audiences are messy. One import has `cs`, another has `cs_CZ`, a signup form wrote `Czech`, and someone typed `česky` by hand. Lettr accepts all of them.
+Language values in real audiences are messy. One import has `de`, another has `de_DE`, a signup form wrote `German`, and someone typed `Deutsch` by hand. Lettr accepts all of them.
 
 For each recipient, Lettr takes the property value and compares it with the languages the template has, from the strictest rule to the loosest. The first rule that matches wins.
 
-| Rule | What it does | Example with a template in `cs` and `en` |
+| Rule | What it does | Example with a template in `de`, `en` and `fr` |
 |-|-|-|
-| **1. Same tag** | Case, surrounding spaces and `_` versus `-` are ignored | `CS`, `cs `, `Cs` all match `cs` |
-| **2. Same base language** | The region part is dropped, in both directions | `cs-CZ` and `cs_cz` match `cs`. A contact with `en` matches a template language `en-GB` |
-| **3. Same language by name** | The value and the template language are looked up in the alias table below | `czech`, `cz`, `česky` match `cs`. `Deutsch` matches a template language `de-AT` |
+| **1. Same tag** | Case, surrounding spaces and `_` versus `-` are ignored | `DE`, `de `, `De` all match `de` |
+| **2. Same base language** | The region part is dropped, in both directions | `de-AT` and `de_ch` match `de`. `en-US` and `en_GB` both match `en` |
+| **3. Same language by name** | The value and the template language are looked up in the alias table below | `german`, `Deutsch`, `ger` match `de`. `Français` and `french` match `fr` |
 
-Rule 2 means regional variants are interchangeable with their base language. If the template has both `pt` and `pt-BR`, a contact with `pt-BR` gets `pt-BR` under rule 1 and a contact with `pt-PT` gets `pt` under rule 2.
+Rule 2 means regional variants reach their base language. Templates built in the editor use two-letter [language codes](/learn/multilingual-campaigns/how-template-languages-work#language-codes), so a contact stored as `pt-BR` and one stored as `pt-PT` both receive the `pt` version.
 
 ### Accepted spellings
 
@@ -86,7 +86,7 @@ Languages outside this table still work under rules 1 and 2. A template with a `
 A recipient receives the **primary language** of the template when:
 
 - the language property is empty or missing on their contact, or
-- the value matches none of the template's languages under the three rules, for example `klingon` or a typo like `czec`.
+- the value matches none of the template's languages under the three rules, for example `it` when the template has no Italian version, or a typo like `germn`.
 
 Nobody is skipped. Every recipient gets an email, and the Review & Send panel counts these two cases separately and shows them before sending: how many have no value, and which unmatched values appear and how often. See [The review panel](/learn/multilingual-campaigns/campaign-setup#the-review-panel).
 
@@ -107,9 +107,9 @@ curl -X POST https://app.lettr.com/api/audience/contacts \
   -H "Authorization: Bearer lttr_your_api_key" \
   -H "Content-Type: application/json" \
   -d '{
-    "email": "jana@example.com",
+    "email": "anna@example.com",
     "properties": {
-      "language": "cs"
+      "language": "de"
     }
   }'
 ```
