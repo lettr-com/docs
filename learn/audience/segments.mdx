@@ -94,6 +94,10 @@ Each condition uses an operator that depends on the field type. Lettr supports t
 
 For `topics` and `lists` fields, `equals` means "is a member" and `not_equals` means "is not a member".
 
+<Warning>
+  Only the fields above are supported, and `topics` and `lists` only take `equals` and `not_equals`. A condition on any other field (for example `city` instead of `properties.city`, or `Email` with a capital E), or `topics`/`lists` with another operator, is rejected when you save the segment; the API returns `422`. A segment saved before this check with such a condition treats it as matching no contacts, so review segments that suddenly match fewer contacts than expected.
+</Warning>
+
 `is_empty` and `is_not_empty` need no value. They are the quickest way to find gaps in your data. For example, `language is empty` lists every contact who would receive the primary language of a [multilingual campaign](/learn/multilingual-campaigns/contact-language#finding-contacts-without-a-language) because Lettr has nothing to match.
 
 ## AI Segment Builder
@@ -119,6 +123,8 @@ The AI converts your description into structured condition groups, opens the seg
 A segment can optionally be scoped to a single [list](/learn/audience/lists). When scoped, the segment only matches contacts who are members of that list **and** satisfy the conditions.
 
 List-scoped segments are useful when you want to slice a specific list further without affecting the rest of your audience. For example, a list called "Onboarding Cohort October 2026" can have its own segments for "completed the welcome tour" or "didn't open the first email" — without those segments running over your entire audience.
+
+While a segment is scoped to a list, that list cannot be deleted. Remove the list from the segment first, or delete the segment.
 
 ## Renaming Lists and Topics
 

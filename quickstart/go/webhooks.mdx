@@ -67,7 +67,7 @@ webhook, err := client.Webhooks.Get(ctx, "webhook-id")
 
 ## Update a Webhook
 
-Set only the fields you want to change. Optional booleans like `Active` are pointers:
+Set only the fields you want to change (at least one). Optional booleans like `Active` are pointers:
 
 ```go
 active := false

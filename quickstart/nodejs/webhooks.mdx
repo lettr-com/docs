@@ -77,7 +77,7 @@ if (!error) {
 
 ## Update a Webhook
 
-All fields are optional — only the ones you set are sent:
+All fields are optional — only the ones you set are sent. Set at least one; an empty update is rejected:
 
 ```typescript
 await client.webhooks.update("webhook-id", {
