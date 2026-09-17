@@ -36,6 +36,8 @@ Every multilingual template has exactly one primary language. It plays three rol
 | Video | The video URL and its preview image | Size and alignment |
 | HTML | The HTML code | Position in the layout |
 | Social | Each icon's link and alt text | Which networks are shown, icon style |
+| Products | The texts of each item | Which items exist and their order. Items can be added, removed and reordered only while the primary language is selected |
+| Rating | The question, captions, labels and alt text | Style and layout |
 | Template settings | The preheader (preview text) | Background, content width, fonts |
 
 Overrides are stored **per value, not per block**. If you change only a button's link in German, the German button keeps following the primary label, and picks up later changes to it.
@@ -49,7 +51,7 @@ Overrides are stored **per value, not per block**. If you change only a button's
 - The layout: structures, columns, block order, and which blocks exist.
 - All styling: colors, fonts, sizes, padding, borders, alignment, **Hide on mobile** and **Hide on desktop**.
 - **Divider** and **Spacer** blocks.
-- **Products** and **Carousel** blocks. Their content is the same in every language, so keep customer-facing text out of them in a multilingual template, or use Text and Image blocks instead.
+- **Carousel** blocks. Their content is the same in every language, so keep customer-facing text out of them in a multilingual template, or use Image blocks instead.
 
 The campaign's subject line, sender name and reply-to are not part of the template at all. They are translated in the campaign; see [Campaign setup](/learn/multilingual-campaigns/campaign-setup).
 
@@ -79,6 +81,7 @@ Because the design exists once, layout work always affects every language, which
 | Move a block or structure | Moves in every language |
 | Delete a block | Removed from every language, together with all its translations |
 | Duplicate a block | The copy keeps the original's translations in every language |
+| Insert a [saved block](/learn/templates/saved-blocks) | A saved block keeps the language versions it was saved with. Check the inserted block in every language of the template afterwards |
 | Add a block while the primary is selected | Its content belongs to the primary. Other languages show it until translated |
 | Add a block while a secondary language is selected | Its starting content is stored for that language **and** the primary. Whatever you then type stays in the selected language, so switch to the primary and write that version too |
 
@@ -95,6 +98,7 @@ After the switch:
 - Blocks that were never translated in the new primary now contain text in the old primary's language. Read through the new primary and translate them.
 - Other languages now fall back to the new primary for anything they have not translated.
 - Contacts with no matching language receive the new primary in campaigns scheduled from then on.
+- In draft campaigns, the main subject and sender fields now belong to the new primary. Rewrite them; see [Change the primary language](/learn/multilingual-campaigns/template-languages#change-the-primary-language).
 
 ## Deleting a Language
 
@@ -108,7 +112,7 @@ These codes are what campaigns compare your contacts' language values against. C
 
 ## When Changes Take Effect
 
-- Language changes live in your editing session until you click **Save**. **Undo** reverts them like any other edit, including adding or deleting a language.
+- Language changes live in your editing session until you click **Save**. **Undo** reverts them like any other edit, including adding or deleting a language. Each AI translation of a language is one undo step, and **Translate all** is one step for all languages.
 - Saving updates the template: its language badge, its detail page, and what draft campaigns offer.
 - A campaign locks its content when it is scheduled or started. Later edits to the template, including new languages or a new primary, do not change a campaign that is already scheduled or sending.
 

@@ -15,13 +15,13 @@ Every recipient is matched to one language during preparation, using the rules o
 | **Subject** | The per-language subject if set, otherwise the primary subject |
 | **From name and from email** | The per-language sender if set, otherwise the primary sender |
 | **Reply-to** | The per-language reply-to if set, otherwise the primary reply-to |
-| **Unsubscribe footer** | Translated into the recipient's language |
+| **Unsubscribe footer** | In the language of the version the recipient received |
 | **Web version** | Opens the same language the recipient received |
-| **Preferences page** | The page behind the unsubscribe link renders in the contact's language |
+| **Preferences page** | The page behind the unsubscribe link renders in the contact's language when it is one of the 19 supported languages, otherwise in your team's default. See [The language of hosted pages](/learn/multilingual-campaigns/contact-language#the-language-of-hosted-pages) |
 
 ### The unsubscribe footer
 
-If your template includes its own `{{unsubscribe_link}}`, the footer is whatever you wrote in each language version, and Lettr adds nothing. If the template has no unsubscribe tag, Lettr appends its [automatic fallback footer](/learn/campaigns/content-and-design#automatic-fallback-footer), and for a multilingual campaign that footer is translated into the recipient's language. Translations exist for 19 languages, the same 19 listed under [Accepted spellings](/learn/multilingual-campaigns/contact-language#accepted-spellings). Any other language gets the English footer.
+If your template includes its own `{{unsubscribe_link}}`, the footer is whatever you wrote in each language version, and Lettr adds nothing. If the template has no unsubscribe tag, Lettr appends its [automatic fallback footer](/learn/campaigns/content-and-design#automatic-fallback-footer), and for a multilingual campaign that footer matches the language version the recipient receives. A contact with `it` who falls back to an English primary gets the English footer, so the footer never disagrees with the email above it. Translations exist for 19 languages, the same 19 listed under [Accepted spellings](/learn/multilingual-campaigns/contact-language#accepted-spellings). Any other language gets the English footer.
 
 Test emails get the same treatment. A test sent in German carries the German footer.
 
@@ -51,9 +51,11 @@ What you reviewed is what goes out. This matters most for scheduled campaigns, w
 
 ### The campaign detail page
 
-The campaign's detail page shows the same **Multi-language send** panel you saw on Review & Send, now in the past tense: how many recipients got each language, which subject and sender each language used, and how many got the primary language as a fallback, with the unmatched values that caused it.
+The campaign's detail page shows the same **Multi-language send** panel you saw on Review & Send, now in the past tense: how many recipients got each language, and which subject and sender each language used. The counts come from the language recorded on each recipient when the email was sent.
 
-<img src="/images/multilingual-sent-panel.png" alt="The Multi-language send panel on a sent campaign, showing that 101 recipients got English, 40 German and 39 French, and that 42 of 180 recipients got English as the primary-language fallback" />
+The breakdown of why contacts fell back, with the missing-value count and the unmatched values, exists only before the send. Afterwards the **Fallback** line shows everyone who received the primary language, whether they matched it or fell back to it. If you want to clean up unmatched values, note them from the Review & Send panel before you send.
+
+<img src="/images/multilingual-sent-panel.png" alt="The Multi-language send panel on a sent campaign, showing that 101 recipients got English, 40 German and 39 French, each with its subject, sender and reply-to, and a Fallback line reading 101 of 180 recipients got English (EN), the primary language" />
 
 Engagement metrics such as opens, clicks and bounces are aggregated for the whole campaign, not split by language.
 
@@ -69,11 +71,13 @@ The badge shows the language at the time of sending. If a contact changes their 
 
 Click the email thumbnail on the detail page to open the preview dialog. Choose **Audience contact**, search by email, and Lettr renders the email in the language recorded for that contact, with their current merge values. For campaigns still in Draft or Scheduled, the same dialog shows what a contact *would* receive based on their current properties.
 
-**Sample data** mode previews any of the template's languages, chosen from the **Language** picker.
+**Sample data** mode previews any of the template's languages, chosen from the **Language** picker. Languages are listed by code, with the primary marked, for example `en (primary)`, `de`, `fr`.
 
 ## Multilingual Campaigns and the API
 
 Per-language subject and sender values are visible on the campaign object returned by the [Campaigns API](/api-reference/campaigns/show-a-campaign) as `language_overrides`, keyed by language code. Campaigns are still authored in the dashboard; the API can list, send, schedule and unschedule them and read their engagement events.
+
+Language routing exists only in campaigns. An email sent through the [Emails API](/api-reference/emails/send-email) with a multilingual template always uses the primary version, and there is no language parameter. To send transactional email in several languages, keep one template per language and choose the template in your own code.
 
 ## Next Steps
 

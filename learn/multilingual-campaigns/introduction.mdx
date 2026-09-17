@@ -13,14 +13,14 @@ Multilingual campaigns are automatic. If the template a campaign links to has mo
 
 Three things work together. Each has its own page in this section.
 
-<CardGroup cols={3}>
-  <Card title="A template with languages" icon="languages" href="/learn/multilingual-campaigns/template-languages">
+<CardGroup cols={1}>
+  <Card horizontal title="A template with languages" icon="language" href="/learn/multilingual-campaigns/template-languages">
     Add languages to a template in the email editor. Do this first: a campaign can only send the languages its template has.
   </Card>
-  <Card title="A contact language property" icon="user-tag" href="/learn/multilingual-campaigns/contact-language">
+  <Card horizontal title="A contact language property" icon="user-tag" href="/learn/multilingual-campaigns/contact-language">
     A property on each contact that says which language they want. Designate one, or let Lettr find it by name.
   </Card>
-  <Card title="The campaign" icon="bullhorn" href="/learn/multilingual-campaigns/campaign-setup">
+  <Card horizontal title="The campaign" icon="bullhorn" href="/learn/multilingual-campaigns/campaign-setup">
     Optional per-language subject and sender, a review panel that shows who gets what, and test sends in any language.
   </Card>
 </CardGroup>
@@ -31,7 +31,7 @@ When a multilingual campaign starts, Lettr reads each recipient's language prope
 
 1. A contact with `de` gets the German version. A contact with `de-AT` or `german` gets it too. Matching is forgiving; see [how values are matched](/learn/multilingual-campaigns/contact-language#how-values-are-matched).
 2. A contact with no value, or a value that matches no template language, gets the **primary language**. Everyone receives an email.
-3. Each recipient gets their language's content, subject, sender and reply-to, an unsubscribe footer translated into their language, and a web version in the same language.
+3. Each recipient gets their language's content, subject, sender and reply-to, an unsubscribe footer in the same language as the email, and a web version in that language too.
 
 Content is locked in every language the moment you schedule or start the campaign. Editing or deleting the template afterwards does not change what goes out.
 
@@ -61,7 +61,7 @@ Content is locked in every language the moment you schedule or start the campaig
 |-|-|
 | Content | The template's version in the recipient's language |
 | Subject, from name, from email, reply-to | The per-language values when set, otherwise the campaign's primary values |
-| Unsubscribe footer | Translated into the recipient's language (19 languages, English for anything else) |
+| Unsubscribe footer | In the language of the version the recipient receives (19 languages, English for anything else) |
 | Web version link | Opens the same language the recipient received |
 | Merge tags | The recipient's own contact properties, in every language |
 

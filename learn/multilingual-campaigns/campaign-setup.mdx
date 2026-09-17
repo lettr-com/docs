@@ -11,7 +11,7 @@ A multilingual campaign uses the same [four-step builder](/learn/campaigns/creat
 
 Choose **Use template** and pick a template that carries a language badge. The campaign reads the template's languages immediately, so there is no need to save the draft first.
 
-The linked-template header confirms the choice. The template name is followed by the language badge, and the subtitle lists every language with the primary one marked, for example `2 languages: English (EN, primary), German (DE)`.
+The linked-template header confirms the choice. The template name is followed by the language badge, such as `EN · DE`. Hover the badge to see every language with the primary one marked: `English (EN) · primary`, then `German (DE)`.
 
 ### Subject and sender
 
@@ -19,7 +19,7 @@ The **Subject**, **From email**, **From name** and **Reply-to** fields at the to
 
 ### Per-language subject and sender
 
-Below the sender fields, a **Per-language subject and sender** section appears with one collapsible row per secondary language. Each row shows the language code, the language name, and, once you have filled something in, a count such as `2 custom fields`. Click **Edit** to expand it.
+Below the sender fields, a **Per-language subject and sender** section appears with one collapsible row per secondary language. Each row shows the language code, the language name, and, once you have filled something in, a count such as `2 custom fields`. Click **Edit** to expand a row and **Hide** to collapse it.
 
 <img src="/images/multilingual-per-language-rows.png" alt="The Per-language subject and sender section in the Compose step with the German row expanded, showing subject, from email, from name and reply-to fields" />
 
@@ -34,7 +34,12 @@ Every field in a row is optional:
 
 The most common setup is a translated subject and nothing else. Fill in the subject, leave the rest empty, and the language sends from the same address as the primary.
 
-The **From email** field works like the primary one: a local part plus a domain chosen from your [verified sending domains](/learn/domains/sending-domains). A language version can never go out from a domain your team does not own. Lettr checks this when the campaign is saved and again at send time, and reports a problem on the field itself.
+The **From email** field works like the primary one: a local part plus a domain chosen from your [verified sending domains](/learn/domains/sending-domains). A language version can never go out from a domain your team does not own. Lettr checks this when the campaign is saved and shows a problem on the field itself. It checks again when you click **Send** or **Schedule**: if a per-language domain is no longer verified, the campaign is not started and a message tells you why. Fix or clear that row's **From email** and try again.
+
+Per-language values are stored by language code and belong to the draft, not the template:
+
+- If a language is removed from the template, its row disappears from the campaign. Its values are kept and come back if the language is added again.
+- If the template's **primary language changes**, the main fields at the top now belong to the new primary. The old primary becomes an ordinary row with no values of its own, and anything you had entered for the new primary is no longer used. Rewrite the main subject in the new primary language and give the old primary its own subject.
 
 <Tip>
   Use a per-language from name when your brand is spelled differently by market, and a per-language reply-to when replies should reach a team that reads that language. Both are cheap to set and recipients notice them.
@@ -48,7 +53,7 @@ Merge tags such as `{{first_name}}` work in every language version, filled from 
 
 Choose recipients the way you [always do](/learn/campaigns/audience-selection). Two things help specifically with languages:
 
-- **An early warning.** If no contact property holds a language, an amber notice appears under the audience selector as soon as the recipient estimate loads. It says that every recipient will get the primary language and links to **Audience** → **Properties** so you can fix it before reaching the review step. See [Contact language](/learn/multilingual-campaigns/contact-language#which-property-holds-the-language).
+- **An early warning.** If no contact property holds a language, an amber notice appears under the audience selector as soon as an audience is selected and the recipient estimate loads. It says that every recipient will get the primary language, and its **Set a language property** button opens **Audience** → **Properties** so you can fix it before reaching the review step. See [Contact language](/learn/multilingual-campaigns/contact-language#which-property-holds-the-language).
 - **Segments with `is empty` and `is not empty`.** Build a segment on your language property to find contacts with no value before sending, or to exclude them. See [Finding contacts without a language](/learn/multilingual-campaigns/contact-language#finding-contacts-without-a-language).
 
 ## Schedule
@@ -73,12 +78,12 @@ From top to bottom:
 **One row per language.** The primary language is first and marked **Primary**. Each row shows:
 
 - how many recipients will get this language,
-- the **Subject**, **From** and **Reply-to** that language will actually use. Values you overrode in the Compose step carry a **Custom** tag. Values without the tag are inherited from the primary language.
+- the **Subject**, **From** and **Reply-to** that language will actually use. Values you overrode in the Compose step carry a **Custom** tag. Values without the tag are inherited from the primary language. **From** is tagged when either the from name or the from email is overridden.
 
 **Fallback.** Shown when at least one recipient will get the primary language for lack of a match, for example `85 of 97 recipients will get English (EN), the primary language`, broken down into:
 
 - how many contacts have no language value at all,
-- how many have a value that matches no template language, listed as chips with counts such as `it ×6` or `nl ×3`.
+- how many have a value that matches no template language, listed as chips with counts such as `it ×6` or `nl ×3`. The five most frequent values are listed. The count in front of them covers all of them.
 
 If every recipient matches a template language, the panel says so instead.
 
@@ -92,11 +97,11 @@ If every recipient matches a template language, the panel says so instead.
 
 ### Sending a test email
 
-The **Send a test email** box gains a language picker when the template is multilingual. Choose **Primary** or any secondary language, enter an address, and send. The test uses that language's content, subject, from address, from name and reply-to, exactly as a matching recipient would receive them.
+The **Send a test email** box gains a language picker when the template is multilingual. Choose **Primary** or any secondary language, enter an address, and send. Secondary languages are listed by their code, such as `de`. The test uses that language's content, subject, from address and from name, as a matching recipient would receive them. Test emails are sent without a reply-to, so check each language's reply-to in the review panel instead. You can send one test every 10 seconds.
 
 <img src="/images/multilingual-test-email.png" alt="The Send a test email box with the language picker open, listing Primary (en), de and fr, next to the recipient address field" />
 
-Test emails use sample contact details for merge tags, and any conditional sections in the template follow the selected language. Send one test per language before a real send. A translated subject with a typo is much easier to catch in your own inbox.
+Test emails use sample contact details for merge tags. Send one test per language before a real send. A translated subject with a typo is much easier to catch in your own inbox.
 
 <Tip>
   Need to see the email as a specific person would receive it? Open the campaign's detail page and click the email thumbnail. The preview dialog lets you choose **Audience contact**, search the campaign's audience by email, and render the exact language and merge values that contact would get.
@@ -104,7 +109,7 @@ Test emails use sample contact details for merge tags, and any conditional secti
 
 ### Abuse screening
 
-Before a campaign is released, Lettr screens its content. For a multilingual campaign every language version that has at least one recipient is screened, not only the primary. If any version is flagged, the campaign goes into review and the report shows the version with the highest risk score. See [The "In Review" state](/learn/campaigns/sending-and-scheduling#the-in-review-state).
+Lettr [screens campaign content](/learn/campaigns/sending-and-scheduling#the-in-review-state) before release. When a multilingual campaign is screened, every language version that has at least one recipient is checked, not only the primary. If any version is flagged, the campaign goes into review and the report shows the version with the highest risk score. See [The "In Review" state](/learn/campaigns/sending-and-scheduling#the-in-review-state).
 
 ## Next Steps
 
