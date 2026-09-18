@@ -1,6 +1,6 @@
 ---
 title: "Email Preferences Page"
-description: "The hosted Manage Email Preferences page every unsubscribe link opens: topic choices, a 30/60/90-day pause, a global unsubscribe with reasons, and recent emails"
+description: "The hosted Manage Email Preferences page every unsubscribe link opens: topic choices, a 30/60/90-day pause, a global unsubscribe with reasons, and recent emails, shown in the contact's language"
 ---
 
 **Manage email preferences** is the hosted page that every `{{unsubscribe_link}}` in a campaign opens. Recipients see their current status, choose which topics they want, pause marketing email for a while, or leave entirely. The page is built in, so there is nothing to host or design yourself.
@@ -21,7 +21,17 @@ The page is addressed to one contact and opens from the signed link in the email
 | **Recent emails** | Up to the ten most recent campaigns this contact received, each linking to its web version, with the subject rendered exactly as it was delivered. |
 | **Update preferences** | The single button that commits the topic selection. |
 
-The page renders in the contact's [communication language](/learn/multilingual-campaigns/contact-language), so a German recipient of a German-language team sees it in German.
+## Page Language
+
+The page is translated. It opens in each contact's own language, so a German contact unsubscribes and manages preferences in German while a French contact on the same list sees French. This covers everything Lettr renders on the page, including the unsubscribe dialog and the confirmation afterwards.
+
+The page is available in 19 languages and picks one in this order:
+
+1. The contact's [communication language](/learn/multilingual-campaigns/contact-language), when it is one of the 19 languages.
+2. Your team's **Default communication language**, set under **Settings** → **Team**.
+3. English.
+
+This works for every campaign, not only [multilingual campaigns](/learn/multilingual-campaigns/introduction). See [The language of hosted pages](/learn/multilingual-campaigns/contact-language#the-language-of-hosted-pages) for how the contact's language is found.
 
 ## How Choices Are Applied
 
