@@ -56,7 +56,7 @@ A translated body under an English subject line is the most common half-finished
 - **Reply-to** when replies should reach someone who reads that language. A French reply landing in an English-only support queue is a bad experience on both sides.
 - **Preheader and footer text** live in the template's language versions. Check them; they are easy to forget because they are small.
 
-Lettr translates the automatic unsubscribe footer into 19 languages. A custom footer needs translating in every version.
+Lettr translates the automatic unsubscribe footer into 19 languages. A custom footer needs translating in every version. The hosted unsubscribe and preferences page behind the link is translated as well: it opens in the contact's language, or in your team's default communication language when the contact's language is not one of the 19. Set that default under **Settings** → **Team** to the language most of your audience reads.
 
 ## Keep Layout Shared, Content Local
 
@@ -75,6 +75,7 @@ Send one test per language from the review step, to an inbox you actually read. 
 - the subject and from name in the inbox list,
 - the body in the right language with no untranslated blocks (a block nobody translated shows primary text, not an empty space),
 - the unsubscribe footer language,
+- the unsubscribe link opening the preferences page in the right language,
 - the web version link opening the same language.
 
 Then use the preview dialog with a real contact from each language group to confirm merge values render the way you expect. A first name works the same in every language, but a date or currency property may need formatting per market.
