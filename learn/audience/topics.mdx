@@ -62,6 +62,36 @@ A topic's visibility controls whether recipients can see and control the topic o
 
 Visibility doesn't change what the topic does in Lettr — it only signals intent. Use private topics as a lightweight tagging system for internal organization (for example "Beta Tester" or "Enterprise Lead") that you don't want recipients to see or control. Use public topics for the choices you genuinely want recipients to make for themselves.
 
+## Translations
+
+The [email preferences page](/learn/audience/email-preferences) opens in each recipient's language, but it can only show your topics' names and descriptions as you wrote them. Translations let you write them for each language yourself. Lettr never translates them for you.
+
+Recipients see the topic's translation for their language, otherwise its default name and description.
+
+<Steps>
+  <Step title="Open the topic">
+    Go to **Audience** → **Topics** and create a topic, or click **Edit** on an existing one.
+  </Step>
+  <Step title="Add a language">
+    Expand **Translations**, click **Add language** and pick one of the [19 supported languages](/learn/multilingual-campaigns/contact-language#accepted-spellings). The inputs show the default text as a placeholder, so you can see what you are translating.
+  </Step>
+  <Step title="Write the name and description">
+    Enter the name (required) and, optionally, the description, then save.
+  </Step>
+  <Step title="Check it">
+    Click **Preview preferences page** at the top of the **Topics** page and switch the language in the preview banner.
+  </Step>
+</Steps>
+
+<Note>
+  A translation is shown exactly as written. If a translation has no description, recipients in that language see **no** description, even when the topic's default has one.
+</Note>
+
+- The **Languages** column on the **Topics** page shows which languages each topic has.
+- Everywhere else in Lettr (segments, contact profiles, activity) the topic keeps its default name.
+- The preview shows public topics only, so translations of a private topic can't be checked there.
+- Through the API and MCP, `translations` on a topic update replaces the whole set: send every language you want to keep. See [Update a topic](/api-reference/audience/update-a-topic) in the API Reference.
+
 ## Adding and Removing Topics on Contacts
 
 You can manage topic membership from several places:
