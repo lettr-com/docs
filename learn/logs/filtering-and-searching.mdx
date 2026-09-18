@@ -68,13 +68,30 @@ When you apply or change any filter, pagination resets to the first page automat
 
 Click the info icon on any row to open the detail dialog. This shows:
 
-- The full **Request Body** — the exact JSON payload your application sent. This is where you can verify that fields like `from`, `to`, `subject`, `html`, and `options` are structured correctly.
+- The **Request Body** — the JSON payload your application sent, with large and sensitive fields shortened. This is where you can verify that fields like `from`, `to`, `subject`, `template_slug`, and `options` are structured correctly. `html`, `text`, and `amp_html` are cut off after 200 characters, and `substitution_data`, `metadata`, and `attachments` are replaced by a count such as `"3 items"` — see [Truncated Fields](/learn/logs/introduction#truncated-fields).
 - The full **Response Body** — exactly what Lettr returned. For successful requests this includes the `request_id` and other confirmation data. For errors, it includes the error code and message.
 - The **IP Address** and **User Agent** string, along with the **API Key** name and prefix.
 
 <Tip>
   If you're debugging a specific email send that failed, start by filtering Logs by the date and time you attempted the send, then look for a POST request to `/api/emails`. The detail dialog will show you exactly what went wrong in the response.
 </Tip>
+
+## What You Can't Filter By
+
+Logs record API *requests*, not emails, so the filters are about the request: when it was made, with which key, by which client, and how it ended. There is no filter for template, recipient, subject, or email content.
+
+| You're looking for | Where to look |
+|-|-|
+| Emails sent to a specific recipient | [Events](/learn/events/introduction) — search by the recipient's exact email address |
+| What happened to one email after sending | [Message Details](/learn/events/message-details) |
+| The request that sent a template email | Logs — narrow the date and time to the send, then open the `POST /api/emails` entries and check `template_slug` in the request body |
+| The merge tag values an email was sent with | Not available — see below |
+
+### Merge Tag Values Are Not Stored
+
+The request body shows `substitution_data` as a count (`"3 items"`), never the values themselves, and no other page shows them either. Merge tag values routinely contain personal data such as names, addresses, and order details, so Lettr uses them to build the email and then discards them rather than keeping them in logs.
+
+The count is still useful: if it shows fewer items than the template has merge tags, your application didn't send all of them. To check the actual values, log the payload in your own application at send time, or send the same request with a [sandbox API key](/learn/api-keys/sandbox) — the email is delivered to your own address, so you can inspect exactly how the values were rendered.
 
 <CardGroup cols={2}>
   <Card title="API Logs Overview" icon="scroll-text" href="/learn/logs/introduction">
