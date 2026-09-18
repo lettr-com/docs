@@ -13,6 +13,20 @@ When you navigate to **Events** in the sidebar, you'll land on a list of all rec
 
 The dashboard defaults to showing events from the last 14 days. You can adjust the date range using the date picker and narrow results down to a specific recipient by entering their email address in the search field. The per-page selector lets you display 10, 25, 50, or 100 events at a time, and navigation buttons let you page through results.
 
+### Available Filters
+
+| Filter | Notes |
+|-|-|
+| **Date range** | Defaults to the last 14 days |
+| **Event type** | Show only one type, such as Bounce or Click — see [Event Types](/learn/events/event-types) |
+| **Recipient email address** | One complete address, matched exactly. Partial addresses and domains don't match. |
+
+The Events page **cannot** filter by template, subject line, or email content. To find the emails sent from one template, search by the recipient you sent to and narrow the date range to when the send happened; the subject column then identifies the message.
+
+<Note>
+  Events also don't show the merge tag values (`substitution_data`) an email was sent with. Lettr does not store those values — the API logs record only how many were sent (see [Truncated Fields](/learn/logs/introduction#truncated-fields)). If you need to know later which values a message was sent with, attach the important ones as [metadata](/learn/sending/metadata), which is kept and shown on the Message Details page, or log them in your own application.
+</Note>
+
 <Note>
   Events are retained for 90 days. If you need longer-term storage of event data, use [webhooks](/learn/webhooks/introduction) to capture and store events in your own system as they occur.
 </Note>

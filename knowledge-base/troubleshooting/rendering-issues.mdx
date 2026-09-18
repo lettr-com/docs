@@ -92,6 +92,20 @@ Modern web development uses CSS Grid and Flexbox, but email requires **table-bas
     <p style="margin: 0 0 16px 0;">Paragraph text</p>
     ```
   </Accordion>
+  <Accordion title="A button shows as a thin bar, or a link isn't clickable">
+    The button label is visible but the button has collapsed into a thin colored line and nothing happens when you click it — while other buttons in the same email work. This is not a client rendering quirk: the link's address is invalid, so the email client removed the link, and the button's padding and background went with it.
+
+    The usual cause is a merge tag used as the link's **entire** URL, such as `href="{{LOBBY_URL}}"`. Values inserted into links are URL-encoded at send time, so a full address arrives as `https%3A%2F%2F…`, which no client treats as a link. The editor preview doesn't reveal this, because it isn't rendered by the sending pipeline.
+
+    **Fix:** Keep `https://` and the fixed part of the address in the template, and use a merge tag only for the variable part — `https://app.example.com/lobby/{{LOBBY_ID}}`. See [Links and URLs](/learn/templates/template-language#links-and-urls).
+
+    If the URL is already built that way, the merge tag value was probably missing: a tag that isn't supplied, or whose name differs in capitalization from the key in `substitution_data`, renders as empty text.
+  </Accordion>
+  <Accordion title="A change I made in the editor is missing from the sent email">
+    You added or changed something, it shows in the editor and its preview, but the email your application sends doesn't have it. Saving a template creates a new **inactive** version; API sends keep using the published version until you publish the new one.
+
+    **Fix:** Open the template, click **See versions**, and choose **Publish** on the version you saved. See [Saving vs. Publishing](/learn/templates/versions#saving-vs-publishing).
+  </Accordion>
   <Accordion title="Responsive design not working in Gmail web">
     Gmail's web client strips `<style>` blocks from the `<head>`, which removes media queries.
 

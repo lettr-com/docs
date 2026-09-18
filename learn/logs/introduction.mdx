@@ -95,7 +95,7 @@ The detail view shows:
 - **Method & Path** - The HTTP method and API endpoint (e.g., `POST api/emails`)
 - **Status Code** - The response status with color indicator (green for success, red for errors)
 - **Timestamp** - Exact date and time of the request
-- **Request Body** - The full JSON payload sent to the API
+- **Request Body** - The JSON payload sent to the API, with some fields shortened (see [Truncated Fields](#truncated-fields))
 
 **Example request body:**
 
@@ -150,8 +150,12 @@ To optimize storage and display, some large fields are truncated in the logs:
 | **Substitution Data** | Replaced with item count (e.g., "4 items") |
 
 <Note>
-  Truncation only affects log display. The actual email sent contains the full content.
+  Truncation only affects the logs. The actual email sent contains the full content.
 </Note>
+
+<Warning>
+  The shortened values are not kept anywhere else. In particular, the merge tag values in `substitution_data` are used to build the email and then discarded — they often contain personal data, so Lettr does not store them, and neither Logs nor [Events](/learn/events/introduction) can show which values an email was sent with. If you need that for debugging, log the payload in your own application, or pass key identifiers as [metadata](/learn/sending/metadata), which is visible on the Message Details page.
+</Warning>
 
 ## Common Status Codes
 

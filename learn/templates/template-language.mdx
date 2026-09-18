@@ -127,7 +127,7 @@ An **expression** is anything inside double curly braces. Expressions output a v
 
 ### Missing Variables Become Empty Strings
 
-If a variable does not exist or its value is `null`, it renders as an empty string.
+If a variable does not exist or its value is `null`, it renders as an empty string. Variable names are case-sensitive, so `{{FIRST_NAME}}` is only filled by a `FIRST_NAME` key in `substitution_data` — a value sent as `first_name` is treated as missing.
 
 ```html Template
 Name: {{name}}
@@ -408,6 +408,49 @@ Links require extra care because template systems often extract and rewrite URLs
 <Warning>
 If the protocol (e.g., `https://`) is stored inside a variable rather than written literally in the template, the link won't be recognized correctly and won't be tracked.
 </Warning>
+
+### Don't Put the Whole URL in a Merge Tag
+
+The most common link mistake is using a single merge tag as the entire address of a link or button, and sending the full URL as its value. Because values inserted into a link are URL-encoded, the protocol and every slash get encoded too, and the result is no longer a link:
+
+```html Template
+<a href="{{lobby_url}}">Open Tournament Lobby</a>
+```
+```json Data
+{
+  "lobby_url": "https://app.example.com/lobby/abc-123"
+}
+```
+```html Result
+<a href="https%3A%2F%2Fapp.example.com%2Flobby%2Fabc-123">Open Tournament Lobby</a>
+```
+
+Email clients don't recognize `https%3A%2F%2F…` as a link, so they drop it. In the inbox the text is not clickable, and a **button loses its shape and collapses into a thin bar with the label on top** — the button's padding and background belong to the link, so they disappear with it. A button with a hard-coded URL in the same email is unaffected, which makes this easy to mistake for an editor or rendering bug.
+
+Keep the fixed part of the address in the template and make only the variable part a merge tag:
+
+```html Template
+<a href="https://app.example.com/lobby/{{lobby_id}}">Open Tournament Lobby</a>
+```
+```json Data
+{
+  "lobby_id": "abc-123"
+}
+```
+```html Result
+<a href="https://app.example.com/lobby/abc-123">Open Tournament Lobby</a>
+```
+
+If the whole address really has to come from your application, write the protocol literally and use triple braces for the rest — see [Disabling URL Encoding](#disabling-url-encoding). Send the value without `https://`.
+
+<Note>
+The same applies in the visual editor: the URL field of a button, image, or text link follows these rules. Enter `https://app.example.com/lobby/{{lobby_id}}`, not `{{lobby_url}}`.
+</Note>
+
+Two other causes produce the same broken link, so check them as well:
+
+- **The merge tag was not sent.** A missing variable renders as an empty string, which leaves the link with an empty address.
+- **The name doesn't match exactly.** Merge tag names are case-sensitive: a value sent as `lobby_url` does not fill `{{LOBBY_URL}}`.
 
 ### Query Strings and Encoding
 
