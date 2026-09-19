@@ -216,7 +216,7 @@ The response includes the auth type and whether credentials are configured:
 ```
 
 <Note>
-  The API response shows `auth_type` and `has_auth_credentials` but never exposes the actual credentials. To update authentication settings, use the Lettr dashboard.
+  The API response shows `auth_type` and `has_auth_credentials` but never exposes the actual credentials. To change authentication settings, use the Lettr dashboard or `PUT /api/webhooks/{webhookId}`. Credentials are only saved together with `auth_type`: `basic` needs `auth_username` and `auth_password`, and `oauth2` needs `oauth_client_id`, `oauth_client_secret` and `oauth_token_url`. Sending credentials without `auth_type` returns `422`.
 </Note>
 
 ## Related Topics

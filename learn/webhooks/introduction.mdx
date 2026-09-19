@@ -276,6 +276,10 @@ curl -X DELETE "https://app.lettr.com/api/webhooks/{webhookId}" \
   -H "Authorization: Bearer lttr_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 ```
 
+<Note>
+  A webhook name can be at most 24 characters. An update must change at least one of `name`, `url`, `auth_type`, `events` or `active`; an empty update returns `422`. To change credentials, send them together with `auth_type` (see [Authorization](/learn/webhooks/authorization)).
+</Note>
+
 The response for retrieving a webhook includes the configuration and its current status:
 
 ```json

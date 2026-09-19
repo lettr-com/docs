@@ -19,10 +19,14 @@ curl -X GET "https://app.lettr.com/api/emails" \
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `per_page` | integer | No | Number of results per page (1-100, default: 25) |
-| `cursor` | string | No | Pagination cursor for next page |
+| `cursor` | string | No | The `next_cursor` from a previous response, passed back unchanged. Any other value returns `422`. |
 | `recipients` | string | No | Filter by recipient email address |
-| `from` | string | No | Filter emails sent after this date (ISO 8601) |
-| `to` | string | No | Filter emails sent before this date (ISO 8601) |
+| `from` | string | No | Filter emails sent at or after this date (ISO 8601). Defaults to 10 days ago. |
+| `to` | string | No | Filter emails sent before this date (ISO 8601, exclusive). Must be after `from`. |
+
+<Note>
+  Email history is kept for about 10 days. A `from` older than that is moved forward to the oldest available day, and the response's `from` shows the window that was actually searched. A window that ends before the retention limit returns an empty list.
+</Note>
 
 ### Response
 
@@ -177,7 +181,7 @@ curl -X GET "https://app.lettr.com/api/emails?recipients=customer@example.com" \
 
 ## Pagination
 
-Use cursor-based pagination to retrieve large result sets:
+Use cursor-based pagination to retrieve large result sets. `next_cursor` is an opaque token: pass it back unchanged as `cursor`. It carries the filters and time window of the first request, so later pages return the same shape and window. When `next_cursor` is `null`, there are no more pages.
 
 ```javascript
 async function getAllEmails() {
@@ -297,7 +301,7 @@ async function getDailySendReport() {
 |--------|-------|-------------|
 | 401 | Unauthorized | Invalid or missing API key |
 | 404 | Not Found | Email with specified request ID not found |
-| 422 | Validation Error | Invalid query parameters |
+| 422 | Validation Error | Invalid query parameters, a `cursor` that is not a `next_cursor` from a previous response, or `to` not after `from`. Fix the request instead of retrying. |
 | 500 | Server Error | Internal error, retry the request |
 
 ## Related Topics

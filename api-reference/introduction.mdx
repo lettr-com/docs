@@ -75,6 +75,7 @@ curl -X POST https://app.lettr.com/api/emails \
 | `200` | Success - Email queued for delivery |
 | `400` | Bad Request - Domain configuration error |
 | `401` | Unauthorized - Invalid or missing API key |
+| `409` | Conflict - The resource already exists or is still in use |
 | `422` | Unprocessable Entity - Validation failed |
 | `429` | Too Many Requests - Rate limit or sending quota exceeded |
 | `502` | Bad Gateway - Upstream transmission failed |
@@ -91,6 +92,8 @@ curl -X POST https://app.lettr.com/api/emails \
 | `quota_exceeded` | 429 | Monthly sending quota exceeded. Upgrade your plan to continue sending. |
 | `daily_quota_exceeded` | 429 | Daily sending quota exceeded (free tier). Try again tomorrow. |
 | `transmission_failed` | 502 | Email transmission to the upstream provider failed. |
+| `resource_already_exists` | 409 | The resource already exists, for example a sending domain your team has already added. |
+| `list_in_use` | 409 | The audience list cannot be deleted because segments are scoped to it. The message names the segments. |
 
 ## Send Email Reference
 
