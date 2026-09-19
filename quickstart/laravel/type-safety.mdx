@@ -7,6 +7,10 @@ Generate type-safe PHP code from your Lettr templates, so mistakes show up in yo
 
 The SDK provides three Artisan commands that connect to the Lettr API, read your templates and their merge tags, and generate PHP classes you can use in your application. Your IDE can then autocomplete template slugs, enforce required merge tags, and flag typos before you deploy.
 
+<Note>
+  This page describes `lettr/lettr-laravel` **2.7.0 and later**. On 2.6.x the generated code looks different: DTO properties lose camelCase, Blade loops use `$item->key`, Mailables for Lettr templates set a subject, and none of the files carry a generated-file docblock. Upgrade with `composer update lettr/lettr-laravel`, then re-run the commands.
+</Note>
+
 ## Why Code Generation?
 
 Using string literals for template slugs and merge tags is error-prone:
