@@ -47,6 +47,10 @@ The **Recipient** section provides details about where the email was routed:
 - **Recipient Address (raw)** — The unprocessed recipient address, which may include additional routing information.
 - **Recipient Metadata** — Any custom metadata you attached to this recipient when sending the email via the `metadata` field. See [Metadata](/learn/sending/metadata) for how to attach this information at send time.
 
+<Note>
+  Message Details does not show the merge tag values (`substitution_data`) the email was sent with, or the rendered email content. Lettr doesn't store either — merge tag values often contain personal data, so they are used to build the email and then discarded. **Recipient Metadata** is the field to use for anything you want to see here later: pass identifiers such as an order or tournament ID as `metadata` when sending.
+</Note>
+
 ## Sender Information
 
 The **Sender** section shows details about how the email was sent:
@@ -65,6 +69,8 @@ If the timeline stops at **Injection** with no subsequent events, the email is l
 If you see **Delayed** followed eventually by **Delivery**, the message experienced a temporary hiccup but was ultimately delivered successfully. No action is needed.
 
 If you see **Bounced**, look at the Recipient section to identify the domain and mailbox provider. If the same domain is bouncing consistently across multiple messages, there may be a domain-level issue or your sending reputation with that provider needs attention.
+
+If the email was **delivered but looks wrong** — a blank where a value should be, or a button that isn't clickable — the event timeline won't explain it, because delivery succeeded. Check the template instead: a blank value means a merge tag wasn't supplied or its name didn't match exactly (names are case-sensitive), a dead button usually means a merge tag was used as the whole URL ([Links and URLs](/learn/templates/template-language#links-and-urls)), and missing content usually means the version you edited isn't published ([Saving vs. Publishing](/learn/templates/versions#saving-vs-publishing)).
 
 If you see **Spam** in the timeline, the recipient actively reported the email. Check the content and sending practices associated with this message, and review your [suppression list](/learn/suppressions/complaints-unsubscribes) to confirm the address has been suppressed.
 

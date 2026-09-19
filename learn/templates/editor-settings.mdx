@@ -116,6 +116,16 @@ The merge tag **value** is auto-generated from the text field — converted to u
 
 Once configured, merge tags appear in the editor's text formatting toolbar as a dropdown organized by group.
 
+### Merge Tags and the Editor Preview
+
+The merge tags you register here are also the only ones the editor's **Merge tags - Preview** panel knows about. That panel lists the registered tags used in the current template and lets you enter sample values for them.
+
+You can still type any merge tag straight into your content — `{{TOURNAMENT_NAME}}` works at send time whether or not it is registered. But unregistered tags never show up in the preview panel, so a template that uses only hand-typed tags opens an **empty** preview panel. If that happens, add the tags here, save, and reopen the template. See [Previewing merge tags](/learn/templates/topol-editor#previewing-merge-tags).
+
+<Note>
+  Register the tag with the same spelling and capitalization you use in the template and in your API calls. Merge tag names are case-sensitive, and the value generated here is uppercase (`FIRST_NAME`).
+</Note>
+
 <Tip>
   Create merge tag groups that match your data model. For example, a "Customer" group might contain `first_name`, `last_name`, and `email`, while an "Order" group contains `order_id`, `total`, and `tracking_url`.
 </Tip>

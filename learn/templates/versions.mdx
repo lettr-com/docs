@@ -18,12 +18,33 @@ Template: "order-confirmation"
 
 Only one version can be active at a time. When you send emails using this template, the **active version** is used.
 
+## Saving vs. Publishing
+
+This is the most important thing to understand about versions: **saving a template does not change what your application sends.**
+
+| Action | What happens |
+|-|-|
+| **Save** in the editor | Creates a new version that is **inactive** (a draft). Nothing changes for emails sent through the API. |
+| **Publish** a version | Makes that version **active**. From now on, sends by template slug use it. The previously active version becomes inactive. |
+
+So after editing a template there are always two steps: save, then publish. If you add a button, save, and then trigger an email from your application, the email still comes from the previously published version — the new button is missing until you publish the version that contains it.
+
+<Warning>
+  A change that shows up in the editor and in the editor's preview but is missing from the email your application sent is almost always an unpublished version. Open the template, click **See versions**, and check which version is marked active.
+</Warning>
+
+The template detail page tells you which state you are looking at: the header reads **"This version is currently Active in production"** or **"This version is not active in production"**.
+
+<Note>
+  Templates created or updated through the [Template API](/learn/templates/introduction#template-api) behave differently: an API update publishes the new version immediately.
+</Note>
+
 ## Viewing Versions
 
-In the template editor:
+On the template detail page:
 
 1. Open a template
-2. Click the **Versions** tab in the sidebar
+2. Click **See versions** to open the **Version History** panel
 3. View all versions with their status and creation dates
 
 Each version shows:
@@ -37,28 +58,28 @@ Each version shows:
 
 ## Creating a New Version
 
-Create a version to snapshot your current template state:
-
-<Steps>
-  <Step title="Open the Template">
-    Navigate to the template you want to version.
-  </Step>
-  <Step title="Access Versions">
-    Click the **Versions** tab in the sidebar.
-  </Step>
-  <Step title="Create Version">
-    Click **Create Version** and configure:
-    - **Active**: Whether to immediately activate this version
-    - **Publish At**: Optional date to automatically activate
-    - **Merge Tags**: Required template variables for this version
-  </Step>
-</Steps>
-
-When you create a version:
+You don't create versions by hand — every time you click **Save** in the editor, Lettr snapshots the template as a new version:
 
 - The current template content (HTML and JSON) is copied to the new version
 - The version number auto-increments
-- You can optionally activate it immediately or schedule it
+- The merge tags used in the content are detected and stored with the version
+- The new version is **inactive** until you publish it
+
+## Publishing a Version
+
+<Steps>
+  <Step title="Open the Template">
+    Navigate to the template's detail page.
+  </Step>
+  <Step title="Open Version History">
+    Click **See versions**.
+  </Step>
+  <Step title="Publish">
+    Open the menu (**⋯**) on the version you want to go live and choose **Publish**. In the **Publish Version** dialog, leave the date empty to publish immediately, or pick a date and time to [schedule it](#scheduled-publishing).
+  </Step>
+</Steps>
+
+The same menu lets you **Compare** a version with another, **Show email** to preview it, and **Delete** inactive versions.
 
 ## Active vs Inactive Versions
 
@@ -101,8 +122,8 @@ await lettr.emails.send({
 
 Schedule a version to become active at a future date:
 
-1. Create or edit a version
-2. Set the **Publish At** date and time
+1. Click **See versions** and choose **Publish** on the version
+2. Pick a date and time in the **Publish Version** dialog
 3. The version will automatically activate at that time
 
 Use scheduled publishing to:
@@ -138,7 +159,7 @@ Each version can define its required merge tags (template variables):
 | `required` | Whether this variable must be provided when sending |
 
 <Warning>
-  Required merge tags must be included in `substitution_data` when sending. Sending without required variables will result in the variable placeholder appearing in the email.
+  Include every merge tag the template uses in `substitution_data` when sending. A merge tag with no matching value renders as **empty text** — the email is still sent, with a blank where the value should be (or a link with an empty address). Names are case-sensitive, so `customer_name` does not fill `{{CUSTOMER_NAME}}`.
 </Warning>
 
 ## Editor Type
@@ -156,26 +177,26 @@ The editor type is stored per version, allowing you to switch between visual and
 
 To restore an older version:
 
-1. Open the template's **Versions** tab
+1. Open the template and click **See versions**
 2. Find the version you want to restore
-3. Click **Activate** to make it the active version
+3. Open its menu and choose **Publish** to make it the active version
 
 This immediately makes the selected version active for all future sends.
 
 <Tip>
-  Before making major changes, create a new version. This gives you a snapshot to revert to if needed.
+  Because every save creates a version and the published one stays active, you can iterate freely: nothing you save reaches recipients until you publish it, and the previous version is always there to roll back to.
 </Tip>
 
 ## Deleting Versions
 
 You can delete inactive versions to clean up old iterations:
 
-1. Open the template's **Versions** tab
+1. Open the template and click **See versions**
 2. Find the version to delete
-3. Click **Delete**
+3. Open its menu and choose **Delete**
 
 <Note>
-  The delete option is disabled for the active version. Activate a different version first if you need to remove it.
+  The delete option is not offered for the active version. Publish a different version first if you need to remove it.
 </Note>
 
 ## Version Workflow
@@ -183,12 +204,14 @@ You can delete inactive versions to clean up old iterations:
 A typical versioning workflow:
 
 ```
-1. Edit template (changes are auto-saved)
-2. Test with preview and test emails
-3. Create new version when ready to publish
-4. Activate the new version (or schedule it)
+1. Edit the template and click Save (creates a new inactive version)
+2. Test with the editor preview and test emails
+3. Open See versions and Publish the new version (or schedule it)
+4. Send through the API — the published version is now used
 5. Previous version remains available for rollback
 ```
+
+To test an unpublished version through the API before it goes live, pass its number as `template_version` — see [Using a Specific Version](#using-a-specific-version).
 
 ### Best Practices
 

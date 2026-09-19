@@ -83,6 +83,10 @@ A styled call-to-action element combining a text label with a click-through URL.
 
 Button styling defaults can be set globally in the Settings panel. Individual buttons can override these defaults.
 
+<Warning>
+  Don't use a merge tag as the button's entire URL (for example `{{LOBBY_URL}}`). The value is URL-encoded at send time, so a full address arrives as `https%3A%2F%2F…`, email clients drop the link, and the button collapses into a thin bar with unclickable text — even though it looks fine in the editor. Keep the fixed part of the address in the URL field and use a merge tag only for the variable part: `https://app.example.com/lobby/{{LOBBY_ID}}`. See [Links and URLs](/learn/templates/template-language#links-and-urls).
+</Warning>
+
 ### Spacer
 
 Adds configurable vertical space between other elements. Height is adjustable by dragging directly on the canvas or through the configuration panel.
@@ -179,6 +183,7 @@ The top toolbar provides access to editing controls and workflow tools:
 | **Undo / Redo** | Step backward or forward through changes within the current session. History is cleared when the editor is closed. |
 | **Create mutation** (language dropdown) | Add, switch between, and delete language versions of the template, and set the primary language. Shows the current language's name once a language exists. See [Multilingual Templates](/learn/multilingual-campaigns/template-languages). |
 | **Desktop / Mobile** | Toggle between desktop and mobile preview modes |
+| **Merge tags - Preview** | Open a side panel where you enter sample values and preview the template with its merge tags replaced. Available in preview mode. See [Previewing merge tags](#previewing-merge-tags). |
 | **Show hidden** | Reveal content hidden on the current viewport (desktop or mobile) for editing |
 | **Autosave history** | View and restore automatically saved versions. See [Autosave with version history](https://support.topol.io/en/articles/10760052-autosave-with-version-history). |
 | **Save** | Persist the current template state. Also provides "Save and Close" via the dropdown menu. |
@@ -222,9 +227,13 @@ Select any autosave from the history list to preview it. If you want to revert t
 | | Autosaves | Manual Saves |
 |---|---|---|
 | **Trigger** | Automatic (periodic) | Click **Save** button |
-| **Purpose** | Crash recovery, undo | Create canonical version for sending |
-| **Used when sending** | No | Yes — the active version from manual save is what gets sent |
+| **Purpose** | Crash recovery, undo | Create a new template version |
+| **Used when sending** | No | Only after you publish it — a save creates a draft version |
 | **Visible to** | Editor users only | Anyone referencing the template |
+
+<Warning>
+  **Saving does not publish.** Every manual save creates a new, *inactive* template version. Emails sent through the API by template slug keep using the currently **active** version until you publish the new one: open the template, click **See versions**, open the menu on the version you just saved, and choose **Publish**. If a change you can see in the editor is missing from the emails your application sends, this is almost always the reason. See [Template Versions](/learn/templates/versions#saving-vs-publishing).
+</Warning>
 
 ---
 
@@ -285,6 +294,30 @@ await lettr.emails.send({
 ```
 
 The merge tag system supports conditionals, loops, default values, and nested data paths. For the complete syntax reference, see [Template Language](/learn/templates/template-language).
+
+Merge tag names are case-sensitive: `{{LOBBY_URL}}` is only filled by a `LOBBY_URL` key. A tag with no matching value renders as empty text.
+
+### Previewing merge tags
+
+The **Merge tags - Preview** panel lets you type sample values and see the template with its merge tags replaced, before you send anything.
+
+The panel lists only merge tags that are **registered for your team** under **Emails** → **Editor Settings** → **Merge Tags** and used in the current template. Tags you typed directly into the content, such as `{{TOURNAMENT_NAME}}`, are valid and work when sending, but the panel doesn't detect them — if none of the template's tags are registered, the panel is empty and there is nowhere to enter values.
+
+To preview with your own tags:
+
+1. Go to **Emails** → **Editor Settings** → **Merge Tags**
+2. Add each tag used in the template (for example `USERNAME`, `TOURNAMENT_NAME`, `LOBBY_ID`) to a group and save
+3. Reopen the template, open **Merge tags - Preview**, fill in the values, and click **Preview with Merge tags**
+
+Registering a tag also adds it to the merge tag dropdown in the text toolbar, so you can insert it without typing. See [Editor Settings](/learn/templates/editor-settings#merge-tags-tab).
+
+<Note>
+  The preview is rendered by the editor, not by the sending pipeline, so it is not a guarantee of what arrives in the inbox. In particular, a button whose whole URL is a merge tag can look correct here and still break in the sent email. See [Links and URLs](/learn/templates/template-language#links-and-urls).
+</Note>
+
+### Test emails from the editor
+
+**Send test email** sends the template exactly as it currently looks in the editor, including unsaved changes. It is sent **without** `substitution_data`, so merge tags arrive empty. To test with real values — and to test the version your application will actually receive — send through the API with a [sandbox API key](/learn/api-keys/sandbox). Keep in mind that API sends use the published version, not your latest save.
 
 ---
 
