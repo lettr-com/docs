@@ -76,8 +76,9 @@ Sandbox keys can access email sending and read-only endpoints. Write operations 
 - `GET /api/emails/{requestId}` — Get email details
 - `GET /api/emails/events` — List email events
 - `POST /api/emails/scheduled` — Schedule an email
-- `GET /api/emails/scheduled/{transmissionId}` — Get scheduled email details
-- `DELETE /api/emails/scheduled/{transmissionId}` — Cancel a scheduled email
+- `GET /api/emails/scheduled` — List scheduled emails
+- `GET /api/emails/scheduled/{requestId}` — Get scheduled email details
+- `DELETE /api/emails/scheduled/{requestId}` — Cancel a scheduled email
 - `GET /api/templates` — List templates
 - `GET /api/templates/{slug}` — Get template details
 - `GET /api/templates/{slug}/merge-tags` — Get template merge tags

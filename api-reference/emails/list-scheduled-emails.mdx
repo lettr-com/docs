@@ -1,0 +1,8 @@
+---
+title: List Scheduled Emails
+openapi: GET /emails/scheduled
+---
+
+List emails waiting to be sent, soonest delivery time first. Filter by `status` to see only what is still pending, or to find what was cancelled or failed.
+
+Each row carries the same detail as a single read, including the `sch_` request ID you need to get or cancel an individual email.
