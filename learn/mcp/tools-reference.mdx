@@ -1,41 +1,102 @@
 ---
 title: Tools Reference
-description: "Complete reference for every Lettr MCP tool for sending, templates, domains, analytics, and monitoring across the remote and local servers."
+description: "Complete reference for every Lettr MCP tool for sending, templates, domains, campaigns, audience, analytics, and monitoring across the remote and local servers."
 ---
 
-This reference documents every tool available through Lettr's MCP servers. Some tools are available on both the [remote](/learn/mcp/setup) and [local](/learn/mcp/local-setup) servers, while others are exclusive to one.
+This reference documents every tool available through Lettr's MCP servers. The [remote server](/learn/mcp/setup) exposes 77 tools and the [local server](/learn/mcp/local-setup) exposes 69. Most tools are available on both; a few analytics, monitoring, and diagnostic tools are exclusive to the remote server, and a few event and system tools are exclusive to the local server.
 
 <Note>
   The remote server uses underscores in tool names (e.g., `send_email`) while the local server uses hyphens (e.g., `send-email`). The functionality is equivalent.
 </Note>
 
+<Info>
+  The parameter tables below describe the remote server. The local server's parameters can differ in naming and shape — for example, it identifies audience and campaign resources with camelCase parameters such as `contactId` and `campaignId`, webhooks with `id`, and templates with `slug`. Your AI client always receives each server's exact input schema.
+</Info>
+
 ## Tool Availability
 
 | Category | Tool | Remote | Local |
-|----------|------|--------|-------|
+|-|-|-|-|
 | **Sending** | send_email | Yes | Yes |
 | **Sending** | send_template_email | Yes | — |
+| **Sending** | schedule_email | Yes | Yes |
+| **Sending** | get_scheduled_email | Yes | Yes |
+| **Sending** | cancel_scheduled_email | Yes | Yes |
+| **Email History** | list_emails | Yes | Yes |
+| **Email History** | get_email_detail | Yes | Yes |
+| **Email History** | list-email-events | — | Yes |
 | **Templates** | list_templates | Yes | Yes |
 | **Templates** | get_template | Yes | Yes |
+| **Templates** | get_template_html | Yes | Yes |
+| **Templates** | get_merge_tags | Yes | Yes |
 | **Templates** | create_template | Yes | Yes |
 | **Templates** | update_template | Yes | Yes |
-| **Templates** | delete_template | — | Yes |
-| **Templates** | get_merge_tags | — | Yes |
-| **Domains** | list_sending_domains / list_domains | Yes | Yes |
+| **Templates** | delete_template | Yes | Yes |
+| **Templates** | list_folders | Yes | Yes |
+| **Templates** | list_projects | Yes | Yes |
+| **Domains** | list_sending_domains / list-domains | Yes | Yes |
+| **Domains** | get_domain | Yes | Yes |
+| **Domains** | create_domain | Yes | Yes |
+| **Domains** | verify_domain | Yes | Yes |
+| **Domains** | delete_domain | Yes | Yes |
+| **Domains** | diagnose_sending_domain_dns | Yes | — |
 | **Domains** | list_tracking_domains | Yes | — |
 | **Domains** | list_inbound_domains | Yes | — |
 | **Domains** | list_storage_domains | Yes | — |
-| **Domains** | create_domain | — | Yes |
-| **Domains** | get_domain | — | Yes |
-| **Domains** | delete_domain | — | Yes |
-| **Domains** | verify_domain | — | Yes |
+| **Campaigns** | list_campaigns | Yes | Yes |
+| **Campaigns** | get_campaign | Yes | Yes |
+| **Campaigns** | list_campaign_events | Yes | Yes |
+| **Campaigns** | send_campaign | Yes | Yes |
+| **Campaigns** | schedule_campaign | Yes | Yes |
+| **Campaigns** | unschedule_campaign | Yes | Yes |
+| **Audience: Contacts** | list_audience_contacts | Yes | Yes |
+| **Audience: Contacts** | get_audience_contact | Yes | Yes |
+| **Audience: Contacts** | create_audience_contact | Yes | Yes |
+| **Audience: Contacts** | bulk_create_audience_contacts | Yes | Yes |
+| **Audience: Contacts** | update_audience_contact | Yes | Yes |
+| **Audience: Contacts** | delete_audience_contact | Yes | Yes |
+| **Audience: Lists** | list_audience_lists | Yes | Yes |
+| **Audience: Lists** | get_audience_list | Yes | Yes |
+| **Audience: Lists** | create_audience_list | Yes | Yes |
+| **Audience: Lists** | update_audience_list | Yes | Yes |
+| **Audience: Lists** | delete_audience_list | Yes | Yes |
+| **Audience: Lists** | bulk_delete_audience_lists | Yes | Yes |
+| **Audience: Lists** | attach_contact_to_list | Yes | Yes |
+| **Audience: Lists** | detach_contact_from_list | Yes | Yes |
+| **Audience: Lists** | bulk_attach_contacts_to_lists | Yes | Yes |
+| **Audience: Lists** | bulk_detach_contacts_from_lists | Yes | Yes |
+| **Audience: Topics** | list_audience_topics | Yes | Yes |
+| **Audience: Topics** | get_audience_topic | Yes | Yes |
+| **Audience: Topics** | create_audience_topic | Yes | Yes |
+| **Audience: Topics** | update_audience_topic | Yes | Yes |
+| **Audience: Topics** | delete_audience_topic | Yes | Yes |
+| **Audience: Topics** | subscribe_contact_to_topic | Yes | Yes |
+| **Audience: Topics** | unsubscribe_contact_from_topic | Yes | Yes |
+| **Audience: Topics** | bulk_subscribe_contacts_to_topics | Yes | Yes |
+| **Audience: Topics** | bulk_unsubscribe_contacts_from_topics | Yes | Yes |
+| **Audience: Properties** | list_audience_properties | Yes | Yes |
+| **Audience: Properties** | get_audience_property | Yes | Yes |
+| **Audience: Properties** | create_audience_property | Yes | Yes |
+| **Audience: Properties** | update_audience_property | Yes | Yes |
+| **Audience: Properties** | delete_audience_property | Yes | Yes |
+| **Audience: Segments** | list_audience_segments | Yes | Yes |
+| **Audience: Segments** | get_audience_segment | Yes | Yes |
+| **Audience: Segments** | create_audience_segment | Yes | Yes |
+| **Audience: Segments** | update_audience_segment | Yes | Yes |
+| **Audience: Segments** | delete_audience_segment | Yes | Yes |
 | **Configuration** | list_api_keys | Yes | — |
 | **Configuration** | list_webhooks | Yes | Yes |
-| **Configuration** | get_webhook | — | Yes |
+| **Configuration** | get_webhook | Yes | Yes |
+| **Configuration** | create_webhook | Yes | Yes |
+| **Configuration** | update_webhook | Yes | Yes |
+| **Configuration** | delete_webhook | Yes | Yes |
 | **Analytics** | get_analytics | Yes | — |
 | **Analytics** | list_template_stats | Yes | — |
 | **Monitoring** | browse_email_events | Yes | — |
 | **Monitoring** | browse_api_logs | Yes | — |
+| **Monitoring** | check_sending_health | Yes | — |
+| **System** | health-check | — | Yes |
+| **System** | auth-check | — | Yes |
 
 ---
 
@@ -43,7 +104,7 @@ This reference documents every tool available through Lettr's MCP servers. Some 
 
 ### send_email
 
-Send an email with plain text, HTML, or AMP HTML content. Supports merge tags for variable substitution.
+Send an email with plain text, HTML, or AMP HTML content. Supports merge tags for variable substitution. The email goes out immediately.
 
 **Available on:** Remote, Local
 
@@ -51,8 +112,8 @@ Send an email with plain text, HTML, or AMP HTML content. Supports merge tags fo
 |-----------|------|----------|-------------|
 | `from` | string | Yes | Sender email address. Must be from a verified sending domain. |
 | `to` | string | Yes | Recipient email address. |
-| `subject` | string | Yes | Email subject line (max 998 characters). |
-| `html` | string | No | HTML content. Supports merge tags like `{{variable_name}}`. |
+| `subject` | string | Yes | Email subject line (max 998 characters). Supports merge tags. |
+| `html` | string | No | HTML content. Supports merge tags like `{{variable_name}}`. At least one of `html`, `text`, or `amp_html` is required. |
 | `text` | string | No | Plain text content. Supports merge tags. |
 | `amp_html` | string | No | AMP HTML content for interactive emails. |
 | `from_name` | string | No | Display name for the sender. |
@@ -60,28 +121,34 @@ Send an email with plain text, HTML, or AMP HTML content. Supports merge tags fo
 | `cc` | string | No | CC recipient email address. |
 | `bcc` | string | No | BCC recipient email address. |
 | `substitution_data` | object | No | Key-value pairs for merge tag substitution. |
+| `idempotency_key` | string | No | 1–255 letters, digits, periods, underscores, or hyphens. Reuse the same key when retrying and the original result is returned instead of a second email being sent. Keys are kept for 24 hours. |
 
 **Example prompt:** "Send a welcome email to john@example.com from hello@mycompany.com with the subject 'Welcome to Acme'"
+
+<Tip>
+  On the local server, `send-email` also supports template-based sending via a `template_slug` parameter, multiple recipients, attachments, custom headers, tags, metadata, and tracking options.
+</Tip>
 
 ---
 
 ### send_template_email
 
-Send an email using a pre-defined template specified by its slug.
+Send an email using a pre-defined template specified by its slug. The email goes out immediately.
 
-**Available on:** Remote only
+**Available on:** Remote only. On the local server, pass `template_slug` to `send-email` instead.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `from` | string | Yes | Sender email address. Must be from a verified sending domain. |
 | `to` | string | Yes | Recipient email address. |
-| `subject` | string | Yes | Email subject line. Can include merge tags. |
 | `template_slug` | string | Yes | The slug of the template to use (e.g., `welcome-email`). |
+| `subject` | string | No | Email subject line. Can include merge tags. Defaults to the template's own subject. |
 | `from_name` | string | No | Display name for the sender. |
 | `reply_to` | string | No | Reply-to email address. |
 | `project_id` | integer | No | Project ID where the template is located. Uses default project if omitted. |
 | `template_version` | integer | No | Specific version number. Uses active version if omitted. |
 | `substitution_data` | object | No | Key-value pairs for merge tag substitution. |
+| `idempotency_key` | string | No | 1–255 letters, digits, periods, underscores, or hyphens. Reuse the same key when retrying to avoid sending the email twice. Keys are kept for 24 hours. |
 
 **Example prompt:** "Send the order-confirmation template to customer@example.com with order_id 12345"
 
@@ -91,25 +158,144 @@ Send an email using a pre-defined template specified by its slug.
 
 ---
 
+### schedule_email
+
+Schedule an email for future delivery. Accepts the same content as `send_email`, or a `template_slug`, plus a delivery time between 5 minutes and 3 days in the future.
+
+**Available on:** Remote, Local
+
+| Parameter | Type | Required | Description |
+|-|-|-|-|
+| `from` | string | Yes | Sender email address on a verified sending domain. |
+| `to` | array | Yes | Recipient email addresses (1–50, counted together with `cc` and `bcc`). |
+| `scheduled_at` | string | Yes | ISO 8601 UTC datetime (e.g., `2026-01-16T10:00:00Z`). Must be at least 5 minutes in the future and within 3 days. |
+| `subject` | string | No | Subject line. Required unless `template_slug` is provided; overrides the template subject when both are given. |
+| `html` | string | No | HTML content. At least one of `html`, `text`, or `template_slug` is required. |
+| `text` | string | No | Plain text content. |
+| `amp_html` | string | No | AMP HTML content. |
+| `template_slug` | string | No | Template slug to use for the content. |
+| `template_version` | integer | No | Specific template version. Defaults to the active version. |
+| `project_id` | integer | No | Project containing the template. Defaults to the team's default project. |
+| `substitution_data` | object | No | Merge tag values, e.g. `{"first_name": "John"}`. |
+| `from_name` | string | No | Sender display name. |
+| `reply_to` | string | No | Reply-to email address. |
+| `reply_to_name` | string | No | Reply-to display name. |
+| `cc` | array | No | CC addresses. |
+| `bcc` | array | No | BCC addresses. |
+| `tag` | string | No | Tag for analytics (max 64 characters). |
+| `metadata` | object | No | Custom string metadata, e.g. `{"user_id": "123"}`. |
+| `options` | object | No | Delivery options: `click_tracking`, `open_tracking`, `transactional`, `inline_css`, `perform_substitutions` (booleans). |
+
+Returns a transmission ID to use with `get_scheduled_email` and `cancel_scheduled_email`.
+
+**Example prompt:** "Schedule the weekly-digest template to team@example.com for tomorrow at 9:00 UTC"
+
+---
+
+### get_scheduled_email
+
+Retrieve a scheduled email's state, scheduled time, sender, subject, recipients, and any events collected so far.
+
+**Available on:** Remote, Local
+
+| Parameter | Type | Required | Description |
+|-|-|-|-|
+| `transmission_id` | string | Yes | Transmission ID returned by `schedule_email`. |
+
+---
+
+### cancel_scheduled_email
+
+Cancel a scheduled email before it is sent. This cannot be undone, and an email that has already started sending can no longer be cancelled.
+
+**Available on:** Remote, Local
+
+| Parameter | Type | Required | Description |
+|-|-|-|-|
+| `transmission_id` | string | Yes | Transmission ID returned by `schedule_email`. |
+
+---
+
+## Email History
+
+### list_emails
+
+List recently sent emails with cursor pagination. Each entry includes the request ID, subject, recipient, and timestamp. Sent emails are kept for about 10 days.
+
+**Available on:** Remote, Local
+
+| Parameter | Type | Required | Description |
+|-|-|-|-|
+| `per_page` | integer | No | Results per page (1–100). Default: 25. |
+| `cursor` | string | No | Pagination cursor from a previous response. |
+| `recipients` | string | No | Only emails sent to this recipient address. |
+| `from` | string | No | ISO 8601 start, inclusive. Defaults to 10 days ago. |
+| `to` | string | No | ISO 8601 end, exclusive. Must be after `from`. |
+
+**Example prompt:** "What emails did we send to jane@example.com this week?"
+
+---
+
+### get_email_detail
+
+Retrieve the full delivery timeline of a single sent email — its state (scheduled, delivered, bounced, failed), sender, subject, recipients, and every event.
+
+**Available on:** Remote, Local
+
+| Parameter | Type | Required | Description |
+|-|-|-|-|
+| `request_id` | string | Yes | Request ID returned by `send_email` or `send_template_email`. |
+| `from` | string | No | ISO 8601 start, inclusive. Defaults to 10 days ago. |
+| `to` | string | No | ISO 8601 end, exclusive. Defaults to now. Must be after `from`. |
+
+**Example prompt:** "Was the email I just sent to jane@example.com delivered?"
+
+---
+
+### list-email-events
+
+List email events (delivery, bounce, click, open, and more) across all sent messages, filtered by event type, recipient, date range, transmission ID, or bounce class.
+
+**Available on:** Local only
+
+| Parameter | Type | Required | Description |
+|-|-|-|-|
+| `events` | array | No | Filter by one or more event types. |
+| `recipients` | array | No | Filter by one or more recipient email addresses. |
+| `from` | string | No | ISO 8601 start date. Defaults to 10 days ago. |
+| `to` | string | No | ISO 8601 end date. |
+| `per_page` | integer | No | Results per page (1–100). Default: 25. |
+| `cursor` | string | No | Pagination cursor. |
+| `transmissions` | string | No | Filter by transmission ID (request ID). |
+| `bounce_classes` | string | No | Comma-separated bounce classification codes. |
+
+<Tip>
+  On the remote server, use `browse_email_events` for the same purpose.
+</Tip>
+
+---
+
 ## Template Management
 
 ### list_templates
 
-Lists all email templates for your team with metadata including name, slug, editor type, version count, and merge tags.
+Lists email templates for your team with metadata including name, slug, purpose, editor type, version count, and merge tags.
 
 **Available on:** Remote, Local
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `project_id` | integer | No | Filter templates by project. Returns templates from all projects if omitted. |
+| `purpose` | string | No | Only return templates of this purpose: `transactional` or `campaign`. Use `campaign` to find templates a campaign can send. |
+| `folder_id` | integer | No | Only return templates in this folder. Use `list_folders` to find folder IDs. |
 
-**Example prompt:** "List all my email templates" or "What templates are in project 3?"
+**Example prompt:** "List all my email templates" or "Which templates can I use for a campaign?"
 
 ---
 
 ### get_template
 
-Gets detailed information about a specific template, including its HTML content and merge tags.
+Gets detailed information about a specific template, including its purpose, versions, merge tags, and HTML content.
 
 **Available on:** Remote, Local
 
@@ -127,6 +313,35 @@ Gets detailed information about a specific template, including its HTML content 
 
 ---
 
+### get_template_html
+
+Retrieves the full rendered HTML of a template's active version, along with its subject and merge tags. Unlike `get_template`, the HTML is never truncated.
+
+**Available on:** Remote, Local
+
+| Parameter | Type | Required | Description |
+|-|-|-|-|
+| `project_id` | integer | Yes | ID of the project containing the template. |
+| `slug` | string | Yes | The template slug. |
+
+---
+
+### get_merge_tags
+
+Retrieves the merge tag variables that a template expects, so you know which substitution data to provide when sending.
+
+**Available on:** Remote, Local
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `slug` | string | Yes | The template slug. |
+| `project_id` | integer | No | Project ID to find the template in. Defaults to the team's default project. |
+| `version` | integer | No | Template version number. Defaults to the active version. |
+
+**Example prompt:** "What merge tags does the order-confirmation template expect?"
+
+---
+
 ### create_template
 
 Creates a new Custom HTML email template.
@@ -136,19 +351,22 @@ Creates a new Custom HTML email template.
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `name` | string | Yes | Display name for the template. |
-| `folder_id` | integer | Yes | The folder ID where the template will be created. |
-| `slug` | string | No | URL-friendly identifier. Auto-generated from name if omitted. |
+| `purpose` | string | No | `transactional` (default) or `campaign`. Cannot be changed after creation. |
+| `folder_id` | integer | No | The folder to create the template in; its purpose must match. Defaults to the first folder of the template's purpose. |
+| `slug` | string | No | URL-friendly identifier. Auto-generated from name if omitted. Must be unique within the project. |
 | `project_id` | integer | No | Project ID. Uses default project if omitted. |
 | `html` | string | No | Initial HTML content for the template. |
 | `subject` | string | No | Default subject line for the template. |
 
-**Example prompt:** "Create a new template called 'Invoice Reminder' in folder 1 with a basic HTML layout"
+**Example prompt:** "Create a campaign template called 'Spring Newsletter' with a basic HTML layout"
 
 <Warning>
-  **This tool creates transactional templates only.** It does not take a `purpose`, so templates it creates cannot be picked by a [campaign](/learn/campaigns/introduction), and the mode cannot be changed afterwards.
-
-  To create a marketing template from an AI agent, use the [remote MCP server](/learn/mcp/introduction) (`create-template` with `purpose: "campaign"`) or the API directly. To rescue one already created here, use the **Copy to Marketing** action in the app.
+  **Set `purpose` deliberately.** Only templates with the `campaign` purpose can be picked by a [campaign](/learn/campaigns/introduction), and the purpose cannot be changed afterwards. A newsletter created with the default `transactional` purpose has to be recreated — or rescued with the **Copy to Marketing** action in the app.
 </Warning>
+
+<Note>
+  The local `create-template` tool also accepts `purpose` and `folder_id`, and additionally takes a `json` parameter to create Topol editor templates. It does not accept `slug` or `subject`.
+</Note>
 
 ---
 
@@ -167,7 +385,7 @@ Updates a template's content and creates a new active version. Supports both Cus
 | `json` | string | No | Updated Topol editor JSON (for Topol templates). |
 
 <Note>
-  Provide either `template_id` or `template_slug` to identify the template. Each update creates a new version automatically.
+  Provide either `template_id` or `template_slug` to identify the template, and exactly one of `html` or `json`. Each update creates a new version automatically.
 </Note>
 
 **Example prompt:** "Update the welcome-email template with new HTML content"
@@ -176,39 +394,50 @@ Updates a template's content and creates a new active version. Supports both Cus
 
 ### delete_template
 
-Permanently deletes a template and all its versions.
+Permanently deletes a template and all its versions. This is irreversible, and emails sent with the template's slug will fail afterwards.
 
-**Available on:** Local only
+**Available on:** Remote, Local
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `template_id` | integer | No | The numeric ID of the template. |
-| `template_slug` | string | No | The slug of the template. |
-| `project_id` | integer | No | Project ID to narrow the search when using a slug. |
+| `slug` | string | Yes | The slug of the template to delete. |
+| `project_id` | integer | No | Project ID to find the template in. Defaults to the team's default project. |
 
 **Example prompt:** "Delete the old-welcome-email template"
 
 ---
 
-### get_merge_tags
+### list_folders
 
-Retrieves the merge tag variables that a template expects, so you know which substitution data to provide when sending.
+Lists the template folders in a project. Each folder has a purpose (`transactional` or `campaign`) that templates inside it inherit.
 
-**Available on:** Local only
+**Available on:** Remote, Local
 
 | Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `template_id` | integer | No | The numeric ID of the template. |
-| `template_slug` | string | No | The slug of the template. |
-| `project_id` | integer | No | Project ID to narrow the search when using a slug. |
+|-|-|-|-|
+| `project_id` | integer | No | Project ID. Defaults to the team's default project. |
+| `purpose` | string | No | Only return folders with this purpose: `transactional` or `campaign`. |
+| `page` | integer | No | Page number, starting at 1. |
+| `per_page` | integer | No | Folders per page (1–100). Default: 20. |
 
-**Example prompt:** "What merge tags does the order-confirmation template expect?"
+---
+
+### list_projects
+
+Lists the projects owned by your team. Templates and folders live inside a project.
+
+**Available on:** Remote, Local
+
+| Parameter | Type | Required | Description |
+|-|-|-|-|
+| `page` | integer | No | Page number, starting at 1. |
+| `per_page` | integer | No | Projects per page (1–100). Default: 25. |
 
 ---
 
 ## Domain Management
 
-### list_sending_domains / list_domains
+### list_sending_domains / list-domains
 
 Lists all sending domains configured for your team with verification status, DNS configuration status, and whether they can be used for sending.
 
@@ -217,6 +446,76 @@ Lists all sending domains configured for your team with verification status, DNS
 **Parameters:** None
 
 **Example prompt:** "Show me all my sending domains and their verification status"
+
+---
+
+### get_domain
+
+Gets full details of a sending domain, including CNAME, DKIM, DMARC, and SPF status, the DKIM record to publish, and any detected DNS provider.
+
+**Available on:** Remote, Local
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `domain` | string | Yes | The domain name (e.g., `example.com`). |
+
+**Example prompt:** "Show me the DNS records for my sending domain"
+
+---
+
+### create_domain
+
+Registers a new sending domain and returns the DKIM record to publish. The domain cannot send until its DNS records are verified.
+
+**Available on:** Remote, Local
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `domain` | string | Yes | The domain name to register (e.g., `notifications.example.com`). |
+
+**Example prompt:** "Add notifications.example.com as a sending domain"
+
+---
+
+### verify_domain
+
+Triggers DNS verification for a sending domain, stores the result, and returns the full validation report for DKIM, CNAME, DMARC, and SPF.
+
+**Available on:** Remote, Local
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `domain` | string | Yes | The domain name to verify (e.g., `example.com`). |
+
+**Example prompt:** "Verify the DNS records for my sending domain"
+
+---
+
+### delete_domain
+
+Removes a sending domain from your account. This is irreversible and stops all sending from that domain.
+
+**Available on:** Remote, Local
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `domain` | string | Yes | The domain name to delete (e.g., `example.com`). |
+
+**Example prompt:** "Remove the old.example.com sending domain"
+
+---
+
+### diagnose_sending_domain_dns
+
+Diagnoses why a sending domain is still pending or failing verification. Compares the expected DNS records against live DNS, detects common mistakes (wrong host, duplicate SPF records, proxied CNAMEs), and explains whether to wait for propagation or fix the records. It does not update the stored status.
+
+**Available on:** Remote only
+
+| Parameter | Type | Required | Description |
+|-|-|-|-|
+| `domain` | string | Yes | The exact sending domain to diagnose (e.g., `mail.example.com`). Must belong to your team. |
+
+**Example prompt:** "Why is mail.example.com still not verified?"
 
 ---
 
@@ -252,59 +551,575 @@ Lists all email storage domains configured for your team. Storage domains serve 
 
 ---
 
-### create_domain
+## Campaigns
 
-Registers a new sending domain.
+### list_campaigns
 
-**Available on:** Local only
+Lists campaigns for your team with embedded engagement stats.
+
+**Available on:** Remote, Local
 
 | Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `domain` | string | Yes | The domain name to register (e.g., `notifications.example.com`). |
+|-|-|-|-|
+| `page` | integer | No | Page number, starting at 1. |
+| `per_page` | integer | No | Campaigns per page (1–100). Default: 20. |
+| `status` | string | No | Filter by status: `draft`, `scheduled`, `preparing`, `in_review`, `sending`, `sent`, `failed`. |
 
-**Example prompt:** "Add notifications.example.com as a sending domain"
+**Example prompt:** "List my draft campaigns"
 
 ---
 
-### get_domain
+### get_campaign
 
-Gets detailed information about a sending domain, including its DNS records for SPF, DKIM, and DMARC setup.
+Retrieves a single campaign, including engagement stats, rendered HTML content, and any per-language overrides.
 
-**Available on:** Local only
+**Available on:** Remote, Local
 
 | Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `domain_id` | string | Yes | The ID of the domain to retrieve. |
-
-**Example prompt:** "Show me the DNS records for my sending domain"
+|-|-|-|-|
+| `campaign_id` | string | Yes | The campaign ID. |
 
 ---
 
-### delete_domain
+### list_campaign_events
 
-Removes a sending domain from your account.
+Lists engagement events for a campaign with cursor pagination. Keep paginating with `next_cursor` until it is null — a filtered page can be empty while more pages remain.
 
-**Available on:** Local only
+**Available on:** Remote, Local
 
 | Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `domain_id` | string | Yes | The ID of the domain to delete. |
+|-|-|-|-|
+| `campaign_id` | string | Yes | The campaign ID. |
+| `event_type` | string | No | Filter by event type: `injection`, `delivery`, `bounce`, `spam_complaint`, `open`, `click`, `list_unsubscribe`. |
+| `email` | string | No | Filter by recipient email address. |
+| `start_date` | string | No | Only events at or after this time (ISO 8601). |
+| `end_date` | string | No | Only events at or before this time (ISO 8601, inclusive). |
+| `limit` | integer | No | Max events per page (1–100). Default: 25. |
+| `cursor` | string | No | Pagination cursor from a previous response. |
 
-**Example prompt:** "Remove the old.example.com sending domain"
+**Example prompt:** "Who clicked a link in the March newsletter campaign?"
 
 ---
 
-### verify_domain
+### send_campaign
 
-Triggers DNS verification for a sending domain to check if SPF and DKIM records are properly configured.
+Immediately sends a draft campaign to its whole audience. This is irreversible and outward-facing — emails cannot be recalled. The campaign must be a draft with a subject, sender, and content, and no pending delivery time.
 
-**Available on:** Local only
+**Available on:** Remote, Local
 
 | Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `domain_id` | string | Yes | The ID of the domain to verify. |
+|-|-|-|-|
+| `campaign_id` | string | Yes | The ID of the draft campaign to send. |
 
-**Example prompt:** "Verify the DNS records for my sending domain"
+---
+
+### schedule_campaign
+
+Schedules a draft campaign for future delivery, or reschedules an already-scheduled one. At the scheduled time it sends real emails to the campaign's whole audience.
+
+**Available on:** Remote, Local
+
+| Parameter | Type | Required | Description |
+|-|-|-|-|
+| `campaign_id` | string | Yes | The ID of the campaign to schedule. |
+| `scheduled_at` | string | Yes | Future delivery time (ISO 8601, e.g., `2026-06-01T09:00:00+02:00`). A value without an offset is interpreted as UTC. |
+
+**Example prompt:** "Schedule the spring newsletter campaign for next Monday at 9am CET"
+
+---
+
+### unschedule_campaign
+
+Cancels a scheduled send and returns the campaign to draft. Also clears a delivery time staged on a draft in the editor.
+
+**Available on:** Remote, Local
+
+| Parameter | Type | Required | Description |
+|-|-|-|-|
+| `campaign_id` | string | Yes | The ID of the scheduled campaign to unschedule. |
+
+---
+
+## Audience: Contacts
+
+### list_audience_contacts
+
+Lists audience contacts with pagination and optional filters.
+
+**Available on:** Remote, Local
+
+| Parameter | Type | Required | Description |
+|-|-|-|-|
+| `page` | integer | No | Page number, starting at 1. |
+| `per_page` | integer | No | Contacts per page (1–100). Default: 20. |
+| `search` | string | No | Search by email address or contact name. |
+| `status` | string | No | Filter by status: `subscribed`, `unsubscribed`, `bounced`, `complained`, `unverified`. |
+| `list_id` | string | No | Only return contacts in this list. |
+| `segment_id` | string | No | Only return contacts matching this segment. |
+
+**Example prompt:** "How many unsubscribed contacts are in my Newsletter list?"
+
+---
+
+### get_audience_contact
+
+Retrieves a single contact, including status, custom properties, and the lists and topics it belongs to.
+
+**Available on:** Remote, Local
+
+| Parameter | Type | Required | Description |
+|-|-|-|-|
+| `contact_id` | string | Yes | The contact ID. |
+
+---
+
+### create_audience_contact
+
+Creates a single audience contact. Fails if the email already exists for your team. See [Double Opt-In](/learn/audience/double-opt-in) for the confirmation flow.
+
+**Available on:** Remote, Local
+
+| Parameter | Type | Required | Description |
+|-|-|-|-|
+| `email` | string | Yes | Contact email address. |
+| `list_id` | string | No | List to add the contact to. |
+| `properties` | object | No | Custom property values, each a string (max 1000 characters). Keys must match properties defined for your team. |
+| `double_opt_in` | object | No | Double opt-in configuration with `from`, `subject`, `template_slug`, and `redirect_url` (all required) and optional `from_name`. The contact stays unverified until they confirm. |
+
+---
+
+### bulk_create_audience_contacts
+
+Creates up to 1000 contacts in one call. Provide exactly one of `emails` or `contacts`. The call can partially succeed — invalid rows are skipped and reported in the result.
+
+**Available on:** Remote, Local
+
+| Parameter | Type | Required | Description |
+|-|-|-|-|
+| `emails` | array | No | Flat list of email addresses (max 1000). Mutually exclusive with `contacts`. |
+| `contacts` | array | No | One row per contact (max 1000), each with `email` and optional `properties`, `list_ids`, and `topics`. Mutually exclusive with `emails`. |
+| `list_id` | string | No | Single list ID applied to the whole batch. |
+| `list_ids` | array | No | List IDs applied to every contact (max 50). |
+| `topics` | array | No | Topic subscriptions (`id` and `subscription`: `opt_in` or `opt_out`) applied to every contact (max 50). |
+| `properties` | object | No | Property values applied to every contact. |
+| `update_existing` | boolean | No | Merge submitted properties into contacts that already exist. Default: `false`. |
+
+**Example prompt:** "Import these 200 addresses into the Beta Testers list"
+
+---
+
+### update_audience_contact
+
+Updates a contact. Only provided fields change.
+
+**Available on:** Remote, Local
+
+| Parameter | Type | Required | Description |
+|-|-|-|-|
+| `contact_id` | string | Yes | The contact ID to update. |
+| `email` | string | No | New email address (must remain unique within the team). |
+| `status` | string | No | New status: `subscribed` or `unsubscribed`. |
+| `properties` | object | No | Partial property update. A property set to `null` is removed from the contact. |
+
+---
+
+### delete_audience_contact
+
+Deletes a contact and removes it from all lists and topics. This is irreversible.
+
+**Available on:** Remote, Local
+
+| Parameter | Type | Required | Description |
+|-|-|-|-|
+| `contact_id` | string | Yes | The contact ID to delete. |
+
+---
+
+## Audience: Lists
+
+### list_audience_lists
+
+Lists your team's audience lists with pagination.
+
+**Available on:** Remote, Local
+
+| Parameter | Type | Required | Description |
+|-|-|-|-|
+| `page` | integer | No | Page number, starting at 1. |
+| `per_page` | integer | No | Lists per page (1–100). Default: 20. |
+
+---
+
+### get_audience_list
+
+Retrieves a single audience list, including its current contact count.
+
+**Available on:** Remote, Local
+
+| Parameter | Type | Required | Description |
+|-|-|-|-|
+| `list_id` | string | Yes | The list ID. |
+
+---
+
+### create_audience_list
+
+Creates a new audience list.
+
+**Available on:** Remote, Local
+
+| Parameter | Type | Required | Description |
+|-|-|-|-|
+| `name` | string | Yes | List name (max 255 characters, unique within the team). |
+
+---
+
+### update_audience_list
+
+Renames an audience list.
+
+**Available on:** Remote, Local
+
+| Parameter | Type | Required | Description |
+|-|-|-|-|
+| `list_id` | string | Yes | The list ID to update. |
+| `name` | string | Yes | New list name (unique within the team). |
+
+---
+
+### delete_audience_list
+
+Deletes an audience list and detaches its contacts. This is irreversible; the contacts themselves are kept.
+
+**Available on:** Remote, Local
+
+| Parameter | Type | Required | Description |
+|-|-|-|-|
+| `list_id` | string | Yes | The list ID to delete. |
+
+---
+
+### bulk_delete_audience_lists
+
+Deletes up to 50 audience lists in one call. This is irreversible.
+
+**Available on:** Remote, Local
+
+| Parameter | Type | Required | Description |
+|-|-|-|-|
+| `list_ids` | array | Yes | 1–50 list IDs to delete. |
+
+---
+
+### attach_contact_to_list
+
+Adds a single contact to a single list.
+
+**Available on:** Remote, Local
+
+| Parameter | Type | Required | Description |
+|-|-|-|-|
+| `contact_id` | string | Yes | The contact ID. |
+| `list_id` | string | Yes | The list ID. |
+
+---
+
+### detach_contact_from_list
+
+Removes a single contact from a single list. The contact itself is kept.
+
+**Available on:** Remote, Local
+
+| Parameter | Type | Required | Description |
+|-|-|-|-|
+| `contact_id` | string | Yes | The contact ID. |
+| `list_id` | string | Yes | The list ID. |
+
+---
+
+### bulk_attach_contacts_to_lists
+
+Attaches every given contact to every given list.
+
+**Available on:** Remote, Local
+
+| Parameter | Type | Required | Description |
+|-|-|-|-|
+| `contact_ids` | array | Yes | Contact IDs to attach (max 1000). |
+| `list_ids` | array | Yes | List IDs to attach the contacts to (max 50). |
+
+---
+
+### bulk_detach_contacts_from_lists
+
+Detaches every given contact from every given list, removing many memberships at once.
+
+**Available on:** Remote, Local
+
+| Parameter | Type | Required | Description |
+|-|-|-|-|
+| `contact_ids` | array | Yes | Contact IDs to detach (max 1000). |
+| `list_ids` | array | Yes | List IDs to detach the contacts from (max 50). |
+
+---
+
+## Audience: Topics
+
+### list_audience_topics
+
+Lists your team's subscription topics with pagination.
+
+**Available on:** Remote, Local
+
+| Parameter | Type | Required | Description |
+|-|-|-|-|
+| `page` | integer | No | Page number, starting at 1. |
+| `per_page` | integer | No | Topics per page (1–100). Default: 20. |
+
+---
+
+### get_audience_topic
+
+Retrieves a single subscription topic.
+
+**Available on:** Remote, Local
+
+| Parameter | Type | Required | Description |
+|-|-|-|-|
+| `topic_id` | string | Yes | The topic ID. |
+
+---
+
+### create_audience_topic
+
+Creates a subscription topic. See [Topics](/learn/audience/topics).
+
+**Available on:** Remote, Local
+
+| Parameter | Type | Required | Description |
+|-|-|-|-|
+| `name` | string | Yes | Topic name (max 255 characters). |
+| `description` | string | No | Topic description (max 1000 characters). |
+| `default_subscription` | string | No | `opt_in` (default) or `opt_out`. Cannot be changed later. |
+| `visibility` | string | No | `private` (default) or `public`. Public topics are shown on preference pages. |
+
+---
+
+### update_audience_topic
+
+Updates a subscription topic. Only provided fields change; `default_subscription` cannot be changed.
+
+**Available on:** Remote, Local
+
+| Parameter | Type | Required | Description |
+|-|-|-|-|
+| `topic_id` | string | Yes | The topic ID to update. |
+| `name` | string | No | New topic name. |
+| `description` | string | No | New description. Pass an empty string to clear it. |
+| `visibility` | string | No | New visibility: `private` or `public`. |
+
+---
+
+### delete_audience_topic
+
+Deletes a subscription topic and all contact subscriptions to it. This is irreversible.
+
+**Available on:** Remote, Local
+
+| Parameter | Type | Required | Description |
+|-|-|-|-|
+| `topic_id` | string | Yes | The topic ID to delete. |
+
+---
+
+### subscribe_contact_to_topic
+
+Subscribes a single contact to a single topic. Subscribing an already subscribed contact has no effect.
+
+**Available on:** Remote, Local
+
+| Parameter | Type | Required | Description |
+|-|-|-|-|
+| `contact_id` | string | Yes | The contact ID. |
+| `topic_id` | string | Yes | The topic ID. |
+
+---
+
+### unsubscribe_contact_from_topic
+
+Unsubscribes a single contact from a single topic.
+
+**Available on:** Remote, Local
+
+| Parameter | Type | Required | Description |
+|-|-|-|-|
+| `contact_id` | string | Yes | The contact ID. |
+| `topic_id` | string | Yes | The topic ID. |
+
+---
+
+### bulk_subscribe_contacts_to_topics
+
+Subscribes every given contact to every given topic.
+
+**Available on:** Remote, Local
+
+| Parameter | Type | Required | Description |
+|-|-|-|-|
+| `contact_ids` | array | Yes | Contact IDs to subscribe (max 1000). |
+| `topic_ids` | array | Yes | Topic IDs to subscribe the contacts to (max 50). |
+
+---
+
+### bulk_unsubscribe_contacts_from_topics
+
+Unsubscribes every given contact from every given topic, dropping many subscriptions at once.
+
+**Available on:** Remote, Local
+
+| Parameter | Type | Required | Description |
+|-|-|-|-|
+| `contact_ids` | array | Yes | Contact IDs to unsubscribe (max 1000). |
+| `topic_ids` | array | Yes | Topic IDs to unsubscribe the contacts from (max 50). |
+
+---
+
+## Audience: Properties
+
+### list_audience_properties
+
+Lists the custom contact properties defined for your team, with pagination.
+
+**Available on:** Remote, Local
+
+| Parameter | Type | Required | Description |
+|-|-|-|-|
+| `page` | integer | No | Page number, starting at 1. |
+| `per_page` | integer | No | Properties per page (1–100). Default: 20. |
+
+---
+
+### get_audience_property
+
+Retrieves a single custom contact property.
+
+**Available on:** Remote, Local
+
+| Parameter | Type | Required | Description |
+|-|-|-|-|
+| `property_id` | string | Yes | The property ID. |
+
+---
+
+### create_audience_property
+
+Defines a new custom contact property. The name and type cannot be changed later.
+
+**Available on:** Remote, Local
+
+| Parameter | Type | Required | Description |
+|-|-|-|-|
+| `name` | string | Yes | Property name. Must start with a lowercase letter and contain only lowercase letters, numbers, and underscores. |
+| `type` | string | Yes | Value type: `string`, `number`, `boolean`, `date`, or `json`. |
+| `fallback_value` | string | No | Default value used when a contact has no value set (max 255 characters). |
+| `purpose` | string | No | Special purpose of the property: `communication_language`. Remote only. |
+
+---
+
+### update_audience_property
+
+Updates a property's fallback value or purpose. Only provided fields change.
+
+**Available on:** Remote, Local
+
+| Parameter | Type | Required | Description |
+|-|-|-|-|
+| `property_id` | string | Yes | The property ID to update. |
+| `fallback_value` | string | No | New fallback value (max 255 characters). Pass an empty string to clear it. |
+| `purpose` | string | No | New purpose: `communication_language`. Pass an empty string to clear it. Remote only. |
+
+---
+
+### delete_audience_property
+
+Deletes a custom contact property and removes its value from every contact. This is irreversible.
+
+**Available on:** Remote, Local
+
+| Parameter | Type | Required | Description |
+|-|-|-|-|
+| `property_id` | string | Yes | The property ID to delete. |
+
+---
+
+## Audience: Segments
+
+### list_audience_segments
+
+Lists audience segments with pagination.
+
+**Available on:** Remote, Local
+
+| Parameter | Type | Required | Description |
+|-|-|-|-|
+| `page` | integer | No | Page number, starting at 1. |
+| `per_page` | integer | No | Segments per page (1–100). Default: 20. |
+| `list_id` | string | No | Only return segments restricted to this list. |
+
+---
+
+### get_audience_segment
+
+Retrieves a single segment, including its condition groups and cached contact count.
+
+**Available on:** Remote, Local
+
+| Parameter | Type | Required | Description |
+|-|-|-|-|
+| `segment_id` | string | Yes | The segment ID. |
+
+---
+
+### create_audience_segment
+
+Creates a segment defined by match conditions. See [Segments](/learn/audience/segments).
+
+**Available on:** Remote, Local
+
+| Parameter | Type | Required | Description |
+|-|-|-|-|
+| `name` | string | Yes | Segment name (max 255 characters). |
+| `conditions` | object | Yes | Match rules in the shape `{"groups": [{"conditions": [...]}]}`, where each condition has a `field`, `operator`, and `value`. Groups are ANDed; conditions within a group are ORed. Fields: `email`, `status`, `created_at`, `properties.<name>`, `topics`, `lists`. |
+| `list_id` | string | No | Restrict the segment to a single list. |
+
+**Example prompt:** "Create a segment of subscribed contacts whose country property is Germany"
+
+---
+
+### update_audience_segment
+
+Updates a segment. Only provided fields change; providing `conditions` replaces the entire condition set.
+
+**Available on:** Remote, Local
+
+| Parameter | Type | Required | Description |
+|-|-|-|-|
+| `segment_id` | string | Yes | The segment ID to update. |
+| `name` | string | No | New segment name. |
+| `list_id` | string | No | New list restriction. Pass an empty string to remove it. |
+| `conditions` | object | No | Replacement match rules, in the same shape as `create_audience_segment`. |
+
+---
+
+### delete_audience_segment
+
+Deletes a segment. This is irreversible; contacts themselves are not deleted.
+
+**Available on:** Remote, Local
+
+| Parameter | Type | Required | Description |
+|-|-|-|-|
+| `segment_id` | string | Yes | The segment ID to delete. |
 
 ---
 
@@ -324,7 +1139,7 @@ Lists all API keys for your team, showing each key's name, key ID, prefix, permi
 
 ### list_webhooks
 
-Lists all webhooks configured for your team, including target URL, enabled status, event types, authentication type, and delivery health indicators.
+Lists all webhooks configured for your team, including ID, target URL, enabled status, event types, authentication type, and delivery health indicators.
 
 **Available on:** Remote, Local
 
@@ -334,15 +1149,72 @@ Lists all webhooks configured for your team, including target URL, enabled statu
 
 ### get_webhook
 
-Gets detailed information about a specific webhook, including its delivery status and configuration.
+Gets detailed information about a specific webhook, including its enabled state, event types, auth type, and last delivery timestamps.
 
-**Available on:** Local only
+**Available on:** Remote, Local
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `webhook_id` | string | Yes | The ID of the webhook to retrieve. |
+| `webhook_id` | string | Yes | The webhook ID (a UUID, as returned by `list_webhooks`). |
 
 **Example prompt:** "Show me the details for my delivery webhook"
+
+---
+
+### create_webhook
+
+Creates a new webhook subscription. See [Webhooks](/learn/webhooks/introduction) and [Event Types](/learn/webhooks/event-types).
+
+**Available on:** Remote, Local
+
+| Parameter | Type | Required | Description |
+|-|-|-|-|
+| `name` | string | Yes | Human-readable name (max 24 characters). |
+| `url` | string | Yes | HTTPS URL that receives webhook POSTs. |
+| `auth_type` | string | Yes | Authentication scheme: `none`, `basic`, or `oauth2`. |
+| `events_mode` | string | Yes | `all` to receive every event, or `selected` to subscribe only to `events`. |
+| `events` | array | No | Event types, required when `events_mode` is `selected`. Uses fully-prefixed names, e.g. `message.delivery`, `engagement.open`. |
+| `auth_username` | string | No | Basic auth username (required when `auth_type` is `basic`). |
+| `auth_password` | string | No | Basic auth password (required when `auth_type` is `basic`). |
+| `oauth_client_id` | string | No | OAuth2 client ID (required when `auth_type` is `oauth2`). |
+| `oauth_client_secret` | string | No | OAuth2 client secret (required when `auth_type` is `oauth2`). |
+| `oauth_token_url` | string | No | OAuth2 token URL (required when `auth_type` is `oauth2`). |
+
+**Example prompt:** "Create a webhook named 'Bounces' that sends bounce events to https://example.com/hooks/lettr"
+
+---
+
+### update_webhook
+
+Updates an existing webhook. Only provided fields change; provide at least one of `name`, `url`, `auth_type`, `events`, or `active`.
+
+**Available on:** Remote, Local
+
+| Parameter | Type | Required | Description |
+|-|-|-|-|
+| `webhook_id` | string | Yes | The webhook ID to update. |
+| `name` | string | No | New name (max 24 characters). |
+| `url` | string | No | New delivery URL. |
+| `auth_type` | string | No | New authentication scheme: `none`, `basic`, or `oauth2`. Required when changing any credential. |
+| `auth_username` | string | No | Basic auth username (required when `auth_type` is `basic`). |
+| `auth_password` | string | No | Basic auth password (required when `auth_type` is `basic`). |
+| `oauth_client_id` | string | No | OAuth2 client ID (required when `auth_type` is `oauth2`). |
+| `oauth_client_secret` | string | No | OAuth2 client secret (required when `auth_type` is `oauth2`). |
+| `oauth_token_url` | string | No | OAuth2 token URL (required when `auth_type` is `oauth2`). |
+| `events` | array | No | Replacement event subscription list, using fully-prefixed names. |
+| `active` | boolean | No | Enable or disable the webhook. |
+
+---
+
+### delete_webhook
+
+Deletes a webhook subscription. This is irreversible, and event delivery to its URL stops immediately.
+
+**Available on:** Remote, Local
+
+| Parameter | Type | Required | Description |
+|-|-|-|-|
+| `webhook_id` | string | Yes | The webhook ID to delete. |
 
 ---
 
@@ -383,7 +1255,7 @@ Lists templates with delivery statistics broken down by campaign, including sent
 
 ### browse_email_events
 
-Browse email delivery events with optional filtering and pagination.
+Browse email delivery events with optional filtering and pagination. Message events are retained for about 10 days.
 
 **Available on:** Remote only
 
@@ -391,12 +1263,16 @@ Browse email delivery events with optional filtering and pagination.
 |-----------|------|----------|-------------|
 | `limit` | integer | No | Number of events to return (10, 25, 50, or 100). Default: 25. |
 | `recipient` | string | No | Filter by recipient email address. Supports partial matching. |
-| `from` | string | No | Start date/time in ISO 8601 format. |
+| `from` | string | No | Start date/time in ISO 8601 format. Dates older than the retention window are pulled forward. |
 | `to` | string | No | End date/time in ISO 8601 format. |
-| `event_type` | string | No | Filter by event type: `delivery`, `injection`, `open`, `initial_open`, `click`, `bounce`, `out_of_band`, `delay`, `spam_complaint`, `policy_rejection`, `generation_rejection`, `generation_failure`, `list_unsubscribe`, `link_unsubscribe`, `amp_open`, `amp_click` |
+| `event_type` | string | No | Filter by event type: `injection`, `delivery`, `bounce`, `delay`, `out_of_band`, `spam_complaint`, `policy_rejection`, `click`, `open`, `initial_open`, `amp_click`, `amp_open`, `amp_initial_open`, `generation_failure`, `generation_rejection`, `list_unsubscribe`, `link_unsubscribe` |
 | `cursor` | string | No | Pagination cursor from a previous response. |
 
 **Example prompt:** "Show me the last 10 bounced emails" or "What emails were sent to john@example.com today?"
+
+<Tip>
+  On the local server, use `list-email-events` for the same purpose.
+</Tip>
 
 ---
 
@@ -412,11 +1288,47 @@ Browse API request logs with optional filtering and pagination.
 | `from` | string | No | Start date/time in ISO 8601 format. Max 30 days back. Default: 7 days ago. |
 | `to` | string | No | End date/time in ISO 8601 format. Default: now. |
 | `api_key_name` | string | No | Filter by API key name (case-insensitive). |
-| `user_agent` | string | No | Filter by client type: `php`, `curl`, `nodejs`, `python`, `ruby`, `go`, `rust`, `java`, `dotnet`, `smtp`, `other` |
+| `user_agent` | string | No | Filter by client type. Lettr SDKs: `lettr-php`, `lettr-node`, `lettr-laravel`, `lettr-java`, `lettr-go`, `lettr-python`, `lettr-rust`, `lettr-wordpress`, `lettr-mcp`, `lettr-n8n`. Generic clients: `php`, `curl`, `node`, `python`, `ruby`, `go`, `rust`, `java`, `dotnet`, `smtp`, `other` |
 | `status` | integer | No | Filter by HTTP status code (e.g., 200, 400, 500). |
 | `cursor` | string | No | Pagination cursor from a previous response. |
 
 **Example prompt:** "Show me failed API requests from the last 24 hours" or "Were there any 500 errors today?"
+
+---
+
+### check_sending_health
+
+Gives a single overview of your team's sending health — domain verification, delivery trends, bounce and complaint rates, and the most common recent problems — with a verdict of healthy, needs attention, or at risk.
+
+**Available on:** Remote only
+
+| Parameter | Type | Required | Description |
+|-|-|-|-|
+| `days` | integer | No | Number of days to look back. Default: 7. Delivery trends cover up to 90 days; recent problem samples reach back about 10 days. |
+
+**Example prompt:** "Is anything wrong with my email delivery?"
+
+---
+
+## System
+
+### health-check
+
+Checks the Lettr API health status and returns a server timestamp.
+
+**Available on:** Local only
+
+**Parameters:** None
+
+---
+
+### auth-check
+
+Validates the configured API key and returns the associated team ID. Useful for confirming the local server is set up correctly.
+
+**Available on:** Local only
+
+**Parameters:** None
 
 ---
 

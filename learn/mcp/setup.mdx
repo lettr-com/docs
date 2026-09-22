@@ -152,65 +152,107 @@ The AI should respond with your verified sending domains. If you see domain info
 
 ## Available Actions
 
-Once connected, your AI assistant gains access to a range of Lettr capabilities. These are organized into categories based on the type of operation.
+Once connected, your AI assistant gains access to 77 Lettr tools. They are organized into categories based on the type of operation. See the [Tools Reference](/learn/mcp/tools-reference) for every parameter.
 
 ### Email Operations
 
-For sending emails, your AI assistant can use `send_email` to compose and send messages with specified recipients, subject, and content, or `send_template_email` to send using a pre-built template with merge tag substitution.
+For sending emails, your AI assistant can use `send_email` to compose and send messages, or `send_template_email` to send using a pre-built template with merge tag substitution. Emails can also be scheduled for later delivery and inspected after they go out.
 
 | Action | Description |
-|--------|-------------|
+|-|-|
 | `send_email` | Send an email with specified recipients, subject, and content |
 | `send_template_email` | Send an email using a pre-built template with merge tags |
+| `schedule_email` | Schedule an email for delivery up to 3 days ahead |
+| `get_scheduled_email`, `cancel_scheduled_email` | Inspect or cancel a scheduled email |
+| `list_emails` | List recently sent emails |
+| `get_email_detail` | View the full delivery timeline of a sent email |
 
 ### Template Management
 
-Your AI assistant can work with email templates—listing, viewing, creating, and updating them.
+Your AI assistant can work with email templates—listing, viewing, creating, updating, and deleting them—and discover the merge tags, folders, and projects they depend on.
 
 | Action | Description |
-|--------|-------------|
-| `list_templates` | List all email templates with metadata and merge tags |
-| `get_template` | View a template's HTML content and configuration |
-| `create_template` | Create a new Custom HTML email template |
+|-|-|
+| `list_templates` | List templates, optionally filtered by project, purpose, or folder |
+| `get_template` | View a template's details, versions, and HTML content |
+| `get_template_html` | Get a template's full rendered HTML |
+| `get_merge_tags` | Discover which merge tags a template expects |
+| `create_template` | Create a new Custom HTML template for transactional email or campaigns |
 | `update_template` | Update template content and create a new version |
+| `delete_template` | Permanently delete a template and all its versions |
+| `list_folders`, `list_projects` | Discover the folders and projects templates live in |
+
+### Campaigns
+
+The AI can review campaigns and their engagement, and send or schedule them. Sending and scheduling dispatch real emails to the campaign's audience, so confirm before approving these actions.
+
+| Action | Description |
+|-|-|
+| `list_campaigns`, `get_campaign` | View campaigns with engagement stats |
+| `list_campaign_events` | View opens, clicks, bounces, and other events for a campaign |
+| `send_campaign` | Send a draft campaign immediately |
+| `schedule_campaign`, `unschedule_campaign` | Schedule a campaign or return it to draft |
+
+### Audience
+
+Your AI assistant can manage the contacts your campaigns are sent to, including lists, subscription topics, custom properties, and segments.
+
+| Action | Description |
+|-|-|
+| `list_audience_contacts`, `get_audience_contact`, `create_audience_contact`, `update_audience_contact`, `delete_audience_contact` | Manage individual contacts, including double opt-in |
+| `bulk_create_audience_contacts` | Import up to 1000 contacts at once |
+| `list_audience_lists`, `get_audience_list`, `create_audience_list`, `update_audience_list`, `delete_audience_list`, `bulk_delete_audience_lists` | Manage contact lists |
+| `attach_contact_to_list`, `detach_contact_from_list`, `bulk_attach_contacts_to_lists`, `bulk_detach_contacts_from_lists` | Manage list memberships |
+| `list_audience_topics`, `get_audience_topic`, `create_audience_topic`, `update_audience_topic`, `delete_audience_topic` | Manage subscription topics |
+| `subscribe_contact_to_topic`, `unsubscribe_contact_from_topic`, `bulk_subscribe_contacts_to_topics`, `bulk_unsubscribe_contacts_from_topics` | Manage topic subscriptions |
+| `list_audience_properties`, `get_audience_property`, `create_audience_property`, `update_audience_property`, `delete_audience_property` | Manage custom contact properties |
+| `list_audience_segments`, `get_audience_segment`, `create_audience_segment`, `update_audience_segment`, `delete_audience_segment` | Manage segments built from match conditions |
 
 ### Analytics
 
 For insights into email performance, the AI can pull aggregate delivery metrics or per-template statistics.
 
 | Action | Description |
-|--------|-------------|
+|-|-|
 | `get_analytics` | View aggregate delivery analytics with daily breakdown |
 | `list_template_stats` | View per-template delivery statistics by campaign |
 
 ### Event Monitoring
 
-To track what happens after emails are sent, the AI can use `browse_email_events` to view delivery events including deliveries, opens, clicks, and bounces. For debugging API integrations, `browse_api_logs` provides access to request history and response data.
+To track what happens after emails are sent, the AI can use `browse_email_events` to view delivery events including deliveries, opens, clicks, and bounces. For debugging API integrations, `browse_api_logs` provides access to request history and response data, and `check_sending_health` summarizes your overall deliverability.
 
 | Action | Description |
-|--------|-------------|
+|-|-|
 | `browse_email_events` | View delivery events (delivered, opened, clicked, bounced, etc.) |
 | `browse_api_logs` | Inspect API request history and responses |
+| `check_sending_health` | Get a single verdict on domains, delivery trends, and recent problems |
 
 ### Domain Management
 
-Your AI assistant can check the status of your email infrastructure across all domain types. Each domain category has its own listing action that returns verification status and configuration details.
+Your AI assistant can register, verify, and remove sending domains, diagnose DNS problems, and check the status of every domain type.
 
 | Action | Description |
-|--------|-------------|
+|-|-|
 | `list_sending_domains` | View sending domains with verification status |
+| `get_domain` | View a sending domain's DNS records and verification details |
+| `create_domain` | Register a new sending domain |
+| `verify_domain` | Re-run DNS verification for a sending domain |
+| `delete_domain` | Remove a sending domain |
+| `diagnose_sending_domain_dns` | Explain why a sending domain is still failing verification |
 | `list_tracking_domains` | View tracking domains for branded links |
 | `list_inbound_domains` | View inbound email receiving domains |
 | `list_storage_domains` | View asset storage/CDN domains |
 
 ### Configuration
 
-Beyond domains, the AI can inspect your account configuration including API keys and webhooks. For security, API keys are shown with prefixes only—never full values.
+Beyond domains, the AI can inspect API keys and fully manage webhooks. For security, API keys are shown with prefixes only—never full values.
 
 | Action | Description |
-|--------|-------------|
+|-|-|
 | `list_api_keys` | View API keys (prefixes only, for security) |
-| `list_webhooks` | View webhook endpoints and their configuration |
+| `list_webhooks`, `get_webhook` | View webhook endpoints and their configuration |
+| `create_webhook`, `update_webhook` | Create or change a webhook's URL, authentication, and events |
+| `delete_webhook` | Delete a webhook subscription |
 
 ## Example Workflows
 
@@ -291,7 +333,7 @@ See [Rate Limits](/api-reference/rate-limit) for detailed information.
     Run the MCP server locally with an API key
   </Card>
   <Card title="Tools Reference" icon="wrench" href="/learn/mcp/tools-reference">
-    Full reference for all remote server tools
+    Full reference for all MCP tools across both servers
   </Card>
   <Card title="Sending Domains" icon="globe" href="/learn/domains/sending-domains">
     Set up domains for sending emails

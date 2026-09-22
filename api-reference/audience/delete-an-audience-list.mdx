@@ -3,4 +3,4 @@ title: Delete an audience list
 openapi: DELETE /audience/lists/{listId}
 ---
 
-Permanently delete an audience list. Requires the `audience:write` scope and is blocked for sandbox API keys.
+Permanently delete an audience list. A list that segments are scoped to cannot be deleted: the response is `409` `list_in_use`, naming the segments. Requires the `audience:write` scope and is blocked for sandbox API keys.

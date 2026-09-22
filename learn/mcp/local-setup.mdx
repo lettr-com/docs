@@ -113,29 +113,38 @@ The AI should respond with your verified sending domains. If you see domain info
 
 ## Available Tools
 
-The local MCP server provides 14 tools for managing your email infrastructure:
+The local MCP server provides 69 tools for managing your email infrastructure:
 
 ### Emails
 
 | Tool | Description |
-|------|-------------|
+|-|-|
 | `send-email` | Send a transactional email with HTML, plain text, templates, attachments, tracking, and personalization |
+| `schedule-email` | Schedule an email for delivery up to 3 days ahead |
+| `get-scheduled-email` | Get the state and details of a scheduled email |
+| `cancel-scheduled-email` | Cancel a scheduled email before it is sent |
+| `list-emails` | List recently sent emails |
+| `get-email-detail` | Get the full delivery timeline of a sent email |
+| `list-email-events` | List delivery, bounce, open, and click events across all sent messages |
 
 ### Templates
 
 | Tool | Description |
-|------|-------------|
-| `list-templates` | List email templates with pagination |
+|-|-|
+| `list-templates` | List email templates with pagination, filtered by project, purpose, or folder |
 | `get-template` | Get full template details including HTML content |
-| `create-template` | Create a new template with HTML or visual editor JSON |
+| `get-template-html` | Get a template's full rendered HTML and merge tags |
+| `create-template` | Create a new transactional or campaign template with HTML or visual editor JSON |
 | `update-template` | Update template name and/or content (creates new version) |
 | `delete-template` | Permanently delete a template and all versions |
 | `get-merge-tags` | Discover merge tag variables a template expects |
+| `list-folders` | List template folders with their purpose and template count |
+| `list-projects` | List the projects available to your team |
 
 ### Domains
 
 | Tool | Description |
-|------|-------------|
+|-|-|
 | `list-domains` | List all sending domains and their verification status |
 | `create-domain` | Register a new sending domain |
 | `get-domain` | Get domain details with DNS records |
@@ -145,9 +154,90 @@ The local MCP server provides 14 tools for managing your email infrastructure:
 ### Webhooks
 
 | Tool | Description |
-|------|-------------|
+|-|-|
 | `list-webhooks` | List all webhook configurations |
 | `get-webhook` | Get webhook details and delivery status |
+| `create-webhook` | Create a webhook subscription |
+| `update-webhook` | Update a webhook's name, URL, authentication, events, or enabled state |
+| `delete-webhook` | Delete a webhook subscription |
+
+### Campaigns
+
+| Tool | Description |
+|-|-|
+| `list-campaigns` | List campaigns with engagement stats |
+| `get-campaign` | Get campaign details, stats, and content |
+| `list-campaign-events` | List engagement events for a campaign |
+| `send-campaign` | Immediately send a draft campaign to its audience |
+| `schedule-campaign` | Schedule or reschedule a campaign |
+| `unschedule-campaign` | Cancel a scheduled send and return the campaign to draft |
+
+### Audience Contacts
+
+| Tool | Description |
+|-|-|
+| `list-audience-contacts` | List contacts filtered by search, status, list, or segment |
+| `get-audience-contact` | Get a contact with its properties, lists, and topics |
+| `create-audience-contact` | Create a contact, optionally with double opt-in |
+| `bulk-create-audience-contacts` | Import up to 1000 contacts at once |
+| `update-audience-contact` | Update a contact's email, status, or properties |
+| `delete-audience-contact` | Permanently delete a contact |
+
+### Audience Lists
+
+| Tool | Description |
+|-|-|
+| `list-audience-lists` | List contact lists with pagination |
+| `get-audience-list` | Get a list and its contact count |
+| `create-audience-list` | Create a contact list |
+| `update-audience-list` | Rename a contact list |
+| `delete-audience-list` | Delete a contact list |
+| `bulk-delete-audience-lists` | Delete up to 50 lists at once |
+| `attach-contact-to-list` | Add a contact to a list |
+| `detach-contact-from-list` | Remove a contact from a list |
+| `bulk-attach-contacts-to-lists` | Add many contacts to many lists |
+| `bulk-detach-contacts-from-lists` | Remove many contacts from many lists |
+
+### Audience Topics
+
+| Tool | Description |
+|-|-|
+| `list-audience-topics` | List subscription topics with pagination |
+| `get-audience-topic` | Get a subscription topic |
+| `create-audience-topic` | Create a subscription topic |
+| `update-audience-topic` | Update a topic's name, description, or visibility |
+| `delete-audience-topic` | Delete a subscription topic |
+| `subscribe-contact-to-topic` | Subscribe a contact to a topic |
+| `unsubscribe-contact-from-topic` | Unsubscribe a contact from a topic |
+| `bulk-subscribe-contacts-to-topics` | Subscribe many contacts to many topics |
+| `bulk-unsubscribe-contacts-from-topics` | Unsubscribe many contacts from many topics |
+
+### Audience Properties
+
+| Tool | Description |
+|-|-|
+| `list-audience-properties` | List custom contact properties |
+| `get-audience-property` | Get a custom contact property |
+| `create-audience-property` | Define a new custom contact property |
+| `update-audience-property` | Update a property's fallback value |
+| `delete-audience-property` | Delete a custom contact property |
+
+### Audience Segments
+
+| Tool | Description |
+|-|-|
+| `list-audience-segments` | List segments with pagination |
+| `get-audience-segment` | Get a segment and its conditions |
+| `create-audience-segment` | Create a segment from match conditions |
+| `update-audience-segment` | Update a segment's name, list, or conditions |
+| `delete-audience-segment` | Delete a segment |
+
+### System
+
+| Tool | Description |
+|-|-|
+| `health-check` | Check the Lettr API health status |
+| `auth-check` | Validate the configured API key and return its team ID |
 
 For detailed parameter documentation, see the [Tools Reference](/learn/mcp/tools-reference).
 

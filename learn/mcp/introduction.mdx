@@ -3,7 +3,7 @@ title: "MCP for AI Assistants"
 description: "Connect AI assistants to Lettr with the Model Context Protocol to send email, manage templates, and monitor delivery in plain language."
 ---
 
-The [Model Context Protocol](https://modelcontextprotocol.io/) (MCP) is an open standard that enables AI assistants to securely connect with external services. Lettr provides two MCP servers so AI agents can interact with your email infrastructure — sending messages, managing templates, configuring domains, and monitoring delivery — all through natural language.
+The [Model Context Protocol](https://modelcontextprotocol.io/) (MCP) is an open standard that enables AI assistants to securely connect with external services. Lettr provides two MCP servers so AI agents can interact with your email infrastructure — sending messages, managing templates, configuring domains, running campaigns, managing your audience, and monitoring delivery — all through natural language.
 
 ## Why Use MCP?
 
@@ -38,14 +38,17 @@ Lettr offers two MCP servers for different workflows. Both give AI assistants ac
 | **Transport** | HTTP/SSE | stdio |
 | **Supported clients** | Claude.ai, ChatGPT, Cursor, Claude Desktop, GitHub Copilot | Claude Code, Cursor, Claude Desktop |
 | **Best for** | Chat-based account management, monitoring, analytics | Developer workflows, coding assistants, CI environments |
-| **Unique tools** | Analytics, email events, API logs | Domain CRUD, template delete, domain verification |
+| **Tool count** | 77 | 69 |
+| **Unique tools** | Analytics, template stats, email event browsing, API logs, sending health check, DNS diagnosis, API keys, tracking/inbound/storage domains, dedicated template send tool | Email event listing with bounce class and transmission filters, API health check, API key validation |
 | **Open source** | No | [Yes](https://github.com/lettr-com/lettr-mcp) |
 
 ### Which Should I Use?
 
-**Use the remote server** if you want to manage your Lettr account from a web-based AI chat like Claude.ai or ChatGPT, or if you need analytics and event monitoring tools. The remote server authenticates through OAuth so you don't need to manage API keys.
+Both servers cover the same core workflows — sending and scheduling email, templates, sending domains, webhooks, campaigns, and audience management. The choice mostly comes down to how you authenticate and where your AI assistant runs.
 
-**Use the local server** if you want email capabilities inside your IDE or CLI during development. The local server is ideal for Claude Code and Cursor workflows where you need to send emails, manage templates, or configure domains as part of your coding process.
+**Use the remote server** if you want to manage your Lettr account from a web-based AI chat like Claude.ai or ChatGPT, or if you need analytics, API logs, sending health checks, or DNS diagnosis. The remote server authenticates through OAuth so you don't need to manage API keys.
+
+**Use the local server** if you want email capabilities inside your IDE or CLI during development, authenticated with an API key you control. It's ideal for Claude Code and Cursor workflows, and you can limit what it can do with [restricted API keys](/learn/api-keys/permissions).
 
 <Tip>
   Cursor and Claude Desktop work with both servers. The remote server uses OAuth (no API key needed), while the local server uses an API key and runs as a local process. You can use both simultaneously.
@@ -58,14 +61,22 @@ Both MCP servers give AI assistants tools to work with your email infrastructure
 | Capability | Remote | Local |
 |---|---|---|
 | Send emails (direct and template-based) | Yes | Yes |
-| List, view, create, and update templates | Yes | Yes |
-| Delete templates and inspect merge tags | No | Yes |
+| Schedule emails and cancel scheduled sends | Yes | Yes |
+| View sent email history and delivery timelines | Yes | Yes |
+| List, view, create, update, and delete templates | Yes | Yes |
+| Inspect merge tags, template HTML, folders, and projects | Yes | Yes |
 | List sending domains | Yes | Yes |
-| Create, verify, and delete domains | No | Yes |
+| Create, verify, and delete sending domains | Yes | Yes |
+| Diagnose sending domain DNS and check sending health | Yes | No |
+| List tracking, inbound, and storage domains | Yes | No |
+| List, inspect, create, update, and delete webhooks | Yes | Yes |
+| List, send, schedule, and unschedule campaigns | Yes | Yes |
+| Manage audience contacts, lists, topics, properties, and segments | Yes | Yes |
 | View analytics and template statistics | Yes | No |
-| Browse email events and API logs | Yes | No |
-| List API keys and webhooks | Yes | Yes |
-| Inspect webhook details | No | Yes |
+| Browse email events across all messages | Yes | Yes |
+| Browse API request logs | Yes | No |
+| List API keys | Yes | No |
+| Check API health and validate the API key | No | Yes |
 
 ## Example Conversations
 

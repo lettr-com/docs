@@ -94,7 +94,7 @@ curl -X POST https://app.lettr.com/api/audience/contacts \
   }'
 ```
 
-The API responds immediately. The contact is created with status `unverified`, and the confirmation email is queued for delivery. If you also pass `properties` or `list_id` in the call, they're attached to the contact right away — they don't wait for confirmation.
+The API responds immediately. The contact is created with status `unverified`, and the confirmation email is queued for delivery. If you also pass `properties` or `list_id` in the call, they're attached to the contact right away — they don't wait for confirmation. A `list_id` must belong to your team; an unknown one returns `422` and no contact is created.
 
 ### Required `double_opt_in` Fields
 

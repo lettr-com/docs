@@ -3,4 +3,4 @@ title: Unschedule a campaign
 openapi: POST /campaigns/{campaignId}/unschedule
 ---
 
-Cancels a scheduled send, returning the campaign to `draft`. The campaign must currently be `scheduled`. Requires the `campaigns:write` scope. Not available to sandbox keys.
+Cancels a scheduled send, returning the campaign to `draft`. Also clears a delivery time staged on a `draft` in the editor, so the draft can then be sent immediately. A draft without a delivery time returns `422` `campaign_not_scheduled`. Requires the `campaigns:write` scope. Not available to sandbox keys.

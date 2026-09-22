@@ -98,7 +98,7 @@ if ($webhook->listensTo(WebhookEventType::MessageBounce)) {
 
 ## Update a Webhook
 
-All fields are optional — only the ones you set are sent:
+All fields are optional — only the ones you set are sent. Set at least one; an empty update is rejected:
 
 ```php
 use Lettr\Dto\Webhook\UpdateWebhookData;

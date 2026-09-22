@@ -58,6 +58,8 @@ You can rename a list at any time from the **Lists** page. Renaming does not aff
 
 Deleting a list removes the list itself and the membership records, but does **not** delete the contacts. The contacts remain in your audience and in any other lists or segments they belong to.
 
+A list that a segment is scoped to cannot be deleted. Deleting it would remove the segment's list restriction and widen the segment to your whole audience. Remove the list from those segments, or delete the segments, first. The API returns `409` with `error_code` `list_in_use` and names the segments; a bulk delete deletes nothing if any of its lists is in use.
+
 <Warning>
   Segments reference lists by **name**, not by ID. If you rename a list that a segment uses in its conditions, that segment will silently stop matching anyone from the renamed list until you update the segment. Always check your segments after renaming a list.
 </Warning>
@@ -72,7 +74,7 @@ A contact who belongs to multiple selected lists is only sent the email once. Se
 
 When you create a segment, you can optionally scope it to a single list. The segment then only matches contacts who are members of that list **and** match the conditions. This is useful for further filtering a list — for example, "everyone in the Q4 onboarding list whose `last_login` is older than 30 days" — without affecting other contacts.
 
-See [Segments](/learn/audience/segments#list-scoped-segments) for details.
+A list with segments scoped to it cannot be deleted until those segments no longer use it. See [Segments](/learn/audience/segments#list-scoped-segments) for details.
 
 ## Lists vs. Topics vs. Segments
 
