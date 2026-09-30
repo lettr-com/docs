@@ -5,7 +5,7 @@ description: "Complete reference for every Lettr MCP tool: emails, scheduled sen
 
 This reference lists every tool on Lettr's [remote MCP server](/learn/mcp/setup), grouped by what it works on. Each tool does exactly what the matching [API endpoint](/api-reference/introduction) does, and your AI client receives each tool's full input schema when it connects, so you never have to pass parameters by hand. Just describe what you want.
 
-The [local server](/learn/mcp/local-setup) (`lettr-mcp` npm package) offers the same tools with a few differences, listed under [Local server differences](#local-server-differences).
+The [deprecated local server](/learn/mcp/local-setup) (`lettr-mcp` npm package) offers the same tools with a few differences, listed under [Local server differences](#local-server-differences). It is no longer updated, so anything added below exists only on the hosted server.
 
 ## Destructive Tools and Permissions
 
@@ -184,7 +184,7 @@ For how contacts, lists, topics, properties, and segments fit together, see [Aud
 
 ## Local Server Differences
 
-The local `lettr-mcp` package names its tools with hyphens instead of underscores (`send-email` instead of `send_email`). Otherwise it offers the same tools, with these exceptions:
+The local `lettr-mcp` package is [no longer updated](/learn/mcp/local-setup). It names its tools with hyphens instead of underscores (`send-email` instead of `send_email`) and uses different names for some parameters (`contactId` rather than `contact_id`), so a configuration moving to the hosted server needs both adjusted. Otherwise it offers the same tools, with these exceptions:
 
 | Remote server | Local server |
 |-|-|
@@ -204,8 +204,8 @@ The local `lettr-mcp` package names its tools with hyphens instead of underscore
   <Card title="Remote Server Setup" icon="cloud" href="/learn/mcp/setup">
     Connect via OAuth from Claude, ChatGPT, Cursor, and other AI clients
   </Card>
-  <Card title="Local Server Setup" icon="terminal" href="/learn/mcp/local-setup">
-    Run the lettr-mcp package with an API key
+  <Card title="Connect with an API Key" icon="key" href="/learn/mcp/api-key-auth">
+    For CI, cron jobs and headless agents
   </Card>
   <Card title="API Reference" icon="code" href="/api-reference/introduction">
     Full REST API documentation
