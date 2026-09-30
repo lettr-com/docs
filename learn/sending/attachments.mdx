@@ -60,11 +60,39 @@ await lettr.emails.send({
 
 ## Inline Images
 
-<Warning>
-  Lettr does not currently support inline (embedded) images. Referencing an attachment from your HTML with a `cid:` URL — for example `<img src="cid:logo">` — will **not** embed the image in the message body. The image is delivered as a regular attachment (with `Content-Disposition: attachment` and no `Content-ID`), so the `cid:` reference has nothing to bind to and the image will not display inline.
-</Warning>
+To show an attachment inside the body of the email instead of as a separate file, give the image attachment a `content_id` and reference it from your HTML with a `cid:` URL:
 
-To show an image inside the body of an email, host it at a public URL and reference that URL directly:
+```json
+{
+  "from": "you@example.com",
+  "to": ["recipient@example.com"],
+  "subject": "Your order has shipped",
+  "html": "<img src=\"cid:logo@example.com\" alt=\"Acme\" /><p>Your order is on its way.</p>",
+  "attachments": [
+    {
+      "name": "logo.png",
+      "type": "image/png",
+      "data": "iVBORw0KGgoAAAANSUhEUgAA...",
+      "content_id": "logo@example.com"
+    }
+  ]
+}
+```
+
+- `content_id` only works on image attachments (a `type` starting with `image/`).
+- It can be up to 255 printable ASCII characters, without spaces or angle brackets. Don't include the `<` `>` brackets you may see in raw MIME headers.
+- Each inline image in a request needs its own unique `content_id`.
+- Attachments without a `content_id` are delivered as regular attachments, as before.
+
+A `content_id` that breaks these rules fails with a `422` validation error on `attachments.N.content_id`, and the email is not sent.
+
+### Over SMTP
+
+When you send over [SMTP](/quickstart/smtp/introduction), embedded images created by your mail library (for example, PHPMailer's `addEmbeddedImage()` or Laravel's `$message->embed()`) keep their `Content-ID`, so `cid:` references in your HTML display inline. You don't need to change anything.
+
+### Hosted Images
+
+You can also host the image at a public URL and reference that URL directly, which keeps the message smaller:
 
 ```javascript
 await lettr.emails.send({
@@ -113,6 +141,8 @@ Attachments are included as base64-encoded content in the API request. Each atta
 - `name` — The filename the recipient will see (max 255 characters)
 - `data` — The file content encoded as base64 (must not contain `\r\n` characters)
 - `type` — The MIME type of the file
+
+An image attachment can also have an optional `content_id` to display it inline — see [Inline Images](#inline-images).
 
 ```javascript
 attachments: [{ name: 'invoice.pdf', data: base64String, type: 'application/pdf' }]

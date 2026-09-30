@@ -9,9 +9,9 @@ The Events dashboard uses color-coded badges to identify what happened at each s
 
 These events track whether your email was successfully handed off to the recipient's mail server.
 
-**Injection** (gray) — The email was accepted by Lettr and queued for processing. This is the first event in any email's lifecycle. If you see an injection event but nothing after it, the email may still be in transit or may have encountered a processing issue downstream.
+**Injected** (gray) — The email was accepted by Lettr and queued for processing. This is the first event in any email's lifecycle. If you see an injection event but nothing after it, the email may still be in transit or may have encountered a processing issue downstream.
 
-**Delivery** (green) — The email was successfully delivered to the recipient's mail server. This is the most positive signal in the pipeline. Keep in mind that delivery confirms the recipient's server accepted the message — it does not guarantee the email landed in the inbox rather than a spam folder.
+**Delivered** (green) — The email was successfully delivered to the recipient's mail server. This is the most positive signal in the pipeline. Keep in mind that delivery confirms the recipient's server accepted the message — it does not guarantee the email landed in the inbox rather than a spam folder.
 
 ## Engagement Events
 
@@ -32,6 +32,17 @@ Bounces mean the email could not be delivered. Understanding the difference betw
 **Bounced** (red) — A general bounce event. Check the Message Details view for the specific bounce reason and whether it was a hard or soft bounce. Hard bounces indicate a permanent failure (the address does not exist or the domain rejects your mail), while soft bounces are typically temporary (the mailbox is full, the server is busy).
 
 **Bounced (OOB)** (red) — An out-of-band bounce. These arrive after the initial delivery appeared successful — the receiving server accepted the message initially, then later determined it could not be delivered and sent a separate bounce notification back. Out-of-band bounces are less common but can be harder to diagnose.
+
+**Auto-reply** (blue) — An automatic reply to your email, such as an out-of-office or vacation message, that came back as an out-of-band report. Lettr labels these **Auto-reply** instead of Bounced (OOB) because they don't mean your email failed to deliver.
+
+### Reports that can't be matched to an email
+
+Sometimes an out-of-band report arrives without the information needed to link it to the original message, so its subject, recipient, or sender may show as unavailable. Instead of **View Details**, these rows have a **Show details** button that expands an explanation in place:
+
+- **Mail report received (OOB)** — a mail server sent a report after the original email was sent. It can be a delivery failure or an automatic reply; the **Reported reason** describes what the provider detected.
+- **Automatic reply received** — the provider identified the report as an automatic reply, such as an out-of-office message. This does not mean your email failed to deliver.
+
+Expand **Technical details** to see whatever the report included: the **Return address (envelope sender)**, the **Reported code**, the **Bounce classification code**, and the raw **Server response**, plus the **Event ID**. The return address is a technical address used to route reports back to the sending service; it can use your registered domain and is different from the sender shown to the recipient.
 
 <Warning>
   Hard bounces automatically add the recipient address to your [suppression list](/learn/suppressions/bounces). Continuing to send to hard-bounced addresses harms your sender reputation and can result in your account being suspended.
@@ -73,7 +84,7 @@ Either way, the address is added to your suppression list automatically. See [Co
 The badge color gives you an immediate signal about the nature of the event without needing to read the label:
 
 - **Green** — Success (delivered)
-- **Blue / Indigo** — Engagement (opens, clicks)
+- **Blue / Indigo** — Engagement (opens, clicks) and auto-replies
 - **Yellow** — Temporary issue (deferral)
 - **Orange** — Rejection to investigate
 - **Red** — Serious failure or complaint

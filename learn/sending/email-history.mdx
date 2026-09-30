@@ -17,12 +17,12 @@ curl -X GET "https://app.lettr.com/api/emails" \
 ### Query Parameters
 
 | Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
+|-|-|-|-|
 | `per_page` | integer | No | Number of results per page (1-100, default: 25) |
-| `cursor` | string | No | Pagination cursor for next page |
+| `cursor` | string | No | The `next_cursor` value from the previous response |
 | `recipients` | string | No | Filter by recipient email address |
-| `from` | string | No | Filter emails sent after this date (ISO 8601) |
-| `to` | string | No | Filter emails sent before this date (ISO 8601) |
+| `from` | string | No | Only emails sent at or after this time (ISO 8601). Defaults to the start of the retained window, about 10 days ago |
+| `to` | string | No | Only emails sent before this time (ISO 8601). Defaults to now and must be after `from` |
 
 ### Response
 
@@ -30,33 +30,60 @@ curl -X GET "https://app.lettr.com/api/emails" \
 {
   "message": "Emails retrieved successfully.",
   "data": {
-    "results": [
-      {
-        "event_id": "abc123def456",
-        "timestamp": "2024-01-15T10:30:00Z",
-        "request_id": "7582751837467401763",
-        "message_id": "0000abcd1234efgh",
-        "subject": "Welcome to Acme",
-        "friendly_from": "Acme Team <hello@acme.com>",
-        "sending_domain": "acme.com",
-        "rcpt_to": "customer@example.com",
-        "recipient_domain": "example.com",
-        "mailbox_provider": "gmail",
-        "click_tracking": true,
-        "open_tracking": true,
-        "transactional": true,
-        "msg_size": 15234,
-        "injection_time": "2024-01-15T10:30:00Z"
+    "events": {
+      "data": [
+        {
+          "event_id": "abc123def456",
+          "type": "injection",
+          "timestamp": "2024-01-15T10:30:00Z",
+          "request_id": "7582751837467401763",
+          "message_id": "0000abcd1234efgh",
+          "subject": "Welcome to Acme",
+          "friendly_from": "Acme Team <hello@acme.com>",
+          "sending_domain": "acme.com",
+          "rcpt_to": "customer@example.com",
+          "recipient_domain": "example.com",
+          "mailbox_provider": "gmail",
+          "click_tracking": true,
+          "open_tracking": true,
+          "transactional": true,
+          "msg_size": 15234,
+          "injection_time": "2024-01-15T10:30:00Z"
+        }
+      ],
+      "total_count": 150,
+      "from": "2024-01-05T00:00:00+00:00",
+      "to": "2024-01-15T10:35:00+00:00",
+      "pagination": {
+        "next_cursor": "eyJjdXJzb3IiOi...",
+        "per_page": 25
       }
-    ],
-    "total_count": 150,
-    "pagination": {
-      "next_cursor": "eyJsYXN0X2V2...",
-      "per_page": 25
     }
   }
 }
 ```
+
+The emails are in `data.events.data`. `data.events.from` and `data.events.to` show the time window that was actually searched, which can differ from the one you asked for (see [Search Window](#search-window)).
+
+## List Email Events
+
+`GET /emails` returns one entry per sent email (its injection event). To see everything that happened afterwards — deliveries, bounces, delays, opens, clicks — use `GET /emails/events`:
+
+```bash
+curl -X GET "https://app.lettr.com/api/emails/events?events=delivery,bounce&recipients=customer@example.com" \
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxx"
+```
+
+It accepts the same `from`, `to`, `per_page`, and `cursor` parameters, plus `events`, `transmissions`, and `bounce_classes` filters, and returns the same `data.events` shape. See [List Email Events](/api-reference/emails/list-email-events) for every parameter and field.
+
+## Search Window
+
+Lettr keeps sent emails and their events for about 10 days, so both `GET /emails` and `GET /emails/events` can only search that window:
+
+- If you leave out `from`, the search starts at the beginning of the retained window.
+- If `from` is earlier than that, it is moved forward to the start of the retained window instead of failing. The `from` in the response tells you where the search actually started.
+- If the whole range ends before the retained window starts, the response is empty.
+- If `to` is not after `from`, the request fails with a `422` validation error.
 
 ## Get Email by Request ID
 
@@ -87,45 +114,44 @@ const requestId = result.data.request_id;
 {
   "message": "Email retrieved successfully.",
   "data": {
-    "results": [
+    "transmission_id": "7582751837467401763",
+    "state": "delivered",
+    "scheduled_at": null,
+    "from": "hello@acme.com",
+    "from_name": null,
+    "subject": "Welcome to Acme",
+    "recipients": ["customer@example.com"],
+    "num_recipients": 1,
+    "events": [
       {
-        "event_id": "abc123def456",
-        "timestamp": "2024-01-15T10:30:00Z",
+        "event_id": "event-delivery-1",
+        "type": "delivery",
+        "timestamp": "2024-01-15T10:31:00.000Z",
         "request_id": "7582751837467401763",
-        "message_id": "0000abcd1234efgh",
-        "subject": "Welcome to Acme",
-        "friendly_from": "Acme Team <hello@acme.com>",
-        "sending_domain": "acme.com",
         "rcpt_to": "customer@example.com",
-        "raw_rcpt_to": "customer@example.com",
-        "recipient_domain": "example.com",
-        "mailbox_provider": "gmail",
-        "mailbox_provider_region": "us",
-        "sending_ip": "192.0.2.1",
-        "click_tracking": true,
-        "open_tracking": true,
-        "transactional": true,
-        "msg_size": 15234,
-        "injection_time": "2024-01-15T10:30:00Z",
-        "rcpt_meta": {
-          "order_id": "ORD-12345",
-          "user_id": "usr_abc123"
-        }
+        "subject": "Welcome to Acme"
+      },
+      {
+        "event_id": "event-injection-1",
+        "type": "injection",
+        "timestamp": "2024-01-15T10:30:00.000Z",
+        "request_id": "7582751837467401763",
+        "rcpt_to": "customer@example.com",
+        "subject": "Welcome to Acme"
       }
-    ],
-    "total_count": 1,
-    "pagination": {
-      "next_cursor": null,
-      "per_page": 25
-    }
+    ]
   }
 }
 ```
 
+`state` is derived from the events: `scheduled`, `delivered`, `bounced`, or `failed`. If no email with that request ID is found in the retained window, the endpoint returns `404`. See [Get Email Detail](/api-reference/emails/get-email-detail) for every field.
+
 ## Response Fields
 
+Each entry in `data.events.data` from `GET /emails` contains:
+
 | Field | Type | Description |
-|-------|------|-------------|
+|-|-|-|
 | `event_id` | string | Unique identifier for this event |
 | `timestamp` | string | When the event occurred (ISO 8601) |
 | `request_id` | string | The transmission/request ID from sending |
@@ -186,7 +212,7 @@ async function getAllEmails() {
 
   do {
     const url = cursor
-      ? `https://app.lettr.com/api/emails?cursor=${cursor}`
+      ? `https://app.lettr.com/api/emails?cursor=${encodeURIComponent(cursor)}`
       : 'https://app.lettr.com/api/emails?per_page=100';
 
     const response = await fetch(url, {
@@ -195,9 +221,9 @@ async function getAllEmails() {
       }
     });
 
-    const data = await response.json();
-    allEmails = allEmails.concat(data.data.results);
-    cursor = data.data.pagination.next_cursor;
+    const { data } = await response.json();
+    allEmails = allEmails.concat(data.events.data);
+    cursor = data.events.pagination.next_cursor;
 
   } while (cursor);
 
@@ -205,8 +231,12 @@ async function getAllEmails() {
 }
 ```
 
+Pass `next_cursor` back as the `cursor` parameter exactly as you received it — don't decode, modify, or build it yourself. The cursor already carries the filters and time window of the first page, so later pages stay consistent. A cursor that didn't come from a previous response fails with a `422` validation error. Cursors issued before the current format still work.
+
+The same pagination works for `GET /emails/events`.
+
 <Note>
-  Email history is retained for 10 days. For longer retention, use webhooks to store email events in your own database.
+  Email history is kept for about 10 days. For longer retention, use [webhooks](/learn/webhooks/introduction) to store email events in your own database.
 </Note>
 
 ## Use Cases
@@ -227,13 +257,13 @@ async function getCustomerEmailHistory(email) {
   );
 
   const { data } = await response.json();
-  return data.results;
+  return data.events.data;
 }
 ```
 
 ### Verify Delivery
 
-Check if a specific email was successfully queued:
+Check what happened to a specific email:
 
 ```javascript
 async function checkEmailStatus(requestId) {
@@ -246,16 +276,16 @@ async function checkEmailStatus(requestId) {
     }
   );
 
-  const { data } = await response.json();
-
-  if (data.total_count === 0) {
+  if (response.status === 404) {
     return { found: false };
   }
 
+  const { data } = await response.json();
+
   return {
     found: true,
-    email: data.results[0],
-    injectedAt: data.results[0].injection_time
+    state: data.state,
+    events: data.events
   };
 }
 ```
@@ -281,8 +311,8 @@ async function getDailySendReport() {
   const { data } = await response.json();
 
   return {
-    totalSent: data.total_count,
-    emails: data.results.map(e => ({
+    totalSent: data.events.total_count,
+    emails: data.events.data.map(e => ({
       to: e.rcpt_to,
       subject: e.subject,
       sentAt: e.timestamp
@@ -294,11 +324,12 @@ async function getDailySendReport() {
 ## Error Responses
 
 | Status | Error | Description |
-|--------|-------|-------------|
+|-|-|-|
 | 401 | Unauthorized | Invalid or missing API key |
 | 404 | Not Found | Email with specified request ID not found |
-| 422 | Validation Error | Invalid query parameters |
+| 422 | Validation Error | Invalid query parameters, `to` not after `from`, or a `cursor` that didn't come from a previous response |
 | 500 | Server Error | Internal error, retry the request |
+| 503 | `auth_unavailable` | Lettr couldn't verify your API key right now. Retry after the `Retry-After` delay |
 
 ## Related Topics
 
