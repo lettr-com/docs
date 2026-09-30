@@ -1,13 +1,24 @@
 ---
-title: Local Server
-description: "Run the lettr-mcp package locally with an API key over stdio to give Claude Code, Cursor, and Claude Desktop access to your email."
+title: Local Server (deprecated)
+description: "The lettr-mcp npm package, no longer updated. Use the hosted MCP server at app.lettr.com/mcp, which now accepts API keys as well as OAuth."
 ---
 
-The [`lettr-mcp`](https://github.com/lettr-com/lettr-mcp) npm package runs an MCP server on your machine, giving AI coding assistants access to your Lettr email infrastructure. It authenticates with an API key and communicates over stdio — ideal for developer workflows in Claude Code, Cursor, and Claude Desktop.
+<Warning>
+  **The `lettr-mcp` package is no longer updated.** Use the hosted server at `https://app.lettr.com/mcp` instead: it now accepts a `lttr_` API key as well as OAuth, which was the only thing this package offered that the hosted server could not. New tools and fixes land there.
 
-<Note>
-  Looking for the hosted MCP server that uses OAuth? See [Remote Server Setup](/learn/mcp/setup).
-</Note>
+  Switching, with the same API key you use here:
+
+  ```bash
+  claude mcp add --transport http lettr https://app.lettr.com/mcp \
+    --header "Authorization: Bearer lttr_xxxxxxxxx"
+  ```
+
+  See [Connect with an API Key](/learn/mcp/api-key-auth). Three differences to expect: tool names use underscores there (`send_email`, not `send-email`), some parameters are named differently (`contact_id` rather than `contactId`), and the hosted server has tools this package never had.
+
+  This page is kept for anyone still running the package. It continues to work.
+</Warning>
+
+The [`lettr-mcp`](https://github.com/lettr-com/lettr-mcp) npm package runs an MCP server on your machine, giving AI coding assistants access to your Lettr email infrastructure. It authenticates with an API key and communicates over stdio.
 
 ## Prerequisites
 

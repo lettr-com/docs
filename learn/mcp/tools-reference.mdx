@@ -1,12 +1,12 @@
 ---
 title: Tools Reference
-description: "Complete reference for every Lettr MCP tool for sending, templates, domains, analytics, and monitoring across the remote and local servers."
+description: "Complete reference for every tool on Lettr’s hosted MCP server: sending, templates, domains, audiences, analytics and monitoring."
 ---
 
 This reference documents every tool available through Lettr's MCP servers. Some tools are available on both the [remote](/learn/mcp/setup) and [local](/learn/mcp/local-setup) servers, while others are exclusive to one.
 
 <Note>
-  The remote server uses underscores in tool names (e.g., `send_email`) while the local server uses hyphens (e.g., `send-email`). The functionality is equivalent.
+  Tool names use underscores (e.g. `send_email`). The deprecated [`lettr-mcp` package](/learn/mcp/local-setup) used hyphens (`send-email`) and some different parameter names, so a configuration moving across needs both adjusted.
 </Note>
 
 ## Tool Availability
@@ -426,8 +426,8 @@ Browse API request logs with optional filtering and pagination.
   <Card title="Remote Server Setup" icon="cloud" href="/learn/mcp/setup">
     Connect via OAuth from Claude.ai, ChatGPT, and other AI clients
   </Card>
-  <Card title="Local Server Setup" icon="terminal" href="/learn/mcp/local-setup">
-    Install the lettr-mcp package for your IDE or CLI
+  <Card title="Connect with an API Key" icon="key" href="/learn/mcp/api-key-auth">
+    For CI, cron jobs and headless agents
   </Card>
   <Card title="API Reference" icon="code" href="/api-reference/introduction">
     Full REST API documentation
