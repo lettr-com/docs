@@ -11,7 +11,7 @@ The [local server](/learn/mcp/local-setup) (`lettr-mcp` npm package) offers the 
 
 Tools marked **Destructive** send email, overwrite data, or remove data in a way that can't be undone. They carry the MCP destructive annotation, so clients such as Claude can ask you before running them. Read-only tools are annotated as read-only.
 
-Every tool runs as you, in the team currently selected in your Lettr account, and goes through the same team permission checks as the dashboard. The AI can never reach another team's domains, templates, contacts, or campaigns.
+Every tool runs as you, in the team you choose (see [Choosing a Team](/learn/mcp/setup#choosing-a-team)), and goes through the same team permission checks as the dashboard. The AI can never reach another team's domains, templates, contacts, or campaigns.
 
 <Warning>
   A confirmation prompt is only as good as your review of it. Before approving a destructive tool, check the recipients, the audience, and the IDs it is about to act on, especially for `send_campaign` and the bulk audience tools.
@@ -178,6 +178,8 @@ For how contacts, lists, topics, properties, and segments fit together, see [Aud
 
 | Tool | What it does | Destructive |
 |-|-|-|
+| `list_teams` | List the teams this connection can act on | — |
+| `current_team` | Show which team a call would act on, and how it was chosen | — |
 | `list_api_keys` | List your team's API keys by name and prefix, with their permissions (never the full key) | — |
 
 ## Local Server Differences

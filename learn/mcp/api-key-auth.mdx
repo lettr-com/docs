@@ -1,0 +1,176 @@
+---
+title: "Connect with an API Key"
+description: "Authenticate to Lettr's remote MCP server with a lttr_ API key instead of OAuth, for CI jobs, scripts, and headless agents that have no browser."
+---
+
+The remote MCP server at `https://app.lettr.com/mcp` accepts a Lettr API key as well as OAuth. Send the key in an `Authorization` header and the connection needs no browser, no sign-in, and no human present — which is what CI jobs, cron scripts, and headless agents need.
+
+<Note>
+  OAuth is still the better choice for interactive use. See [Remote Server](/learn/mcp/setup) for the browser flow, and [Which should I use?](#which-should-i-use) below to choose.
+</Note>
+
+## Connection Details
+
+| Setting | Value |
+|---------|-------|
+| Server URL | `https://app.lettr.com/mcp` |
+| Authentication | `Authorization: Bearer lttr_…` |
+| Transport | HTTP |
+| Team | The team the key belongs to |
+
+Create a key in the Lettr dashboard under **API Keys**. The key's value is shown once, so copy it then.
+
+## Setup by AI Client
+
+<Tabs>
+  <Tab title="Claude Code">
+    ```bash
+    claude mcp add --transport http lettr https://app.lettr.com/mcp \
+      --header "Authorization: Bearer lttr_xxxxxxxxx"
+    ```
+
+    Start a new session afterwards — MCP servers are loaded when a session starts. Run `/mcp` and the server should show as connected, with no authentication step.
+  </Tab>
+  <Tab title="Cursor">
+    Open **Cursor Settings** → **MCP** → **Add new global MCP server** and add:
+
+    ```json
+    {
+      "mcpServers": {
+        "lettr": {
+          "url": "https://app.lettr.com/mcp",
+          "headers": {
+            "Authorization": "Bearer lttr_xxxxxxxxx"
+          }
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="Any other client">
+    Any client that supports a streamable HTTP MCP server with custom headers will work:
+
+    ```json
+    {
+      "url": "https://app.lettr.com/mcp",
+      "headers": {
+        "Authorization": "Bearer lttr_xxxxxxxxx"
+      }
+    }
+    ```
+
+    Clients that only support OAuth should use the [browser flow](/learn/mcp/setup) instead.
+  </Tab>
+</Tabs>
+
+<Warning>
+  A key in a client config file is a password in plain text. Prefer a key scoped to only what the agent needs, and keep config files out of version control.
+</Warning>
+
+## What a Key Can Reach
+
+A key's permissions decide which tools it sees at all. A tool the key has no scope for is **not listed**, so an agent never offers to do something the key cannot do.
+
+| Key permissions | Tools available |
+|---|---|
+| **Full access** | Everything except `list_api_keys` and `browse_api_logs` |
+| **Sending only** | `send_email`, `send_template_email`, `schedule_email`, `cancel_scheduled_email` |
+| **Custom scopes** | The tools covered by the scopes you granted, matching the REST endpoints those scopes allow |
+
+Scopes map to the same permissions the REST API uses — a key with `audience:read` can list contacts but not create them, exactly as on `/api`.
+
+<Note>
+  `list_api_keys` and `browse_api_logs` are never available to a key, whatever its permissions. They have no REST equivalent, so a key cannot read them. Use OAuth if an agent needs them.
+</Note>
+
+### Sandbox Keys
+
+A sandbox key can read and send, but not write. Creating, updating and deleting templates, domains, audiences and campaigns are all unavailable to it — the same restriction those endpoints have on REST.
+
+Sandbox sends are rewritten server-side: the sender becomes Lettr's sandbox domain and the recipient becomes the key owner's own email address, whatever address the agent asked for. That makes a sandbox key safe to hand to an agent you are still testing.
+
+### IP Restrictions
+
+If a key restricts allowed IP addresses, those apply to MCP exactly as they do to REST. A call from another address is refused with `403`.
+
+## Choosing a Team
+
+An API key belongs to one team, so a key-authenticated connection always acts on that team and tools take no `team_id`.
+
+OAuth is different: a token identifies a person, who may belong to several teams. Then every tool takes a `team_id`, and two tools help you find one:
+
+- `list_teams` — the teams this connection can act on
+- `current_team` — which team a call would act on, and how that was decided
+
+To stop passing `team_id` on every call, pin a team in your client configuration by adding it to the URL:
+
+```bash
+claude mcp add --transport http lettr "https://app.lettr.com/mcp?team=41"
+```
+
+With a team pinned, `team_id` disappears from the tools entirely, so the AI cannot act on another team even if it tries. You can also pin with a `Lettr-Team-Id` header.
+
+<Tip>
+  Ask your assistant to call `current_team` before anything destructive. It reports the team and why it was chosen — "pinned in the MCP client configuration", "passed as team_id with this call", or "the API key is bound to this team".
+</Tip>
+
+## Rate Limits
+
+Key-authenticated MCP calls count against the same per-team budget as that key's REST calls, so an agent cannot get extra throughput by going through MCP.
+
+| Key type | Limit on `/mcp` |
+|---|---|
+| Live | 10 requests per second, per team |
+| Sandbox | 20 per second, 120 per minute, 2000 per day, per key |
+
+Connecting a client costs about 4 requests before it does any work, so the per-second figure is a burst allowance rather than a sustained rate. Exceeding it returns `429` with `error_code: rate_limit_exceeded`; wait a second and retry.
+
+## Monitoring
+
+Key-authenticated MCP calls appear in your API logs alongside REST calls, with the key's id, so you can see what an agent has been doing. Filter by API key name in the dashboard under **Logs**, or ask an OAuth-connected assistant to use `browse_api_logs`.
+
+## Which Should I Use?
+
+| | API key | OAuth |
+|---|---|---|
+| **Needs a browser** | No | Yes, once |
+| **Acts as** | A team | A person |
+| **Team selection** | Fixed by the key | `team_id` per call, or pinned |
+| **Scoped access** | Yes, by key permissions | No, full account access |
+| **Best for** | CI, cron, scripts, headless agents, restricted access | Interactive chat, personal use, account-wide tasks |
+
+Use a **key** when no human is present, or when you want an agent restricted to part of your account. Use **OAuth** for your own interactive use, and when an agent needs the API-key or log tools.
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="401 Invalid API key.">
+    The key is wrong or has been deleted. Keys are revoked by deletion, so a deleted key is indistinguishable from one that never existed. Create a new one in the dashboard.
+  </Accordion>
+  <Accordion title="The client asks me to authenticate">
+    The header did not reach the server, so the request fell through to OAuth. Check the header is exactly `Authorization: Bearer lttr_…`, and that your client sends headers for MCP servers at all.
+  </Accordion>
+  <Accordion title="A tool I expected is missing">
+    The key's permissions do not cover it, so it is hidden rather than refused. Check the key's scopes in the dashboard, and remember that `list_api_keys` and `browse_api_logs` are never available to a key. Tool lists are cached per session, so restart your client after changing a key's permissions.
+  </Accordion>
+  <Accordion title="Tool [name] not found.">
+    The same thing: a tool the key cannot use is not registered, so calling it reports it as missing rather than naming the missing scope.
+  </Accordion>
+  <Accordion title="403 Access denied. Your IP address is not allowed.">
+    The key restricts allowed IPs and the call came from another address. CI runners often have changing addresses — either allow the range or use a key without IP restrictions.
+  </Accordion>
+  <Accordion title="Unconfigured Sending Domain">
+    The sending domain is not verified for this team. Add and verify it under [sending domains](/learn/domains/sending-domains). A sandbox key sends from Lettr's sandbox domain instead, so this does not apply to it.
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Tools Reference" icon="wrench" href="/learn/mcp/tools-reference">
+    Every tool the remote server exposes, with its parameters.
+  </Card>
+  <Card title="OAuth Setup" icon="cloud" href="/learn/mcp/setup">
+    The browser flow, for interactive use.
+  </Card>
+</CardGroup>
