@@ -34,7 +34,7 @@ Every field in a row is optional:
 
 The most common setup is a translated subject and nothing else. Fill in the subject, leave the rest empty, and the language sends from the same address as the primary.
 
-The **From email** field works like the primary one: a local part plus a domain chosen from your [verified sending domains](/learn/domains/sending-domains). A language version can never go out from a domain your team does not own. Lettr checks this when the campaign is saved and shows a problem on the field itself. It checks again when you click **Send** or **Schedule**: if a per-language domain is no longer verified, the campaign is not started and a message tells you why. Fix or clear that row's **From email** and try again.
+The **From email** field works like the primary one: a local part plus a domain chosen from your [verified sending domains](/learn/domains/sending-domains). To change only the domain, leave the local part empty and pick another domain: the language sends from the primary local part at that domain, so `news@example.com` becomes `news@example.de`. A language version can never go out from a domain your team does not own. Lettr checks this when the campaign is saved and shows a problem on the field itself. It checks again when you click **Send** or **Schedule**: if a per-language domain is no longer verified, the campaign is not started and a message tells you why. Fix or clear that row's **From email** and try again.
 
 Per-language values are stored by language code and belong to the draft, not the template:
 

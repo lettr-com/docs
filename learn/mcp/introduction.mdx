@@ -3,14 +3,14 @@ title: "MCP for AI Assistants"
 description: "Connect AI assistants to Lettr with the Model Context Protocol to send email, manage templates, and monitor delivery in plain language."
 ---
 
-The [Model Context Protocol](https://modelcontextprotocol.io/) (MCP) is an open standard that enables AI assistants to securely connect with external services. Lettr provides two MCP servers so AI agents can interact with your email infrastructure — sending messages, managing templates, configuring domains, and monitoring delivery — all through natural language.
+The [Model Context Protocol](https://modelcontextprotocol.io/) (MCP) is an open standard that enables AI assistants to securely connect with external services. Lettr provides two MCP servers so AI agents can work with your email infrastructure in plain language: sending and scheduling messages, managing templates, domains, and webhooks, running campaigns, managing your audience, and monitoring delivery.
 
 ## Why Use MCP?
 
 MCP transforms how you interact with your email infrastructure. Instead of switching between dashboards, writing code, or memorizing API calls, you can ask your AI assistant to handle email tasks directly.
 
 | Traditional Workflow | With MCP |
-|---------------------|----------|
+|-|-|
 | Open dashboard, navigate to domains, check verification status | "Check if my domain example.com is verified" |
 | Write code to send an email via API | "Send a test email to john@example.com" |
 | Query API logs, parse response, identify issues | "Why didn't my email to jane@example.com deliver yesterday?" |
@@ -22,50 +22,56 @@ Lettr offers two MCP servers for different workflows. Both give AI assistants ac
 
 <CardGroup cols={2}>
   <Card title="Remote Server" icon="cloud" href="/learn/mcp/setup">
-    Hosted at `https://app.lettr.com/mcp`. Authenticates via OAuth, or with a `lttr_` API key for CI and headless agents. Connect directly from Claude.ai, ChatGPT, Cursor, Claude Code, Claude Desktop, and GitHub Copilot.
+    Hosted at `https://app.lettr.com/mcp`. You connect by signing in to Lettr, or with a `lttr_` API key for CI and headless agents. Works with Claude.ai, Claude Desktop, Claude Code, ChatGPT, Cursor, and GitHub Copilot.
   </Card>
   <Card title="Local Server" icon="terminal" href="/learn/mcp/local-setup">
-    The `lettr-mcp` npm package runs on your machine. Authenticates with an API key. Ideal for Claude Code, Cursor, and Claude Desktop during development.
+    The `lettr-mcp` npm package runs on your machine and authenticates with an API key. Useful when you want the server running on your own machine.
   </Card>
 </CardGroup>
 
 ### Comparison
 
 | | Remote Server | Local Server |
-|---|---|---|
+|-|-|-|
 | **How it runs** | Hosted by Lettr | Runs on your machine via `npx` |
-| **Authentication** | OAuth 2.1, or a `lttr_` [API key header](/learn/mcp/api-key-auth) | API key (`LETTR_API_KEY`) |
+| **Authentication** | OAuth 2.1 (sign in to Lettr), or a `lttr_` [API key header](/learn/mcp/api-key-auth) | API key (`LETTR_API_KEY`) |
 | **Transport** | HTTP/SSE | stdio |
-| **Supported clients** | Claude.ai, ChatGPT, Cursor, Claude Desktop, GitHub Copilot | Claude Code, Cursor, Claude Desktop |
+| **Supported clients** | Claude.ai, Claude Desktop, Claude Code, ChatGPT, Cursor, GitHub Copilot | Claude Code, Cursor, Claude Desktop |
 | **Best for** | Chat-based account management, monitoring, analytics, CI and headless agents | Developer workflows, coding assistants |
-| **Unique tools** | Analytics, email events, API logs | Domain CRUD, template delete, domain verification |
+| **Tools** | The full set, including analytics, API logs, sending health checks, and DNS diagnosis | The same core tools, with a few [differences](/learn/mcp/tools-reference#local-server-differences) |
+| **Access control** | Your team permissions, or the API key's [permissions](/learn/mcp/api-key-auth) | The API key's [permissions](/learn/api-keys/permissions) |
 | **Open source** | No | [Yes](https://github.com/lettr-com/lettr-mcp) |
 
 ### Which Should I Use?
 
-**Use the remote server** if you want to manage your Lettr account from a web-based AI chat like Claude.ai or ChatGPT, or if you need analytics and event monitoring tools. The remote server authenticates through OAuth so you don't need to manage API keys.
+**Use the remote server** in most cases. It works in web chats like Claude.ai and ChatGPT as well as in desktop apps and coding tools like Claude Desktop, Claude Code, and Cursor. You sign in with your Lettr account, so there are no API keys to create or store, and it has the widest set of tools.
 
-**Use the local server** if you want email capabilities inside your IDE or CLI during development. The local server is ideal for Claude Code and Cursor workflows where you need to send emails, manage templates, or configure domains as part of your coding process.
+Where a browser sign-in isn't possible, such as CI, cron jobs, or headless agents, connect to the remote server [with an API key](/learn/mcp/api-key-auth) instead.
+
+**Use the local server** when you want the server to run on your own machine over stdio, or want to read or modify its [open-source code](https://github.com/lettr-com/lettr-mcp).
 
 <Tip>
-  Cursor and Claude Desktop work with both servers. The remote server uses OAuth (no API key needed), while the local server uses an API key and runs as a local process. You can use both simultaneously.
+  You can connect both servers in the same client. Give them different names (for example `lettr` and `lettr-local`) so you can tell their tools apart.
 </Tip>
 
 ## What Can You Do?
 
-Both MCP servers give AI assistants tools to work with your email infrastructure. The exact tools vary — see the [tools reference](/learn/mcp/tools-reference) for the full list.
+Both MCP servers give AI assistants tools to work with your email infrastructure. Each tool does what the matching API endpoint does. See the [tools reference](/learn/mcp/tools-reference) for the full list.
 
 | Capability | Remote | Local |
-|---|---|---|
-| Send emails (direct and template-based) | Yes | Yes |
-| List, view, create, and update templates | Yes | Yes |
-| Delete templates and inspect merge tags | No | Yes |
-| List sending domains | Yes | Yes |
-| Create, verify, and delete domains | No | Yes |
-| View analytics and template statistics | Yes | No |
-| Browse email events and API logs | Yes | No |
-| List API keys and webhooks | Yes | Yes |
-| Inspect webhook details | No | Yes |
+|-|-|-|
+| Send emails, directly or from a template | Yes | Yes |
+| Schedule emails, look them up, and cancel them | Yes | Yes |
+| List sent emails and view their delivery timelines | Yes | Yes |
+| Manage templates, folders, and merge tags | Yes | Yes |
+| Create, verify, and delete sending domains | Yes | Yes |
+| Diagnose DNS problems and check sending health | Yes | No |
+| Create, update, and delete webhooks | Yes | Yes |
+| Send and schedule campaigns, and view campaign events | Yes | Yes |
+| Manage contacts, lists, topics, properties, and segments | Yes | Yes |
+| Browse email events | Yes | Yes |
+| View analytics, template statistics, and API logs | Yes | No |
+| List API keys and tracking, inbound, and storage domains | Yes | No |
 
 ## Example Conversations
 
@@ -86,11 +92,21 @@ Once connected, you can interact with your email infrastructure using natural la
 **Reviewing events:**
 > "Show me all bounces from the last week"
 
+**Scheduling:**
+> "Schedule the 'weekly-digest' template to team@example.com for Monday at 9am"
+
+**Managing your audience:**
+> "Add these five addresses to the 'Beta testers' list and subscribe them to the Product updates topic"
+
+**Running campaigns:**
+> "How did last week's newsletter campaign perform?"
+
 ## Security
 
 Both MCP servers are designed with security in mind:
 
-- **Remote server** — Authenticates through OAuth 2.1. Access is tied to your Lettr session and team permissions. When you sign out, the AI loses access. API keys are never exposed to the AI assistant.
+- **Remote server** — Authenticates through OAuth 2.1, or with a `lttr_` [API key](/learn/mcp/api-key-auth) limited to that key's permissions. Every tool runs as you, in the team you choose (see [Choosing a Team](/learn/mcp/setup#choosing-a-team)), and goes through the same team permission checks as the dashboard. API keys are never exposed to the AI assistant.
+- **Destructive tools** — Tools that send email, overwrite data, or delete it are marked as destructive, so your AI client can ask you before using them. The [tools reference](/learn/mcp/tools-reference) marks each one.
 - **Local server** — Authenticates with an API key stored in your local environment. The key never leaves your machine. Use [restricted API keys](/learn/api-keys/permissions) to limit what the AI can do.
 
 <Warning>

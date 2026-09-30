@@ -34,6 +34,7 @@ Every error is a JSON object with the same shape. **`error_code` identifies the 
 | `quota_exceeded` | 429 | Monthly or daily sending quota reached |
 | `send_error` | 500 | Email sending error |
 | `transmission_failed` | 502 | Email delivery to upstream provider failed |
+| `auth_unavailable` | 503 | Lettr couldn't verify your API key because of a temporary problem on its side; wait for `Retry-After` |
 
 ## Validation errors
 
@@ -95,10 +96,11 @@ Retrying a validation error or an unauthorized request produces the same result 
 | `429` `rate_limit_exceeded` | Yes | Wait for `Retry-After`, then retry. Rate limits and quotas apply to retries too. |
 | `409` `idempotency_in_progress` | Yes | The original request is still processing. Retry the same request after `Retry-After`. |
 | `500` Server error | Yes | Retry with backoff |
+| `503` `auth_unavailable` | Yes | Lettr couldn't check your API key because of a temporary problem on its side. The key is not invalid — don't rotate it. Retry after `Retry-After` (currently 5 seconds). |
 | `502/503/504` Gateway errors | Yes | Retry with backoff |
 | `409` `idempotency_key_conflict` | No | The key was reused with a different payload. Use a new key for a new email. |
 | `422` `validation_error` | No | Correct the invalid key or payload |
-| `401` Unauthorized | No | Check the API key |
+| `401` Unauthorized | No | The API key is missing or invalid. Check the API key |
 | `403` Forbidden | No | Check the API key's permissions |
 | `404` Not found | No | Check that the template or resource exists |
 

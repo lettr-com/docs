@@ -114,6 +114,14 @@ Each header is optional and controls its own setting. Use `true` to explicitly e
 
 Use UTF-8 for your HTML and plain text, and let your mail library generate the MIME message and its transfer encoding. Lettr supports quoted-printable and base64 content, including multipart messages with attachments. Do not manually encode content before passing it to a library that already handles transfer encoding.
 
+Accented and other non-ASCII characters come through intact. If your application still sends HTML or text in an older charset, such as ISO-8859-2 or Windows-1250, Lettr converts it to UTF-8 based on the `charset` declared in the part's `Content-Type` header.
+
+If Lettr can't decode the message body at all — for example, because of broken base64 or a malformed MIME structure — the message is rejected permanently with `554 5.6.0`, so your mail client doesn't keep retrying a message that will never go through.
+
+## Embedded Images
+
+Images embedded in the message and referenced from your HTML with a `cid:` URL, such as `<img src="cid:logo@example.com">`, display inline in the delivered email. Most mail libraries create these for you (for example, PHPMailer's `addEmbeddedImage()` or Laravel's `$message->embed()`). An image part is kept inline when it has a `Content-ID` and is marked `inline` or has no `Content-Disposition`; other files are delivered as regular attachments.
+
 ## BCC Is Not Private Over SMTP
 
 <Warning>
@@ -193,7 +201,9 @@ Choose your framework or library for specific setup instructions:
 
     An invalid or duplicate [tracking header](/learn/sending/tracking#smtp-tracking-headers) returns `554 5.6.0`. Correct the header before retrying.
 
-    API forwarding errors return `451` with the reason from the API. Sends are recorded in the [dashboard](https://app.lettr.com) alongside API sends, so check there for the full error.
+    A message body that can't be decoded (for example, broken base64 or a malformed MIME structure) also returns `554 5.6.0`. This is permanent — fix how the message is built rather than retrying it.
+
+    Other API forwarding errors return `451` with the reason from the API. Sends are recorded in the [dashboard](https://app.lettr.com) alongside API sends, so check there for the full error.
   </Accordion>
 
   <Accordion title="TLS/SSL Errors">

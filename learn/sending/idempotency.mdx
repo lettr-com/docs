@@ -13,6 +13,9 @@ The rules that follow from it:
 
 - **Key format.** Keys are 1 to 255 characters using letters, numbers, `.`, `_`, and `-`.
 - **One key per intended email.** A new intended email requires a new key. Reusing a key with a different payload returns `409 idempotency_key_conflict` rather than a second send.
+- **Replays are free.** A replayed response doesn't send the email again and doesn't count against your quota again.
+- **Normal checks run first.** Authentication, sending-domain and quota checks run before the key is looked up, so a retry after your quota is used up still gets a `429`.
+- **Only `POST /emails`.** [Scheduled sends](/api-reference/emails/schedule-email) (`POST /emails/scheduled`) ignore the header.
 - **Retention is 24 hours.** This is not an unlimited exactly-once guarantee. A retry after the window is a new request and sends a new email.
 - **Metadata does not deduplicate.** `metadata.idempotency_key` is stored and echoed in webhooks like any other metadata field. Only the header enables deduplication.
 
@@ -143,7 +146,7 @@ Two `409` responses are specific to idempotent requests. The rest of the retry r
 
 | Response | Meaning and action |
 |-|-|
-| `409` `idempotency_in_progress` | The original request is still being processed. Retry the same request after `Retry-After`. |
+| `409` `idempotency_in_progress` | The original request is still being processed. Retry the same request after `Retry-After` (1 second). |
 | `409` `idempotency_key_conflict` | The key was reused with a different payload. Use a new key for a new email, or send the original payload. |
 | `422` `validation_error` | Correct the invalid key or payload. |
 | `429` | Rate limits and quotas still apply, including to retries. |

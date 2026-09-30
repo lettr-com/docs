@@ -71,18 +71,19 @@ curl -X POST https://app.lettr.com/api/emails \
 ## HTTP Status Codes
 
 | Code | Description |
-|------|-------------|
+|-|-|
 | `200` | Success - Email queued for delivery |
 | `400` | Bad Request - Domain configuration error |
 | `401` | Unauthorized - Invalid or missing API key |
 | `422` | Unprocessable Entity - Validation failed |
 | `429` | Too Many Requests - Rate limit or sending quota exceeded |
 | `502` | Bad Gateway - Upstream transmission failed |
+| `503` | Service Unavailable - The API key couldn't be verified right now; retry after `Retry-After` |
 
 ## Error Codes
 
 | Code | HTTP Status | Description |
-|------|-------------|-------------|
+|-|-|-|
 | `validation_error` | 422 | Request validation failed. Check the `errors` object for field-specific messages. |
 | `invalid_domain` | 400 | The sender domain could not be determined from the email address. |
 | `unconfigured_domain` | 400 | The sender domain is not configured or approved for sending. |
@@ -91,6 +92,7 @@ curl -X POST https://app.lettr.com/api/emails \
 | `quota_exceeded` | 429 | Monthly sending quota exceeded. Upgrade your plan to continue sending. |
 | `daily_quota_exceeded` | 429 | Daily sending quota exceeded (free tier). Try again tomorrow. |
 | `transmission_failed` | 502 | Email transmission to the upstream provider failed. |
+| `auth_unavailable` | 503 | Lettr couldn't verify your API key because of a temporary problem on its side. This doesn't mean the key is invalid (an invalid key returns `401`). Retry after the `Retry-After` delay, currently 5 seconds. |
 
 ## Send Email Reference
 

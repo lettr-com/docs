@@ -3,10 +3,12 @@ title: Local Server
 description: "Run the lettr-mcp package locally with an API key over stdio to give Claude Code, Cursor, and Claude Desktop access to your email."
 ---
 
-The [`lettr-mcp`](https://github.com/lettr-com/lettr-mcp) npm package runs an MCP server on your machine, giving AI coding assistants access to your Lettr email infrastructure. It authenticates with an API key and communicates over stdio — ideal for developer workflows in Claude Code, Cursor, and Claude Desktop.
+The [`lettr-mcp`](https://github.com/lettr-com/lettr-mcp) npm package runs an MCP server on your machine, giving AI coding assistants access to your Lettr email infrastructure. It authenticates with an API key and communicates over stdio, so it works in Claude Code, Cursor, and Claude Desktop without a browser sign-in.
+
+Choose the local server when you'd rather authenticate with an API key, for example where you can't complete a browser sign-in, or when you want a [restricted API key](/learn/api-keys/permissions) to limit what the AI can do.
 
 <Note>
-  Looking for the hosted MCP server that uses OAuth? See [Remote Server Setup](/learn/mcp/setup).
+  Claude Code, Cursor, and Claude Desktop can also connect to the hosted server by signing in to Lettr, with no API key to manage. See [Remote Server Setup](/learn/mcp/setup).
 </Note>
 
 ## Prerequisites
@@ -78,7 +80,7 @@ npx -y lettr-mcp --sender hello@mycompany.com --reply-to support@mycompany.com
 ```
 
 | Option | Environment Variable | Description |
-|--------|---------------------|-------------|
+|-|-|-|
 | `--key` | `LETTR_API_KEY` | Your Lettr API key (required) |
 | `--sender` | `SENDER_EMAIL_ADDRESS` | Default sender email address from a [verified domain](/learn/domains/sending-domains) |
 | `--reply-to` | `REPLY_TO_EMAIL_ADDRESS` | Default reply-to email address |
@@ -113,43 +115,14 @@ The AI should respond with your verified sending domains. If you see domain info
 
 ## Available Tools
 
-The local MCP server provides 14 tools for managing your email infrastructure:
+The local server offers the same tools as the remote server, named with hyphens instead of underscores (for example `send-email` and `list-audience-contacts`). That covers sending and scheduling emails, templates and folders, sending domains, webhooks, campaigns, and your whole audience: contacts, lists, topics, properties, and segments.
 
-### Emails
+A few tools differ between the two servers:
 
-| Tool | Description |
-|------|-------------|
-| `send-email` | Send a transactional email with HTML, plain text, templates, attachments, tracking, and personalization |
+- **Only on the local server** — `list-scheduled-emails` to list emails waiting to be sent, `auth-check` to validate your API key, and `health-check` to check the Lettr API status.
+- **Only on the remote server** — sending health checks, DNS diagnosis, analytics, template statistics, API logs, API key listing, and listing tracking, inbound, and storage domains.
 
-### Templates
-
-| Tool | Description |
-|------|-------------|
-| `list-templates` | List email templates with pagination |
-| `get-template` | Get full template details including HTML content |
-| `create-template` | Create a new template with HTML or visual editor JSON |
-| `update-template` | Update template name and/or content (creates new version) |
-| `delete-template` | Permanently delete a template and all versions |
-| `get-merge-tags` | Discover merge tag variables a template expects |
-
-### Domains
-
-| Tool | Description |
-|------|-------------|
-| `list-domains` | List all sending domains and their verification status |
-| `create-domain` | Register a new sending domain |
-| `get-domain` | Get domain details with DNS records |
-| `delete-domain` | Remove a sending domain |
-| `verify-domain` | Trigger DNS verification for a domain |
-
-### Webhooks
-
-| Tool | Description |
-|------|-------------|
-| `list-webhooks` | List all webhook configurations |
-| `get-webhook` | Get webhook details and delivery status |
-
-For detailed parameter documentation, see the [Tools Reference](/learn/mcp/tools-reference).
+What each tool can do also depends on your API key's [permissions](/learn/api-keys/permissions). For the full list and which tools are destructive, see the [Tools Reference](/learn/mcp/tools-reference).
 
 ## Example Workflows
 
@@ -173,6 +146,10 @@ For detailed parameter documentation, see the [Tools Reference](/learn/mcp/tools
 
 > "List my webhook configurations and show me the details for the first one"
 
+### Managing Your Audience
+
+> "Create a list called 'Beta testers' and add jane@example.com and john@example.com to it"
+
 ## Security
 
 - **API key storage** — Your API key stays in your local environment configuration and is never transmitted to third parties
@@ -191,7 +168,7 @@ The local MCP server is open source and available on GitHub: [lettr-com/lettr-mc
 
 <CardGroup cols={2}>
   <Card title="Remote Server Setup" icon="cloud" href="/learn/mcp/setup">
-    Connect via OAuth from Claude.ai and ChatGPT
+    Connect by signing in from Claude, ChatGPT, Cursor, and more
   </Card>
   <Card title="Tools Reference" icon="wrench" href="/learn/mcp/tools-reference">
     Full reference for all MCP tools

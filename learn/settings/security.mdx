@@ -1,6 +1,6 @@
 ---
 title: Account Security
-description: "Add two-factor authentication to your Lettr account, scan an authenticator QR code, and store recovery codes to keep sign-in secure."
+description: "Add two-factor authentication or a passkey to your Lettr account, scan an authenticator QR code, and store recovery codes to keep sign-in secure."
 ---
 
 Lettr supports two-factor authentication (2FA) to add an extra layer of security to your account. When enabled, you'll need both your password and a time-based verification code from an authenticator app to sign in.
@@ -9,7 +9,7 @@ Lettr supports two-factor authentication (2FA) to add an extra layer of security
 
 <Steps>
   <Step title="Go to Security Settings">
-    Navigate to **Settings** → **Two-Factor Authentication** in the sidebar.
+    Navigate to **Settings** → **Two-Factor Auth** in the sidebar.
   </Step>
   <Step title="Enable 2FA">
     Click **Enable Two-Factor Authentication**. You'll be prompted to confirm your password.
@@ -47,7 +47,7 @@ Recovery codes are single-use backup codes that let you sign in when you don't h
 
 To regenerate recovery codes:
 
-1. Go to **Settings** → **Two-Factor Authentication**
+1. Go to **Settings** → **Two-Factor Auth**
 2. Click **Regenerate Recovery Codes**
 3. Store the new codes securely
 
@@ -59,9 +59,43 @@ To regenerate recovery codes:
 
 To disable two-factor authentication:
 
-1. Go to **Settings** → **Two-Factor Authentication**
+1. Go to **Settings** → **Two-Factor Auth**
 2. Click **Disable Two-Factor Authentication**
 3. Confirm your password
+
+## Passkeys
+
+A passkey lets you sign in with Touch ID, Windows Hello, your phone, or a hardware security key instead of typing your password. Passkeys are tied to your device and can't be phished or reused on another site.
+
+### Adding a Passkey
+
+<Steps>
+  <Step title="Open the Passkeys section">
+    Go to **Settings** → **Two-Factor Auth** and find the **Passkeys** section.
+  </Step>
+  <Step title="Add a passkey">
+    Click **Add passkey** and give it a name you'll recognize later, such as *MacBook Pro* or *YubiKey*.
+  </Step>
+  <Step title="Confirm on your device">
+    Your browser asks you to confirm with your fingerprint, device PIN, phone, or security key. Once confirmed, the passkey appears in the list.
+  </Step>
+</Steps>
+
+Each passkey in the list shows when it was added and when it was last used. Click **Remove** to delete a passkey you no longer use, for example after replacing a laptop. The name is set when you add the passkey; to change it, remove the passkey and add it again.
+
+### Signing In with a Passkey
+
+On the login page, click **Sign in with passkey** and confirm on your device. A passkey proves both who you are and that you have your device, so it counts as both sign-in steps and you won't be asked for an authenticator code afterwards.
+
+Passkeys also work in these places:
+
+- **Confirm your identity**: when Lettr asks you to confirm your password before a sensitive action, click **Confirm with passkey** instead.
+- **Two-factor challenge**: if you sign in with your password and also use an authenticator app, the code screen offers **Use a passkey instead**.
+- **Team invitations**: signing in with a passkey from an invitation link accepts the invitation, just like signing in with a password.
+
+<Note>
+  Adding a passkey does **not** turn on two-factor authentication, and it does not satisfy a team's **Require Two-Factor Authentication** setting. If your team requires 2FA, you still need to set up an authenticator app as described above. You can use both: a passkey for everyday sign-in and an authenticator app to meet the team requirement.
+</Note>
 
 ## Requiring 2FA for Your Team
 
@@ -72,7 +106,7 @@ To enable this requirement:
 1. Go to **Settings** → **Team**
 2. In the **Security** section, toggle on **Require Two-Factor Authentication**
 
-Members who haven't set up 2FA will see a setup prompt when they try to access the dashboard. They can still sign in, but they won't be able to use any team features until 2FA is configured.
+Members who haven't set up 2FA will see a setup prompt when they try to access the dashboard. They can still sign in, but they won't be able to use any team features until 2FA is configured. A [passkey](#passkeys) does not count toward this requirement; members need an authenticator app.
 
 <Tip>
   The team settings page shows which members have 2FA enabled (green shield icon) and which don't (gray shield with alert). Review this before enabling the requirement to give your team advance notice.

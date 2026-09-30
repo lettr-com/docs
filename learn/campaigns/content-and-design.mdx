@@ -101,6 +101,8 @@ When the campaign sends, each recipient gets their own values substituted in. Th
 - **The recipient's email** — always available as `{{email}}`
 - **Custom properties** you've defined for your team — see [Custom Properties](/learn/audience/contacts#custom-properties)
 
+You don't have to remember property names. In the marketing email editor, the merge-tag menu in the text toolbar has an **Audience** group with **Email** and every contact property your team has defined, listed alphabetically. Each property shows its type and fallback value, if it has one. A **Campaign** group next to it holds the **Unsubscribe Link** and **View in Browser** links.
+
 If a recipient doesn't have a value set for a property, the [fallback value](/learn/audience/contacts#fallback-values) on the property is used. If the property has no fallback either, the merge tag is replaced with an empty string.
 
 <Tip>
@@ -177,16 +179,28 @@ The web-version tag is fully optional. If you don't include `{{webversion_link}}
 Before sending you can:
 
 - See a live **preview** of the rendered email in the builder
+- Open the **Email content** preview from the campaign page to see the email with real or sample data
 - View a **screenshot** thumbnail of the campaign on the Campaigns list
 - Send a **test email** to verify rendering and merge tag substitution in a real inbox
 
-The preview and screenshot are useful for layout checks. Test emails are the only way to see what the email looks like when fully rendered in a real client (Gmail, Outlook, Apple Mail) — always test in at least one before committing to a real send.
+### The Email Content Preview
+
+Click the email thumbnail on a campaign's page to open the **Email content** dialog. It shows the subject and the rendered email, and works for every campaign, whether it's a draft, scheduled, or already sent. Use **Preview using** to choose what fills the merge tags:
+
+- **Sample data** — placeholder values, in any of the email's languages chosen from the **Language** picker. Useful for checking layout and each translation.
+- **Audience contact** — search the campaign's audience under **Find a contact by email** and see the email exactly as that contact gets it, with their details filled in and in their language. For a sent campaign, this is the language they actually received.
+
+See [Previewing what a specific contact received](/learn/multilingual-campaigns/sending-and-results#previewing-what-a-specific-contact-received) for how the preview works with multilingual campaigns.
+
+The previews and screenshot are useful for layout and personalization checks. Test emails are the only way to see what the email looks like when fully rendered in a real client (Gmail, Outlook, Apple Mail) — always test in at least one before committing to a real send.
 
 ### Sending a Test Email
 
 From the Compose or Review step, click **Send test email** and enter one or more recipient addresses (yourself, teammates, a QA address). The test arrives as a transactional email; tracking is disabled on tests to keep them out of campaign analytics. Tests are rate-limited to prevent accidents.
 
-Tests use sample data for merge tags rather than real recipient values — they're for checking layout and merge tag syntax, not for confirming personalization for a specific contact.
+On a draft, the test sends what is currently in the editor, including changes you haven't saved yet, so you can check an edit before committing it.
+
+Tests use sample data for merge tags rather than real recipient values: `first_name` becomes *Taylor*, `last_name` *Example*, `company` *Example Company*, `email` the test recipient's address, and any other tag a readable placeholder such as *Sample Plan*. They're for checking layout and merge tag syntax. To see the email as a specific contact will get it, use the [preview](#previewing-your-campaign).
 
 When the campaign links a template with more than one language, the test box has a language picker. Send one test per language to check each translated subject and sender. See [Sending a test email](/learn/multilingual-campaigns/campaign-setup#sending-a-test-email) in the multilingual guide.
 

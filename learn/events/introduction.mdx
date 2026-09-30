@@ -11,14 +11,14 @@ Events are distinct from [Analytics](/learn/analytics/introduction), which shows
 
 When you navigate to **Events** in the sidebar, you'll land on a list of all recent email events for your team. Each row shows the timestamp, the event type (color-coded by category), the email subject, and the recipient and sender addresses. From this list, you can click **View Details** on any row to drill into the full event history for that specific message.
 
-The dashboard defaults to showing events from the last 14 days. You can adjust the date range using the date picker and narrow results down to a specific recipient by entering their email address in the search field. The per-page selector lets you display 10, 25, 50, or 100 events at a time, and navigation buttons let you page through results.
+Events are kept for about 10 days, and the dashboard opens on that whole window. You can narrow the date range with the date picker (it doesn't offer days older than the retained window or days in the future) and narrow results down to a specific recipient by entering their email address in the search field. If a requested range reaches further back than that, the page tells you so ("Events are kept for about 10 days…") and shows results from the oldest retained events onward. The per-page selector lets you display 10, 25, 50, or 100 events at a time, and navigation buttons let you page through results.
 
 ### Available Filters
 
 | Filter | Notes |
 |-|-|
-| **Date range** | Defaults to the last 14 days |
-| **Event type** | Show only one type, such as Bounce or Click — see [Event Types](/learn/events/event-types) |
+| **Date range** | Defaults to the whole retained window (about 10 days) |
+| **Event type** | Show only one type, such as Injected, Delivered, Bounce, or Click — see [Event Types](/learn/events/event-types). The filter stays applied while you page through results and when you switch sandbox mode on or off. |
 | **Recipient email address** | One complete address, matched exactly. Partial addresses and domains don't match. |
 
 The Events page **cannot** filter by template, subject line, or email content. To find the emails sent from one template, search by the recipient you sent to and narrow the date range to when the send happened; the subject column then identifies the message.
@@ -28,7 +28,7 @@ The Events page **cannot** filter by template, subject line, or email content. T
 </Note>
 
 <Note>
-  Events are retained for 90 days. If you need longer-term storage of event data, use [webhooks](/learn/webhooks/introduction) to capture and store events in your own system as they occur.
+  Events are kept for about 10 days. If you need longer-term storage of event data, use [webhooks](/learn/webhooks/introduction) to capture and store events in your own system as they occur.
 </Note>
 
 ## Events vs. Webhooks

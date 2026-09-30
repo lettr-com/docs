@@ -57,6 +57,8 @@ Lettr reserves quota for the full submitted recipient count *before* handing the
 
 Because reservation happens up front and atomically, concurrent sends at the limit boundary cannot all slip through — the check and the increment are a single operation.
 
+[Scheduled emails](/api-reference/emails/schedule-email) count against your quota on the day they are sent, not the day you schedule them.
+
 ## Quota Response Headers
 
 The [Send Email](/api-reference/emails/send-email) endpoint returns headers that let you track your quota usage in real time. These headers are present for **free tier** teams:

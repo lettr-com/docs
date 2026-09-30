@@ -48,23 +48,28 @@ Live keys use the standard `lttr_` prefix. This makes it straightforward to spot
 
 ## Rate Limits
 
-Sandbox keys have stricter rate limits than live keys to prevent abuse:
+Sandbox keys have their own rate limits, separate from the team's [3 requests per second](/api-reference/rate-limit) for live keys. Sandbox traffic doesn't use up the team limit, and live traffic doesn't slow down sandbox keys, so tools that make many calls in a row, such as `lettr:init` and DTO generation in the [Laravel package](/quickstart/laravel/introduction), don't stall.
 
 | Limit | Threshold | Window |
 |-|-|-|
-| Per-minute | 10 requests | 1 minute |
-| Per-day | 100 requests | 24 hours |
+| Per-second | 20 requests | 1 second |
+| Per-minute | 120 requests | 1 minute |
+| Per-day | 2,000 requests | 24 hours |
 
 Every response from a sandbox key includes rate limit headers so you can track your usage:
 
 ```
-X-Sandbox-RateLimit-Minute-Limit: 10
-X-Sandbox-RateLimit-Minute-Remaining: 9
-X-Sandbox-RateLimit-Day-Limit: 100
-X-Sandbox-RateLimit-Day-Remaining: 99
+X-Sandbox-RateLimit-Second-Limit: 20
+X-Sandbox-RateLimit-Second-Remaining: 19
+X-Sandbox-RateLimit-Minute-Limit: 120
+X-Sandbox-RateLimit-Minute-Remaining: 119
+X-Sandbox-RateLimit-Day-Limit: 2000
+X-Sandbox-RateLimit-Day-Remaining: 1999
 ```
 
-When you exceed either limit, the API returns a `429` status code with a `Retry-After` header indicating how many seconds to wait.
+The standard `X-RateLimit-Limit`, `X-RateLimit-Remaining`, and `X-RateLimit-Reset` headers are also sent and follow the per-second limit, so SDKs that read them keep working unchanged.
+
+When you exceed any limit, the API returns a `429` status code with a `Retry-After` header indicating how many seconds to wait.
 
 ## Allowed Endpoints
 

@@ -11,7 +11,7 @@ Lettr enforces per-team rate limits on API requests to ensure fair usage across 
 
 ## Rate Limit
 
-The default rate limit is **3 requests per second** per team, shared across all API keys belonging to the same team. If you exceed the limit, subsequent requests return `429 Too Many Requests` until the window resets.
+The default rate limit is **3 requests per second** per team, shared across all live API keys belonging to the same team. [Sandbox API keys](/learn/api-keys/sandbox#rate-limits) have separate limits (20 per second, 120 per minute, 2,000 per day) and don't count toward the team limit. If you exceed the limit, subsequent requests return `429 Too Many Requests` until the window resets.
 
 | Limit Type | Value |
 |------------|-------|
