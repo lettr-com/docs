@@ -6,7 +6,7 @@ description: "Connect Claude, Claude Code, ChatGPT, Cursor, and Copilot to Lettr
 Lettr's remote MCP server is hosted at `https://app.lettr.com/mcp` and authenticates through OAuth 2.1. Connect directly from Claude.ai, Claude Desktop, Claude Code, ChatGPT, Cursor, or GitHub Copilot — no API key required.
 
 <Note>
-  No browser available — CI, a cron job, a headless agent? The same server also accepts a `lttr_` API key in an `Authorization` header: see [Connect with an API Key](/learn/mcp/api-key-auth). For the local MCP server that runs on your machine, see [Local Server Setup](/learn/mcp/local-setup).
+  No browser available — CI, a cron job, a headless agent? The same server also accepts a `lttr_` API key in an `Authorization` header: see [Connect with an API Key](/learn/mcp/api-key-auth). The `lettr-mcp` npm package that ran on your own machine is [no longer updated](/learn/mcp/local-setup).
 </Note>
 
 ## Prerequisites
@@ -319,7 +319,7 @@ See [Rate Limits](/api-reference/rate-limit) for detailed information.
 ## Learn More
 
 <CardGroup cols={2}>
-  <Card title="Local Server Setup" icon="terminal" href="/learn/mcp/local-setup">
+  <Card title="Local Server (deprecated)" icon="terminal" href="/learn/mcp/local-setup">
     Run the MCP server locally with an API key
   </Card>
   <Card title="Tools Reference" icon="wrench" href="/learn/mcp/tools-reference">

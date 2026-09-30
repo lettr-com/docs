@@ -1,15 +1,34 @@
 ---
-title: Local Server
-description: "Run the lettr-mcp package locally with an API key over stdio to give Claude Code, Cursor, and Claude Desktop access to your email."
+title: Local Server (deprecated)
+description: "The lettr-mcp npm package is no longer updated. Use the hosted server at app.lettr.com/mcp, which now accepts API keys as well as a Lettr sign-in."
 ---
+
+<Warning>
+  **This package is no longer updated.** The hosted server at `https://app.lettr.com/mcp` now accepts a `lttr_` API key as well as a Lettr sign-in, which was the only thing this package offered that the hosted server could not. New tools and fixes land there.
+
+  The package keeps working, and its [code stays open](https://github.com/lettr-com/lettr-mcp). This page is here for anyone still running it.
+</Warning>
 
 The [`lettr-mcp`](https://github.com/lettr-com/lettr-mcp) npm package runs an MCP server on your machine, giving AI coding assistants access to your Lettr email infrastructure. It authenticates with an API key and communicates over stdio, so it works in Claude Code, Cursor, and Claude Desktop without a browser sign-in.
 
-Choose the local server when you'd rather authenticate with an API key, for example where you can't complete a browser sign-in, or when you want a [restricted API key](/learn/api-keys/permissions) to limit what the AI can do.
+## Switching to the Remote Server
 
-<Note>
-  Claude Code, Cursor, and Claude Desktop can also connect to the hosted server by signing in to Lettr, with no API key to manage. See [Remote Server Setup](/learn/mcp/setup).
-</Note>
+Use the same API key you already have:
+
+```bash
+claude mcp add --transport http lettr https://app.lettr.com/mcp \
+  --header "Authorization: Bearer lttr_xxxxxxxxx"
+```
+
+For Cursor, Claude Desktop and other clients, see [Connect with an API Key](/learn/mcp/api-key-auth). Three differences to expect:
+
+| | This package | Remote server |
+|-|-|-|
+| Tool names | `send-email` | `send_email` |
+| Some parameters | `contactId` | `contact_id` |
+| Tools | The core set | Everything, plus analytics, email events, API logs, sending health and DNS diagnosis |
+
+A restricted key behaves the same on both: the remote server hides the tools a key's [permissions](/learn/mcp/api-key-auth) do not cover, rather than failing when one is called.
 
 ## Prerequisites
 

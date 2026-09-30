@@ -18,14 +18,14 @@ MCP transforms how you interact with your email infrastructure. Instead of switc
 
 ## Two Ways to Connect
 
-Lettr offers two MCP servers for different workflows. Both give AI assistants access to your email infrastructure, but they differ in how they authenticate and where they run.
+Lettr's MCP server is hosted at `https://app.lettr.com/mcp` and accepts either a Lettr sign-in or a `lttr_` API key. A second server, the `lettr-mcp` npm package, ran on your own machine — it is no longer updated.
 
 <CardGroup cols={2}>
   <Card title="Remote Server" icon="cloud" href="/learn/mcp/setup">
     Hosted at `https://app.lettr.com/mcp`. You connect by signing in to Lettr, or with a `lttr_` API key for CI and headless agents. Works with Claude.ai, Claude Desktop, Claude Code, ChatGPT, Cursor, and GitHub Copilot.
   </Card>
-  <Card title="Local Server" icon="terminal" href="/learn/mcp/local-setup">
-    The `lettr-mcp` npm package runs on your machine and authenticates with an API key. Useful when you want the server running on your own machine.
+  <Card title="Local Server (deprecated)" icon="terminal" href="/learn/mcp/local-setup">
+    The `lettr-mcp` npm package. No longer updated — the remote server now takes API keys too, which was the only thing this offered that a browser sign-in could not.
   </Card>
 </CardGroup>
 
@@ -41,6 +41,7 @@ Lettr offers two MCP servers for different workflows. Both give AI assistants ac
 | **Tools** | The full set, including analytics, API logs, sending health checks, and DNS diagnosis | The same core tools, with a few [differences](/learn/mcp/tools-reference#local-server-differences) |
 | **Access control** | Your team permissions, or the API key's [permissions](/learn/mcp/api-key-auth) | The API key's [permissions](/learn/api-keys/permissions) |
 | **Open source** | No | [Yes](https://github.com/lettr-com/lettr-mcp) |
+| **Maintained** | Yes | No — new tools and fixes land on the remote server only |
 
 ### Which Should I Use?
 
@@ -48,10 +49,10 @@ Lettr offers two MCP servers for different workflows. Both give AI assistants ac
 
 Where a browser sign-in isn't possible, such as CI, cron jobs, or headless agents, connect to the remote server [with an API key](/learn/mcp/api-key-auth) instead.
 
-**Use the local server** when you want the server to run on your own machine over stdio, or want to read or modify its [open-source code](https://github.com/lettr-com/lettr-mcp).
+**The local server is deprecated.** It still works, and its [code is still open](https://github.com/lettr-com/lettr-mcp), but it will not gain anything further. If you are running it, [switching](/learn/mcp/local-setup#switching-to-the-remote-server) takes one command and the same API key.
 
 <Tip>
-  You can connect both servers in the same client. Give them different names (for example `lettr` and `lettr-local`) so you can tell their tools apart.
+  Connecting the remote server twice is often useful: one entry signed in as you, another with a restricted API key for automation. Give them different names so you can tell their tools apart.
 </Tip>
 
 ## What Can You Do?
