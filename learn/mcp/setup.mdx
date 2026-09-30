@@ -1,9 +1,9 @@
 ---
 title: Remote Server
-description: "Connect Claude, ChatGPT, Cursor, and Copilot to Lettr's hosted MCP server at app.lettr.com/mcp using OAuth, with no API key required."
+description: "Connect Claude, Claude Code, ChatGPT, Cursor, and Copilot to Lettr's hosted MCP server at app.lettr.com/mcp using OAuth, with no API key required."
 ---
 
-Lettr's remote MCP server is hosted at `https://app.lettr.com/mcp` and authenticates through OAuth 2.1. Connect directly from Claude.ai, ChatGPT, Cursor, Claude Desktop, or GitHub Copilot — no API key required.
+Lettr's remote MCP server is hosted at `https://app.lettr.com/mcp` and authenticates through OAuth 2.1. Connect directly from Claude.ai, Claude Desktop, Claude Code, ChatGPT, Cursor, or GitHub Copilot — no API key required.
 
 <Note>
   Looking for the local MCP server that runs on your machine with an API key? See [Local Server Setup](/learn/mcp/local-setup).
@@ -18,7 +18,7 @@ You'll need a Lettr account with at least one [verified sending domain](/learn/d
 When configuring your AI client, use the following settings:
 
 | Setting | Value |
-|---------|-------|
+|-|-|
 | Server URL | `https://app.lettr.com/mcp` |
 | Authentication | OAuth 2.1 (automatic) |
 | Transport | HTTP/SSE |
@@ -67,6 +67,33 @@ When configuring your AI client, use the following settings:
         Follow the OAuth prompts to sign in to Lettr and authorize access.
       </Step>
     </Steps>
+  </Tab>
+  <Tab title="Claude Code">
+    ### Claude Code
+
+    Claude Code connects to the remote server over HTTP and signs you in through your browser.
+
+    <Steps>
+      <Step title="Add the Lettr Server">
+        Run the following command in your terminal:
+
+        ```bash
+        claude mcp add --transport http lettr https://app.lettr.com/mcp
+        ```
+
+        Add `--scope user` to make the server available in all your projects, not just the current one.
+      </Step>
+      <Step title="Sign In">
+        Start Claude Code, run `/mcp`, select **lettr**, and choose **Authenticate**. A browser window opens to Lettr's OAuth flow. Sign in and authorize access.
+      </Step>
+      <Step title="Verify Connection">
+        Back in Claude Code, `/mcp` shows Lettr as connected. Ask Claude about your email infrastructure to try it out.
+      </Step>
+    </Steps>
+
+    <Tip>
+      Prefer to authenticate with an API key instead? Use the [local server](/learn/mcp/local-setup).
+    </Tip>
   </Tab>
   <Tab title="ChatGPT">
     ### ChatGPT
@@ -150,67 +177,33 @@ After connecting, verify that your AI assistant can access Lettr by asking a sim
 
 The AI should respond with your verified sending domains. If you see domain information, the connection is working correctly.
 
-## Available Actions
+## Available Tools
 
-Once connected, your AI assistant gains access to a range of Lettr capabilities. These are organized into categories based on the type of operation.
+Once connected, your AI assistant can work with every part of your Lettr account. Each tool does exactly what the matching API endpoint does.
 
-### Email Operations
+| Area | What the AI can do |
+|-|-|
+| Emails | Send emails directly or from a template, list sent emails, and show an email's delivery timeline |
+| Scheduled emails | Schedule emails for later, look them up, and cancel them before they're sent |
+| Templates | List projects and folders, read, create, update, and delete templates, and inspect merge tags |
+| Domains | Create, verify, diagnose, and delete sending domains, and list tracking, inbound, and storage domains |
+| Webhooks | List, inspect, create, update, and delete webhooks |
+| Campaigns | List campaigns and their events, send them, schedule them, and unschedule them |
+| Audience | Manage contacts, lists, topics, properties, and segments, including bulk operations |
+| Monitoring | Check sending health, view analytics and template statistics, and browse email events and API logs |
+| Account | List API keys (prefixes only, never full keys) |
 
-For sending emails, your AI assistant can use `send_email` to compose and send messages with specified recipients, subject, and content, or `send_template_email` to send using a pre-built template with merge tag substitution.
+See the [Tools Reference](/learn/mcp/tools-reference) for every tool by name.
 
-| Action | Description |
-|--------|-------------|
-| `send_email` | Send an email with specified recipients, subject, and content |
-| `send_template_email` | Send an email using a pre-built template with merge tags |
+## Permissions and Confirmations
 
-### Template Management
+Every tool runs as you, in the team currently selected in your Lettr account, and goes through the same team permission checks as the dashboard. The AI can't reach other teams' data.
 
-Your AI assistant can work with email templates—listing, viewing, creating, and updating them.
+Tools that send email, overwrite data, or delete it are marked as **destructive** using the MCP tool annotations. Clients that support these annotations, such as Claude, can ask you to approve each destructive call before it runs. The [Tools Reference](/learn/mcp/tools-reference) marks which tools are destructive.
 
-| Action | Description |
-|--------|-------------|
-| `list_templates` | List all email templates with metadata and merge tags |
-| `get_template` | View a template's HTML content and configuration |
-| `create_template` | Create a new Custom HTML email template |
-| `update_template` | Update template content and create a new version |
-
-### Analytics
-
-For insights into email performance, the AI can pull aggregate delivery metrics or per-template statistics.
-
-| Action | Description |
-|--------|-------------|
-| `get_analytics` | View aggregate delivery analytics with daily breakdown |
-| `list_template_stats` | View per-template delivery statistics by campaign |
-
-### Event Monitoring
-
-To track what happens after emails are sent, the AI can use `browse_email_events` to view delivery events including deliveries, opens, clicks, and bounces. For debugging API integrations, `browse_api_logs` provides access to request history and response data.
-
-| Action | Description |
-|--------|-------------|
-| `browse_email_events` | View delivery events (delivered, opened, clicked, bounced, etc.) |
-| `browse_api_logs` | Inspect API request history and responses |
-
-### Domain Management
-
-Your AI assistant can check the status of your email infrastructure across all domain types. Each domain category has its own listing action that returns verification status and configuration details.
-
-| Action | Description |
-|--------|-------------|
-| `list_sending_domains` | View sending domains with verification status |
-| `list_tracking_domains` | View tracking domains for branded links |
-| `list_inbound_domains` | View inbound email receiving domains |
-| `list_storage_domains` | View asset storage/CDN domains |
-
-### Configuration
-
-Beyond domains, the AI can inspect your account configuration including API keys and webhooks. For security, API keys are shown with prefixes only—never full values.
-
-| Action | Description |
-|--------|-------------|
-| `list_api_keys` | View API keys (prefixes only, for security) |
-| `list_webhooks` | View webhook endpoints and their configuration |
+<Warning>
+  Campaign tools such as `send_campaign` and `schedule_campaign` send real email to a campaign's whole audience. Review the campaign and its audience before approving.
+</Warning>
 
 ## Example Workflows
 
@@ -240,17 +233,31 @@ The AI will use your saved template and substitute the merge tags with the provi
 
 The AI will list your domains and highlight any with verification issues.
 
+### Setting Up a New Domain
+
+> "Add notifications.example.com as a sending domain and tell me which DNS records to create"
+
+The AI registers the domain and shows the records to publish. Once you've added them, ask it to verify the domain, or to diagnose what's wrong if verification still fails.
+
+### Scheduling an Email
+
+> "Schedule the 'weekly-digest' template to team@example.com for Monday at 9am"
+
+The AI schedules the email and returns its ID, so you can check on it or cancel it later.
+
 ## Troubleshooting
 
 <AccordionGroup>
   <Accordion title="OAuth flow doesn't complete">
     Start by ensuring you're already signed in to Lettr in your browser before initiating the OAuth flow. Check that pop-ups aren't blocked for the AI client's domain. If the flow still fails, try disconnecting and reconnecting the MCP server, or clear your browser cache and attempt the connection again.
+
+    Desktop apps such as Claude Code and Cursor finish sign-in through a callback address on your own machine (`localhost`). Lettr used to reject these callbacks, so if an earlier attempt from a desktop app failed, remove the server and add it again.
   </Accordion>
   <Accordion title="AI says it can't access Lettr">
     First, verify that the MCP server URL is exactly `https://app.lettr.com/mcp` with no trailing slash or typos. Confirm that your Lettr session is active by signing in to the dashboard in your browser. Make sure the AI client has MCP support enabled in its settings. If problems persist, try removing the server connection entirely and adding it fresh.
   </Accordion>
   <Accordion title="Actions fail with permission errors">
-    MCP uses your Lettr session permissions, so you can only access resources your account has permission to view or modify. Team members with restricted roles may not have access to all actions. If you need elevated permissions, contact your team administrator to adjust your role.
+    MCP tools use your Lettr team permissions and act on the team currently selected in your account. If a tool reports that you aren't authorized, check that the right team is selected in the Lettr dashboard and that you're still a member of it. Tools only see resources owned by that team, so an ID from another team is treated as not found.
   </Accordion>
   <Accordion title="Emails aren't sending">
     Verify that your sending domain is both verified and approved in the Lettr dashboard. Check that the "from" address in your email uses one of your verified domains. Ensure the recipient isn't on your suppression list due to previous bounces or complaints. Finally, review your account's sending limits to make sure you haven't exceeded them.
@@ -265,9 +272,9 @@ The AI will list your domains and highlight any with verification issues.
 When using MCP with Lettr, keep these security considerations in mind:
 
 - **Only connect trusted clients** — MCP allows AI assistants to send emails and access account data on your behalf, so treat authorization requests with the same caution you'd apply to any OAuth connection
-- **Review before confirming** — Most AI clients display the intended action before executing it — review email content and recipient lists before confirming sends, especially for bulk operations or sensitive communications
+- **Review before confirming** — Tools that send email or change data are marked as destructive, and most AI clients ask before running them. Review email content, recipient lists, and IDs before confirming, especially for campaigns, bulk audience changes, and deletions
 - **Audit connected clients** — Periodically revoke access for clients you no longer use via **Settings** → **Connected Apps**
-- **Permission scoping** — MCP respects your existing Lettr team permissions, so team members with view-only access won't be able to send emails through MCP
+- **Permission scoping** — MCP respects your Lettr team permissions and only acts on your currently selected team
 
 ## Disconnecting
 
@@ -291,7 +298,7 @@ See [Rate Limits](/api-reference/rate-limit) for detailed information.
     Run the MCP server locally with an API key
   </Card>
   <Card title="Tools Reference" icon="wrench" href="/learn/mcp/tools-reference">
-    Full reference for all remote server tools
+    Every MCP tool, grouped by area
   </Card>
   <Card title="Sending Domains" icon="globe" href="/learn/domains/sending-domains">
     Set up domains for sending emails

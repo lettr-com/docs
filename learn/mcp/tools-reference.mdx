@@ -1,433 +1,209 @@
 ---
 title: Tools Reference
-description: "Complete reference for every Lettr MCP tool for sending, templates, domains, analytics, and monitoring across the remote and local servers."
+description: "Complete reference for every Lettr MCP tool: emails, scheduled sends, templates, domains, webhooks, campaigns, audience, and monitoring."
 ---
 
-This reference documents every tool available through Lettr's MCP servers. Some tools are available on both the [remote](/learn/mcp/setup) and [local](/learn/mcp/local-setup) servers, while others are exclusive to one.
+This reference lists every tool on Lettr's [remote MCP server](/learn/mcp/setup), grouped by what it works on. Each tool does exactly what the matching [API endpoint](/api-reference/introduction) does, and your AI client receives each tool's full input schema when it connects, so you never have to pass parameters by hand. Just describe what you want.
 
-<Note>
-  The remote server uses underscores in tool names (e.g., `send_email`) while the local server uses hyphens (e.g., `send-email`). The functionality is equivalent.
-</Note>
+The [local server](/learn/mcp/local-setup) (`lettr-mcp` npm package) offers the same tools with a few differences, listed under [Local server differences](#local-server-differences).
 
-## Tool Availability
+## Destructive Tools and Permissions
 
-| Category | Tool | Remote | Local |
-|----------|------|--------|-------|
-| **Sending** | send_email | Yes | Yes |
-| **Sending** | send_template_email | Yes | — |
-| **Templates** | list_templates | Yes | Yes |
-| **Templates** | get_template | Yes | Yes |
-| **Templates** | create_template | Yes | Yes |
-| **Templates** | update_template | Yes | Yes |
-| **Templates** | delete_template | — | Yes |
-| **Templates** | get_merge_tags | — | Yes |
-| **Domains** | list_sending_domains / list_domains | Yes | Yes |
-| **Domains** | list_tracking_domains | Yes | — |
-| **Domains** | list_inbound_domains | Yes | — |
-| **Domains** | list_storage_domains | Yes | — |
-| **Domains** | create_domain | — | Yes |
-| **Domains** | get_domain | — | Yes |
-| **Domains** | delete_domain | — | Yes |
-| **Domains** | verify_domain | — | Yes |
-| **Configuration** | list_api_keys | Yes | — |
-| **Configuration** | list_webhooks | Yes | Yes |
-| **Configuration** | get_webhook | — | Yes |
-| **Analytics** | get_analytics | Yes | — |
-| **Analytics** | list_template_stats | Yes | — |
-| **Monitoring** | browse_email_events | Yes | — |
-| **Monitoring** | browse_api_logs | Yes | — |
+Tools marked **Destructive** send email, overwrite data, or remove data in a way that can't be undone. They carry the MCP destructive annotation, so clients such as Claude can ask you before running them. Read-only tools are annotated as read-only.
 
----
-
-## Email Sending
-
-### send_email
-
-Send an email with plain text, HTML, or AMP HTML content. Supports merge tags for variable substitution.
-
-**Available on:** Remote, Local
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `from` | string | Yes | Sender email address. Must be from a verified sending domain. |
-| `to` | string | Yes | Recipient email address. |
-| `subject` | string | Yes | Email subject line (max 998 characters). |
-| `html` | string | No | HTML content. Supports merge tags like `{{variable_name}}`. |
-| `text` | string | No | Plain text content. Supports merge tags. |
-| `amp_html` | string | No | AMP HTML content for interactive emails. |
-| `from_name` | string | No | Display name for the sender. |
-| `reply_to` | string | No | Reply-to email address. |
-| `cc` | string | No | CC recipient email address. |
-| `bcc` | string | No | BCC recipient email address. |
-| `substitution_data` | object | No | Key-value pairs for merge tag substitution. |
-
-**Example prompt:** "Send a welcome email to john@example.com from hello@mycompany.com with the subject 'Welcome to Acme'"
-
----
-
-### send_template_email
-
-Send an email using a pre-defined template specified by its slug.
-
-**Available on:** Remote only
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `from` | string | Yes | Sender email address. Must be from a verified sending domain. |
-| `to` | string | Yes | Recipient email address. |
-| `subject` | string | Yes | Email subject line. Can include merge tags. |
-| `template_slug` | string | Yes | The slug of the template to use (e.g., `welcome-email`). |
-| `from_name` | string | No | Display name for the sender. |
-| `reply_to` | string | No | Reply-to email address. |
-| `project_id` | integer | No | Project ID where the template is located. Uses default project if omitted. |
-| `template_version` | integer | No | Specific version number. Uses active version if omitted. |
-| `substitution_data` | object | No | Key-value pairs for merge tag substitution. |
-
-**Example prompt:** "Send the order-confirmation template to customer@example.com with order_id 12345"
-
-<Tip>
-  On the local server, the `send-email` tool supports template-based sending directly via a `template_slug` parameter.
-</Tip>
-
----
-
-## Template Management
-
-### list_templates
-
-Lists all email templates for your team with metadata including name, slug, editor type, version count, and merge tags.
-
-**Available on:** Remote, Local
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `project_id` | integer | No | Filter templates by project. Returns templates from all projects if omitted. |
-
-**Example prompt:** "List all my email templates" or "What templates are in project 3?"
-
----
-
-### get_template
-
-Gets detailed information about a specific template, including its HTML content and merge tags.
-
-**Available on:** Remote, Local
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `template_id` | integer | No | The numeric ID of the template. |
-| `template_slug` | string | No | The slug of the template (e.g., `welcome-email`). |
-| `project_id` | integer | No | Project ID to narrow the search when using a slug. |
-
-<Note>
-  Provide either `template_id` or `template_slug` to identify the template.
-</Note>
-
-**Example prompt:** "Show me the HTML content of the welcome-email template"
-
----
-
-### create_template
-
-Creates a new Custom HTML email template.
-
-**Available on:** Remote, Local
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `name` | string | Yes | Display name for the template. |
-| `folder_id` | integer | Yes | The folder ID where the template will be created. |
-| `slug` | string | No | URL-friendly identifier. Auto-generated from name if omitted. |
-| `project_id` | integer | No | Project ID. Uses default project if omitted. |
-| `html` | string | No | Initial HTML content for the template. |
-| `subject` | string | No | Default subject line for the template. |
-
-**Example prompt:** "Create a new template called 'Invoice Reminder' in folder 1 with a basic HTML layout"
+Every tool runs as you, in the team currently selected in your Lettr account, and goes through the same team permission checks as the dashboard. The AI can never reach another team's domains, templates, contacts, or campaigns.
 
 <Warning>
-  **This tool creates transactional templates only.** It does not take a `purpose`, so templates it creates cannot be picked by a [campaign](/learn/campaigns/introduction), and the mode cannot be changed afterwards.
-
-  To create a marketing template from an AI agent, use the [remote MCP server](/learn/mcp/introduction) (`create-template` with `purpose: "campaign"`) or the API directly. To rescue one already created here, use the **Copy to Marketing** action in the app.
+  A confirmation prompt is only as good as your review of it. Before approving a destructive tool, check the recipients, the audience, and the IDs it is about to act on, especially for `send_campaign` and the bulk audience tools.
 </Warning>
 
----
+## Emails
 
-### update_template
+| Tool | What it does | Destructive |
+|-|-|-|
+| `send_email` | Send an email with HTML, plain text, or AMP HTML content, with optional merge tags | Yes |
+| `send_template_email` | Send an email using a saved template, identified by its slug | Yes |
+| `list_emails` | List recently sent emails with filters and cursor pagination | — |
+| `get_email_detail` | Show one sent email's full delivery timeline by its request ID | — |
 
-Updates a template's content and creates a new active version. Supports both Custom HTML and Topol editor templates.
+Both send tools accept an `idempotency_key`. When the AI reuses the same key on a retry, the email is not sent twice (see [Idempotency](/learn/sending/idempotency)). Sent emails stay in `list_emails` for about 10 days.
 
-**Available on:** Remote, Local
+## Scheduled Emails
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `template_id` | integer | No | The numeric ID of the template. |
-| `template_slug` | string | No | The slug of the template. |
-| `project_id` | integer | No | Project ID to narrow the search when using a slug. |
-| `html` | string | No | Updated HTML content (for Custom HTML templates). |
-| `json` | string | No | Updated Topol editor JSON (for Topol templates). |
+| Tool | What it does | Destructive |
+|-|-|-|
+| `schedule_email` | Schedule an email for later delivery, with the same content options as `send_email` | — |
+| `get_scheduled_email` | Show a scheduled email's state, delivery time, sender, subject, and recipients | — |
+| `cancel_scheduled_email` | Cancel a scheduled email before it is sent | Yes |
+
+The delivery time must be at least 5 minutes and at most 30 days in the future. See the [Schedule Email](/api-reference/emails/schedule-email) endpoint for the full set of options.
+
+## Templates, Folders, and Projects
+
+| Tool | What it does | Destructive |
+|-|-|-|
+| `list_projects` | List your team's projects, the containers for templates and folders | — |
+| `list_folders` | List the template folders in a project, each with its purpose | — |
+| `list_templates` | List templates, filtered by project, purpose, or folder | — |
+| `get_template` | Show a template's details by ID or slug | — |
+| `get_template_html` | Get the rendered HTML, subject, and merge tags of a template's active version | — |
+| `get_merge_tags` | List the merge tags a template expects, and which are required | — |
+| `create_template` | Create a Custom HTML template | — |
+| `update_template` | Replace a template's content and make the result the new active version | Yes |
+| `delete_template` | Permanently delete a template and all its versions | Yes |
 
 <Note>
-  Provide either `template_id` or `template_slug` to identify the template. Each update creates a new version automatically.
+  `create_template` takes a `purpose` of `transactional` (the default) or `campaign`, and the purpose can't be changed later. A [campaign](/learn/campaigns/introduction) can only send a campaign template, so ask for a campaign template when you're writing a newsletter or promotion.
 </Note>
 
-**Example prompt:** "Update the welcome-email template with new HTML content"
-
----
-
-### delete_template
-
-Permanently deletes a template and all its versions.
-
-**Available on:** Local only
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `template_id` | integer | No | The numeric ID of the template. |
-| `template_slug` | string | No | The slug of the template. |
-| `project_id` | integer | No | Project ID to narrow the search when using a slug. |
-
-**Example prompt:** "Delete the old-welcome-email template"
-
----
-
-### get_merge_tags
-
-Retrieves the merge tag variables that a template expects, so you know which substitution data to provide when sending.
-
-**Available on:** Local only
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `template_id` | integer | No | The numeric ID of the template. |
-| `template_slug` | string | No | The slug of the template. |
-| `project_id` | integer | No | Project ID to narrow the search when using a slug. |
-
-**Example prompt:** "What merge tags does the order-confirmation template expect?"
-
----
-
-## Domain Management
-
-### list_sending_domains / list_domains
-
-Lists all sending domains configured for your team with verification status, DNS configuration status, and whether they can be used for sending.
-
-**Available on:** Remote (`list_sending_domains`), Local (`list-domains`)
-
-**Parameters:** None
-
-**Example prompt:** "Show me all my sending domains and their verification status"
-
----
-
-### list_tracking_domains
-
-Lists all tracking domains configured for your team. Tracking domains are used to track email opens and clicks with your own branded domain.
-
-**Available on:** Remote only
-
-**Parameters:** None
-
-**Example prompt:** "What tracking domains do I have set up?"
-
----
-
-### list_inbound_domains
-
-Lists all inbound domains configured for your team. Inbound domains receive emails via MX records.
-
-**Available on:** Remote only
-
-**Parameters:** None
-
----
-
-### list_storage_domains
-
-Lists all email storage domains configured for your team. Storage domains serve email assets (images, files) from your branded domain.
-
-**Available on:** Remote only
-
-**Parameters:** None
-
----
-
-### create_domain
-
-Registers a new sending domain.
-
-**Available on:** Local only
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `domain` | string | Yes | The domain name to register (e.g., `notifications.example.com`). |
-
-**Example prompt:** "Add notifications.example.com as a sending domain"
-
----
-
-### get_domain
-
-Gets detailed information about a sending domain, including its DNS records for SPF, DKIM, and DMARC setup.
-
-**Available on:** Local only
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `domain_id` | string | Yes | The ID of the domain to retrieve. |
-
-**Example prompt:** "Show me the DNS records for my sending domain"
-
----
-
-### delete_domain
-
-Removes a sending domain from your account.
-
-**Available on:** Local only
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `domain_id` | string | Yes | The ID of the domain to delete. |
-
-**Example prompt:** "Remove the old.example.com sending domain"
-
----
-
-### verify_domain
-
-Triggers DNS verification for a sending domain to check if SPF and DKIM records are properly configured.
-
-**Available on:** Local only
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `domain_id` | string | Yes | The ID of the domain to verify. |
-
-**Example prompt:** "Verify the DNS records for my sending domain"
-
----
-
-## Configuration
-
-### list_api_keys
-
-Lists all API keys for your team, showing each key's name, key ID, prefix, permissions level, and IP whitelist configuration.
-
-**Available on:** Remote only
-
-**Parameters:** None
-
-**Example prompt:** "List my API keys and their permissions"
-
----
-
-### list_webhooks
-
-Lists all webhooks configured for your team, including target URL, enabled status, event types, authentication type, and delivery health indicators.
-
-**Available on:** Remote, Local
-
-**Parameters:** None
-
----
-
-### get_webhook
-
-Gets detailed information about a specific webhook, including its delivery status and configuration.
-
-**Available on:** Local only
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `webhook_id` | string | Yes | The ID of the webhook to retrieve. |
-
-**Example prompt:** "Show me the details for my delivery webhook"
-
----
-
-## Analytics
-
-### get_analytics
-
-Returns aggregate email delivery analytics with a daily breakdown, including targeted, accepted, bounced, and opened counts.
-
-**Available on:** Remote only
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `from` | string | No | Start date in ISO 8601 format. Default: 7 days ago. Max 90 days back. |
-| `to` | string | No | End date in ISO 8601 format. Default: now. |
-
-**Example prompt:** "Show me my email delivery stats for the last 30 days"
-
----
-
-### list_template_stats
-
-Lists templates with delivery statistics broken down by campaign, including sent, delivered, opened, and bounced counts.
-
-**Available on:** Remote only
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `project_id` | integer | No | Filter by project. Returns stats for all projects if omitted. |
-| `from` | string | No | Start date in ISO 8601 format. Default: 30 days ago. |
-| `to` | string | No | End date in ISO 8601 format. Default: now. |
-
-**Example prompt:** "Which of my templates has the best open rate this month?"
-
----
-
-## Monitoring
-
-### browse_email_events
-
-Browse email delivery events with optional filtering and pagination.
-
-**Available on:** Remote only
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `limit` | integer | No | Number of events to return (10, 25, 50, or 100). Default: 25. |
-| `recipient` | string | No | Filter by recipient email address. Supports partial matching. |
-| `from` | string | No | Start date/time in ISO 8601 format. |
-| `to` | string | No | End date/time in ISO 8601 format. |
-| `event_type` | string | No | Filter by event type: `delivery`, `injection`, `open`, `initial_open`, `click`, `bounce`, `out_of_band`, `delay`, `spam_complaint`, `policy_rejection`, `generation_rejection`, `generation_failure`, `list_unsubscribe`, `link_unsubscribe`, `amp_open`, `amp_click` |
-| `cursor` | string | No | Pagination cursor from a previous response. |
-
-**Example prompt:** "Show me the last 10 bounced emails" or "What emails were sent to john@example.com today?"
-
----
-
-### browse_api_logs
-
-Browse API request logs with optional filtering and pagination.
-
-**Available on:** Remote only
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `limit` | integer | No | Number of log entries (1, 20, 50, or 100). Default: 20. |
-| `from` | string | No | Start date/time in ISO 8601 format. Max 30 days back. Default: 7 days ago. |
-| `to` | string | No | End date/time in ISO 8601 format. Default: now. |
-| `api_key_name` | string | No | Filter by API key name (case-insensitive). |
-| `user_agent` | string | No | Filter by client type: `php`, `curl`, `nodejs`, `python`, `ruby`, `go`, `rust`, `java`, `dotnet`, `smtp`, `other` |
-| `status` | integer | No | Filter by HTTP status code (e.g., 200, 400, 500). |
-| `cursor` | string | No | Pagination cursor from a previous response. |
-
-**Example prompt:** "Show me failed API requests from the last 24 hours" or "Were there any 500 errors today?"
-
----
+## Sending Domains
+
+| Tool | What it does | Destructive |
+|-|-|-|
+| `list_sending_domains` | List sending domains with their verification status | — |
+| `get_domain` | Show a sending domain's DNS status and the DKIM record to publish | — |
+| `create_domain` | Register a new sending domain and return the DNS records to publish | — |
+| `verify_domain` | Run DNS verification for a sending domain and store the result | — |
+| `delete_domain` | Delete a sending domain, which stops all sending from it | Yes |
+| `diagnose_sending_domain_dns` | Explain why a domain is still pending or failing verification, and whether to wait or fix a record | — |
+
+## Other Domains
+
+| Tool | What it does | Destructive |
+|-|-|-|
+| `list_tracking_domains` | List the branded domains used for open and click tracking | — |
+| `list_inbound_domains` | List the domains set up to receive email | — |
+| `list_storage_domains` | List the domains that serve stored email content | — |
+
+## Webhooks
+
+| Tool | What it does | Destructive |
+|-|-|-|
+| `list_webhooks` | List webhooks with their URL, event types, and delivery health | — |
+| `get_webhook` | Show one webhook's configuration and last delivery times | — |
+| `create_webhook` | Create a webhook for all events or selected ones, with optional basic or OAuth 2.0 auth | — |
+| `update_webhook` | Change a webhook's settings; only the fields you give change | Yes |
+| `delete_webhook` | Delete a webhook, which stops event delivery right away | Yes |
+
+## Campaigns
+
+| Tool | What it does | Destructive |
+|-|-|-|
+| `list_campaigns` | List campaigns with engagement stats, optionally filtered by status | — |
+| `get_campaign` | Show one campaign with its stats, rendered HTML, and language overrides | — |
+| `list_campaign_events` | List a campaign's opens, clicks, bounces, and other events | — |
+| `send_campaign` | Send a draft campaign to its whole audience right away | Yes |
+| `schedule_campaign` | Schedule a draft campaign, or move an already scheduled one to a new time | Yes |
+| `unschedule_campaign` | Cancel a scheduled send and return the campaign to draft | — |
+
+<Warning>
+  `send_campaign` and `schedule_campaign` send real email to every recipient in the campaign's audience. Emails that have gone out can't be recalled.
+</Warning>
+
+## Audience
+
+### Contacts
+
+| Tool | What it does | Destructive |
+|-|-|-|
+| `list_audience_contacts` | List contacts, filtered by search text, status, list, or segment | — |
+| `get_audience_contact` | Show a contact with its status, properties, lists, and topics | — |
+| `create_audience_contact` | Create a single contact | — |
+| `bulk_create_audience_contacts` | Create many contacts in one call and report any rows that were skipped | — |
+| `update_audience_contact` | Update a contact; only the fields you give change | Yes |
+| `delete_audience_contact` | Delete a contact and remove it from all lists and topics | Yes |
+
+### Lists
+
+| Tool | What it does | Destructive |
+|-|-|-|
+| `list_audience_lists` | List your team's contact lists | — |
+| `get_audience_list` | Show one list with its contact count | — |
+| `create_audience_list` | Create a list | — |
+| `update_audience_list` | Rename a list | Yes |
+| `delete_audience_list` | Delete a list; its contacts are kept but detached | Yes |
+| `bulk_delete_audience_lists` | Delete several lists in one call | Yes |
+| `attach_contact_to_list` | Add one contact to one list | — |
+| `detach_contact_from_list` | Remove one contact from one list; the contact is kept | Yes |
+| `bulk_attach_contacts_to_lists` | Add every given contact to every given list | — |
+| `bulk_detach_contacts_from_lists` | Remove every given contact from every given list | Yes |
+
+### Topics
+
+| Tool | What it does | Destructive |
+|-|-|-|
+| `list_audience_topics` | List your team's subscription topics | — |
+| `get_audience_topic` | Show one topic | — |
+| `create_audience_topic` | Create a topic with an opt-in or opt-out default | — |
+| `update_audience_topic` | Update a topic; its default subscription can't change | Yes |
+| `delete_audience_topic` | Delete a topic and all subscriptions to it | Yes |
+| `subscribe_contact_to_topic` | Subscribe one contact to one topic | — |
+| `unsubscribe_contact_from_topic` | Unsubscribe one contact from one topic | Yes |
+| `bulk_subscribe_contacts_to_topics` | Subscribe every given contact to every given topic | — |
+| `bulk_unsubscribe_contacts_from_topics` | Unsubscribe every given contact from every given topic | Yes |
+
+### Properties
+
+| Tool | What it does | Destructive |
+|-|-|-|
+| `list_audience_properties` | List the custom contact properties defined for your team | — |
+| `get_audience_property` | Show one property | — |
+| `create_audience_property` | Define a new custom property | — |
+| `update_audience_property` | Change a property's fallback value or purpose | Yes |
+| `delete_audience_property` | Delete a property and its value from every contact | Yes |
+
+### Segments
+
+| Tool | What it does | Destructive |
+|-|-|-|
+| `list_audience_segments` | List segments, optionally only those restricted to a list | — |
+| `get_audience_segment` | Show a segment's conditions and contact count | — |
+| `create_audience_segment` | Create a segment from match conditions | — |
+| `update_audience_segment` | Update a segment; new conditions replace the old set | Yes |
+| `delete_audience_segment` | Delete a segment; its contacts are kept | Yes |
+
+For how contacts, lists, topics, properties, and segments fit together, see [Audience](/learn/audience/introduction).
+
+## Analytics and Monitoring
+
+| Tool | What it does | Destructive |
+|-|-|-|
+| `check_sending_health` | Give one verdict on your sending health from domains, delivery trends, and recent problems | — |
+| `get_analytics` | Show delivery totals and a daily breakdown for a period | — |
+| `list_template_stats` | Show delivery statistics per template | — |
+| `browse_email_events` | Browse delivery events such as deliveries, opens, clicks, and bounces | — |
+| `browse_api_logs` | Browse API request logs, filtered by key, client, or status code | — |
+
+## Account
+
+| Tool | What it does | Destructive |
+|-|-|-|
+| `list_api_keys` | List your team's API keys by name and prefix, with their permissions (never the full key) | — |
+
+## Local Server Differences
+
+The local `lettr-mcp` package names its tools with hyphens instead of underscores (`send-email` instead of `send_email`). Otherwise it offers the same tools, with these exceptions:
+
+| Remote server | Local server |
+|-|-|
+| `send_template_email` | No separate tool; `send-email` takes a `template_slug` |
+| `list_sending_domains` | `list-domains` |
+| `browse_email_events` | `list-email-events` |
+| `check_sending_health`, `diagnose_sending_domain_dns` | Not available |
+| `get_analytics`, `list_template_stats`, `browse_api_logs` | Not available |
+| `list_tracking_domains`, `list_inbound_domains`, `list_storage_domains`, `list_api_keys` | Not available |
+| Not available | `list-scheduled-emails` lists emails waiting to be sent |
+| Not available | `auth-check` validates the configured API key |
+| Not available | `health-check` checks the Lettr API status |
 
 ## Related Topics
 
 <CardGroup cols={2}>
   <Card title="Remote Server Setup" icon="cloud" href="/learn/mcp/setup">
-    Connect via OAuth from Claude.ai, ChatGPT, and other AI clients
+    Connect via OAuth from Claude, ChatGPT, Cursor, and other AI clients
   </Card>
   <Card title="Local Server Setup" icon="terminal" href="/learn/mcp/local-setup">
-    Install the lettr-mcp package for your IDE or CLI
+    Run the lettr-mcp package with an API key
   </Card>
   <Card title="API Reference" icon="code" href="/api-reference/introduction">
     Full REST API documentation
