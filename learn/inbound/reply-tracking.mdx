@@ -38,7 +38,7 @@ await lettr.emails.send({
 });
 ```
 
-When the customer replies, you receive a `relay.relay_delivery` webhook event:
+When the customer replies, the reply is posted to your inbound domain's forwarding URL:
 
 ```json
 [

@@ -1,9 +1,9 @@
 ---
 title: Inbound Domains
-description: "Set up MX records to receive incoming email through Lettr, capturing replies and triggering webhooks for support and automation workflows"
+description: "Set up an inbound domain with a forwarding URL and MX records to receive incoming email through Lettr for replies, support, and automation workflows"
 ---
 
-An inbound domain is a domain configured to receive incoming emails through Lettr. By pointing your domain's MX records to Lettr's mail servers, you can capture replies to transactional emails, process incoming support messages, or trigger automated workflows when emails arrive. This is useful for building reply tracking, support ticket systems, or any application that needs to programmatically handle incoming email.
+An inbound domain is a domain configured to receive incoming emails through Lettr. By pointing your domain's MX records to Lettr's mail servers and giving Lettr a forwarding URL to deliver each message to, you can capture replies to transactional emails, process incoming support messages, or trigger automated workflows when emails arrive. This is useful for building reply tracking, support ticket systems, or any application that needs to programmatically handle incoming email.
 
 ## Why Use Inbound Domains?
 
@@ -11,7 +11,7 @@ Inbound domains let your application participate in two-way email communication:
 
 - **Capture replies** — Feed replies to transactional emails (such as order confirmations or password resets) back into your system
 - **Trigger workflows** — Parse and process incoming mail to create support tickets, update CRM records, or route messages to the right team
-- **Real-time events** — Every received email generates a webhook event, so you can react in real time without polling
+- **Real-time delivery** — Every received email is posted to your forwarding URL, so you can react in real time without polling
 - **Forwarding and routing** — Forward incoming emails to other addresses or build dedicated support inboxes (like `support@yourcompany.com`) that integrate directly with your internal tools
 
 ## How Inbound Email Works
@@ -19,8 +19,8 @@ Inbound domains let your application participate in two-way email communication:
 1. A sender emails `support@yourcompany.com`
 2. Their email server looks up MX records for `yourcompany.com`
 3. MX records point to Lettr's mail servers
-4. Lettr receives the email and processes it
-5. You receive a webhook or access the email via API
+4. Lettr receives the email and parses it
+5. Lettr posts the parsed email to your domain's forwarding URL
 
 ## Adding an Inbound Domain
 
@@ -30,20 +30,31 @@ Inbound domains let your application participate in two-way email communication:
   <Step title="Navigate to Inbound Domains">
     Go to **Domains** → **Inbound** in your dashboard.
   </Step>
-  <Step title="Add Domain">
-    Click **Add Domain** and enter your domain name (e.g., `example.com` or `mail.example.com`).
+  <Step title="Create the Domain">
+    Click **Create Inbound Domain** (**New Inbound Domain** once you already have one) and enter your domain name (e.g., `example.com` or `mail.example.com`).
+  </Step>
+  <Step title="Enter a Forwarding URL">
+    Enter the **Forwarding URL** that should receive mail sent to this domain (a full `http://` or `https://` address), and optionally an **Auth token**. The token is sent to your endpoint in the `X-MessageSystems-Webhook-Token` header so you can verify each request. Click **Create Inbound Domain**.
   </Step>
   <Step title="Add MX Records">
     Add the provided MX records to your DNS. These tell email servers to route mail to Lettr.
   </Step>
   <Step title="Verify Domain">
-    Click **Verify** to confirm MX record configuration.
+    Click **Verify MX Records** on the domain's page to confirm MX record configuration.
   </Step>
 </Steps>
 
-<Card title="Try it in the app" icon="wand-magic-sparkles" href="https://app.lettr.com/domains/inbound?guide=eyJ2IjoxLCJzdGVwcyI6W3siYW5jaG9yIjoiZG9tYWlucy5pbmJvdW5kLmFkZCIsIm1lc3NhZ2UiOiJBZGQgYW4gaW5ib3VuZCBkb21haW4gc28gTGV0dHIgY2FuIHJlY2VpdmUgaW5jb21pbmcgZW1haWwgYW5kIGZpcmUgd2ViaG9va3MgZm9yIGl0LiJ9LHsiYW5jaG9yIjoiZG9tYWlucy5pbmJvdW5kLm5hbWUtaW5wdXQiLCJtZXNzYWdlIjoiVXNlIGEgc3ViZG9tYWluIGxpa2UgbWFpbC5leGFtcGxlLmNvbSB0byBrZWVwIHlvdXIgcm9vdCBkb21haW4gb24geW91ciBleGlzdGluZyBlbWFpbCBwcm92aWRlci4ifSx7ImFuY2hvciI6ImRvbWFpbnMuaW5ib3VuZC5zdWJtaXQiLCJtZXNzYWdlIjoiQWRkIGl0LiBMZXR0ciB0aGVuIHNob3dzIHRoZSB0aHJlZSBNWCByZWNvcmRzIHRvIHBvaW50IGF0IGl0cyBtYWlsIHNlcnZlcnMuIn1dLCJkb2NzIjoiaHR0cHM6Ly9kb2NzLmxldHRyLmNvbS9sZWFybi9kb21haW5zL2luYm91bmQtZG9tYWlucyJ9">
+<Card title="Try it in the app" icon="wand-magic-sparkles" href="https://app.lettr.com/domains/inbound?guide=eyJ2IjoxLCJzdGVwcyI6W3siYW5jaG9yIjoiZG9tYWlucy5pbmJvdW5kLmFkZCIsIm1lc3NhZ2UiOiJBZGQgYW4gaW5ib3VuZCBkb21haW4gc28gTGV0dHIgY2FuIHJlY2VpdmUgaW5jb21pbmcgZW1haWwgYW5kIGZvcndhcmQgaXQgdG8geW91ciBhcHBsaWNhdGlvbi4ifSx7ImFuY2hvciI6ImRvbWFpbnMuaW5ib3VuZC5uYW1lLWlucHV0IiwibWVzc2FnZSI6IlVzZSBhIHN1YmRvbWFpbiBsaWtlIG1haWwuZXhhbXBsZS5jb20gdG8ga2VlcCB5b3VyIHJvb3QgZG9tYWluIG9uIHlvdXIgZXhpc3RpbmcgZW1haWwgcHJvdmlkZXIuIn0seyJhbmNob3IiOiJkb21haW5zLmluYm91bmQudGFyZ2V0LWlucHV0IiwibWVzc2FnZSI6IkVudGVyIHRoZSBVUkwgdGhhdCBzaG91bGQgcmVjZWl2ZSBtYWlsIHNlbnQgdG8gdGhpcyBkb21haW4uIEl0IGlzIHRlc3RlZCB3aGVuIHlvdSBjcmVhdGUgdGhlIGRvbWFpbiBhbmQgbXVzdCBhbnN3ZXIgd2l0aCBhIDJ4eCBzdGF0dXMuIn0seyJhbmNob3IiOiJkb21haW5zLmluYm91bmQuc3VibWl0IiwibWVzc2FnZSI6IkNyZWF0ZSBpdC4gTGV0dHIgdGhlbiBzaG93cyB0aGUgdGhyZWUgTVggcmVjb3JkcyB0byBwb2ludCBhdCBpdHMgbWFpbCBzZXJ2ZXJzLiJ9XSwiZG9jcyI6Imh0dHBzOi8vZG9jcy5sZXR0ci5jb20vbGVhcm4vZG9tYWlucy9pbmJvdW5kLWRvbWFpbnMifQ">
   Follow an interactive walkthrough of this guide inside Lettr.
 </Card>
+
+### Forwarding URL Test
+
+The forwarding URL is required and is tested before the domain is created: SparkPost, the mail infrastructure behind Lettr's inbound servers, sends a `POST` request to it and needs a `2xx` response. If your endpoint rejects the test, the dashboard shows the status it returned (for example "Your forwarding URL answered SparkPost with HTTP 403") and the domain is not created.
+
+<Warning>
+  A firewall or WAF such as Cloudflare commonly blocks the test with a challenge page. Allow server-to-server `POST` requests on your forwarding URL's path. SparkPost publishes no fixed source IP addresses, so verify requests with the auth token rather than an IP allowlist. See [Inbound Security](/learn/inbound/security#verify-the-auth-token).
+</Warning>
 
 <Note>
   Inbound domains are managed through the Lettr dashboard. API endpoints for inbound domains are not currently available.
@@ -75,16 +86,31 @@ All three MX records use the same priority (10), which means email servers will 
 
 ### Via Dashboard
 
-1. Go to **Domains** → **Inbound**
-2. Find your domain and click **Verify**
+1. Go to **Domains** → **Inbound** and open your domain
+2. Click **Verify MX Records**
 3. Lettr checks that all MX records are configured correctly
+
+If the domain has no MX records, the failed check tells you where mail sent to it is actually going. A domain without MX records falls back to its A record, so mail is delivered to that host instead of reaching Lettr.
 
 ## Inbound Domain Status
 
-| Status | Description |
-|--------|-------------|
-| `valid` | All MX records found and configured correctly |
-| `unverified` | MX records not yet detected or incomplete |
+Each inbound domain shows one status: either it is receiving mail, or what is missing. The **Inbound Domains** list shows:
+
+|Status|Description|
+|-|-|
+|**Receiving mail**|MX records are verified and a forwarding URL is set|
+|**MX not verified**|MX records are not yet detected or incomplete, so mail never reaches Lettr|
+|**No forwarding URL**|Mail that arrives is accepted and then discarded, because there is nowhere to forward it|
+
+A domain can show both problems at once. On the domain's page, the same verdict reads **This domain is receiving mail** or **This domain is not receiving mail yet**, with each missing piece listed.
+
+## Mail Forwarding
+
+Every inbound domain's page has a **Mail Forwarding** card showing where its mail is delivered. Use it to add or change the **Forwarding URL** and **Auth token**, then click **Save forwarding URL**. The new URL is tested before it is saved. Leave **Auth token** blank to keep the token already set.
+
+<Note>
+  Inbound domains created before forwarding URLs were required have none, so their mail is accepted and then discarded. Their **Mail Forwarding** card shows **Not configured** until you add a URL.
+</Note>
 
 ## Using Subdomains
 
@@ -105,36 +131,36 @@ We recommend using a subdomain for inbound email to separate it from your main d
 
 Once your inbound domain is configured, you can process incoming emails in several ways:
 
-### Webhooks
+### Forwarding URL Payload
 
-Set up a webhook to receive notifications when emails arrive:
+Each email sent to the domain is posted to your forwarding URL as a JSON array of events, each holding an `msys.relay_message` object:
 
 ```json
-{
-  "event": "inbound",
-  "timestamp": "2024-01-15T10:30:00Z",
-  "data": {
-    "from": "sender@external.com",
-    "to": ["support@mail.example.com"],
-    "subject": "Question about my order",
-    "text": "Hello, I have a question...",
-    "html": "<p>Hello, I have a question...</p>",
-    "headers": {
-      "message-id": "<abc123@external.com>",
-      "date": "Mon, 15 Jan 2024 10:30:00 +0000"
-    },
-    "attachments": [
-      {
-        "filename": "screenshot.png",
-        "content_type": "image/png",
-        "size": 15234
+[
+  {
+    "msys": {
+      "relay_message": {
+        "msg_from": "sender@external.com",
+        "rcpt_to": "support@mail.example.com",
+        "friendly_from": "Sender <sender@external.com>",
+        "content": {
+          "subject": "Question about my order",
+          "text": "Hello, I have a question...",
+          "html": "<p>Hello, I have a question...</p>",
+          "headers": [
+            { "Message-ID": "<abc123@external.com>" },
+            { "Date": "Mon, 15 Jan 2024 10:30:00 +0000" }
+          ],
+          "to": ["support@mail.example.com"],
+          "email_rfc822": "...raw MIME content..."
+        }
       }
-    ]
+    }
   }
-}
+]
 ```
 
-See [Webhooks](/learn/webhooks/introduction) for setup instructions.
+See [Email Parsing](/learn/inbound/parsing) for a breakdown of each field.
 
 ## Delete an Inbound Domain
 
@@ -156,7 +182,7 @@ Capture replies to transactional emails:
 
 1. Set up `reply.example.com` as an inbound domain
 2. Send emails with `reply-to: reply-{ticket_id}@reply.example.com`
-3. Receive webhook when customer replies
+3. Receive the reply at your forwarding URL when the customer replies
 4. Parse the reply address to match the original email
 
 ### Support Ticketing
@@ -164,7 +190,7 @@ Capture replies to transactional emails:
 Create a support email system:
 
 1. Set up `support.example.com` as an inbound domain
-2. Configure webhook to receive incoming emails
+2. Point its forwarding URL at your ticketing endpoint
 3. Create tickets in your system from email content
 4. Use metadata to track conversation threads
 
@@ -173,7 +199,7 @@ Create a support email system:
 Extract structured data from incoming emails:
 
 1. Receive order confirmations, receipts, or notifications
-2. Parse email content using webhooks
+2. Parse the email content posted to your forwarding URL
 3. Extract relevant data and store in your database
 
 ## Troubleshooting
@@ -187,10 +213,17 @@ Extract structured data from incoming emails:
   </Accordion>
 
   <Accordion title="Emails not being received">
-    - Confirm MX status is `valid` in the dashboard
+    - Confirm the domain shows **Receiving mail** in the dashboard. If it shows **No forwarding URL**, add one on the domain's **Mail Forwarding** card.
     - Check that the sender's email isn't being blocked
-    - Verify webhook endpoint is configured and accessible
+    - Verify your forwarding URL is reachable and returns a `2xx` status
     - Check spam filters at the sending server
+  </Accordion>
+
+  <Accordion title="Forwarding URL rejected when creating the domain">
+    - The dashboard shows the HTTP status your endpoint returned to the test request, and the domain is not created
+    - Make sure the endpoint accepts `POST` requests and returns a `2xx` status
+    - If it sits behind Cloudflare or another WAF, allow server-to-server `POST` requests on that path
+    - SparkPost publishes no fixed source IPs, so don't rely on an IP allowlist. Use the auth token instead.
   </Accordion>
 
   <Accordion title="Partial MX records detected">
@@ -209,7 +242,7 @@ Extract structured data from incoming emails:
 ## Best Practices
 
 1. **Use subdomains** - Keep inbound separate from your main email
-2. **Set up webhooks early** - Ensure you're receiving inbound notifications before going live
+2. **Test your forwarding URL early** - Make sure your endpoint receives inbound mail before going live
 3. **Handle attachments carefully** - Validate and sanitize uploaded files
 4. **Monitor for spam** - Implement filtering for inbound messages
 5. **Test with multiple senders** - Verify emails arrive from various email providers
@@ -220,8 +253,8 @@ Extract structured data from incoming emails:
   <Card title="Sending Domains" icon="paper-plane" href="/learn/domains/sending-domains">
     Configure domains for sending
   </Card>
-  <Card title="Webhooks" icon="webhook" href="/learn/webhooks/introduction">
-    Set up inbound email webhooks
+  <Card title="Inbound Setup" icon="gear" href="/learn/inbound/setup">
+    Forwarding URL and MX setup step by step
   </Card>
   <Card title="Inbound" icon="inbox" href="/learn/inbound/introduction">
     Learn about inbound email

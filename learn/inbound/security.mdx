@@ -1,33 +1,36 @@
 ---
 title: Security
-description: "Secure your inbound email pipeline in Lettr by verifying webhook credentials with Basic Auth or OAuth and handling external mail safely."
+description: "Secure your inbound email pipeline in Lettr by verifying the auth token sent to your forwarding URL and handling external mail safely."
 ---
 
 Receiving emails from external sources introduces security considerations. This guide covers best practices for securing your inbound email processing pipeline.
 
-## Webhook Security
+## Forwarding URL Security
 
-### Verify Webhook Credentials
+### Verify the Auth Token
 
-Always verify that webhooks come from Lettr, not malicious actors. Lettr supports Basic Auth and OAuth 2.0 for webhook authentication — configure your preferred method when creating the webhook in the dashboard.
+Always verify that requests to your forwarding URL come from Lettr, not malicious actors. When you create an inbound domain, or later on the domain's **Mail Forwarding** card, set an **Auth token**. Lettr sends it with every request in the `X-MessageSystems-Webhook-Token` header. Compare it against your stored value and reject anything that doesn't match:
 
 ```javascript
-app.post('/webhooks/inbound', (req, res, next) => {
-  const authHeader = req.headers.authorization;
+import crypto from 'node:crypto';
+import express from 'express';
 
-  if (!authHeader || !authHeader.startsWith('Basic ')) {
-    return res.sendStatus(401);
-  }
+function verifyInboundToken(req, res, next) {
+  const token = req.get('X-MessageSystems-Webhook-Token') ?? '';
+  const expected = process.env.INBOUND_AUTH_TOKEN;
 
-  const credentials = Buffer.from(authHeader.slice(6), 'base64').toString();
-  const [username, password] = credentials.split(':');
-
-  if (username !== process.env.WEBHOOK_USERNAME || password !== process.env.WEBHOOK_PASSWORD) {
+  // Constant-time comparison to avoid timing attacks
+  if (
+    token.length !== expected.length ||
+    !crypto.timingSafeEqual(Buffer.from(token), Buffer.from(expected))
+  ) {
     return res.sendStatus(401);
   }
 
   next();
-}, express.json(), async (req, res) => {
+}
+
+app.post('/webhooks/inbound', verifyInboundToken, express.json(), async (req, res) => {
   for (const event of req.body) {
     const relay = event.msys?.relay_message;
     if (!relay) continue;
@@ -39,34 +42,15 @@ app.post('/webhooks/inbound', (req, res, next) => {
 });
 ```
 
-See [Webhook Authorization](/learn/webhooks/authorization) for details on configuring Basic Auth and OAuth 2.0.
-
-### IP Allowlisting
-
-You can optionally restrict webhook access to known IP addresses as an additional layer of defense:
-
-```javascript
-function ipAllowlist(allowedIPs) {
-  return (req, res, next) => {
-    const clientIP = req.ip || req.connection.remoteAddress;
-
-    if (!allowedIPs.includes(clientIP)) {
-      console.warn(`Rejected webhook from unauthorized IP: ${clientIP}`);
-      return res.sendStatus(403);
-    }
-
-    next();
-  };
-}
-
-// Configure with your known webhook source IPs
-const allowedIPs = process.env.WEBHOOK_ALLOWED_IPS?.split(',') || [];
-app.post('/webhooks/inbound', ipAllowlist(allowedIPs), webhookHandler);
-```
-
 <Note>
-  IP allowlisting should be used as a supplementary security measure alongside credential verification, not as a replacement.
+  Lettr doesn't store your auth token, so keep your own copy (for example in an environment variable). To rotate it, enter a new token on the **Mail Forwarding** card and click **Save forwarding URL**. Leaving the field blank keeps the token that is already set.
 </Note>
+
+### Don't Rely on IP Allowlisting
+
+Inbound mail is posted to your forwarding URL by SparkPost, the mail infrastructure behind Lettr's inbound servers, and SparkPost publishes no fixed source IP addresses. An IP allowlist can't reliably identify these requests, so use the auth token instead.
+
+If your endpoint sits behind Cloudflare or another firewall/WAF, allow server-to-server `POST` requests on your forwarding URL's path. Otherwise the firewall may answer with a challenge page, and a non-`2xx` response makes the forwarding URL test fail when you create the domain or save a new URL.
 
 ## Input Validation
 
@@ -476,11 +460,11 @@ class AnomalyDetector {
 ## Security Checklist
 
 <AccordionGroup>
-  <Accordion title="Webhook Security">
-    - [ ] Verify webhook credentials (Basic Auth or OAuth 2.0) on every request
-    - [ ] Store credentials securely in environment variables
-    - [ ] Use HTTPS for your webhook endpoint
-    - [ ] Consider IP allowlisting as additional protection
+  <Accordion title="Forwarding URL Security">
+    - [ ] Set an auth token and verify the `X-MessageSystems-Webhook-Token` header on every request
+    - [ ] Store the token securely in environment variables
+    - [ ] Use HTTPS for your forwarding URL
+    - [ ] Allow server-to-server `POST` requests through your firewall or WAF instead of relying on an IP allowlist
   </Accordion>
 
   <Accordion title="Input Validation">
@@ -512,8 +496,8 @@ class AnomalyDetector {
 ## Related Topics
 
 <CardGroup cols={2}>
-  <Card title="Webhook Authorization" icon="lock" href="/learn/webhooks/authorization">
-    Secure webhook endpoints
+  <Card title="Inbound Setup" icon="gear" href="/learn/inbound/setup">
+    Set the forwarding URL and auth token
   </Card>
   <Card title="Spam Filtering" icon="shield" href="/learn/inbound/spam-filtering">
     Filter spam emails

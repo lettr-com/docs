@@ -137,9 +137,15 @@ An inbound domain allows Lettr to receive emails on your behalf. This requires t
 To create an Inbound domain in Lettr:
 1. Select **Domains** in the navigation panel
 2. Select **Inbound Domains**
-3. Click **Create Inbound Domain**
+3. Click **Create Inbound Domain** (**New Inbound Domain** if you already have one)
 4. Enter your desired inbound subdomain (e.g. `inbound.company.com`)
-5. Click **Create Domain**.
+5. Enter the **Forwarding URL** where Lettr should deliver mail sent to this domain (e.g. `https://yourapp.com/webhooks/inbound`)
+6. Optionally enter an **Auth token**. Lettr sends it in the `X-MessageSystems-Webhook-Token` header so your endpoint can verify each request.
+7. Click **Create Inbound Domain**
+
+<Note>
+  The forwarding URL is required and is tested before the domain is created. Your endpoint must answer the test `POST` request with a `2xx` status. If it doesn't, the domain is not created and Lettr shows the status your endpoint returned. See [Inbound Email Setup](/learn/inbound/setup#adding-an-inbound-domain) if a firewall blocks the test.
+</Note>
 
 
 Click on your new domain in the Inbound Domains list.
@@ -172,7 +178,7 @@ Copy the MX values from Lettr to Vercel:
 
 ### Verify Your Inbound Domain
 
-After adding all three MX records, go back to Lettr and click **Verify DNS Records**. DNS propagation can take up to 24–48 hours, though it typically completes within a few minutes.
+After adding all three MX records, go back to Lettr and click **Verify MX Records**. DNS propagation can take up to 24–48 hours, though it typically completes within a few minutes. Once the MX records verify and a forwarding URL is set, the domain shows **Receiving mail** in the Inbound Domains list. If the domain has no MX records, the failed check shows where mail sent to it is actually going instead.
 
 
 ---

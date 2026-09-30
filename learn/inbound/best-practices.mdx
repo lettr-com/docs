@@ -415,7 +415,7 @@ import request from 'supertest';
 import app from './app';
 
 describe('Inbound Webhook', () => {
-  const validCredentials = Buffer.from('webhook_user:webhook_pass').toString('base64');
+  const validToken = process.env.INBOUND_AUTH_TOKEN;
 
   it('should process valid relay event', async () => {
     const payload = [{
@@ -438,13 +438,13 @@ describe('Inbound Webhook', () => {
 
     const response = await request(app)
       .post('/webhooks/inbound')
-      .set('Authorization', `Basic ${validCredentials}`)
+      .set('X-MessageSystems-Webhook-Token', validToken)
       .send(payload);
 
     expect(response.status).toBe(200);
   });
 
-  it('should reject missing credentials', async () => {
+  it('should reject a missing auth token', async () => {
     const response = await request(app)
       .post('/webhooks/inbound')
       .send([]);
@@ -490,7 +490,7 @@ describe('Email Processing', () => {
 <AccordionGroup>
   <Accordion title="Setup">
     - [ ] Configure inbound domain with MX records
-    - [ ] Set up webhook endpoint with credential verification
+    - [ ] Set a forwarding URL on the domain and verify its auth token
     - [ ] Configure spam filtering sensitivity
     - [ ] Set up monitoring and alerting
   </Accordion>
@@ -504,7 +504,7 @@ describe('Email Processing', () => {
   </Accordion>
 
   <Accordion title="Security">
-    - [ ] Verify webhook credentials
+    - [ ] Verify the `X-MessageSystems-Webhook-Token` auth token
     - [ ] Validate and sanitize all inputs
     - [ ] Validate attachment types from content
     - [ ] Implement rate limiting

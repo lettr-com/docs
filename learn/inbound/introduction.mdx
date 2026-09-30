@@ -1,9 +1,9 @@
 ---
 title: Inbound Introduction
-description: "Receive and process inbound email programmatically with Lettr by configuring an inbound domain and webhooks to capture parsed messages."
+description: "Receive and process inbound email programmatically with Lettr by configuring an inbound domain that forwards parsed messages to your application."
 ---
 
-Lettr allows you to receive and process incoming emails programmatically. By configuring an inbound domain and setting up webhooks, your application can capture replies to transactional emails, process support requests, parse incoming data, and trigger automated workflows whenever an email arrives.
+Lettr allows you to receive and process incoming emails programmatically. By configuring an inbound domain with a forwarding URL, your application can capture replies to transactional emails, process support requests, parse incoming data, and trigger automated workflows whenever an email arrives.
 
 ## What You Can Build
 
@@ -16,17 +16,17 @@ Lettr allows you to receive and process incoming emails programmatically. By con
 
 ## How It Works
 
-Lettr's inbound email processing follows a four-step flow. You configure DNS to route emails to Lettr's mail servers, and Lettr parses each email into structured data and delivers it to your application via webhook.
+Lettr's inbound email processing follows a four-step flow. You configure DNS to route emails to Lettr's mail servers, and Lettr parses each email into structured data and posts it to your application's forwarding URL.
 
 <Steps>
-  <Step title="Configure Inbound Domain">
-    Add an inbound domain in your Lettr dashboard and configure MX records to route incoming emails to Lettr's mail servers.
+  <Step title="Build a Receiving Endpoint">
+    Create an endpoint in your application that accepts `POST` requests and returns a `2xx` status. This is your forwarding URL.
   </Step>
-  <Step title="Set Up Webhook">
-    Create a webhook endpoint in your application to receive parsed email data when emails arrive.
+  <Step title="Configure Inbound Domain">
+    Add an inbound domain in your Lettr dashboard with your forwarding URL, then configure MX records to route incoming emails to Lettr's mail servers.
   </Step>
   <Step title="Receive and Process">
-    When someone sends an email to your inbound domain, Lettr parses it and sends the structured data to your webhook.
+    When someone sends an email to your inbound domain, Lettr parses it and posts the structured data to your forwarding URL.
   </Step>
   <Step title="Build Your Logic">
     Route emails, extract data, trigger workflows, and respond programmatically.
@@ -34,7 +34,7 @@ Lettr's inbound email processing follows a four-step flow. You configure DNS to 
 </Steps>
 
 ```
-Sender → MX Records → Lettr Mail Servers → Parse & Extract → Webhook → Your Application
+Sender → MX Records → Lettr Mail Servers → Parse & Extract → Forwarding URL → Your Application
 ```
 
 Lettr handles the low-level SMTP reception, MIME parsing, attachment extraction, and spam scoring. Your application receives clean, structured JSON with the email's sender, recipients, subject, body (both plain text and HTML), headers, and attachment URLs.
@@ -43,7 +43,9 @@ Lettr handles the low-level SMTP reception, MIME parsing, attachment extraction,
 
 ### 1. Add an Inbound Domain
 
-Navigate to **Domains** → **Inbound** in your dashboard, click **Add Domain**, and enter your domain (e.g., `mail.example.com`).
+Navigate to **Domains** → **Inbound** in your dashboard and click **Create Inbound Domain**. Enter your domain (e.g., `mail.example.com`), a **Forwarding URL** for your endpoint (e.g., `https://yourapp.com/webhooks/inbound`), and optionally an **Auth token**.
+
+The forwarding URL is required and is tested with a `POST` request before the domain is created. If your endpoint doesn't answer with a `2xx` status, the dashboard shows the status it returned and the domain is not created. See the [Setup Guide](/learn/inbound/setup#adding-an-inbound-domain) for what to do when a firewall blocks the test.
 
 <Note>
   Inbound domain management is available through the Lettr dashboard. There is no public API endpoint for creating or managing inbound domains.
@@ -63,25 +65,23 @@ Multiple MX records with equal priority provide load balancing — sending serve
 
 ### 3. Handle Incoming Emails
 
-Set up a webhook endpoint to receive parsed emails:
+Handle parsed emails at your forwarding URL:
 
 ```javascript
+import crypto from 'node:crypto';
 import express from 'express';
 
 const app = express();
 
 app.post('/webhooks/inbound', (req, res, next) => {
-  // Verify webhook credentials (Basic Auth configured in Lettr dashboard)
-  const authHeader = req.headers.authorization;
+  // Verify the auth token you set on the inbound domain
+  const token = req.get('X-MessageSystems-Webhook-Token') ?? '';
+  const expected = process.env.INBOUND_AUTH_TOKEN;
 
-  if (!authHeader || !authHeader.startsWith('Basic ')) {
-    return res.sendStatus(401);
-  }
-
-  const credentials = Buffer.from(authHeader.slice(6), 'base64').toString();
-  const [username, password] = credentials.split(':');
-
-  if (username !== process.env.WEBHOOK_USERNAME || password !== process.env.WEBHOOK_PASSWORD) {
+  if (
+    token.length !== expected.length ||
+    !crypto.timingSafeEqual(Buffer.from(token), Buffer.from(expected))
+  ) {
     return res.sendStatus(401);
   }
 
@@ -109,12 +109,12 @@ app.post('/webhooks/inbound', (req, res, next) => {
 ```
 
 <Warning>
-  Always [verify webhook credentials](/learn/inbound/security) before processing incoming emails to ensure requests are genuinely from Lettr. Configure Basic Auth or OAuth 2.0 authentication when creating your webhook in the dashboard.
+  Always [verify the auth token](/learn/inbound/security#verify-the-auth-token) before processing incoming emails to ensure requests are genuinely from Lettr. Set the token in the **Auth token** field when you create the inbound domain, or later on the domain's **Mail Forwarding** card. Lettr sends it in the `X-MessageSystems-Webhook-Token` header.
 </Warning>
 
 ## Webhook Payload
 
-When an email is received, Lettr sends a `relay.relay_delivery` webhook event. The payload is delivered as a JSON array of event objects, each containing a relay message with the parsed email:
+When an email is received, Lettr posts it to your domain's forwarding URL. The payload is delivered as a JSON array of event objects, each containing an `msys.relay_message` with the parsed email:
 
 ```json
 [
@@ -342,7 +342,7 @@ See [Best Practices](/learn/inbound/best-practices) for architecture patterns, r
 
 <CardGroup cols={2}>
   <Card title="Setup Guide" icon="gear" href="/learn/inbound/setup">
-    Step-by-step domain and webhook configuration
+    Step-by-step domain and forwarding URL configuration
   </Card>
   <Card title="Webhooks" icon="webhook" href="/learn/webhooks/introduction">
     Webhook configuration and event handling

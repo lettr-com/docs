@@ -1,9 +1,9 @@
 ---
 title: "Inbound Email Setup"
-description: "Configure your domain to receive email with Lettr by adding an inbound domain, setting up MX records, and connecting a webhook endpoint."
+description: "Configure your domain to receive email with Lettr by adding an inbound domain with a forwarding URL and setting up MX records."
 ---
 
-Before you can receive emails with Lettr, you need to configure an inbound domain and set up MX records to route incoming mail to Lettr's servers.
+Before you can receive emails with Lettr, you need to create an inbound domain with a forwarding URL and set up MX records to route incoming mail to Lettr's servers. A domain receives mail only when both are in place: the MX records bring mail to Lettr, and the forwarding URL is where Lettr delivers it.
 
 ## Prerequisites
 
@@ -11,33 +11,38 @@ Before setting up inbound email, ensure you have:
 
 - A verified Lettr account
 - Access to your domain's DNS settings
-- A webhook endpoint ready to receive inbound email events (recommended)
+- An HTTP endpoint that accepts `POST` requests and returns a `2xx` status. This is your forwarding URL, and it is required to create the domain.
 
 ## Step-by-Step Setup
 
 <Steps>
-  <Step title="Add an Inbound Domain">
-    Navigate to **Domains** → **Inbound** in your dashboard and click **Add Domain**. Enter the domain or subdomain you want to use for receiving emails.
+  <Step title="Create an Inbound Domain">
+    Navigate to **Domains** → **Inbound** in your dashboard and click **Create Inbound Domain**. Enter the domain or subdomain you want to use for receiving emails, and the **Forwarding URL** where Lettr should deliver the mail it receives.
   </Step>
   <Step title="Configure MX Records">
     Add the provided MX records to your domain's DNS settings. These records tell email servers to route mail to Lettr.
   </Step>
   <Step title="Verify MX Records">
-    Click **Verify** in the dashboard to confirm your MX records are properly configured.
-  </Step>
-  <Step title="Set Up Webhooks">
-    Configure a webhook endpoint to receive notifications when emails arrive.
+    Click **Verify MX Records** on the domain's page to confirm your MX records are properly configured. Once they verify, the domain shows **This domain is receiving mail**.
   </Step>
 </Steps>
 
 ## Adding an Inbound Domain
 
 1. Go to **Domains** → **Inbound**
-2. Click **Add Domain**
-3. Enter your domain (e.g., `mail.example.com`)
-4. Click **Create**
+2. Click **Create Inbound Domain** (**New Inbound Domain** once you already have one)
+3. Enter your domain in **Domain Name** (e.g., `mail.example.com`)
+4. Enter your endpoint in **Forwarding URL** (e.g., `https://yourapp.com/webhooks/inbound`). It must be a full `http://` or `https://` address.
+5. Optionally enter an **Auth token**. Lettr sends it to your endpoint in the `X-MessageSystems-Webhook-Token` header so you can verify each request.
+6. Click **Create Inbound Domain**
 
-The dashboard will display the MX records you need to add, along with the domain's current status (`unverified` until DNS is configured).
+Before the domain is created, your forwarding URL is tested with a `POST` request (sent by SparkPost, the mail infrastructure behind Lettr's inbound servers). The endpoint must answer with a `2xx` status. If it doesn't, the dashboard shows the status your endpoint returned, for example "Your forwarding URL answered SparkPost with HTTP 403", and the domain is not created, so you can fix the endpoint and try again.
+
+Once the domain is created, the dashboard displays the MX records you need to add.
+
+<Warning>
+  Endpoints behind Cloudflare or another firewall/WAF often answer the test request with a challenge page (for example HTTP `403`). Allow server-to-server `POST` requests on your forwarding URL's path. SparkPost publishes no fixed source IP addresses, so use the auth token to verify requests instead of an IP allowlist. See [Security](/learn/inbound/security#verify-the-auth-token).
+</Warning>
 
 <Note>
   Inbound domain management is available through the Lettr dashboard. There is no public API endpoint for creating or managing inbound domains.
@@ -73,18 +78,31 @@ With equal priority, sending servers distribute email across all three servers. 
 
 After adding MX records, verify they're properly configured:
 
-1. Go to **Domains** → **Inbound**
-2. Find your domain and click **Verify**
+1. Go to **Domains** → **Inbound** and open your domain
+2. Click **Verify MX Records**
 3. Wait for the verification to complete
 
-Once verified, the domain's status changes from `unverified` to `valid`, confirming your MX records are correctly configured.
+If the MX check fails because the domain has no MX records, the dashboard tells you where mail sent to the domain is actually going. A domain without MX records falls back to its A record, so mail lands on that host (usually a web server) instead of reaching Lettr.
 
 ## Domain Status
 
-| Status | Description |
-|--------|-------------|
-| `valid` | All MX records found and configured correctly |
-| `unverified` | MX records not yet detected or incomplete |
+Each inbound domain shows one status that tells you whether it is receiving mail, or what is missing. In the **Inbound Domains** list:
+
+|Status|Description|
+|-|-|
+|**Receiving mail**|MX records are verified and a forwarding URL is set|
+|**MX not verified**|MX records are not yet detected or incomplete, so mail never reaches Lettr|
+|**No forwarding URL**|Mail that arrives is accepted and then discarded, because there is nowhere to forward it|
+
+A domain can show both **MX not verified** and **No forwarding URL**. The domain's page shows the same verdict as **This domain is receiving mail** or **This domain is not receiving mail yet**, with each missing piece listed.
+
+## Mail Forwarding
+
+The domain's page has a **Mail Forwarding** card where you can add or change the forwarding URL and auth token, then click **Save forwarding URL**. The new URL is tested the same way as when the domain is created. Leave the **Auth token** field blank to keep the token that is already set.
+
+<Note>
+  Inbound domains created before forwarding URLs were required have no forwarding URL, so mail sent to them is accepted and then discarded. Their **Mail Forwarding** card shows **Not configured**. Add a URL there to start receiving mail.
+</Note>
 
 ## Using Subdomains vs Root Domain
 
@@ -118,8 +136,8 @@ DNS changes can take time to propagate:
 ## Next Steps
 
 <CardGroup cols={2}>
-  <Card title="Webhooks" icon="webhook" href="/learn/webhooks/introduction">
-    Receive notifications when emails arrive
+  <Card title="Email Parsing" icon="code" href="/learn/inbound/parsing">
+    Understand the payload posted to your forwarding URL
   </Card>
   <Card title="Routing" icon="route" href="/learn/inbound/routing">
     Route emails to different handlers

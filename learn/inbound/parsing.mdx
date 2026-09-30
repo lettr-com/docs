@@ -7,7 +7,7 @@ When Lettr receives an email on your inbound domain, it automatically parses the
 
 ## Parsed Email Structure
 
-Inbound emails are delivered as `relay.relay_delivery` webhook events. Each event contains a relay message with parsed email content:
+Inbound emails are posted to your inbound domain's forwarding URL as a JSON array of events. Each event contains a relay message with parsed email content:
 
 ```json
 [
