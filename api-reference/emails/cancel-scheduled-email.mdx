@@ -3,4 +3,4 @@ title: Cancel Scheduled Email
 openapi: DELETE /emails/scheduled/{transmissionId}
 ---
 
-Cancel a scheduled email transmission before it is sent. Once the scheduled delivery time has passed, the transmission can no longer be cancelled.
+Cancel a scheduled email before it is sent. Scheduled emails are held in Lettr until their send time, so cancelling works right up to the moment of sending. Only an email whose status is still `scheduled` can be cancelled; once it is `sending`, `sent`, `cancelled` or `failed`, the request returns `409` with the code `schedule_cancellation_failed`.

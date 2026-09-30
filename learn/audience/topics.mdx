@@ -21,6 +21,8 @@ A topic has a name, an optional description, a default subscription, and a visib
 
 A contact can be subscribed to any number of topics at once. Topic memberships are tracked separately from list memberships and from the contact's overall `subscribed` / `unsubscribed` status.
 
+A topic's contact count, in the app and as `contacts_count` in the [Topics API](/api-reference/audience/list-audience-topics), includes only contacts currently subscribed to it. Contacts who unsubscribed from the topic aren't counted.
+
 <Note>
   Topics replace the older "Tags" concept. If you're returning to Lettr after a long break, the same idea has been redesigned with explicit visibility and default-subscription settings.
 </Note>

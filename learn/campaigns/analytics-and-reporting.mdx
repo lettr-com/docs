@@ -101,9 +101,11 @@ Unsubscribes are permanent until you manually re-subscribe the contact (which yo
 
 ## Archived Events
 
-About 28 days after a campaign sends, Lettr archives its per-event activity to a downloadable CSV file. The archive includes every event captured during the 30-day window — every delivery, open, click, bounce, complaint, and unsubscribe — with timestamps, recipient addresses, and detail fields.
+About 25 days after a campaign sends, before the 30-day event window closes, Lettr archives its per-event activity to a downloadable CSV file. The archive includes every event captured during the 30-day window — every delivery, open, click, bounce, complaint, and unsubscribe — with timestamps, recipient addresses, and detail fields.
 
 To download the archive, open the campaign's Show page after the archive is ready and click the archive download option. Lettr generates a one-time download link valid for 1 hour and sends it to your email.
+
+If a campaign's events had already expired before they could be archived, the download tells you there is no archive for that campaign instead of returning an empty CSV.
 
 The archive is useful for:
 

@@ -20,10 +20,14 @@ The template is automatically assigned a URL-friendly slug based on its name. Yo
   If the template is going to an audience rather than to one person, pass `purpose: "campaign"` now.
 </Warning>
 
-Folders are mode-scoped, so `folder_id` must name a folder of the same mode as `purpose`. Use [List Folders](/api-reference/templates/list-folders) to find one — it is the only endpoint that returns folder IDs, and it reports each folder's mode.
+Folders are mode-scoped, so `folder_id` must name a folder of the same mode as `purpose`; a folder of the other mode returns `422`. Leave `folder_id` out and the template goes to the main folder of its mode, so a `campaign` template appears in the marketing module and the campaign picker straight away. Use [List Folders](/api-reference/templates/list-folders) to find a folder — it is the only endpoint that returns folder IDs, and it reports each folder's mode.
+
+## Validation
+
+`json` must be a Topol editor design. JSON that isn't one is rejected with `422` instead of being saved as a template that breaks when opened in the editor.
 
 ## Preparation
 
-Templates created from `json` are rendered by a background job, so the response comes back with `preparation_status: "pending"` and no HTML yet. It normally settles within seconds — poll [Get Template](/api-reference/templates/get-template) until `preparation_status` is `ready` before sending.
+Templates created from `json` are rendered by a background job, so the response comes back with `preparation_status: "pending"` and no HTML yet. Rendering in the background means large imports don't time out. It normally settles within seconds, and ends as `ready` or `failed` — poll [Get Template](/api-reference/templates/get-template) until `preparation_status` is `ready` before sending.
 
 Templates created from raw `html` are `ready` immediately.

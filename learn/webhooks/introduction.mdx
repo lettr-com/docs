@@ -50,6 +50,9 @@ Webhooks can be managed through the Lettr dashboard or the API. The API provides
   <Step title="Click Create Webhook">
     Click the **Create Webhook** button.
   </Step>
+  <Step title="Name the Webhook">
+    Give the webhook a name of up to 24 characters.
+  </Step>
   <Step title="Enter Your Endpoint URL">
     Provide the HTTPS URL where Lettr should send event notifications. This must be a publicly accessible endpoint.
   </Step>
@@ -266,7 +269,7 @@ curl -X PUT "https://app.lettr.com/api/webhooks/{webhookId}" \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Updated Notifications",
-    "target": "https://example.com/webhook-v2",
+    "url": "https://example.com/webhook-v2",
     "events": ["message.delivery", "message.bounce", "engagement.click"],
     "active": true
   }'
@@ -295,6 +298,12 @@ The response for retrieving a webhook includes the configuration and its current
   }
 }
 ```
+
+A few rules apply to requests:
+
+- `name` can be at most 24 characters.
+- An update must change at least one of `name`, `url`, `auth_type`, `events` or `active`. An empty update is rejected with `422`.
+- Authentication credentials are only accepted together with `auth_type`, so the API always knows which kind of credentials you are sending.
 
 <Tip>
   For complete request and response schemas, see the [Webhooks API Reference](/api-reference/webhooks/list-webhooks).

@@ -3,6 +3,10 @@ title: List Templates
 openapi: GET /templates
 ---
 
-Returns a paginated list of templates for your team. Optionally filter by project using the `project_id` query parameter.
+Returns a paginated list of templates for your team. Narrow the list with these query parameters:
+
+- `project_id` — only templates in one project
+- `purpose` — `transactional` or `campaign`, to list one [mode](/learn/templates/projects#transactional-vs-marketing-templates)
+- `folder_id` — only templates in one folder; get folder IDs from [List Folders](/api-reference/templates/list-folders). A folder outside the project returns `404`.
 
 Each template in the list includes its name, slug, project and folder assignment, and timestamps. To retrieve the full HTML content and version details for a specific template, use [Get Template](/api-reference/templates/get-template).

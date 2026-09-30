@@ -58,6 +58,8 @@ You can rename a list at any time from the **Lists** page. Renaming does not aff
 
 Deleting a list removes the list itself and the membership records, but does **not** delete the contacts. The contacts remain in your audience and in any other lists or segments they belong to.
 
+A list that a [segment](/learn/audience/segments) is limited to can't be deleted. Deleting it would remove the segment's list restriction and widen the segment to your whole audience. The app names the segments that use the list; remove the list restriction from those segments, or delete them, and then delete the list. Over the API, deleting such a list (on its own or in a bulk delete) returns `409` with the code `list_in_use`.
+
 <Warning>
   Segments reference lists by **name**, not by ID. If you rename a list that a segment uses in its conditions, that segment will silently stop matching anyone from the renamed list until you update the segment. Always check your segments after renaming a list.
 </Warning>

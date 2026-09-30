@@ -92,7 +92,9 @@ Each condition uses an operator that depends on the field type. Lettr supports t
 | `is_empty` | The contact has no value for the property | Any custom property |
 | `is_not_empty` | The contact has a value for the property | Any custom property |
 
-For `topics` and `lists` fields, `equals` means "is a member" and `not_equals` means "is not a member".
+For `topics` and `lists` fields, `equals` means "is a member" and `not_equals` means "is not a member". These are the only operators they accept.
+
+A condition that uses an unknown field, or an operator its field type doesn't support, is rejected when you save the segment, in the app and through the API. A segment saved before this check with such a condition matches no contacts, rather than risking a campaign to your whole audience; edit the condition to make it match again.
 
 `is_empty` and `is_not_empty` need no value. They are the quickest way to find gaps in your data. For example, `language is empty` lists every contact who would receive the primary language of a [multilingual campaign](/learn/multilingual-campaigns/contact-language#finding-contacts-without-a-language) because Lettr has nothing to match.
 

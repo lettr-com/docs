@@ -140,6 +140,9 @@
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
           }
         }
       }
@@ -411,6 +414,9 @@
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
           },
           "404": {
             "description": "Template or project not found",
@@ -730,6 +736,9 @@
               }
             }
           },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
+          },
           "422": {
             "description": "Validation error",
             "content": {
@@ -983,6 +992,9 @@
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
           },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
+          },
           "422": {
             "description": "Validation error",
             "content": {
@@ -1125,6 +1137,9 @@
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
           },
           "404": {
             "description": "Email not found",
@@ -1320,6 +1335,9 @@
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
           },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
+          },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
           },
@@ -1472,6 +1490,9 @@
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
@@ -1708,6 +1729,9 @@
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
           },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
+          },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
           },
@@ -1802,6 +1826,9 @@
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
           },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
+          },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
           },
@@ -1893,6 +1920,9 @@
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
           },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
+          },
           "500": {
             "description": "Server error - Failed to retrieve domains",
             "content": {
@@ -1961,6 +1991,9 @@
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
           },
           "409": {
             "description": "Conflict - Domain already exists",
@@ -2076,6 +2109,9 @@
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
           },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
+          },
           "404": {
             "description": "Domain not found",
             "content": {
@@ -2136,6 +2172,9 @@
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
           },
           "404": {
             "description": "Domain not found",
@@ -2248,6 +2287,9 @@
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
           },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
+          },
           "500": {
             "description": "Server error - Failed to retrieve webhooks",
             "content": {
@@ -2344,6 +2386,9 @@
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
           },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
+          },
           "409": {
             "description": "Conflict - A webhook with this target URL already exists",
             "content": {
@@ -2434,6 +2479,9 @@
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
           },
           "404": {
             "description": "Webhook not found",
@@ -2549,6 +2597,9 @@
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
           },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
+          },
           "404": {
             "description": "Webhook not found",
             "content": {
@@ -2627,6 +2678,9 @@
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
           },
           "404": {
             "description": "Webhook not found",
@@ -2784,6 +2838,9 @@
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
           },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
+          },
           "404": {
             "description": "Project not found or no default project configured",
             "content": {
@@ -2940,6 +2997,9 @@
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
           },
           "404": {
             "description": "Project or folder not found",
@@ -3146,6 +3206,9 @@
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
           },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
+          },
           "404": {
             "description": "Template or project not found",
             "content": {
@@ -3263,6 +3326,9 @@
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
           },
           "404": {
             "description": "Template or project not found",
@@ -3434,6 +3500,9 @@
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
           },
           "404": {
             "description": "Template or project not found",
@@ -3626,6 +3695,9 @@
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
           },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
+          },
           "404": {
             "description": "Template, version, or project not found",
             "content": {
@@ -3786,6 +3858,9 @@
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
           },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
+          },
           "404": {
             "description": "Domain not found",
             "content": {
@@ -3909,6 +3984,9 @@
                 }
               }
             }
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
           },
           "404": {
             "description": "Template not found or project does not belong to team",
@@ -4052,6 +4130,9 @@
               }
             }
           },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
+          },
           "404": {
             "description": "Project not found or no default project configured",
             "content": {
@@ -4180,6 +4261,9 @@
               }
             }
           },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
+          },
           "422": {
             "description": "Validation error",
             "content": {
@@ -4254,6 +4338,9 @@
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
           },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
+          },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
           },
@@ -4307,6 +4394,9 @@
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
@@ -4363,6 +4453,9 @@
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
@@ -4437,6 +4530,9 @@
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
           },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
+          },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
           },
@@ -4508,6 +4604,9 @@
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
           },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
+          },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
           },
@@ -4571,6 +4670,9 @@
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
@@ -4707,6 +4809,9 @@
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
           },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
+          },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
           },
@@ -4760,6 +4865,9 @@
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
@@ -4883,6 +4991,9 @@
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
           },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
+          },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
           },
@@ -4939,6 +5050,9 @@
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
           },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
+          },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
           },
@@ -4992,6 +5106,9 @@
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
@@ -5049,6 +5166,9 @@
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
           },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
+          },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
           },
@@ -5102,6 +5222,9 @@
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
@@ -5160,6 +5283,9 @@
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
@@ -5231,6 +5357,9 @@
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
           },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
+          },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
           },
@@ -5293,6 +5422,9 @@
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
@@ -5377,6 +5509,9 @@
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
           },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
+          },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
           },
@@ -5440,6 +5575,9 @@
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
@@ -5523,6 +5661,9 @@
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
           },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
+          },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
           },
@@ -5585,6 +5726,9 @@
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
@@ -5661,6 +5805,9 @@
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
           },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
+          },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
           },
@@ -5714,6 +5861,9 @@
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
@@ -5772,6 +5922,9 @@
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
@@ -5843,6 +5996,9 @@
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
           },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
+          },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
           },
@@ -5905,6 +6061,9 @@
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
@@ -5981,6 +6140,9 @@
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
           },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
+          },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
           },
@@ -6034,6 +6196,9 @@
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
@@ -6107,6 +6272,9 @@
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
           },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
+          },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
           },
@@ -6177,6 +6345,9 @@
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
           },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
+          },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
           },
@@ -6239,6 +6410,9 @@
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
@@ -6325,6 +6499,9 @@
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
           },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
+          },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
           },
@@ -6378,6 +6555,9 @@
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
@@ -6436,6 +6616,9 @@
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
@@ -6507,6 +6690,9 @@
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
           },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
+          },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
           },
@@ -6569,6 +6755,9 @@
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
@@ -6664,6 +6853,9 @@
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
           },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
+          },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
           },
@@ -6722,6 +6914,9 @@
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
@@ -6855,6 +7050,9 @@
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
           },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
+          },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
           },
@@ -6927,6 +7125,9 @@
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
@@ -7026,6 +7227,9 @@
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
@@ -7128,6 +7332,9 @@
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
           },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
+          },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
           },
@@ -7195,6 +7402,29 @@
                   "message": "Invalid API key."
                 }
               }
+            }
+          }
+        }
+      },
+      "ServiceUnavailableError": {
+        "description": "Service unavailable - the API key could not be verified, so the request was not processed. This does not mean the key is invalid; retry after the delay given in the Retry-After header.",
+        "headers": {
+          "Retry-After": {
+            "description": "Seconds to wait before retrying.",
+            "schema": {
+              "type": "integer",
+              "example": 5
+            }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "example": {
+              "message": "Unable to verify your API key right now. Please retry shortly.",
+              "error_code": "auth_unavailable"
             }
           }
         }

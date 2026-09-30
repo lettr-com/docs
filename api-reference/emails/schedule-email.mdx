@@ -3,4 +3,8 @@ title: Schedule Email
 openapi: POST /emails/scheduled
 ---
 
-Schedule a transactional email for future delivery. Accepts the same payload as `POST /emails` with an additional required `scheduled_at` field.
+Schedule a transactional email for future delivery, up to 30 days ahead. Accepts the same payload as `POST /emails`, including custom `headers`, with an additional required `scheduled_at` field.
+
+The response returns a Lettr ID that starts with `sch_`. Use it to [get](/api-reference/emails/get-scheduled-email) or [cancel](/api-reference/emails/cancel-scheduled-email) the email. `transmission_id` stays `null` until the email is actually sent, so don't read it from the scheduling response.
+
+A scheduled email counts against your [quota](/learn/sending/usage-quotas) on the day it is sent, not the day you schedule it. The `Idempotency-Key` header is ignored on this endpoint.

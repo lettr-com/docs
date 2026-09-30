@@ -63,8 +63,10 @@ Response with DNS records to configure:
 }
 ```
 
+If your team already has the domain, the request returns `409` instead of replacing it, so an existing domain never loses its verification. A domain left over from an earlier, unfinished setup can be added again.
+
 <Tip>
-  Working in an AI-powered editor like Claude Code or Cursor? The [local Lettr MCP server](/learn/mcp/local-setup) can handle this whole flow for you — its `create-domain` and `verify-domain` tools let your assistant add the domain, hand you the exact DNS records, and re-run verification until everything passes.
+  Working in an AI-powered editor like Claude Code or Cursor? The [Lettr MCP server](/learn/mcp/introduction) can handle this whole flow for you — its `create_domain` and `verify_domain` tools let your assistant add the domain, hand you the exact DNS records, and re-run verification until everything passes.
 </Tip>
 
 ## DNS Records Configuration

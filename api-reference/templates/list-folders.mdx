@@ -16,11 +16,9 @@ curl "https://app.lettr.com/api/folders?purpose=campaign" \
   -H "Authorization: Bearer $LETTR_API_KEY"
 ```
 
-A template's `folder_id` must name a folder of the same mode as its `purpose`.
+A template's `folder_id` must name a folder of the same mode as its `purpose`. [Create Template](/api-reference/templates/create-template) rejects a folder of the other mode with `422`, and when you leave `folder_id` out, the template goes to the main folder of its mode.
 
-<Note>
-  A folder's mode does not set its templates'. Filing a template in a marketing folder does **not** make it a marketing template — only `purpose` on the template does.
-</Note>
+You can also pass `folder_id` to [List Templates](/api-reference/templates/list-templates) to list only the templates in one folder.
 
 ## Read-only
 

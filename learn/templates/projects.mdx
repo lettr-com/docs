@@ -54,14 +54,17 @@ curl "https://app.lettr.com/api/folders?purpose=campaign" \
   -H "Authorization: Bearer $LETTR_API_KEY"
 ```
 
-A folder's mode does not set the template's. Filing a template in a marketing folder does **not** make it a marketing template — only `purpose` does, and the two must agree.
+Over the API, `purpose` and `folder_id` must agree. If you omit `folder_id`, the template goes to the main folder of its mode in the project. If `folder_id` names a folder of the other mode, the request is rejected with `422` rather than filing the template somewhere campaigns can't see it.
+
+In the app, the folder wins: **moving** a template into a folder of the other mode switches the template to that folder's mode, the same way duplicating into a folder does. A transactional email moved into a marketing folder becomes a marketing email and shows up in the marketing grid and the campaign picker.
 
 ### Other behaviors
 
 A few more things that follow from mode-scoping:
 
 - **Copying to the other mode** — Use the **Copy to Transactional** / **Copy to Marketing** action on a template to create a copy in the other mode. The copy is named "*name* (Copy)", gets a new unique slug, and carries over all versions and merge tags. It lands in your current folder if that folder already belongs to the target mode, otherwise in the project's default folder for that mode.
-- **Duplicating into a folder** — A duplicated template takes on the mode of the folder you duplicate it into, not the mode of the original.
+- **Moving or duplicating into a folder** — A moved or duplicated template takes on the mode of the folder it lands in, not the mode of the original.
+- **Returning to the list** — The **← Emails** link on an email's detail page takes you back to the list with your folder and search still applied. Deleting an email from the list keeps you in the same folder, with the same view, search and sort.
 - **Deleting a folder keeps its templates** — Templates in a deleted folder are not deleted with it. Each one is moved to the project's default folder for its mode.
 
 When sending emails with templates, you can specify which project to use:
