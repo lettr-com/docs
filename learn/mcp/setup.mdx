@@ -6,7 +6,7 @@ description: "Connect Claude, ChatGPT, Cursor, and Copilot to Lettr's hosted MCP
 Lettr's remote MCP server is hosted at `https://app.lettr.com/mcp` and authenticates through OAuth 2.1. Connect directly from Claude.ai, ChatGPT, Cursor, Claude Desktop, or GitHub Copilot — no API key required.
 
 <Note>
-  Looking for the local MCP server that runs on your machine with an API key? See [Local Server Setup](/learn/mcp/local-setup).
+  No browser available — CI, a cron job, a headless agent? The same server also accepts a `lttr_` API key in an `Authorization` header: see [Connect with an API Key](/learn/mcp/api-key-auth). For the local MCP server that runs on your machine, see [Local Server Setup](/learn/mcp/local-setup).
 </Note>
 
 ## Prerequisites
@@ -240,6 +240,31 @@ The AI will use your saved template and substitute the merge tags with the provi
 
 The AI will list your domains and highlight any with verification issues.
 
+## Choosing a Team
+
+An OAuth token identifies you, and you may belong to more than one team. When you do, every tool takes a `team_id` and will refuse to guess:
+
+> This account belongs to more than one team, so team_id is required.
+
+Two tools exist to resolve that without asking you:
+
+- `list_teams` — the teams this connection can act on
+- `current_team` — which team a call would act on, and why
+
+To stop passing `team_id` on every call, pin a team in your client configuration by adding it to the server URL:
+
+```
+https://app.lettr.com/mcp?team=41
+```
+
+With a team pinned, `team_id` is removed from the tools altogether, so the assistant cannot act on another team. A `Lettr-Team-Id` header does the same.
+
+If you belong to exactly one team, none of this appears — there is nothing to choose.
+
+<Tip>
+  Ask your assistant to call `current_team` before anything destructive. It reports the team and how it was chosen, so you are never relying on it having guessed right.
+</Tip>
+
 ## Troubleshooting
 
 <AccordionGroup>
@@ -275,7 +300,7 @@ To revoke an AI client's access to your Lettr account, sign in to the Lettr dash
 
 ## Rate Limits
 
-MCP requests follow the same rate limits as the REST API:
+MCP requests share your team's REST API budget, at a higher per-second ceiling: 10 requests per second, because connecting a client costs about 4 requests before it does any work. Exceeding it returns `429` with `error_code: rate_limit_exceeded`.
 
 - **Sending** — Standard API rate limits apply to emails sent through AI assistants
 - **Event queries** — 25 results per request by default (configurable: 10, 25, 50, or 100)

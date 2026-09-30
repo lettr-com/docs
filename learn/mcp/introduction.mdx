@@ -22,7 +22,7 @@ Lettr offers two MCP servers for different workflows. Both give AI assistants ac
 
 <CardGroup cols={2}>
   <Card title="Remote Server" icon="cloud" href="/learn/mcp/setup">
-    Hosted at `https://app.lettr.com/mcp`. Authenticates via OAuth — no API key needed. Connect directly from Claude.ai, ChatGPT, Cursor, Claude Desktop, and GitHub Copilot.
+    Hosted at `https://app.lettr.com/mcp`. Authenticates via OAuth, or with a `lttr_` API key for CI and headless agents. Connect directly from Claude.ai, ChatGPT, Cursor, Claude Code, Claude Desktop, and GitHub Copilot.
   </Card>
   <Card title="Local Server" icon="terminal" href="/learn/mcp/local-setup">
     The `lettr-mcp` npm package runs on your machine. Authenticates with an API key. Ideal for Claude Code, Cursor, and Claude Desktop during development.
@@ -34,10 +34,10 @@ Lettr offers two MCP servers for different workflows. Both give AI assistants ac
 | | Remote Server | Local Server |
 |---|---|---|
 | **How it runs** | Hosted by Lettr | Runs on your machine via `npx` |
-| **Authentication** | OAuth 2.1 (your Lettr session) | API key (`LETTR_API_KEY`) |
+| **Authentication** | OAuth 2.1, or a `lttr_` [API key header](/learn/mcp/api-key-auth) | API key (`LETTR_API_KEY`) |
 | **Transport** | HTTP/SSE | stdio |
 | **Supported clients** | Claude.ai, ChatGPT, Cursor, Claude Desktop, GitHub Copilot | Claude Code, Cursor, Claude Desktop |
-| **Best for** | Chat-based account management, monitoring, analytics | Developer workflows, coding assistants, CI environments |
+| **Best for** | Chat-based account management, monitoring, analytics, CI and headless agents | Developer workflows, coding assistants |
 | **Unique tools** | Analytics, email events, API logs | Domain CRUD, template delete, domain verification |
 | **Open source** | No | [Yes](https://github.com/lettr-com/lettr-mcp) |
 
