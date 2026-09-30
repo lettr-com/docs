@@ -22,7 +22,7 @@ curl -X GET "https://app.lettr.com/api/emails" \
 | `cursor` | string | No | The `next_cursor` value from the previous response |
 | `recipients` | string | No | Filter by recipient email address |
 | `from` | string | No | Only emails sent at or after this time (ISO 8601). Defaults to the start of the retained window, about 10 days ago |
-| `to` | string | No | Only emails sent before this time (ISO 8601). Defaults to now and must be after `from` |
+| `to` | string | No | Only emails sent before this time (ISO 8601), exclusive — an email sent at exactly this time is not returned. Defaults to now and must be after `from` |
 
 ### Response
 
