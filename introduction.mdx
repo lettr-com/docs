@@ -7,6 +7,67 @@ Lettr is an email infrastructure platform built for developers who need reliable
 
 Email delivery is deceptively complex. Between authentication protocols like SPF, DKIM, and DMARC, reputation management, bounce handling, and the ever-changing landscape of spam filtering, building reliable email infrastructure from scratch is a significant undertaking. Lettr handles this complexity so you can focus on your application.
 
+## Official SDKs
+
+Lettr maintains open-source SDKs for the most popular languages and frameworks. Each one wraps the REST API in an idiomatic, typed client, so you can send emails and manage templates, domains, webhooks, audience, and campaigns without writing HTTP calls by hand.
+
+<CardGroup cols={2}>
+  <Card title="lettr-php" icon="php" href="https://github.com/lettr-com/lettr-php">
+    The PHP SDK for any PHP 8.4+ project, with a fluent email builder and typed responses.
+
+    ```bash
+    composer require lettr/lettr-php
+    ```
+  </Card>
+  <Card title="lettr-laravel" icon="laravel" href="https://github.com/lettr-com/lettr-laravel">
+    A native Laravel mail driver for `Mail::to()`. Includes `php artisan lettr:init`, an interactive setup command.
+
+    ```bash
+    composer require lettr/lettr-laravel
+    ```
+  </Card>
+  <Card title="lettr-node" icon="node-js" href="https://github.com/lettr-com/lettr-node">
+    A type-safe TypeScript client for Node.js, plus `lettr-kit`, a CLI for managing templates locally.
+
+    ```bash
+    npm install lettr
+    ```
+  </Card>
+  <Card title="lettr-python" icon="python" href="https://github.com/lettr-com/lettr-python">
+    A typed Python client. It raises typed exceptions when a call fails.
+
+    ```bash
+    pip install lettr
+    ```
+  </Card>
+  <Card title="lettr-go" icon="golang" href="https://github.com/lettr-com/lettr-go">
+    An idiomatic Go client with `context.Context` support. Requires Go 1.21 or later.
+
+    ```bash
+    go get github.com/lettr-com/lettr-go
+    ```
+  </Card>
+  <Card title="lettr-rust" icon="rust" href="https://github.com/lettr-com/lettr-rust">
+    An async, typed Rust client, published on crates.io.
+
+    ```bash
+    cargo add lettr
+    ```
+  </Card>
+  <Card title="lettr-java" icon="java" href="https://github.com/lettr-com/lettr-java">
+    A builder-based Java client on Maven Central. It throws checked exceptions when a call fails.
+
+    ```groovy
+    implementation 'com.lettr:lettr-java:1.7.0'
+    ```
+  </Card>
+  <Card title="All repositories" icon="github" href="https://github.com/lettr-com">
+    You can browse every SDK, integration, and example project on GitHub. Issues and pull requests are welcome.
+  </Card>
+</CardGroup>
+
+The install command, quickstart, and framework guides for each SDK are on the [SDKs](/resources/sdks) page.
+
 ## What You Can Build with Lettr
 
 <CardGroup cols={2}>
