@@ -7,10 +7,16 @@ Send transactional emails through Lettr's SMTP relay server. If your application
 
 Using an AI coding agent? Give it this prompt to get started:
 
-```text
-Help me add a Lettr SMTP sending example,
-or migrate my current SMTP provider setup to Lettr
-using these docs: https://docs.lettr.com/quickstart/smtp/introduction
+```text wrap
+Set up email sending through Lettr's SMTP server in this project.
+
+Read this guide first: https://docs.lettr.com/quickstart/smtp/introduction.md
+
+1. Find where this project configures SMTP or sends email today, and point it at Lettr. If it doesn't send email yet, add one small, working example.
+2. Use host `smtp.lettr.com` with the port and encryption settings from the guide. The username is always `lettr`; the password is the Lettr API key.
+3. Read the API key from an environment variable. Never hard-code it or commit it.
+4. Send from an address on a domain that is verified in Lettr.
+5. When you're done, summarize what you changed and tell me how to send a test email.
 ```
 
 ## Why Use SMTP?

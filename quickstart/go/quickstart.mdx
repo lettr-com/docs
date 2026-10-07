@@ -15,10 +15,16 @@ Add the module with `go get`, or browse its source on GitHub:
 
 Using an AI coding agent? Give it this prompt to get started:
 
-```text
-Help me add a Lettr sending example for Go using github.com/lettr-com/lettr-go,
-or migrate my current Go sending solution to Lettr
-using these docs: https://docs.lettr.com/quickstart/go/quickstart
+```text wrap
+Set up email sending with Lettr in this Go project, using the official `lettr-go` SDK.
+
+Read this guide first: https://docs.lettr.com/quickstart/go/quickstart.md
+
+1. Check how this project sends email today. If it already uses a provider, migrate that code to Lettr. If it doesn't send email yet, add one small, working example.
+2. Install the SDK with `go get github.com/lettr-com/lettr-go`.
+3. Read the API key from the `LETTR_API_KEY` environment variable. Never hard-code it or commit it.
+4. Send from an address on a domain that is verified in Lettr.
+5. When you're done, summarize what you changed and tell me how to send a test email.
 ```
 
 ## Why Use the Go SDK?

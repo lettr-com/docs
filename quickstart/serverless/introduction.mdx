@@ -7,10 +7,16 @@ Lettr's HTTP API sends an email in a single stateless request, which is the shap
 
 Using an AI coding agent? Give it this prompt to get started:
 
-```text
-Help me add a Lettr sending example for serverless functions (AWS Lambda, Vercel, Cloudflare Workers),
-or migrate my current serverless sending solution to Lettr
-using these docs: https://docs.lettr.com/quickstart/serverless/introduction
+```text wrap
+Set up email sending with Lettr in this serverless project (AWS Lambda, Vercel Functions, or Cloudflare Workers).
+
+Read this guide first, then the platform guide it links to: https://docs.lettr.com/quickstart/serverless/introduction.md
+
+1. Check how this project sends email today. If it already uses a provider, migrate that code to Lettr. If it doesn't send email yet, add one small, working example.
+2. Install the official SDK with `npm install lettr`.
+3. Read the API key from the `LETTR_API_KEY` environment variable, stored in the platform's secrets or environment settings. Never hard-code it or commit it.
+4. Send from an address on a domain that is verified in Lettr.
+5. When you're done, summarize what you changed and tell me how to send a test email.
 ```
 
 ## Why HTTP instead of SMTP

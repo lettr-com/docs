@@ -17,10 +17,16 @@ Install it with Composer, or browse its source on GitHub:
 
 Using an AI coding agent? Give it this prompt to get started:
 
-```text
-Help me add a Lettr sending example for Laravel using lettr/lettr-laravel,
-or migrate my current Laravel sending solution to Lettr
-using these docs: https://docs.lettr.com/quickstart/laravel/introduction
+```text wrap
+Set up email sending with Lettr in this Laravel app, using the official `lettr/lettr-laravel` package.
+
+Read this guide first: https://docs.lettr.com/quickstart/laravel/introduction.md
+
+1. Check how this project sends email today. If it already uses a provider, migrate that code to Lettr. If it doesn't send email yet, add one small, working example.
+2. Install the package with `composer require lettr/lettr-laravel` and make Lettr the mail driver (`MAIL_MAILER=lettr`), so existing Mailables and notifications send through Lettr.
+3. Read the API key from the `LETTR_API_KEY` environment variable. Never hard-code it or commit it.
+4. Send from an address on a domain that is verified in Lettr.
+5. When you're done, summarize what you changed and tell me how to send a test email.
 ```
 
 ## Why Use the Laravel SDK?

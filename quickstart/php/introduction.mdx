@@ -17,10 +17,16 @@ Install it with Composer, or browse its source on GitHub:
 
 Using an AI coding agent? Give it this prompt to get started:
 
-```text
-Help me add a Lettr sending example for PHP using lettr/lettr-php,
-or migrate my current PHP sending solution to Lettr
-using these docs: https://docs.lettr.com/quickstart/php/introduction
+```text wrap
+Set up email sending with Lettr in this PHP project, using the official `lettr/lettr-php` SDK.
+
+Read this guide first: https://docs.lettr.com/quickstart/php/introduction.md
+
+1. Check how this project sends email today. If it already uses a provider, migrate that code to Lettr. If it doesn't send email yet, add one small, working example.
+2. Install the SDK with `composer require lettr/lettr-php`.
+3. Read the API key from the `LETTR_API_KEY` environment variable. Never hard-code it or commit it.
+4. Send from an address on a domain that is verified in Lettr.
+5. When you're done, summarize what you changed and tell me how to send a test email.
 ```
 
 ## Why Use the PHP SDK?

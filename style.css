@@ -324,3 +324,17 @@
     transform: none;
   }
 }
+
+/* ===========================================================================
+ * Code blocks marked `wrap`
+ *
+ * Mintlify honours the `wrap` meta by putting `whitespace-pre-wrap` on the
+ * block's wrapper, but the Shiki <pre> inside sets `white-space: pre` and
+ * wins, so long lines still scroll. Let the <pre> follow its wrapper. Blocks
+ * without `wrap` get `whitespace-pre` on the wrapper and are unaffected.
+ * ======================================================================== */
+.whitespace-pre-wrap > pre.shiki,
+.whitespace-pre-wrap > pre.shiki code {
+  white-space: pre-wrap !important;
+  overflow-wrap: anywhere;
+}
