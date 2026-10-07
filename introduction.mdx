@@ -3,9 +3,23 @@ title: Introduction
 description: "Lettr is an email infrastructure platform for developers, offering reliable transactional and marketing delivery, inbound parsing, and tracking."
 ---
 
+import { SdkRow } from "/snippets/sdk-row.jsx";
+
 Lettr is an email infrastructure platform built for developers who need reliable, scalable email delivery without the complexity. Whether you're sending transactional emails like password resets and order confirmations, or building sophisticated email workflows with tracking and analytics, Lettr provides the APIs and tools to get it done.
 
 Email delivery is deceptively complex. Between authentication protocols like SPF, DKIM, and DMARC, reputation management, bounce handling, and the ever-changing landscape of spam filtering, building reliable email infrastructure from scratch is a significant undertaking. Lettr handles this complexity so you can focus on your application.
+
+## Official SDKs
+
+<div className="sdk-list not-prose">
+  <SdkRow name="lettr-php" icon="php" href="https://github.com/lettr-com/lettr-php" install="composer require lettr/lettr-php" />
+  <SdkRow name="lettr-laravel" icon="laravel" href="https://github.com/lettr-com/lettr-laravel" install="composer require lettr/lettr-laravel" />
+  <SdkRow name="lettr-node" icon="node-js" href="https://github.com/lettr-com/lettr-node" install="npm install lettr" />
+  <SdkRow name="lettr-python" icon="python" href="https://github.com/lettr-com/lettr-python" install="pip install lettr" />
+  <SdkRow name="lettr-go" icon="golang" href="https://github.com/lettr-com/lettr-go" install="go get github.com/lettr-com/lettr-go" />
+  <SdkRow name="lettr-rust" icon="rust" href="https://github.com/lettr-com/lettr-rust" install="cargo add lettr" />
+  <SdkRow name="lettr-java" icon="java" href="https://github.com/lettr-com/lettr-java" install="implementation 'com.lettr:lettr-java:1.7.0'" />
+</div>
 
 ## What You Can Build with Lettr
 

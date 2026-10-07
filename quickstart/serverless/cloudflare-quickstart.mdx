@@ -5,7 +5,19 @@ description: "Send transactional emails from Cloudflare Workers using Lettr's HT
 
 Send transactional emails from Cloudflare Workers using Lettr's HTTP API. Workers run on Cloudflare's global edge network with instant cold starts and zero-millisecond latency — perfect for email APIs that need to be fast anywhere in the world.
 
-Using Cursor? [Jump straight in using this prompt](https://cursor.com/link/prompt?text=Help%20me%20add%20a%20Lettr%20sending%20example%20for%20Cloudflare%20Workers%2C%20or%20migrate%20my%20current%20Worker%20email%20sending%20solution%20to%20Lettr%20using%20these%20docs%3A%20https%3A%2F%2Fdocs.lettr.com%2Fquickstart%2Fserverless%2Fcloudflare-quickstart)
+Using an AI coding agent? Give it this prompt to get started:
+
+```text wrap expandable
+Set up email sending with Lettr in this Cloudflare Workers project, using the official `lettr` Node.js SDK.
+
+Read this guide first: https://docs.lettr.com/quickstart/serverless/cloudflare-quickstart.md
+
+1. Check how this project sends email today. If it already uses a provider, migrate that code to Lettr. If it doesn't send email yet, add one small, working example.
+2. Install the SDK with `npm install lettr`.
+3. Read the API key from the `LETTR_API_KEY` environment variable. Store it as a Worker secret with `npx wrangler secret put LETTR_API_KEY`. Never hard-code it or commit it.
+4. Send from an address on a domain that is verified in Lettr.
+5. When you're done, summarize what you changed and tell me how to send a test email.
+```
 
 ## Prerequisites
 

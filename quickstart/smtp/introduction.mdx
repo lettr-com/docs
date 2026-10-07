@@ -5,7 +5,19 @@ description: "Send transactional emails through Lettr's SMTP relay server and mi
 
 Send transactional emails through Lettr's SMTP relay server. If your application already uses SMTP or you're migrating from another email provider, you can switch to Lettr without changing your code — just update your SMTP credentials.
 
-Using Cursor? [Jump straight in using this prompt](https://cursor.com/link/prompt?text=Help%20me%20add%20a%20Lettr%20SMTP%20sending%20example%2C%20or%20migrate%20my%20current%20SMTP%20provider%20setup%20to%20Lettr%20using%20these%20docs%3A%20https%3A%2F%2Fdocs.lettr.com%2Fquickstart%2Fsmtp%2Fintroduction)
+Using an AI coding agent? Give it this prompt to get started:
+
+```text wrap expandable
+Set up email sending through Lettr's SMTP server in this project.
+
+Read this guide first: https://docs.lettr.com/quickstart/smtp/introduction.md
+
+1. Find where this project configures SMTP or sends email today, and point it at Lettr. If it doesn't send email yet, add one small, working example.
+2. Use host `smtp.lettr.com` with the port and encryption settings from the guide. The username is always `lettr`; the password is the Lettr API key.
+3. Read the API key from an environment variable. Never hard-code it or commit it.
+4. Send from an address on a domain that is verified in Lettr.
+5. When you're done, summarize what you changed and tell me how to send a test email.
+```
 
 ## Why Use SMTP?
 

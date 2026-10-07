@@ -105,3 +105,236 @@
 .latex-style ul > li::before {
   border-radius: 50% !important;
 }
+
+/* ===========================================================================
+ * Official SDKs list (introduction.mdx, snippets/sdk-row.jsx)
+ *
+ * One SDK per full-width row: logo, name, copyable install command, arrow.
+ * The whole row links to the GitHub repo through a "stretched link" — the
+ * name's ::after covers the row — while the install button sits above that
+ * overlay, so copying never navigates and no interactive element is nested
+ * inside another.
+ * ======================================================================== */
+.sdk-list {
+  --sdk-fg: rgb(24 14 19);
+  --sdk-muted: rgb(24 14 19 / 0.55);
+  --sdk-line: rgb(60 20 35 / 0.1);
+  --sdk-hover: rgb(236 16 75 / 0.035);
+  --sdk-code-bg: rgb(60 20 35 / 0.035);
+  --sdk-code-line: rgb(60 20 35 / 0.12);
+  --sdk-accent: #d00e43;
+  --sdk-ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  margin: 1.25rem 0 2.5rem;
+  border-top: 1px solid var(--sdk-line);
+}
+
+.dark .sdk-list {
+  --sdk-fg: rgb(250 242 245);
+  --sdk-muted: rgb(250 242 245 / 0.5);
+  --sdk-line: rgb(255 225 235 / 0.09);
+  --sdk-hover: rgb(240 64 112 / 0.05);
+  --sdk-code-bg: rgb(255 225 235 / 0.035);
+  --sdk-code-line: rgb(255 225 235 / 0.1);
+  --sdk-accent: #f04070;
+}
+
+.sdk-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1.25rem 8.75rem minmax(0, 1fr) 1rem;
+  align-items: center;
+  column-gap: 1rem;
+  padding: 0.875rem 0.75rem;
+  border-bottom: 1px solid var(--sdk-line);
+  transition: background-color 180ms var(--sdk-ease);
+}
+
+.sdk-row:hover {
+  background-color: var(--sdk-hover);
+}
+
+.sdk-row:has(.sdk-row__name:focus-visible) {
+  outline: 2px solid var(--sdk-accent);
+  outline-offset: -2px;
+}
+
+.sdk-row__logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--sdk-muted);
+  transition: color 180ms var(--sdk-ease);
+}
+
+/* Mintlify's <Icon> paints through a mask with its own gray; follow the row. */
+.sdk-row__logo svg,
+.sdk-row__logo span {
+  background-color: currentColor !important;
+}
+
+.sdk-row:hover .sdk-row__logo {
+  color: var(--sdk-fg);
+}
+
+.sdk-row__name {
+  /* Mintlify's .link makes anchors relative, which would trap the ::after
+   * overlay inside the name instead of letting it span the row. Its z-index
+   * matters too: grid items stack even when static, so .link's z-index: 10
+   * would lift the overlay above the install button. */
+  position: static !important;
+  z-index: auto !important;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: var(--sdk-fg);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.sdk-row__name:focus-visible {
+  outline: none;
+}
+
+.sdk-row__name::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.sdk-row__install {
+  position: relative;
+  z-index: 1;
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  max-width: 100%;
+  min-width: 0;
+  padding: 0.3125rem 0.5rem 0.3125rem 0.625rem;
+  border: 1px solid var(--sdk-code-line);
+  background: var(--sdk-code-bg);
+  color: var(--sdk-fg);
+  cursor: pointer;
+  transition: border-color 180ms var(--sdk-ease);
+}
+
+.sdk-row__install:hover {
+  border-color: var(--sdk-accent);
+}
+
+.sdk-row__install:focus-visible {
+  outline: 2px solid var(--sdk-accent);
+  outline-offset: 2px;
+}
+
+.sdk-row__install code {
+  /* Undo Mintlify's inline-code chip; the button is the chip. */
+  padding: 0 !important;
+  border: 0 !important;
+  background: none !important;
+  color: inherit !important;
+  overflow: hidden;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sdk-row__copy {
+  display: flex;
+  flex-shrink: 0;
+  color: var(--sdk-muted);
+  transition: color 180ms var(--sdk-ease);
+}
+
+.sdk-row__install:hover .sdk-row__copy,
+.sdk-row__copy[data-copied="true"] {
+  color: var(--sdk-accent);
+}
+
+.sdk-row__arrow {
+  color: var(--sdk-muted);
+  transition:
+    transform 220ms var(--sdk-ease),
+    color 180ms var(--sdk-ease);
+}
+
+.sdk-row:hover .sdk-row__arrow {
+  color: var(--sdk-accent);
+  transform: translate(2px, -2px);
+}
+
+.sdk-row__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Inline variant, used on the SDK guide pages: a sentence leads into the
+ * row, so the row sits close under that sentence and keeps the ordinary
+ * paragraph gap below it. */
+.sdk-list--inline {
+  margin: 0 0 1.25rem;
+}
+
+/* Mintlify renders MDX paragraphs as block <span>s, so match any element. */
+:has(+ .sdk-list--inline) {
+  margin-bottom: 0.625rem !important;
+}
+
+/* Narrow screens: the install command drops under the name, full width. */
+@media (max-width: 640px) {
+  .sdk-row {
+    grid-template-columns: 1.25rem minmax(0, 1fr) 1rem;
+    row-gap: 0.625rem;
+    padding: 0.875rem 0.5rem;
+  }
+
+  .sdk-row__install {
+    grid-row: 2;
+    grid-column: 2 / 4;
+    justify-self: stretch;
+    justify-content: space-between;
+    min-height: 2.75rem;
+    padding-block: 0.5rem;
+    text-align: left;
+  }
+
+  /* Wrap long commands rather than truncate them; the full text is readable. */
+  .sdk-row__install code {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sdk-row,
+  .sdk-row__logo,
+  .sdk-row__install,
+  .sdk-row__copy,
+  .sdk-row__arrow {
+    transition: none;
+  }
+
+  .sdk-row:hover .sdk-row__arrow {
+    transform: none;
+  }
+}
+
+/* ===========================================================================
+ * Code blocks marked `wrap`
+ *
+ * Mintlify honours the `wrap` meta by putting `whitespace-pre-wrap` on the
+ * block's wrapper, but the Shiki <pre> inside sets `white-space: pre` and
+ * wins, so long lines still scroll. Let the <pre> follow its wrapper. Blocks
+ * without `wrap` get `whitespace-pre` on the wrapper and are unaffected.
+ * ======================================================================== */
+.whitespace-pre-wrap > pre.shiki,
+.whitespace-pre-wrap > pre.shiki code {
+  white-space: pre-wrap !important;
+  overflow-wrap: anywhere;
+}

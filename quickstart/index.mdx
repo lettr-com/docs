@@ -5,7 +5,20 @@ description: "Get started with Lettr"
 
 Get up and running with Lettr in minutes. Choose the integration path that matches your stack.
 
-Using Cursor? [Jump straight in using this prompt](https://cursor.com/link/prompt?text=Help%20me%20add%20a%20Lettr%20sending%20example%20for%20my%20stack%2C%20or%20migrate%20my%20current%20email%20sending%20solution%20to%20Lettr%20using%20these%20docs%3A%20https%3A%2F%2Fdocs.lettr.com%2Fquickstart)
+Using an AI coding agent? Give it this prompt to get started:
+
+```text wrap expandable
+Set up email sending with Lettr in this project.
+
+Read the quickstart first and follow the guide that matches this project's language or framework: https://docs.lettr.com/quickstart.md
+The full docs index is at https://docs.lettr.com/llms.txt.
+
+1. Check how this project sends email today. If it already uses a provider, migrate that code to Lettr. If it doesn't send email yet, add one small, working example.
+2. Use the official Lettr SDK for this stack if there is one; otherwise use the REST API or SMTP as the guide describes.
+3. Read the API key from the `LETTR_API_KEY` environment variable. Never hard-code it or commit it.
+4. Send from an address on a domain that is verified in Lettr.
+5. When you're done, summarize what you changed and tell me how to send a test email.
+```
 
 <Tip>
   Working with an AI coding assistant like Claude Code or Cursor? Connect the [Lettr MCP server](/learn/mcp/introduction) and your assistant can send test emails, create templates, and set up domains for you while you integrate.

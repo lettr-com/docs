@@ -3,11 +3,31 @@ title: Getting Started
 description: "Send transactional emails from any PHP app with the type-safe lettr/lettr-php SDK, featuring a fluent builder and typed error handling."
 ---
 
+import { SdkRow } from "/snippets/sdk-row.jsx";
+
 Send transactional emails from any PHP application using the official Lettr PHP SDK. The SDK provides a clean, type-safe interface for the Lettr API without requiring a specific framework.
 
 The `lettr/lettr-php` package gives you a fluent interface for building and sending emails, managing templates, and tracking delivery — all with full IDE autocompletion and compile-time safety.
 
-Using Cursor? [Jump straight in using this prompt](https://cursor.com/link/prompt?text=Help%20me%20add%20a%20Lettr%20sending%20example%20for%20PHP%20using%20lettr%2Flettr-php%2C%20or%20migrate%20my%20current%20PHP%20sending%20solution%20to%20Lettr%20using%20these%20docs%3A%20https%3A%2F%2Fdocs.lettr.com%2Fquickstart%2Fphp%2Fintroduction)
+Install it with Composer, or browse its source on GitHub:
+
+<div className="sdk-list sdk-list--inline not-prose">
+  <SdkRow name="lettr-php" icon="php" href="https://github.com/lettr-com/lettr-php" install="composer require lettr/lettr-php" />
+</div>
+
+Using an AI coding agent? Give it this prompt to get started:
+
+```text wrap expandable
+Set up email sending with Lettr in this PHP project, using the official `lettr/lettr-php` SDK.
+
+Read this guide first: https://docs.lettr.com/quickstart/php/introduction.md
+
+1. Check how this project sends email today. If it already uses a provider, migrate that code to Lettr. If it doesn't send email yet, add one small, working example.
+2. Install the SDK with `composer require lettr/lettr-php`.
+3. Read the API key from the `LETTR_API_KEY` environment variable. Never hard-code it or commit it.
+4. Send from an address on a domain that is verified in Lettr.
+5. When you're done, summarize what you changed and tell me how to send a test email.
+```
 
 ## Why Use the PHP SDK?
 
