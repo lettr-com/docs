@@ -274,6 +274,18 @@
   white-space: nowrap;
 }
 
+/* Inline variant, used on the SDK guide pages: a sentence leads into the
+ * row, so the row sits close under that sentence and keeps the ordinary
+ * paragraph gap below it. */
+.sdk-list--inline {
+  margin: 0 0 1.25rem;
+}
+
+/* Mintlify renders MDX paragraphs as block <span>s, so match any element. */
+:has(+ .sdk-list--inline) {
+  margin-bottom: 0.625rem !important;
+}
+
 /* Narrow screens: the install command drops under the name, full width. */
 @media (max-width: 640px) {
   .sdk-row {
