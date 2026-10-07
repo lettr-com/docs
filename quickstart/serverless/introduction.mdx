@@ -5,7 +5,13 @@ description: "Send transactional emails from serverless functions on AWS Lambda,
 
 Lettr's HTTP API sends an email in a single stateless request, which is the shape serverless platforms want. This guide covers the generic `fetch` call that works on AWS Lambda, Vercel, Cloudflare Workers, and any other function runtime, plus the retry and idempotency handling a production function needs.
 
-Using Cursor? [Jump straight in using this prompt](https://cursor.com/link/prompt?text=Help%20me%20add%20a%20Lettr%20sending%20example%20for%20serverless%20functions%20%28AWS%20Lambda%2C%20Vercel%2C%20Cloudflare%20Workers%29%2C%20or%20migrate%20my%20current%20serverless%20sending%20solution%20to%20Lettr%20using%20these%20docs%3A%20https%3A%2F%2Fdocs.lettr.com%2Fquickstart%2Fserverless%2Fintroduction)
+Using Claude Code? Start it in your project with this prompt:
+
+```bash
+claude "Help me add a Lettr sending example for serverless functions (AWS Lambda, Vercel, Cloudflare Workers),
+or migrate my current serverless sending solution to Lettr
+using these docs: https://docs.lettr.com/quickstart/serverless/introduction"
+```
 
 ## Why HTTP instead of SMTP
 
