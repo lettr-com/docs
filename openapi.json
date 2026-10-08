@@ -6873,6 +6873,63 @@
             "$ref": "#/components/responses/ServerError"
           }
         }
+      },
+      "post": {
+        "operationId": "createCampaign",
+        "summary": "Create a campaign",
+        "description": "Creates a draft campaign. Give the content as `html_content` (optionally with the editor's `json_content`) or as a `template_id`, whose HTML is copied onto the campaign. Every list, segment, topic and template must belong to your team. The sender domain is checked when the campaign is sent, not here; language override senders are checked here and must use a verified sending domain. Send or schedule the draft with the send and schedule endpoints. Requires the `campaigns:write` scope. Not available to sandbox keys.",
+        "tags": [
+          "Campaigns"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StoreCampaignRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Campaign created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateCampaignResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailableError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "422": {
+            "description": "Validation error. Also returned when a list, segment, topic or template is not in your team, when both `html_content` and `template_id` are given, or when a language override sender uses an unverified domain.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
       }
     },
     "/campaigns/{campaignId}": {
@@ -13378,6 +13435,143 @@
           "data": {
             "description": "The updated campaign. Present on success; omitted in the rare case the campaign cannot be re-read immediately after the action (e.g. it was concurrently deleted).",
             "$ref": "#/components/schemas/CampaignSummary"
+          }
+        }
+      },
+      "StoreCampaignRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "Campaign name. Required unless `subject` is given, in which case the subject is used.",
+            "example": "October newsletter"
+          },
+          "subject": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 998,
+            "example": "News for October"
+          },
+          "from_email": {
+            "type": "string",
+            "format": "email",
+            "nullable": true,
+            "maxLength": 255,
+            "example": "news@example.com"
+          },
+          "from_name": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255,
+            "example": "Example"
+          },
+          "reply_to": {
+            "type": "string",
+            "format": "email",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "html_content": {
+            "type": "string",
+            "nullable": true,
+            "description": "Email HTML. Merge tags such as `{{first_name}}` are filled from contact properties. Cannot be combined with `template_id`; required when `json_content` is given.",
+            "example": "<p>Hello {{first_name}}</p>"
+          },
+          "json_content": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": true,
+            "description": "Editor JSON stored next to `html_content` so the campaign can be opened in the editor."
+          },
+          "template_id": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Template from one of your projects. Its HTML is copied onto the campaign. Cannot be combined with `html_content`."
+          },
+          "audience_config": {
+            "type": "object",
+            "nullable": true,
+            "description": "Who receives the campaign. Lists and segments are combined (a contact in any of them receives it); `topic_id` further limits recipients to contacts subscribed to that topic. With no lists or segments, every subscribed contact receives it.",
+            "additionalProperties": false,
+            "properties": {
+              "all_contacts": {
+                "type": "boolean",
+                "nullable": true
+              },
+              "list_ids": {
+                "type": "array",
+                "nullable": true,
+                "items": {
+                  "type": "string"
+                }
+              },
+              "segment_ids": {
+                "type": "array",
+                "nullable": true,
+                "items": {
+                  "type": "string"
+                }
+              },
+              "topic_id": {
+                "type": "string",
+                "nullable": true
+              }
+            }
+          },
+          "language_overrides": {
+            "type": "object",
+            "nullable": true,
+            "description": "Per-language sender and subject overrides, keyed by language code.",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "subject": {
+                  "type": "string",
+                  "nullable": true,
+                  "maxLength": 998
+                },
+                "from_email": {
+                  "type": "string",
+                  "format": "email",
+                  "nullable": true,
+                  "maxLength": 255
+                },
+                "from_email_domain": {
+                  "type": "string",
+                  "nullable": true,
+                  "maxLength": 253,
+                  "description": "Verified sending domain to send this language from, keeping the local part of `from_email`."
+                },
+                "from_name": {
+                  "type": "string",
+                  "nullable": true,
+                  "maxLength": 255
+                },
+                "reply_to": {
+                  "type": "string",
+                  "format": "email",
+                  "nullable": true,
+                  "maxLength": 255
+                }
+              }
+            }
+          }
+        }
+      },
+      "CreateCampaignResponse": {
+        "type": "object",
+        "required": [
+          "message",
+          "data"
+        ],
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Campaign created successfully."
+          },
+          "data": {
+            "$ref": "#/components/schemas/CampaignDetail"
           }
         }
       },

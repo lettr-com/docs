@@ -456,6 +456,7 @@
           {
             "group": "Campaigns",
             "pages": [
+              "api-reference/campaigns/create-a-campaign",
               "api-reference/campaigns/list-campaigns",
               "api-reference/campaigns/show-a-campaign",
               "api-reference/campaigns/list-campaign-engagement-events",

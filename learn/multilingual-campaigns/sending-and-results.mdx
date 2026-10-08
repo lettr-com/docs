@@ -93,7 +93,7 @@ Click the email thumbnail on the detail page to open the preview dialog. Choose 
 
 ## Multilingual Campaigns and the API
 
-Per-language subject and sender values are visible on the campaign object returned by the [Campaigns API](/api-reference/campaigns/show-a-campaign) as `language_overrides`, keyed by language code. Campaigns are still authored in the dashboard; the API can list, send, schedule and unschedule them and read their engagement events.
+Per-language subject and sender values are visible on the campaign object returned by the [Campaigns API](/api-reference/campaigns/show-a-campaign) as `language_overrides`, keyed by language code. You can also set them when you [create a campaign](/api-reference/campaigns/create-a-campaign) through the API. Every override sender must use a verified sending domain, and Lettr checks this when the draft is created.
 
 Language routing exists only in campaigns. An email sent through the [Emails API](/api-reference/emails/send-email) with a multilingual template always uses the primary version, and there is no language parameter. To send transactional email in several languages, keep one template per language and choose the template in your own code.
 
