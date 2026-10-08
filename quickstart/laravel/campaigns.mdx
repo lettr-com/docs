@@ -3,7 +3,7 @@ title: Campaigns
 description: "List, inspect, send, schedule, and unschedule email campaigns from Laravel using the Lettr facade and the campaigns API"
 ---
 
-Reach campaigns through `Lettr::campaigns()`. You get read access to your campaigns plus lifecycle actions — send now, schedule, and unschedule. Campaigns are **created and edited in the Lettr dashboard**; the API does not expose create, update, or delete.
+Reach campaigns through `Lettr::campaigns()`. You get read access to your campaigns plus lifecycle actions — send now, schedule, and unschedule. The SDK doesn't create campaigns yet. To create a draft from code, call the [create a campaign](/api-reference/campaigns/create-a-campaign) endpoint directly, then send or schedule it with the SDK. Editing and deleting campaigns happen in the dashboard.
 
 Reads require an API key with the `campaigns:read` scope; actions (send, schedule, unschedule) require `campaigns:write`.
 

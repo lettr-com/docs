@@ -9,7 +9,7 @@ Campaigns are different from transactional emails in two important ways:
 
 | | Campaign | Transactional email |
 |-|-|-|
-| Triggered by | You, sending from the dashboard | A user action or system event, sent through the API |
+| Triggered by | You, from the dashboard or the Campaigns API | A user action or system event, sent through the API |
 | Recipient list | A pre-built audience (lists or segments) | Specified per request, usually one or a few recipients |
 | Use case | Newsletters, product announcements, promotions | Password resets, order confirmations, account alerts |
 
@@ -116,11 +116,24 @@ The [Sending & Scheduling](/learn/campaigns/sending-and-scheduling) page covers 
 
 ## Where Campaigns Live
 
-Campaigns are authored in the Lettr dashboard. You build content, choose your audience, and review the send from the web app. If you need programmatic email sending for application events, use the [transactional email API](/learn/sending/introduction) instead — the two systems serve different purposes and are intentionally separate.
+Most campaigns are built in the Lettr dashboard, where you write the content, choose your audience, and review the send in the web app. If you need programmatic email sending for application events, use the [transactional email API](/learn/sending/introduction) instead. The two systems serve different purposes and are intentionally separate.
 
 <Tip>
-  While campaigns are authored in the dashboard, their lifecycle actions and engagement data are available programmatically. The [Campaigns API](/api-reference/campaigns/list-campaigns) lets you list campaigns, send or schedule them, unschedule a scheduled campaign, and pull per-recipient engagement events.
+  You can also run the whole campaign workflow through the API. The [Campaigns API](/api-reference/campaigns/create-a-campaign) lets you create a draft campaign from your own HTML or from a template, send or schedule it, unschedule a scheduled campaign, list campaigns, and pull per-recipient engagement events.
 </Tip>
+
+### Creating Campaigns Through the API
+
+[Create a campaign](/api-reference/campaigns/create-a-campaign) always makes a **draft**. Pass the content in one of two ways:
+
+- **`html_content`**: your own HTML. Merge tags such as `{{first_name}}` are filled from contact properties. Add the editor's `json_content` if you want the campaign to stay editable in the dashboard editor.
+- **`template_id`**: a template from one of your projects. Its HTML is copied onto the campaign.
+
+Set the recipients in `audience_config`. Every list, segment, topic and template you reference must belong to your team. Then pass the returned ID to [send a campaign now](/api-reference/campaigns/send-a-campaign-now) or [schedule a campaign](/api-reference/campaigns/schedule-a-campaign).
+
+<Note>
+  Creating a draft doesn't check the sender domain. Lettr checks it when you send or schedule the campaign: the `from_email` domain must be a verified [sending domain](/learn/domains/sending-domains), and at least one subscribed contact must be in the audience. Language override senders are the exception. Lettr checks them when the draft is created.
+</Note>
 
 ## Next Steps
 
