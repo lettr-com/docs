@@ -7,6 +7,31 @@ Create up to 1000 contacts in a single request. Emails are normalized and dedupl
 
 Send **either** `emails` (a flat list of addresses that all share the batch-wide `list_ids`, `properties` and `topics`) **or** `contacts` (one row per contact, each with its own properties, lists and topic subscriptions). Row-level values are applied on top of the batch-wide ones: a row's `properties` key overrides the batch-wide value for that key, and a row-level `opt_out` beats a batch-level `opt_in`.
 
+## Define properties first
+
+Every key you send in `properties` must already exist as a property on your team. This endpoint does not create properties on the fly. Register each field once with [create a property](/api-reference/audience/create-a-property) (`POST /audience/properties`), then upsert contacts that use it. If you're syncing from a CRM or your own database, make "define your fields" the first step: list existing properties with [list properties](/api-reference/audience/list-audience-properties) and create the ones that are missing.
+
+An unknown key is handled differently depending on where you send it:
+
+| Where the unknown key is | Result |
+|-|-|
+| Batch-wide `properties` | The whole request is rejected with `422` and `error_code: validation_error`. No contacts are written. |
+| A row's `properties` (in `contacts`) | Only that row is skipped and reported in `errors` with `unknown_property_key`. The rest of the batch commits. |
+
+The `422` response names the missing keys. A skipped row carries the same text in its `error` field.
+
+```json
+{
+  "message": "Validation failed.",
+  "error_code": "validation_error",
+  "errors": {
+    "properties": [
+      "Unknown property keys: 'plan', 'signup_source'. Register via POST /audience/properties first."
+    ]
+  }
+}
+```
+
 <Warning>
   **A `201` does not mean every row landed.** Rows that fail validation are skipped and reported in `errors` — the rest of the batch still commits. Always check `error_count` / `errors` rather than treating a 2xx as full success.
 </Warning>
@@ -30,6 +55,8 @@ The `contacts` array in the response returns `{ id, email, created }` for every 
 | Batch-wide `topics` | 50 |
 | Property value length | 1000 characters |
 
+For larger imports, split the contacts into batches of up to 1,000 and send one request per batch.
+
 ## Row error codes
 
 Each entry in `errors` carries the zero-based `index` of the submitted row, the `email`, a human-readable `error`, and one of these `error_code` values:
@@ -39,7 +66,7 @@ Each entry in `errors` carries the zero-based `index` of the submitted row, the 
 | `missing_email` | The row had no email address. |
 | `invalid_email` | The address failed validation. |
 | `invalid_property_value` | A property value was the wrong type or too long. |
-| `unknown_property_key` | A property key is not defined for the team. |
+| `unknown_property_key` | A property key is not defined for the team. Create it with `POST /audience/properties` and resend the row. |
 | `unknown_list` | A list id does not exist. |
 | `unknown_topic` | A topic id does not exist. |
 | `invalid_topic_subscription` | A `subscription` value was neither `opt_in` nor `opt_out`. |
