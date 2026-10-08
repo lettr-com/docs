@@ -38,7 +38,7 @@ Before setting up inbound email, ensure you have:
 
 Before the domain is created, your forwarding URL is tested with a `POST` request (sent by SparkPost, the mail infrastructure behind Lettr's inbound servers). The endpoint must answer with a `2xx` status. If it doesn't, the dashboard shows the status your endpoint returned, for example "Your forwarding URL answered SparkPost with HTTP 403", and the domain is not created, so you can fix the endpoint and try again.
 
-Once the domain is created, the dashboard displays the MX records you need to add.
+Once the domain is created, the dashboard displays the MX records you need to add. Mail sent to any address at the domain is forwarded to the same URL, so you don't create individual addresses.
 
 <Warning>
   Endpoints behind Cloudflare or another firewall/WAF often answer the test request with a challenge page (for example HTTP `403`). Allow server-to-server `POST` requests on your forwarding URL's path. SparkPost publishes no fixed source IP addresses, so use the auth token to verify requests instead of an IP allowlist. See [Security](/learn/inbound/security#verify-the-auth-token).
@@ -53,21 +53,27 @@ Once the domain is created, the dashboard displays the MX records you need to ad
 Add these MX records to your domain's DNS settings:
 
 | Type | Host/Name | Priority | Value |
-|------|-----------|----------|-------|
+|-|-|-|-|
 | MX | `@` or subdomain | 10 | `rx1.sparkpostmail.com` |
 | MX | `@` or subdomain | 10 | `rx2.sparkpostmail.com` |
 | MX | `@` or subdomain | 10 | `rx3.sparkpostmail.com` |
 
+All three records are required.
+
 <Note>
   If you're using a subdomain like `mail.example.com`, set the Host/Name field to `mail` instead of `@`.
 </Note>
+
+<Tip>
+  If your DNS is hosted on Cloudflare, the domain's page offers **One-Click DNS Setup**. Click **Configure with Cloudflare** and authorize the change to add the MX records without editing DNS by hand, then click **Verify MX Records**.
+</Tip>
 
 ### Understanding MX Priority
 
 All three MX records use the same priority (10), which provides load balancing:
 
 | Priority | Server | Purpose |
-|----------|--------|---------|
+|-|-|-|
 | 10 | `rx1.sparkpostmail.com` | Mail server |
 | 10 | `rx2.sparkpostmail.com` | Mail server |
 | 10 | `rx3.sparkpostmail.com` | Mail server |
@@ -109,11 +115,11 @@ The domain's page has a **Mail Forwarding** card where you can add or change the
 We recommend using a subdomain for inbound email:
 
 | Configuration | Use Case |
-|---------------|----------|
+|-|-|
 | `mail.example.com` | General inbound processing |
 | `reply.example.com` | Reply tracking for transactional emails |
 | `support.example.com` | Customer support emails |
-| `inbound.example.com` | Webhook-triggered workflows |
+| `inbound.example.com` | Automated workflow triggers |
 
 <Tip>
   Using subdomains lets you keep your root domain's MX records pointing to your regular email provider (Gmail, Microsoft 365, etc.) while routing specific addresses through Lettr.
@@ -124,7 +130,7 @@ We recommend using a subdomain for inbound email:
 DNS changes can take time to propagate:
 
 | Typical Time | Description |
-|--------------|-------------|
+|-|-|
 | 5 minutes | Most DNS providers |
 | 1-4 hours | Some registrars |
 | Up to 48 hours | Worst case |
@@ -143,7 +149,7 @@ DNS changes can take time to propagate:
     Route emails to different handlers
   </Card>
   <Card title="Attachments" icon="paperclip" href="/learn/inbound/attachments">
-    Handle incoming attachments
+    Get attachments out of the raw MIME message
   </Card>
   <Card title="Inbound Domains" icon="globe" href="/learn/domains/inbound-domains">
     Learn more about domain configuration

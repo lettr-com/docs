@@ -58,7 +58,7 @@ Tracking domains need two CNAME records:
 
 ### Inbound Domains
 
-Inbound domains need three MX records (all at priority 10) that direct incoming email to Lettr's mail servers for processing.
+Inbound domains need three MX records, `rx1.sparkpostmail.com`, `rx2.sparkpostmail.com`, and `rx3.sparkpostmail.com`, all at priority 10. They direct incoming email to Lettr's inbound mail servers, which forward each message to the Forwarding URL set on the inbound domain.
 
 <Tip>
   Domain Connect checks your existing DNS configuration before applying records. If you already have valid DMARC or SPF records in place, it skips those records to avoid creating conflicts or duplicates. This means you can safely use Domain Connect even if you've already partially configured your domain manually.
@@ -86,7 +86,7 @@ Inbound domains need three MX records (all at priority 10) that direct incoming 
 1. Go to **Domains** → **Inbound** and select your inbound domain
 2. Click **Configure with Cloudflare**
 3. Review and apply the three MX records
-4. Return to Lettr and click **Verify Records**
+4. Return to Lettr and click **Verify MX Records**
 
 ## After Domain Connect
 

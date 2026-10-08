@@ -9,21 +9,21 @@ Follow these best practices to build reliable, secure, and maintainable inbound 
 
 ### Process Asynchronously
 
-Don't block webhook responses with long-running processing:
+Respond to each delivery with a 2xx quickly and do slow work in the background. Lettr doesn't document a timeout for your forwarding URL, so keep the request itself short:
 
 ```javascript
-// Good: Respond immediately, process asynchronously
-app.post('/webhooks/inbound', express.json(), async (req, res) => {
-  // Acknowledge receipt immediately
-  res.sendStatus(200);
-
-  // Queue each event for async processing
+// Good: Queue the work, then respond
+app.post('/webhooks/inbound', express.json({ limit: '50mb' }), async (req, res) => {
+  // Queue each event for async processing (fast)
   for (const event of req.body) {
     const relay = event.msys?.relay_message;
     if (relay) {
       await emailQueue.add('process-inbound', relay);
     }
   }
+
+  // Acknowledge once the work is safely queued
+  res.sendStatus(200);
 });
 
 // Process in background
@@ -35,13 +35,13 @@ emailQueue.process('process-inbound', async (job) => {
 
 ```javascript
 // Bad: Blocking the webhook response
-app.post('/webhooks/inbound', express.json(), async (req, res) => {
+app.post('/webhooks/inbound', express.json({ limit: '50mb' }), async (req, res) => {
   for (const event of req.body) {
     const relay = event.msys?.relay_message;
     if (!relay) continue;
 
-    // This might timeout
-    await downloadAllAttachments(relay);
+    // Slow work inside the request
+    await extractAndStoreAttachments(relay);
     await processEmail(relay);
     await sendNotifications(relay);
     await updateDatabase(relay);
@@ -53,25 +53,44 @@ app.post('/webhooks/inbound', express.json(), async (req, res) => {
 
 ### Implement Idempotency
 
-Handle duplicate webhooks gracefully:
+The same message can arrive more than once, so make processing idempotent. Events carry no ID of their own; key on the message's `Message-ID` header instead:
 
 ```javascript
 import Redis from 'ioredis';
 const redis = new Redis();
 
-async function processEmailOnce(email) {
-  const key = `processed:${email.id}`;
+// Read a header from the headers array (case-insensitive)
+function getHeader(headers = [], name) {
+  const wanted = name.toLowerCase();
+  for (const header of headers) {
+    for (const [key, value] of Object.entries(header)) {
+      if (key.toLowerCase() === wanted) return value;
+    }
+  }
+  return null;
+}
+
+async function processEmailOnce(relay) {
+  const messageId = getHeader(relay.content.headers, 'Message-ID');
+  // Fall back to a hash of the raw message if Message-ID is missing
+  const dedupeId = messageId || sha256(relay.content.email_rfc822 || '');
+  // Include the recipient: one message sent to two of your addresses is two deliveries
+  const key = `processed:${relay.rcpt_to}:${dedupeId}`;
 
   // Try to set the key (only succeeds if it doesn't exist)
-  const isNew = await redis.set(key, '1', 'EX', 86400, 'NX');
+  const isNew = await redis.set(key, '1', 'EX', 7 * 86400, 'NX');
 
   if (!isNew) {
-    console.log(`Already processed: ${email.id}`);
+    console.log(`Already processed: ${key}`);
     return { skipped: true };
   }
 
-  // Process the email
-  await processEmail(email);
+  try {
+    await processEmail(relay);
+  } catch (error) {
+    await redis.del(key); // allow a later attempt
+    throw error;
+  }
   return { processed: true };
 }
 ```
@@ -85,11 +104,12 @@ const highPriorityQueue = new Queue('email-high', redisUrl);
 const normalQueue = new Queue('email-normal', redisUrl);
 const lowPriorityQueue = new Queue('email-low', redisUrl);
 
-function routeToQueue(email) {
-  if (isVipCustomer(email.from)) {
+function routeToQueue(relay) {
+  if (isVipCustomer(relay.msg_from)) {
     return highPriorityQueue;
   }
-  if (analyzeForSpam(email).score > 3) {
+  // Your own spam heuristic: Lettr adds no spam score
+  if (looksLikeSpam(relay)) {
     return lowPriorityQueue;
   }
   return normalQueue;
@@ -105,10 +125,10 @@ lowPriorityQueue.process(2, processEmail);
 
 ### Store Before Processing
 
-Save the raw email before any processing:
+Lettr doesn't keep a copy of inbound mail, so save the payload yourself before any processing:
 
 ```javascript
-app.post('/webhooks/inbound', express.json(), async (req, res) => {
+app.post('/webhooks/inbound', express.json({ limit: '50mb' }), async (req, res) => {
   // Store raw payload first
   await storeRawPayload({
     payload: req.body,
@@ -117,14 +137,14 @@ app.post('/webhooks/inbound', express.json(), async (req, res) => {
 
   res.sendStatus(200);
 
-  // Then process each event (can be retried from stored data if it fails)
+  // Then process each event (your own retry job can replay it from stored data)
   for (const event of req.body) {
     const relay = event.msys?.relay_message;
     if (!relay) continue;
 
     try {
       await processEmail(relay);
-      await markAsProcessed(relay.rcpt_to, relay.msg_from);
+      await markAsProcessed(getHeader(relay.content.headers, 'Message-ID'));
     } catch (error) {
       await markAsFailed(relay, error);
       await scheduleRetry(relay);
@@ -133,7 +153,9 @@ app.post('/webhooks/inbound', express.json(), async (req, res) => {
 });
 ```
 
-### Implement Retry Logic
+### Retry Your Own Downstream Calls
+
+When your processing calls other services (your database, a ticketing API, storage), retry transient failures in your own code. This is your application's retry policy, separate from how the message reaches your forwarding URL:
 
 ```javascript
 class EmailProcessor {
@@ -171,47 +193,44 @@ class EmailProcessor {
 }
 ```
 
-### Handle Attachment Expiration
+### Extract Attachments from the Raw Message
 
-Download attachments promptly before URLs expire:
+The payload has no attachment list or attachment URLs. Attachments are only inside the raw MIME message in `content.email_rfc822`. Parse it with a MIME library in your background job, and store the files yourself if you need them later:
 
 ```javascript
-app.post('/webhooks/inbound', express.json(), async (req, res) => {
-  res.sendStatus(200);
+import { simpleParser } from 'mailparser';
 
-  for (const event of req.body) {
-    const relay = event.msys?.relay_message;
-    if (!relay) continue;
+emailQueue.process('process-inbound', async (job) => {
+  const relay = job.data;
 
-    // Parse raw MIME to extract attachments
-    const parsed = await simpleParser(relay.content.email_rfc822);
-    const attachments = parsed.attachments || [];
+  // email_rfc822 can be base64-encoded; decode it first when flagged
+  const raw = relay.content.email_rfc822_is_base64
+    ? Buffer.from(relay.content.email_rfc822, 'base64')
+    : relay.content.email_rfc822;
 
-    // Download attachments immediately (URLs expire in 24 hours)
-    const savedAttachments = await Promise.all(
-      attachments.map(async (attachment) => {
+  const parsed = await simpleParser(raw);
+
+  // Each attachment's content is a Buffer, not a URL
+  const savedAttachments = await Promise.all(
+    parsed.attachments.map(async (attachment) => {
       try {
-        const response = await fetch(attachment.url);
-        const buffer = await response.arrayBuffer();
-
         const savedPath = await saveToStorage(
-          attachment.filename,
-          Buffer.from(buffer)
+          attachment.filename || 'attachment',
+          attachment.content
         );
-
-        return { ...attachment, savedPath };
+        return { filename: attachment.filename, contentType: attachment.contentType, savedPath };
       } catch (error) {
-        console.error(`Failed to download ${attachment.filename}:`, error);
-        return { ...attachment, error: error.message };
+        console.error(`Failed to store ${attachment.filename}:`, error);
+        return { filename: attachment.filename, error: error.message };
       }
     })
   );
 
-    // Process with saved attachments
-    await processEmail({ relay, attachments: savedAttachments });
-  }
+  await processEmail({ relay, attachments: savedAttachments });
 });
 ```
+
+See [Attachments](/learn/inbound/attachments) for more on parsing attachments.
 
 ## Error Handling
 
@@ -220,7 +239,7 @@ app.post('/webhooks/inbound', express.json(), async (req, res) => {
 Handle partial failures gracefully:
 
 ```javascript
-async function processEmail(email) {
+async function processEmail({ relay, attachments }) {
   const results = {
     stored: false,
     attachmentsProcessed: false,
@@ -230,7 +249,7 @@ async function processEmail(email) {
 
   // Store email (critical)
   try {
-    await storeEmail(email);
+    await storeEmail(relay);
     results.stored = true;
   } catch (error) {
     results.errors.push({ stage: 'store', error: error.message });
@@ -240,7 +259,7 @@ async function processEmail(email) {
 
   // Process attachments (non-critical)
   try {
-    await processAttachments(email.attachments);
+    await processAttachments(attachments);
     results.attachmentsProcessed = true;
   } catch (error) {
     results.errors.push({ stage: 'attachments', error: error.message });
@@ -249,7 +268,7 @@ async function processEmail(email) {
 
   // Send notifications (non-critical)
   try {
-    await sendNotifications(email);
+    await sendNotifications(relay);
     results.notificationsSent = true;
   } catch (error) {
     results.errors.push({ stage: 'notifications', error: error.message });
@@ -268,8 +287,9 @@ function logError(context, error) {
     level: 'error',
     timestamp: new Date().toISOString(),
     context: {
-      emailId: context.emailId,
-      sender: context.from,
+      messageId: context.messageId, // the Message-ID header
+      recipient: context.rcptTo,
+      sender: context.msgFrom,
       stage: context.stage
     },
     error: {
@@ -358,14 +378,15 @@ const queueSize = new Gauge({
   help: 'Current email queue size'
 });
 
-async function processEmail(email) {
+async function processEmail(relay) {
   const timer = processingTime.startTimer({ type: 'full' });
+  const domain = relay.rcpt_to.split('@')[1];
 
   try {
-    await doProcessing(email);
-    emailsReceived.inc({ domain: email.domain, status: 'success' });
+    await doProcessing(relay);
+    emailsReceived.inc({ domain, status: 'success' });
   } catch (error) {
-    emailsReceived.inc({ domain: email.domain, status: 'error' });
+    emailsReceived.inc({ domain, status: 'error' });
     throw error;
   } finally {
     timer();
@@ -376,7 +397,7 @@ async function processEmail(email) {
 ### Set Up Alerts
 
 ```javascript
-// Alert on high spam rate
+// Alert on a high spam rate, as measured by your own spam checks
 async function checkSpamRate() {
   const recent = await getRecentEmails(100);
   const spamCount = recent.filter(e => e.isSpam).length;
@@ -459,28 +480,34 @@ describe('Inbound Webhook', () => {
 ```javascript
 describe('Email Processing', () => {
   it('should handle missing fields', async () => {
-    const email = {
-      id: 'test_456',
-      from: 'sender@example.com',
-      to: ['support@example.com']
-      // Missing subject, text, html
+    const relay = {
+      msg_from: 'sender@example.com',
+      rcpt_to: 'support@mail.example.com',
+      content: {
+        to: ['support@mail.example.com'],
+        headers: []
+        // Missing subject, text, html
+      }
     };
 
-    const result = await processEmail(email);
+    const result = await processEmail(relay);
     expect(result.success).toBe(true);
   });
 
-  it('should handle expired attachment URLs', async () => {
-    const email = {
-      id: 'test_789',
-      attachments: [{
-        filename: 'file.pdf',
-        url: 'https://expired-url.com/file.pdf'
-      }]
+  it('should skip a duplicate delivery', async () => {
+    const relay = {
+      msg_from: 'sender@example.com',
+      rcpt_to: 'support@mail.example.com',
+      content: {
+        subject: 'Hello',
+        text: 'Hi',
+        headers: [{ 'Message-ID': '<dup-1@example.com>' }]
+      }
     };
 
-    const result = await processEmail(email);
-    expect(result.attachmentErrors).toHaveLength(1);
+    await processEmailOnce(relay);
+    const second = await processEmailOnce(relay);
+    expect(second.skipped).toBe(true);
   });
 });
 ```
@@ -491,7 +518,7 @@ describe('Email Processing', () => {
   <Accordion title="Setup">
     - [ ] Configure inbound domain with MX records
     - [ ] Set a forwarding URL on the domain and verify its auth token
-    - [ ] Configure spam filtering sensitivity
+    - [ ] Decide how your handler treats spam (Lettr does not filter it)
     - [ ] Set up monitoring and alerting
   </Accordion>
 
@@ -499,8 +526,8 @@ describe('Email Processing', () => {
     - [ ] Implement async processing (don't block webhooks)
     - [ ] Store raw emails before processing
     - [ ] Implement idempotency (handle duplicates)
-    - [ ] Download attachments promptly
-    - [ ] Implement retry logic for failures
+    - [ ] Parse attachments from the raw MIME message
+    - [ ] Retry your own downstream calls on transient failures
   </Accordion>
 
   <Accordion title="Security">

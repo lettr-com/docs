@@ -35,7 +35,7 @@ Webhooks enable powerful real-time integrations:
 | `engagement.open` | Track engagement metrics and trigger follow-up sequences |
 | `engagement.click` | Measure link performance and user interest |
 | `message.spam_complaint` | Immediately suppress users who mark emails as spam |
-| `relay.relay_delivery` | Process inbound emails, create support tickets, track replies |
+| `relay.relay_permfail` | Alert when an inbound email could not be delivered to your forwarding URL |
 
 ## Managing Webhooks
 
@@ -220,10 +220,10 @@ Events for recipient opt-outs:
 
 ### Relay Events
 
-Events for inbound email processing:
+Status events for inbound email on your inbound domains. The message itself is posted to the domain's forwarding URL, not to your webhook:
 
-- `relay.relay_injection` - Inbound email received and queued
-- `relay.relay_delivery` - Inbound email delivered to your endpoint
+- `relay.relay_injection` - Inbound email received
+- `relay.relay_delivery` - Inbound email delivered to your forwarding URL
 - `relay.relay_rejection` - Inbound email rejected
 - `relay.relay_tempfail` - Inbound email delivery temporarily failed
 - `relay.relay_permfail` - Inbound email delivery permanently failed

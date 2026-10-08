@@ -1,30 +1,92 @@
 ---
 title: Routing
-description: "Route inbound email in Lettr to different handlers based on recipient address, subject, content, or variable addressing in your webhook."
+description: "Route inbound email from Lettr to different handlers in your own code, based on recipient address, variable addressing, subject, sender, or content."
 ---
 
-Route incoming emails to different handlers based on the recipient address, subject line, content, or custom rules. This allows you to build sophisticated email processing workflows.
+Lettr has no routing rules to configure. Mail sent to any address at an inbound domain is posted to that domain's one forwarding URL, and your handler decides what to do with each message. This page shows common routing patterns you can build in that handler.
+
+## What Lettr Routes for You
+
+The only routing Lettr does is per domain: each inbound domain has its own forwarding URL. If you want different kinds of mail to reach different services, you can set up separate inbound domains with separate forwarding URLs:
+
+| Inbound domain | Forwarding URL |
+|-|-|
+| `support.example.com` | `https://helpdesk.example.com/webhooks/inbound` |
+| `replies.example.com` | `https://app.example.com/webhooks/replies` |
+
+Everything below that level, such as `support@` versus `billing@` on the same domain, is handled in your code.
+
+## Fields Used for Routing
+
+Your forwarding URL receives a JSON array of events. Each event has a `msys.relay_message` object (see [Email Parsing](/learn/inbound/parsing) for the full payload). These are the fields you usually route on:
+
+| Field | Contains |
+|-|-|
+| `rcpt_to` | The envelope recipient: the address on your inbound domain that received the message |
+| `msg_from` | The envelope sender address |
+| `friendly_from` | The `From` header, with display name, for example `John Doe <john@example.com>` |
+| `content.subject` | The decoded subject line |
+| `content.to` | Addresses from the `To` header |
+| `content.headers` | All headers, as an array of single-key objects |
+| `content.text` / `content.html` | The message body. Either can be missing. |
+
+The examples on this page share these helpers:
+
+```javascript
+// Read a header from the headers array (case-insensitive)
+function getHeader(headers = [], name) {
+  const wanted = name.toLowerCase();
+  for (const header of headers) {
+    for (const [key, value] of Object.entries(header)) {
+      if (key.toLowerCase() === wanted) return value;
+    }
+  }
+  return null;
+}
+
+// Extract the bare address from "Name <address>" or a plain address
+function extractAddress(value = '') {
+  const match = value.match(/<([^>]+)>/);
+  return (match ? match[1] : value).trim().toLowerCase();
+}
+
+// Collect the relay messages from one delivery
+function relayMessages(body) {
+  return (Array.isArray(body) ? body : [])
+    .map((event) => event.msys?.relay_message)
+    .filter(Boolean);
+}
+```
+
+<Note>
+  The raw MIME message in `content.email_rfc822` makes payloads with attachments large. Raise your body parser's size limit (Express defaults to 100kb), as the examples below do.
+</Note>
 
 ## Routing by Recipient
 
-The most common routing pattern is based on the recipient email address:
+The most common pattern is to route on the address that received the message:
 
 ```javascript
-app.post('/webhooks/inbound', async (req, res) => {
-  const { to, from, subject, text, html } = req.body.data;
-  const recipient = to[0].toLowerCase();
+app.post('/webhooks/inbound', express.json({ limit: '50mb' }), async (req, res) => {
+  for (const relay of relayMessages(req.body)) {
+    const recipient = relay.rcpt_to.toLowerCase();
+    const message = {
+      from: relay.friendly_from || relay.msg_from,
+      subject: relay.content.subject,
+      body: relay.content.text || relay.content.html
+    };
 
-  // Route based on recipient address
-  if (recipient.startsWith('support@')) {
-    await createSupportTicket({ from, subject, body: text || html });
-  } else if (recipient.startsWith('sales@')) {
-    await notifySalesTeam({ from, subject, body: text || html });
-  } else if (recipient.startsWith('feedback@')) {
-    await storeFeedback({ from, subject, body: text || html });
-  } else if (recipient.startsWith('billing@')) {
-    await routeToBilling({ from, subject, body: text || html });
-  } else {
-    await handleUnknownRecipient({ recipient, from, subject });
+    if (recipient.startsWith('support@')) {
+      await createSupportTicket(message);
+    } else if (recipient.startsWith('sales@')) {
+      await notifySalesTeam(message);
+    } else if (recipient.startsWith('feedback@')) {
+      await storeFeedback(message);
+    } else if (recipient.startsWith('billing@')) {
+      await routeToBilling(message);
+    } else {
+      await handleUnknownRecipient({ recipient, ...message });
+    }
   }
 
   res.sendStatus(200);
@@ -33,19 +95,22 @@ app.post('/webhooks/inbound', async (req, res) => {
 
 ## Variable Address Routing
 
-Use variable addresses (plus addressing) to encode data in the email address:
+Because every address at the domain is forwarded, you can encode data in the address itself (plus addressing) and parse it in your handler:
 
 ```javascript
-app.post('/webhooks/inbound', async (req, res) => {
-  const { to, from, subject, text } = req.body.data;
-  const recipient = to[0];
+app.post('/webhooks/inbound', express.json({ limit: '50mb' }), async (req, res) => {
+  for (const relay of relayMessages(req.body)) {
+    // Parse variable address: reply+{ticketId}@mail.example.com
+    const match = relay.rcpt_to.match(/^reply\+([^@]+)@/i);
 
-  // Parse variable address: reply+{ticketId}@mail.example.com
-  const match = recipient.match(/^reply\+([^@]+)@/);
-
-  if (match) {
-    const ticketId = match[1];
-    await addReplyToTicket(ticketId, { from, subject, body: text });
+    if (match) {
+      const ticketId = match[1];
+      await addReplyToTicket(ticketId, {
+        from: relay.msg_from,
+        subject: relay.content.subject,
+        body: relay.content.text
+      });
+    }
   }
 
   res.sendStatus(200);
@@ -55,31 +120,37 @@ app.post('/webhooks/inbound', async (req, res) => {
 ### Common Variable Address Patterns
 
 | Pattern | Use Case | Example |
-|---------|----------|---------|
+|-|-|-|
 | `reply+{ticketId}@` | Support ticket replies | `reply+TKT-1234@mail.example.com` |
 | `unsubscribe+{userId}@` | Email unsubscriptions | `unsubscribe+usr_abc@mail.example.com` |
 | `confirm+{token}@` | Email confirmations | `confirm+xyz789@mail.example.com` |
 | `order+{orderId}@` | Order communications | `order+ORD-5678@mail.example.com` |
 | `notify+{channelId}@` | Channel notifications | `notify+ch_slack@mail.example.com` |
 
+<Tip>
+  Anyone can write to any address at your inbound domain, so treat the encoded value as untrusted input. Look it up in your database rather than trusting it, or sign it so you can detect tampering.
+</Tip>
+
 ## Routing by Subject
 
-Route emails based on subject line keywords or patterns:
+Route on keywords or patterns in the subject line:
 
 ```javascript
-app.post('/webhooks/inbound', async (req, res) => {
-  const { from, subject, text } = req.body.data;
-  const subjectLower = subject.toLowerCase();
+app.post('/webhooks/inbound', express.json({ limit: '50mb' }), async (req, res) => {
+  for (const relay of relayMessages(req.body)) {
+    const subject = relay.content.subject || '';
+    const message = { from: relay.msg_from, subject, body: relay.content.text };
+    const ticketMatch = subject.match(/ticket #(\d+)/i);
 
-  if (subjectLower.includes('urgent') || subjectLower.includes('emergency')) {
-    await createHighPriorityTicket({ from, subject, body: text });
-  } else if (subjectLower.includes('unsubscribe')) {
-    await processUnsubscribeRequest({ from });
-  } else if (subjectLower.match(/re:\s*ticket #\d+/i)) {
-    const ticketNum = subjectLower.match(/ticket #(\d+)/i)[1];
-    await addReplyToTicket(ticketNum, { from, body: text });
-  } else {
-    await createStandardTicket({ from, subject, body: text });
+    if (/\b(urgent|emergency)\b/i.test(subject)) {
+      await createHighPriorityTicket(message);
+    } else if (/unsubscribe/i.test(subject)) {
+      await processUnsubscribeRequest({ from: relay.msg_from });
+    } else if (ticketMatch) {
+      await addReplyToTicket(ticketMatch[1], message);
+    } else {
+      await createStandardTicket(message);
+    }
   }
 
   res.sendStatus(200);
@@ -88,50 +159,52 @@ app.post('/webhooks/inbound', async (req, res) => {
 
 ## Routing by Sender Domain
 
-Route based on the sender's domain for B2B workflows:
+Route on the sender's domain, for example to send mail from known customers to their account manager:
 
 ```javascript
-app.post('/webhooks/inbound', async (req, res) => {
-  const { from, subject, text } = req.body.data;
-  const senderDomain = from.split('@')[1].toLowerCase();
+app.post('/webhooks/inbound', express.json({ limit: '50mb' }), async (req, res) => {
+  for (const relay of relayMessages(req.body)) {
+    const sender = extractAddress(relay.friendly_from || relay.msg_from);
+    const senderDomain = sender.split('@')[1];
+    const message = { from: sender, subject: relay.content.subject, body: relay.content.text };
 
-  // Check if sender is from a known customer domain
-  const customer = await findCustomerByDomain(senderDomain);
+    const customer = await findCustomerByDomain(senderDomain);
 
-  if (customer) {
-    await routeToAccountManager(customer.accountManagerId, {
-      from,
-      subject,
-      body: text,
-      customerId: customer.id
-    });
-  } else {
-    await routeToGeneralInbox({ from, subject, body: text });
+    if (customer) {
+      await routeToAccountManager(customer.accountManagerId, { ...message, customerId: customer.id });
+    } else {
+      await routeToGeneralInbox(message);
+    }
   }
 
   res.sendStatus(200);
 });
 ```
 
+<Note>
+  `msg_from` is the envelope sender and can differ from the address in the `From` header (`friendly_from`), for example when mail comes through a mailing list or a bulk sender. Neither proves who sent the message. See [Security](/learn/inbound/security) before you grant anything based on the sender.
+</Note>
+
 ## Content-Based Routing
 
-Route based on email content analysis:
+Route on what the message says:
 
 ```javascript
-app.post('/webhooks/inbound', async (req, res) => {
-  const { from, subject, text, html } = req.body.data;
-  const content = text || stripHtml(html);
-  const contentLower = content.toLowerCase();
+app.post('/webhooks/inbound', express.json({ limit: '50mb' }), async (req, res) => {
+  for (const relay of relayMessages(req.body)) {
+    const content = relay.content.text || stripHtml(relay.content.html || '');
+    const lower = content.toLowerCase();
+    const message = { from: relay.msg_from, subject: relay.content.subject, body: content };
 
-  // Detect intent from content
-  if (contentLower.includes('cancel') && contentLower.includes('subscription')) {
-    await routeToCancellations({ from, subject, body: content });
-  } else if (contentLower.includes('refund') || contentLower.includes('money back')) {
-    await routeToRefunds({ from, subject, body: content });
-  } else if (contentLower.includes('bug') || contentLower.includes('error')) {
-    await routeToTechnicalSupport({ from, subject, body: content });
-  } else {
-    await routeToGeneralSupport({ from, subject, body: content });
+    if (lower.includes('cancel') && lower.includes('subscription')) {
+      await routeToCancellations(message);
+    } else if (lower.includes('refund') || lower.includes('money back')) {
+      await routeToRefunds(message);
+    } else if (lower.includes('bug') || lower.includes('error')) {
+      await routeToTechnicalSupport(message);
+    } else {
+      await routeToGeneralSupport(message);
+    }
   }
 
   res.sendStatus(200);
@@ -140,52 +213,45 @@ app.post('/webhooks/inbound', async (req, res) => {
 
 ## Multi-Criteria Routing
 
-Combine multiple routing criteria for complex workflows:
+Combine criteria into an ordered rule list in your code, and run the first rule that matches:
 
 ```javascript
-app.post('/webhooks/inbound', async (req, res) => {
-  const { to, from, subject, text, html, spamScore } = req.body.data;
-  const recipient = to[0].toLowerCase();
-  const content = text || html;
-
-  // Define routing rules
-  const rules = [
-    {
-      name: 'spam',
-      condition: () => spamScore > 5,
-      action: async () => await quarantineAsSpam({ from, subject })
-    },
-    {
-      name: 'vip',
-      condition: () => isVipCustomer(from),
-      action: async () => await routeToVipSupport({ from, subject, body: content })
-    },
-    {
-      name: 'ticket-reply',
-      condition: () => recipient.match(/^reply\+/),
-      action: async () => {
-        const ticketId = recipient.match(/^reply\+([^@]+)@/)[1];
-        await addReplyToTicket(ticketId, { from, body: content });
-      }
-    },
-    {
-      name: 'sales',
-      condition: () => recipient.startsWith('sales@'),
-      action: async () => await notifySalesTeam({ from, subject, body: content })
-    },
-    {
-      name: 'default',
-      condition: () => true,
-      action: async () => await createSupportTicket({ from, subject, body: content })
+const rules = [
+  {
+    name: 'vip',
+    matches: (relay) => isVipCustomer(extractAddress(relay.friendly_from || relay.msg_from)),
+    handle: (relay, message) => routeToVipSupport(message)
+  },
+  {
+    name: 'ticket-reply',
+    matches: (relay) => /^reply\+[^@]+@/i.test(relay.rcpt_to),
+    handle: (relay, message) => {
+      const ticketId = relay.rcpt_to.match(/^reply\+([^@]+)@/i)[1];
+      return addReplyToTicket(ticketId, message);
     }
-  ];
+  },
+  {
+    name: 'sales',
+    matches: (relay) => relay.rcpt_to.toLowerCase().startsWith('sales@'),
+    handle: (relay, message) => notifySalesTeam(message)
+  },
+  {
+    name: 'default',
+    matches: () => true,
+    handle: (relay, message) => createSupportTicket(message)
+  }
+];
 
-  // Execute first matching rule
-  for (const rule of rules) {
-    if (rule.condition()) {
-      await rule.action();
-      break;
-    }
+app.post('/webhooks/inbound', express.json({ limit: '50mb' }), async (req, res) => {
+  for (const relay of relayMessages(req.body)) {
+    const message = {
+      from: relay.msg_from,
+      subject: relay.content.subject,
+      body: relay.content.text || relay.content.html
+    };
+
+    const rule = rules.find((r) => r.matches(relay));
+    await rule.handle(relay, message);
   }
 
   res.sendStatus(200);
@@ -194,7 +260,7 @@ app.post('/webhooks/inbound', async (req, res) => {
 
 ## Routing with Priority Queues
 
-For high-volume applications, use priority queues:
+For high volumes, push messages onto queues by priority and respond right away:
 
 ```javascript
 import Queue from 'bull';
@@ -203,26 +269,24 @@ const highPriorityQueue = new Queue('email-high', redisUrl);
 const normalPriorityQueue = new Queue('email-normal', redisUrl);
 const lowPriorityQueue = new Queue('email-low', redisUrl);
 
-app.post('/webhooks/inbound', async (req, res) => {
-  const { from, subject, text, spamScore } = req.body.data;
+function pickQueue(relay) {
+  const sender = extractAddress(relay.friendly_from || relay.msg_from);
+  const subject = (relay.content.subject || '').toLowerCase();
+  const headers = relay.content.headers;
 
-  // Determine priority
-  let queue;
-  if (isVipCustomer(from) || subject.toLowerCase().includes('urgent')) {
-    queue = highPriorityQueue;
-  } else if (spamScore > 3) {
-    queue = lowPriorityQueue;
-  } else {
-    queue = normalPriorityQueue;
+  if (isVipCustomer(sender) || subject.includes('urgent')) {
+    return highPriorityQueue;
   }
+  if (getHeader(headers, 'List-Id') || getHeader(headers, 'Auto-Submitted')) {
+    return lowPriorityQueue; // mailing lists and automated mail
+  }
+  return normalPriorityQueue;
+}
 
-  // Add to appropriate queue
-  await queue.add({
-    from,
-    subject,
-    body: text,
-    receivedAt: new Date().toISOString()
-  });
+app.post('/webhooks/inbound', express.json({ limit: '50mb' }), async (req, res) => {
+  for (const relay of relayMessages(req.body)) {
+    await pickQueue(relay).add({ relay, receivedAt: new Date().toISOString() });
+  }
 
   res.sendStatus(200);
 });
@@ -233,25 +297,24 @@ normalPriorityQueue.process(5, processEmail);
 lowPriorityQueue.process(2, processEmail);
 ```
 
-## Catch-All Addresses
+## Unknown Addresses
 
-Handle any address on your inbound domain:
+Every address at your inbound domain is forwarded, including ones you never planned for. Decide in your handler what happens to addresses you don't recognize:
 
 ```javascript
-app.post('/webhooks/inbound', async (req, res) => {
-  const { to, from, subject, text } = req.body.data;
-  const recipient = to[0];
-  const localPart = recipient.split('@')[0].toLowerCase();
+const knownAddresses = ['support', 'sales', 'feedback', 'billing'];
 
-  // Known addresses
-  const knownAddresses = ['support', 'sales', 'feedback', 'billing'];
+app.post('/webhooks/inbound', express.json({ limit: '50mb' }), async (req, res) => {
+  for (const relay of relayMessages(req.body)) {
+    const localPart = relay.rcpt_to.split('@')[0].toLowerCase();
+    const message = { from: relay.msg_from, subject: relay.content.subject, body: relay.content.text };
 
-  if (knownAddresses.includes(localPart)) {
-    await routeToKnownHandler(localPart, { from, subject, body: text });
-  } else {
-    // Catch-all: log and potentially notify admin
-    await logUnknownAddress(recipient, { from, subject });
-    await notifyAdmin(`Unknown address: ${recipient}`);
+    if (knownAddresses.includes(localPart)) {
+      await routeToKnownHandler(localPart, message);
+    } else {
+      // Log and optionally notify an admin
+      await logUnknownAddress(relay.rcpt_to, message);
+    }
   }
 
   res.sendStatus(200);
@@ -259,78 +322,93 @@ app.post('/webhooks/inbound', async (req, res) => {
 ```
 
 <Tip>
-  Catch-all addresses can receive a lot of spam. Consider implementing spam filtering before processing catch-all emails.
+  Lettr does not filter spam on inbound mail, and unknown addresses tend to attract it. Add your own checks before acting on these messages. See [Spam Filtering](/learn/inbound/spam-filtering).
 </Tip>
 
 ## Forwarding Emails
 
-Forward received emails to another address:
+To pass a received message on to another mailbox, send it with the Lettr send API. Attachments are only in the raw MIME message (`content.email_rfc822`), so parse that first and re-attach the files as base64:
 
 ```javascript
-app.post('/webhooks/inbound', async (req, res) => {
-  const { from, fromName, subject, text, html, attachments } = req.body.data;
+import { simpleParser } from 'mailparser';
 
-  // Forward to internal team
-  await lettr.emails.send({
-    from: 'forwarded@yourdomain.com',
+function escapeHtml(value = '') {
+  return value.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+}
+
+async function forwardToTeam(relay) {
+  const raw = relay.content.email_rfc822_is_base64
+    ? Buffer.from(relay.content.email_rfc822, 'base64')
+    : relay.content.email_rfc822;
+  const parsed = await simpleParser(raw);
+
+  const { error } = await lettr.emails.send({
+    from: 'forwarded@yourdomain.com', // an address on your verified sending domain
+    from_name: 'Inbound Forwarder',
     to: ['team@yourdomain.com'],
-    subject: `[Forwarded] ${subject}`,
+    reply_to: extractAddress(relay.friendly_from || relay.msg_from),
+    subject: `[Forwarded] ${relay.content.subject || '(no subject)'}`,
     html: `
-      <p><strong>Originally from:</strong> ${fromName} &lt;${from}&gt;</p>
+      <p><strong>Originally from:</strong> ${escapeHtml(relay.friendly_from || relay.msg_from)}</p>
       <hr>
-      ${html || `<pre>${text}</pre>`}
+      ${relay.content.html || `<pre>${escapeHtml(relay.content.text || '')}</pre>`}
     `,
-    attachments: attachments.map(att => ({
-      filename: att.filename,
-      url: att.url
-    }))
+    attachments: parsed.attachments
+      .filter((att) => !att.related) // skip inline images
+      .map((att) => ({
+        name: att.filename || 'attachment',
+        type: att.contentType,
+        data: att.content.toString('base64')
+      }))
   });
 
-  res.sendStatus(200);
-});
+  if (error) {
+    throw new Error(`Forward failed: ${error.message}`);
+  }
+}
 ```
+
+<Warning>
+  Forwarded HTML comes from an external sender. Sanitize it before you show it anywhere other than the recipient's mail client.
+</Warning>
 
 ## Error Handling
 
-Implement proper error handling in your routing logic:
+Store the payload before you route it, and answer with a 2xx once it is saved. Handle routing failures from your own store instead of counting on the message being delivered to you again:
 
 ```javascript
-app.post('/webhooks/inbound', async (req, res) => {
-  try {
-    const { to, from, subject, text } = req.body.data;
-    const recipient = to[0];
+app.post('/webhooks/inbound', express.json({ limit: '50mb' }), async (req, res) => {
+  // Persist first, so a routing bug never loses a message
+  const deliveryId = await storeInboundPayload(req.body);
+  res.sendStatus(200);
 
-    await routeEmail(recipient, { from, subject, body: text });
-
-    res.sendStatus(200);
-  } catch (error) {
-    console.error('Routing error:', error);
-
-    // Store failed email for manual review
-    await storeFailedEmail(req.body.data, error.message);
-
-    // Return 200 to prevent retries if it's a processing error
-    // Return 500 to trigger retry if it's a temporary error
-    if (error.isTemporary) {
-      res.sendStatus(500);
-    } else {
-      res.sendStatus(200);
+  for (const relay of relayMessages(req.body)) {
+    try {
+      await routeEmail(relay);
+    } catch (error) {
+      console.error('Routing error:', error);
+      // Keep it for manual review or your own retry job
+      await markForReview(deliveryId, relay, error.message);
     }
   }
 });
 ```
 
+<Note>
+  The same message can occasionally arrive more than once. Make your routing idempotent, for example by skipping messages whose `Message-ID` header you have already handled. See [Best Practices](/learn/inbound/best-practices#implement-idempotency).
+</Note>
+
 ## Related Topics
 
 <CardGroup cols={2}>
-  <Card title="Webhooks" icon="webhook" href="/learn/webhooks/introduction">
-    Set up webhook endpoints
+  <Card title="Email Parsing" icon="code" href="/learn/inbound/parsing">
+    The full inbound payload
   </Card>
   <Card title="Reply Tracking" icon="reply" href="/learn/inbound/reply-tracking">
-    Track and thread email replies
+    Match replies to the emails you sent
   </Card>
   <Card title="Spam Filtering" icon="shield" href="/learn/inbound/spam-filtering">
-    Filter spam from inbound emails
+    Handle spam in your own code
   </Card>
   <Card title="Best Practices" icon="star" href="/learn/inbound/best-practices">
     Inbound best practices
