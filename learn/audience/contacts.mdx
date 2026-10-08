@@ -128,7 +128,7 @@ One property per team can hold each contact's language. Tick **Use as communicat
 Go to **Audience** → **Properties** to view, create, edit, and delete your team's property schema.
 
 <Tip>
-  Define the properties you care about before you import contacts. The CSV import flow can map columns directly to existing properties, so having them set up first saves a step.
+  Define the properties you care about before you import contacts. The CSV import flow can map columns directly to existing properties, so having them set up first saves a step. Over the API it's required: the [contacts endpoints](/api-reference/audience/bulk-create-contacts#define-properties-first) reject property keys that aren't defined yet, so create them first with `POST /audience/properties`.
 </Tip>
 
 ### Using Properties in Campaigns
