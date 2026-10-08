@@ -124,15 +124,15 @@ Triggered when a recipient unsubscribes by clicking an unsubscribe link in the e
 
 ## Relay Events
 
-These events are triggered by inbound email processing on your configured inbound domains.
+These events report the status of inbound email on your [inbound domains](/learn/domains/inbound-domains). They are status notifications, not the message itself: the inbound message is posted separately to the **Forwarding URL** set on the inbound domain (see [Email Parsing](/learn/inbound/parsing)).
 
 ### relay.relay_injection
 
-Triggered when an inbound email is received and queued for processing.
+Triggered when an inbound email is received on your inbound domain.
 
 ### relay.relay_delivery
 
-Triggered when an inbound email is successfully delivered to your configured endpoint.
+Triggered when an inbound email is successfully delivered to your forwarding URL.
 
 ### relay.relay_rejection
 
@@ -140,11 +140,11 @@ Triggered when an inbound email is rejected.
 
 ### relay.relay_tempfail
 
-Triggered when delivery of an inbound email to your endpoint temporarily fails. Lettr will retry automatically.
+Triggered when delivery of an inbound email to your forwarding URL temporarily fails, for example because your endpoint returned an error or was unreachable.
 
 ### relay.relay_permfail
 
-Triggered when delivery of an inbound email to your endpoint permanently fails after all retry attempts are exhausted.
+Triggered when delivery of an inbound email to your forwarding URL permanently fails and the message will not be delivered.
 
 ---
 

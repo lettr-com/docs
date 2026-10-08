@@ -3,13 +3,13 @@ title: Security
 description: "Secure your inbound email pipeline in Lettr by verifying the auth token sent to your forwarding URL and handling external mail safely."
 ---
 
-Receiving emails from external sources introduces security considerations. This guide covers best practices for securing your inbound email processing pipeline.
+Receiving emails from external sources introduces security considerations. This guide covers best practices for securing your inbound email processing pipeline. Apart from the auth token, everything here runs in your own handler: Lettr posts inbound mail to your forwarding URL as received and doesn't sanitize, scan or filter it.
 
 ## Forwarding URL Security
 
 ### Verify the Auth Token
 
-Always verify that requests to your forwarding URL come from Lettr, not malicious actors. When you create an inbound domain, or later on the domain's **Mail Forwarding** card, set an **Auth token**. Lettr sends it with every request in the `X-MessageSystems-Webhook-Token` header. Compare it against your stored value and reject anything that doesn't match:
+Always verify that requests to your forwarding URL come from Lettr, not malicious actors. When you create an inbound domain, or later on the domain's **Mail Forwarding** card, set an **Auth token**. It is sent with every request in the `X-MessageSystems-Webhook-Token` header. Compare it against your stored value and reject anything that doesn't match:
 
 ```javascript
 import crypto from 'node:crypto';
@@ -30,7 +30,7 @@ function verifyInboundToken(req, res, next) {
   next();
 }
 
-app.post('/webhooks/inbound', verifyInboundToken, express.json(), async (req, res) => {
+app.post('/webhooks/inbound', verifyInboundToken, express.json({ limit: '50mb' }), async (req, res) => {
   for (const event of req.body) {
     const relay = event.msys?.relay_message;
     if (!relay) continue;
@@ -43,7 +43,7 @@ app.post('/webhooks/inbound', verifyInboundToken, express.json(), async (req, re
 ```
 
 <Note>
-  Lettr doesn't store your auth token, so keep your own copy (for example in an environment variable). To rotate it, enter a new token on the **Mail Forwarding** card and click **Save forwarding URL**. Leaving the field blank keeps the token that is already set.
+  Lettr never shows your auth token again after you save it, so keep your own copy (for example in an environment variable). To rotate it, enter a new token on the **Mail Forwarding** card and click **Save forwarding URL**. Leaving the field blank keeps the token that is already set.
 </Note>
 
 ### Don't Rely on IP Allowlisting
@@ -56,7 +56,7 @@ If your endpoint sits behind Cloudflare or another firewall/WAF, allow server-to
 
 ### Validate Email Addresses
 
-Never trust email addresses from inbound emails:
+Never trust email addresses from inbound emails. `msg_from`, `friendly_from` and the address headers are all set by the sender:
 
 ```javascript
 function validateEmailAddress(email) {
@@ -107,11 +107,12 @@ function sanitizeHtml(html) {
   });
 }
 
-app.post('/webhooks/inbound', express.json(), async (req, res) => {
+app.post('/webhooks/inbound', verifyInboundToken, express.json({ limit: '50mb' }), async (req, res) => {
   for (const event of req.body) {
     const relay = event.msys?.relay_message;
     if (!relay) continue;
 
+    // Either body can be missing
     const { html, text } = relay.content;
 
     // Sanitize before storing
@@ -127,10 +128,11 @@ app.post('/webhooks/inbound', express.json(), async (req, res) => {
 
 ### Validate and Sanitize Filenames
 
-Never use attachment filenames directly:
+Attachment filenames come from the sender. Never use them directly as paths:
 
 ```javascript
-import path from 'path';
+import crypto from 'node:crypto';
+import path from 'node:path';
 
 function sanitizeFilename(filename) {
   if (!filename || typeof filename !== 'string') {
@@ -168,9 +170,31 @@ function generateSafeFilename(originalFilename) {
 
 ## Attachment Security
 
+### Extract Attachments From the Raw Message
+
+The payload has no attachments array and no attachment URLs. Attachments exist only inside the raw MIME message in `content.email_rfc822`, so your handler parses it with a MIME library such as [mailparser](https://nodemailer.com/extras/mailparser/). Every check below runs on the parsed attachments:
+
+```javascript
+import { simpleParser } from 'mailparser';
+
+async function extractAttachments(relay) {
+  const { content } = relay;
+  const raw = content.email_rfc822_is_base64
+    ? Buffer.from(content.email_rfc822, 'base64')
+    : content.email_rfc822;
+
+  const parsed = await simpleParser(raw);
+
+  // Each attachment has filename, contentType, size and content (a Buffer)
+  return parsed.attachments;
+}
+```
+
+Lettr doesn't store inbound messages or attachments, so validate and save what you need while handling the request, or from a queue job that received the payload. See [Attachments](/learn/inbound/attachments) for more.
+
 ### Validate File Types
 
-Never trust the declared content type:
+Never trust the declared content type. Detect the real type from the file's bytes:
 
 ```javascript
 import { fileTypeFromBuffer } from 'file-type';
@@ -185,14 +209,13 @@ const ALLOWED_TYPES = new Map([
 ]);
 
 async function validateAttachment(attachment) {
-  const response = await fetch(attachment.url);
-  const buffer = Buffer.from(await response.arrayBuffer());
+  const buffer = attachment.content;
 
   // Detect actual file type from content
   const detected = await fileTypeFromBuffer(buffer);
 
   if (!detected) {
-    // Could be text file
+    // Could be a text file, which has no magic bytes
     if (attachment.contentType.startsWith('text/')) {
       return { valid: true, type: attachment.contentType };
     }
@@ -212,7 +235,7 @@ async function validateAttachment(attachment) {
     // Use detected type, not declared type
   }
 
-  return { valid: true, type: detected.mime, buffer };
+  return { valid: true, type: detected.mime };
 }
 ```
 
@@ -230,12 +253,12 @@ const clamscan = await new ClamScan().init({
   }
 });
 
-async function scanForMalware(buffer, filename) {
+async function scanForMalware(attachment) {
   try {
-    const { isInfected, viruses } = await clamscan.scanBuffer(buffer);
+    const { isInfected, viruses } = await clamscan.scanBuffer(attachment.content);
 
     if (isInfected) {
-      console.error(`Malware detected in ${filename}: ${viruses.join(', ')}`);
+      console.error(`Malware detected in ${attachment.filename}: ${viruses.join(', ')}`);
       return {
         safe: false,
         threats: viruses
@@ -253,7 +276,7 @@ async function scanForMalware(buffer, filename) {
 
 ### Limit File Sizes
 
-Enforce size limits to prevent resource exhaustion:
+Set your own size limits to prevent resource exhaustion. The numbers below are example values for your application, not Lettr limits:
 
 ```javascript
 const MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024; // 10 MB
@@ -275,13 +298,46 @@ function validateAttachmentSizes(attachments) {
   if (totalSize > MAX_TOTAL_SIZE) {
     return {
       valid: false,
-      reason: `Total attachment size exceeds limit`
+      reason: 'Total attachment size exceeds limit'
     };
   }
 
   return { valid: true };
 }
 ```
+
+Putting the attachment checks together in your handler:
+
+```javascript
+app.post('/webhooks/inbound', verifyInboundToken, express.json({ limit: '50mb' }), async (req, res) => {
+  for (const event of req.body) {
+    const relay = event.msys?.relay_message;
+    if (!relay) continue;
+
+    const attachments = await extractAttachments(relay);
+
+    if (!validateAttachmentSizes(attachments).valid) {
+      await logRejectedEmail(relay, 'Attachments too large');
+      continue;
+    }
+
+    for (const attachment of attachments) {
+      const typeCheck = await validateAttachment(attachment);
+      const scan = typeCheck.valid ? await scanForMalware(attachment) : { safe: false };
+
+      if (typeCheck.valid && scan.safe) {
+        await saveToStorage(generateSafeFilename(attachment.filename), attachment.content);
+      }
+    }
+
+    await processEmail(relay);
+  }
+
+  res.sendStatus(200);
+});
+```
+
+For large messages or slow scanners, acknowledge the request first and run these checks from a queue.
 
 ## Content Security
 
@@ -342,7 +398,7 @@ function removeTrackingPixels(html) {
 
 ## Rate Limiting
 
-Protect against email flooding:
+Protect against email flooding by limiting how many messages one sender, one sender domain, or all senders together can push through your pipeline:
 
 ```javascript
 import { RateLimiterRedis } from 'rate-limiter-flexible';
@@ -371,9 +427,9 @@ const globalLimiter = new RateLimiterRedis({
   duration: 3600
 });
 
-async function checkRateLimits(email) {
-  const sender = email.from.toLowerCase();
-  const domain = sender.split('@')[1];
+async function checkRateLimits(relay) {
+  const sender = (relay.msg_from || 'unknown').toLowerCase();
+  const domain = sender.split('@')[1] || 'unknown';
 
   try {
     await Promise.all([
@@ -392,21 +448,33 @@ async function checkRateLimits(email) {
 }
 ```
 
+Still answer the request with a `2xx` when you drop a rate-limited message. Your response doesn't reach the sender, so an error status can't push the mail back to them.
+
 ## Logging and Monitoring
 
 ### Audit Logging
 
-Log all inbound email processing:
+Log all inbound email processing. The payload has no event ID, so use the `Message-ID` header to identify a message:
 
 ```javascript
-async function logInboundEmail(email, result) {
+function getHeader(relay, name) {
+  const wanted = name.toLowerCase();
+  for (const header of relay.content?.headers ?? []) {
+    for (const [key, value] of Object.entries(header)) {
+      if (key.toLowerCase() === wanted) return value;
+    }
+  }
+  return undefined;
+}
+
+async function logInboundEmail(relay, attachments, result) {
   await auditLog.create({
     type: 'inbound_email',
-    emailId: email.id,
-    from: email.from,
-    to: email.to,
-    subject: email.subject?.substring(0, 100),
-    attachmentCount: email.attachments?.length || 0,
+    messageId: getHeader(relay, 'Message-ID'),
+    from: relay.msg_from,
+    to: relay.rcpt_to,
+    subject: relay.content?.subject?.substring(0, 100),
+    attachmentCount: attachments.length,
     result: result.status,
     processingTime: result.duration,
     timestamp: new Date()
@@ -424,8 +492,8 @@ class AnomalyDetector {
     this.senderHistory = new Map();
   }
 
-  async analyze(email) {
-    const sender = email.from.toLowerCase();
+  analyze(relay, attachments) {
+    const sender = (relay.msg_from || 'unknown').toLowerCase();
     const alerts = [];
 
     // Track sender frequency
@@ -443,12 +511,12 @@ class AnomalyDetector {
       });
     }
 
-    // Unusual attachment patterns
-    if (email.attachments?.length > 5) {
+    // Unusual attachment patterns (attachments parsed from content.email_rfc822)
+    if (attachments.length > 5) {
       alerts.push({
         type: 'many_attachments',
         sender,
-        count: email.attachments.length
+        count: attachments.length
       });
     }
 
@@ -475,9 +543,10 @@ class AnomalyDetector {
   </Accordion>
 
   <Accordion title="Attachment Security">
+    - [ ] Parse attachments from `content.email_rfc822` with a MIME library
     - [ ] Verify file types from content, not headers
     - [ ] Scan attachments for malware
-    - [ ] Enforce size limits
+    - [ ] Enforce your own size limits
     - [ ] Store attachments outside web root
   </Accordion>
 
@@ -485,7 +554,7 @@ class AnomalyDetector {
     - [ ] Log all inbound email processing
     - [ ] Monitor for rate limit violations
     - [ ] Alert on anomalous patterns
-    - [ ] Track spam score distributions
+    - [ ] Track your own spam filtering decisions
   </Accordion>
 </AccordionGroup>
 
@@ -500,7 +569,7 @@ class AnomalyDetector {
     Set the forwarding URL and auth token
   </Card>
   <Card title="Spam Filtering" icon="shield" href="/learn/inbound/spam-filtering">
-    Filter spam emails
+    Handle spam in your own handler
   </Card>
   <Card title="Attachments" icon="paperclip" href="/learn/inbound/attachments">
     Handle attachments safely

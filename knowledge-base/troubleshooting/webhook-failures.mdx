@@ -82,7 +82,7 @@ The fastest way to diagnose webhook issues is the event log in the Lettr dashboa
     **Fixes:**
     - Process webhook events asynchronously. Accept the request immediately (return `200`), then process the event in a background job.
     - Check if your server is overloaded or if the webhook handler has a performance bottleneck.
-    - Verify your firewall allows inbound connections from Lettr's IP ranges.
+    - Verify your firewall or WAF is not dropping or holding POST requests to your webhook path. Webhooks are not sent from a fixed, published set of IP addresses, so allow the path rather than specific IPs.
   </Accordion>
   <Accordion title="All events failing with DNS resolution error">
     Lettr cannot resolve your webhook endpoint hostname.
@@ -117,7 +117,7 @@ The fastest way to diagnose webhook issues is the event log in the Lettr dashboa
     Your server is rejecting the request due to authentication or authorization rules.
 
     **Fixes:**
-    - If you have IP-based access controls, ensure Lettr's sending IPs are allowlisted.
+    - If you have IP-based access controls, exempt your webhook path from them. Webhooks are not sent from a fixed, published set of IP addresses, so authenticate requests with the auth method configured on the webhook instead.
     - If you require authentication headers, note that Lettr sends a `lettr-signature` header — make sure your middleware isn't blocking the request before signature verification.
     - Check for CSRF protection middleware intercepting the POST request.
   </Accordion>

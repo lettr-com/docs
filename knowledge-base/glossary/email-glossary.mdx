@@ -567,7 +567,7 @@ See [Personalization and Dynamic Content](/knowledge-base/best-practices/persona
 
 ### Message Threading
 
-The email client feature that groups related messages into conversation threads using email headers (`Message-ID`, `In-Reply-To`, `References`). When replying to an email, the reply includes these headers to indicate the relationship to the original message. Lettr supports message threading for inbound emails, enabling reply tracking and conversation reconstruction.
+The email client feature that groups related messages into conversation threads using email headers (`Message-ID`, `In-Reply-To`, `References`). When replying to an email, the reply includes these headers to indicate the relationship to the original message. Inbound emails forwarded by Lettr include their full headers, so your handler can use these headers to match replies to the original message and rebuild conversations.
 
 See [Reply Tracking](/learn/inbound/reply-tracking) and [Email Headers Explained](/knowledge-base/fundamentals/email-headers).
 
@@ -723,7 +723,7 @@ See [SMTP Protocol Basics](/knowledge-base/fundamentals/smtp-protocol-basics).
 
 ### Relay
 
-The process of receiving inbound email on a domain configured with Lettr and forwarding (relaying) it to a destination endpoint via webhook or SMTP. Relay events track the lifecycle of inbound messages: injection (received), delivery (successfully forwarded), rejection (blocked by spam filtering or routing rules), temporary failure, and permanent failure.
+The process of receiving inbound email on a domain configured with Lettr and forwarding (relaying) it as an HTTP POST to the Forwarding URL set on that inbound domain. Relay webhook events report the status of inbound messages: injection (received), delivery (successfully forwarded), rejection (not accepted for forwarding), temporary failure, and permanent failure.
 
 See [Inbound Email Setup](/learn/inbound/introduction) and [Email Routing](/learn/inbound/routing).
 
@@ -829,7 +829,7 @@ See [Bounce Diagnosis](/knowledge-base/troubleshooting/bounce-diagnosis).
 
 ### Spam Score
 
-A numeric value (0.0–10.0) assigned to incoming emails indicating the likelihood of spam. Scores near 0.0 indicate legitimate email, while scores approaching 10.0 indicate almost certain spam. Lettr's inbound email processing uses spam scores to route or filter messages based on configurable thresholds.
+A numeric value (0.0–10.0) assigned to incoming emails indicating the likelihood of spam. Scores near 0.0 indicate legitimate email, while scores approaching 10.0 indicate almost certain spam. Lettr does not add a spam score to inbound email or filter it for you. If you need spam handling for inbound mail, apply it in your own forwarding URL handler.
 
 See [Spam Filtering](/learn/inbound/spam-filtering).
 

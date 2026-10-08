@@ -1,34 +1,34 @@
 ---
 title: Reply Tracking
-description: "Track email replies in Lettr using variable reply-to addresses to match incoming messages to the original send and thread conversations."
+description: "Track email replies with Lettr by sending with a variable reply-to address on your inbound domain, then matching and threading replies in your own handler."
 ---
 
-Reply tracking allows you to associate incoming replies with the original emails you sent, enabling threaded conversations, support ticket systems, and automated workflows.
+Reply tracking lets you connect incoming replies to the emails you sent, for threaded conversations, support tickets, and automated workflows. Lettr's part is delivery: you send with a `reply_to` address on your [inbound domain](/learn/inbound/setup), and when someone replies, the reply is posted to that domain's forwarding URL. Matching the reply to the original email, threading it, and filtering auto-replies all happen in your code.
 
 ## How Reply Tracking Works
 
 <Steps>
   <Step title="Send with Reply-To">
-    Send an email with a unique reply-to address that encodes the conversation ID.
+    Send an email whose `reply_to` is an address on your inbound domain that encodes a conversation ID.
   </Step>
   <Step title="Recipient Replies">
-    When the recipient hits reply, their email goes to your inbound domain.
+    The reply goes to that address, and Lettr posts it to your inbound domain's forwarding URL.
   </Step>
-  <Step title="Match Reply">
-    Extract the conversation ID from the recipient address and match to the original email.
+  <Step title="Match Reply (your code)">
+    Your handler extracts the conversation ID from the recipient address and looks up the conversation.
   </Step>
-  <Step title="Thread Together">
-    Add the reply to the conversation thread.
+  <Step title="Thread Together (your code)">
+    Your handler adds the reply to the conversation in your own database.
   </Step>
 </Steps>
 
 ## Variable Reply-To Addresses
 
-The most reliable way to track replies is using variable (plus) addressing in the reply-to field:
+The most reliable way to track replies is variable (plus) addressing in the `reply_to` field. Every address at an inbound domain is forwarded, so you don't need to create these addresses anywhere:
 
 ```javascript
 // Send an email with a trackable reply-to address
-await lettr.emails.send({
+const { data, error } = await lettr.emails.send({
   from: 'support@example.com',
   to: ['customer@example.com'],
   subject: 'Re: Your support request',
@@ -38,7 +38,7 @@ await lettr.emails.send({
 });
 ```
 
-When the customer replies, the reply is posted to your inbound domain's forwarding URL:
+Here `mail.example.com` is your inbound domain. When the customer replies, the reply is posted to its forwarding URL:
 
 ```json
 [
@@ -52,6 +52,7 @@ When the customer replies, the reply is posted to your inbound domain's forwardi
           "subject": "Re: Your support request",
           "text": "Thanks, that fixed my issue!",
           "headers": [
+            { "Message-ID": "<reply-id@example.com>" },
             { "In-Reply-To": "<original-message-id@example.com>" },
             { "References": "<original-message-id@example.com>" }
           ]
@@ -62,93 +63,108 @@ When the customer replies, the reply is posted to your inbound domain's forwardi
 ]
 ```
 
+This example is shortened. See [Email Parsing](/learn/inbound/parsing) for every field.
+
 ## Processing Replies
 
-Extract the conversation ID and match to the original:
+Extract the conversation ID from `rcpt_to` and match it to the original in your handler:
 
 ```javascript
-// Helper to find a header value from the headers array
-function getHeader(headers, name) {
-  const header = headers.find(h => h[name] !== undefined);
-  return header ? header[name] : null;
+// Read a header from the headers array (case-insensitive)
+function getHeader(headers = [], name) {
+  const wanted = name.toLowerCase();
+  for (const header of headers) {
+    for (const [key, value] of Object.entries(header)) {
+      if (key.toLowerCase() === wanted) return value;
+    }
+  }
+  return null;
 }
 
-app.post('/webhooks/inbound', express.json(), async (req, res) => {
+app.post('/webhooks/inbound', express.json({ limit: '50mb' }), async (req, res) => {
   for (const event of req.body) {
     const relay = event.msys?.relay_message;
     if (!relay) continue;
 
-    const recipient = relay.rcpt_to;
-    const { msg_from, content } = relay;
+    const { rcpt_to, msg_from, content } = relay;
 
-    // Extract ticket ID from reply address
-    const match = recipient.match(/^reply\+ticket_([^@]+)@/);
+    // Extract ticket ID from the reply address
+    const match = rcpt_to.match(/^reply\+ticket_([^@]+)@/i);
+    if (!match) continue;
 
-    if (match) {
-      const ticketId = match[1];
+    const ticketId = match[1];
 
-      // Add reply to the ticket
-      await addReplyToTicket(ticketId, {
-        from: msg_from,
-        subject: content.subject,
-        body: content.text || stripHtml(content.html),
-        messageId: getHeader(content.headers, 'Message-ID'),
-        inReplyTo: getHeader(content.headers, 'In-Reply-To'),
-        receivedAt: new Date()
-      });
+    // Add the reply to the ticket in your database
+    await addReplyToTicket(ticketId, {
+      from: msg_from,
+      subject: content.subject,
+      body: content.text || stripHtml(content.html || ''),
+      messageId: getHeader(content.headers, 'Message-ID'),
+      inReplyTo: getHeader(content.headers, 'In-Reply-To'),
+      receivedAt: new Date()
+    });
 
-      // Optionally notify the support agent
-      await notifyAgent(ticketId, { from: msg_from, subject: content.subject });
-    }
+    // Optionally notify the support agent
+    await notifyAgent(ticketId, { from: msg_from, subject: content.subject });
   }
 
   res.sendStatus(200);
 });
 ```
 
+<Warning>
+  Anyone can send mail to any address at your inbound domain, including made-up `reply+...` addresses. Check that the ticket exists and that the sender belongs to it before you add the message, or use an unguessable token instead of a sequential ID.
+</Warning>
+
 ## Using Email Headers for Threading
 
-Standard email headers help track conversation threads:
+Standard email headers can help your code group messages into threads:
 
 | Header | Purpose |
-|--------|---------|
+|-|-|
 | `Message-ID` | Unique identifier for each email |
 | `In-Reply-To` | Message-ID of the email being replied to |
 | `References` | Chain of Message-IDs in the thread |
 
+Lettr's send API returns a `request_id`, not the `Message-ID` of the email it sends, and doesn't let you set `Message-ID` yourself. So header-based matching works against Message-IDs you have stored from earlier inbound messages, for example the customer's previous reply in the same conversation:
+
 ```javascript
-app.post('/webhooks/inbound', express.json(), async (req, res) => {
+app.post('/webhooks/inbound', express.json({ limit: '50mb' }), async (req, res) => {
   for (const event of req.body) {
     const relay = event.msys?.relay_message;
     if (!relay) continue;
 
     const { msg_from, content } = relay;
 
-    // Try to find the original message using headers
     const inReplyTo = getHeader(content.headers, 'In-Reply-To');
     const references = getHeader(content.headers, 'References');
 
     let thread = null;
 
     if (inReplyTo) {
-      // Find by direct reply
+      // Find by direct reply to a message you stored earlier
       thread = await findThreadByMessageId(inReplyTo);
     }
 
     if (!thread && references) {
       // Find by any message in the reference chain
-      const refIds = references.split(/\s+/);
-      for (const refId of refIds) {
+      for (const refId of references.split(/\s+/)) {
         thread = await findThreadByMessageId(refId);
         if (thread) break;
       }
     }
 
+    const message = {
+      from: msg_from,
+      subject: content.subject,
+      body: content.text,
+      messageId: getHeader(content.headers, 'Message-ID')
+    };
+
     if (thread) {
-      await addMessageToThread(thread.id, { from: msg_from, subject: content.subject, body: content.text });
+      await addMessageToThread(thread.id, message);
     } else {
-      // Start a new thread
-      await createNewThread({ from: msg_from, subject: content.subject, body: content.text });
+      await createNewThread(message);
     }
   }
 
@@ -158,7 +174,7 @@ app.post('/webhooks/inbound', express.json(), async (req, res) => {
 
 ## Building a Conversation Thread
 
-Store and display threaded conversations:
+Store and display threaded conversations in your own data model:
 
 ```javascript
 // Data model for conversation threads
@@ -174,7 +190,7 @@ class ConversationThread {
 
   addMessage(message) {
     this.messages.push({
-      id: message.messageId || generateId(),
+      id: message.id || generateId(),
       from: message.from,
       body: message.body,
       direction: message.direction, // 'inbound' or 'outbound'
@@ -199,28 +215,31 @@ class ConversationThread {
 // Usage
 const thread = await getOrCreateThread(ticketId);
 
-// When receiving a reply
+// When receiving a reply: use the Message-ID header
 thread.addMessage({
+  id: getHeader(relay.content.headers, 'Message-ID'),
   from: relay.msg_from,
   body: relay.content.text,
-  direction: 'inbound',
-  messageId: getHeader(relay.content.headers, 'Message-ID')
+  direction: 'inbound'
 });
 
-// When sending a response
-thread.addMessage({
-  from: 'support@example.com',
-  body: responseText,
-  direction: 'outbound',
-  messageId: sentEmail.messageId
-});
+// When sending a response: use the request_id from the send API
+const { data, error } = await lettr.emails.send(responseEmail);
+if (!error) {
+  thread.addMessage({
+    id: data.request_id,
+    from: 'support@example.com',
+    body: responseText,
+    direction: 'outbound'
+  });
+}
 
 await saveThread(thread);
 ```
 
 ## Auto-Reply Detection
 
-Detect and handle auto-replies (out-of-office, delivery receipts):
+Out-of-office replies and delivery reports also arrive at your reply addresses. Lettr doesn't flag them, so detect them in your handler:
 
 ```javascript
 function isAutoReply(relay) {
@@ -229,7 +248,7 @@ function isAutoReply(relay) {
 
   // Check standard auto-reply headers
   const autoSubmitted = getHeader(content.headers, 'Auto-Submitted');
-  if (autoSubmitted && autoSubmitted !== 'no') {
+  if (autoSubmitted && autoSubmitted.toLowerCase() !== 'no') {
     return true;
   }
 
@@ -237,7 +256,8 @@ function isAutoReply(relay) {
     return true;
   }
 
-  if (getHeader(content.headers, 'Precedence') === 'auto_reply') {
+  const precedence = (getHeader(content.headers, 'Precedence') || '').toLowerCase();
+  if (['auto_reply', 'bulk', 'junk'].includes(precedence)) {
     return true;
   }
 
@@ -254,27 +274,20 @@ function isAutoReply(relay) {
     /^returned mail/i
   ];
 
-  for (const pattern of autoReplyPatterns) {
-    if (pattern.test(subject)) {
-      return true;
-    }
-  }
-
-  return false;
+  return autoReplyPatterns.some((pattern) => pattern.test(subject));
 }
 
-app.post('/webhooks/inbound', express.json(), async (req, res) => {
+app.post('/webhooks/inbound', express.json({ limit: '50mb' }), async (req, res) => {
   for (const event of req.body) {
     const relay = event.msys?.relay_message;
     if (!relay) continue;
 
     if (isAutoReply(relay)) {
-      // Log but don't create a ticket or notify
+      // Log but don't create a ticket or notify anyone
       await logAutoReply(relay);
       continue;
     }
 
-    // Process as a normal reply
     await processReply(relay);
   }
 
@@ -282,9 +295,15 @@ app.post('/webhooks/inbound', express.json(), async (req, res) => {
 });
 ```
 
+<Tip>
+  Don't send an automatic response to an auto-reply. Two auto-responders answering each other can loop indefinitely.
+</Tip>
+
 ## Reply Matching Strategies
 
 ### Strategy 1: Variable Address (Recommended)
+
+Mail clients send the reply to the `reply_to` address, so the ID always comes back in `rcpt_to`:
 
 ```javascript
 // Encode data in the reply-to address
@@ -299,56 +318,41 @@ function decodeData(encoded) {
 }
 ```
 
-### Strategy 2: Custom Headers
+<Note>
+  Some systems lowercase the local part of an address. If your IDs are case-sensitive, use an encoding that survives lowercasing, such as hex.
+</Note>
 
-```javascript
-// Add custom headers to outgoing emails
-await lettr.emails.send({
-  from: 'support@example.com',
-  to: ['customer@example.com'],
-  subject: 'Your request',
-  html: content,
-  headers: {
-    'X-Conversation-ID': conversationId,
-    'X-Ticket-ID': ticketId
-  }
-});
+### Strategy 2: Subject Line Tokens
 
-// Note: Custom headers may not always be preserved in replies
-```
-
-### Strategy 3: Subject Line Tokens
+Most mail clients keep the subject when replying, prefixed with `Re:`:
 
 ```javascript
 // Add a token to the subject
 const subject = `[Ticket #${ticketId}] Your support request`;
 
 // Parse the token from replies
-function extractTicketFromSubject(subject) {
+function extractTicketFromSubject(subject = '') {
   const match = subject.match(/\[Ticket #([^\]]+)\]/);
   return match ? match[1] : null;
 }
 ```
 
-### Strategy 4: Message-ID Tracking
+Recipients can edit the subject, so use this as a fallback rather than your only signal.
 
-```javascript
-// Store the Message-ID when sending
-const result = await lettr.emails.send(emailData);
-await storeMessageId(conversationId, result.messageId);
+### Strategy 3: Message-ID Headers
 
-// Match replies using In-Reply-To header
-const originalConversation = await findByMessageId(
-  getHeader(relay.content.headers, 'In-Reply-To')
-);
-```
+Match `In-Reply-To` and `References` against Message-IDs of inbound messages you have stored, as shown in [Using Email Headers for Threading](#using-email-headers-for-threading). This connects follow-up replies within a conversation. It can't connect the first reply to your original email, because the send API doesn't return that email's Message-ID.
+
+### Custom Headers Don't Come Back
+
+You can add custom headers to outgoing email with the `headers` field, but mail clients don't copy them into replies. Don't rely on headers such as `X-Conversation-ID` for reply matching; put the ID in the reply-to address instead.
 
 ## Handling Reply Chains
 
-When multiple people are involved in a thread:
+When several people take part in a conversation:
 
 ```javascript
-app.post('/webhooks/inbound', express.json(), async (req, res) => {
+app.post('/webhooks/inbound', express.json({ limit: '50mb' }), async (req, res) => {
   for (const event of req.body) {
     const relay = event.msys?.relay_message;
     if (!relay) continue;
@@ -365,15 +369,15 @@ app.post('/webhooks/inbound', express.json(), async (req, res) => {
     await addMessage(conversationId, {
       from: msg_from,
       body: content.text,
+      messageId: getHeader(content.headers, 'Message-ID'),
       inReplyTo: getHeader(content.headers, 'In-Reply-To')
     });
 
-    // Track all participants from To and CC headers
+    // Track all participants from the To and CC headers
     const toAddresses = content.to || [];
-    const ccHeader = getHeader(content.headers, 'CC');
-    const allRecipients = [...toAddresses, ...(ccHeader ? [].concat(ccHeader) : [])];
-    for (const recipient of allRecipients) {
-      if (!recipient.includes('@mail.example.com')) {
+    const ccAddresses = content.cc || [];
+    for (const recipient of [...toAddresses, ...ccAddresses]) {
+      if (!recipient.toLowerCase().includes('@mail.example.com')) {
         await addParticipant(conversationId, recipient);
       }
     }
@@ -390,19 +394,20 @@ app.post('/webhooks/inbound', express.json(), async (req, res) => {
 
 ```javascript
 import express from 'express';
-import { v4 as uuid } from 'uuid';
+import { Lettr } from 'lettr';
 
 const app = express();
+const lettr = new Lettr(process.env.LETTR_API_KEY);
 
-// Send initial support response
+// Send a support response with a trackable reply-to address
 async function sendTicketResponse(ticket, responseText) {
-  const result = await lettr.emails.send({
+  const { data, error } = await lettr.emails.send({
     from: 'support@example.com',
     from_name: 'Support Team',
     to: [ticket.customerEmail],
     subject: `Re: ${ticket.subject}`,
     html: `
-      <p>${responseText}</p>
+      <p>${escapeHtml(responseText)}</p>
       <hr>
       <p style="color: #666; font-size: 12px;">
         Ticket #${ticket.id} - Please reply above this line
@@ -410,24 +415,28 @@ async function sendTicketResponse(ticket, responseText) {
     `,
     reply_to: `reply+${ticket.id}@mail.example.com`,
     metadata: {
-      ticketId: ticket.id,
+      ticket_id: String(ticket.id),
       type: 'support_response'
     }
   });
 
-  // Store the message
+  if (error) {
+    throw new Error(`Send failed: ${error.message}`);
+  }
+
+  // Store the outgoing message, keyed by the send request ID
   await addTicketMessage(ticket.id, {
     from: 'support@example.com',
     body: responseText,
     direction: 'outbound',
-    messageId: result.messageId
+    requestId: data.request_id
   });
 
-  return result;
+  return data;
 }
 
 // Handle incoming replies
-app.post('/webhooks/inbound', express.json(), async (req, res) => {
+app.post('/webhooks/inbound', express.json({ limit: '50mb' }), async (req, res) => {
   for (const event of req.body) {
     const relay = event.msys?.relay_message;
     if (!relay) continue;
@@ -440,14 +449,14 @@ app.post('/webhooks/inbound', express.json(), async (req, res) => {
     }
 
     // Extract ticket ID
-    const match = rcpt_to.match(/^reply\+([^@]+)@/);
+    const match = rcpt_to.match(/^reply\+([^@]+)@/i);
 
     if (!match) {
-      // Not a reply to a ticket - create new ticket
+      // Not a reply to a ticket: create a new ticket
       const ticket = await createTicket({
         customerEmail: msg_from,
-        subject: content.subject,
-        body: content.text || stripHtml(content.html)
+        subject: content.subject || '(no subject)',
+        body: content.text || stripHtml(content.html || '')
       });
 
       // Send acknowledgment
@@ -469,7 +478,7 @@ app.post('/webhooks/inbound', express.json(), async (req, res) => {
     // Add customer reply to ticket
     await addTicketMessage(ticketId, {
       from: msg_from,
-      body: content.text || stripHtml(content.html),
+      body: content.text || stripHtml(content.html || ''),
       direction: 'inbound',
       messageId: getHeader(content.headers, 'Message-ID'),
       inReplyTo: getHeader(content.headers, 'In-Reply-To')
@@ -495,11 +504,15 @@ app.post('/webhooks/inbound', express.json(), async (req, res) => {
 });
 ```
 
+<Note>
+  In production, respond with a 2xx before doing slow work such as sending the acknowledgment, and skip messages whose `Message-ID` you have already processed. See [Best Practices](/learn/inbound/best-practices).
+</Note>
+
 ## Related Topics
 
 <CardGroup cols={2}>
-  <Card title="Webhooks" icon="webhook" href="/learn/webhooks/event-types">
-    Webhook payload structure
+  <Card title="Email Parsing" icon="code" href="/learn/inbound/parsing">
+    The inbound payload structure
   </Card>
   <Card title="Routing" icon="route" href="/learn/inbound/routing">
     Route emails to handlers

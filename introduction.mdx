@@ -1,6 +1,6 @@
 ---
 title: Introduction
-description: "Lettr is an email infrastructure platform for developers, offering reliable transactional and marketing delivery, inbound parsing, and tracking."
+description: "Lettr is an email infrastructure platform for developers, offering reliable transactional and marketing delivery, inbound email forwarding, and tracking."
 ---
 
 import { SdkRow } from "/snippets/sdk-row.jsx";
@@ -31,7 +31,7 @@ Email delivery is deceptively complex. Between authentication protocols like SPF
     Newsletters, announcements, and promotional emails with open and click tracking.
   </Card>
   <Card title="Inbound Processing" icon="inbox">
-    Receive and parse incoming emails to power support tickets, reply detection, and automated workflows.
+    Receive incoming emails on your own endpoint to power support tickets, reply detection, and automated workflows.
   </Card>
   <Card title="Email Automation" icon="gear">
     Build complex email flows with webhooks, templates, and real-time event tracking.
@@ -59,7 +59,7 @@ Lettr provides everything you need for production email infrastructure:
     Automatic handling of bounces, spam complaints, and unsubscribes protects your sender reputation. Lettr maintains suppression lists and prevents sending to problematic addresses without any code on your part.
   </Accordion>
   <Accordion title="Inbound Email">
-    Receive emails at your domain and process them programmatically. Parse sender information, subject, body, and attachments via webhooks. Build support inboxes, reply detection, or any workflow that starts with an incoming email.
+    Receive emails at your domain and process them programmatically. Each message is posted as JSON to your forwarding URL with the sender, recipient, subject, text and HTML body, headers, and the full raw message, which you can parse for attachments. Build support inboxes, reply detection, or any workflow that starts with an incoming email.
   </Accordion>
 </AccordionGroup>
 

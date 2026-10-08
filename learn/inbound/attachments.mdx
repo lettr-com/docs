@@ -1,109 +1,235 @@
 ---
 title: Attachments
-description: "Handle file attachments on inbound emails in Lettr, which extracts each file and provides a secure temporary URL to download it."
+description: "Get attachments and inline images out of inbound emails by parsing the raw MIME message in the relay payload with a MIME library."
 ---
 
-When someone sends an email with attachments to your inbound domain, Lettr extracts and stores the attachments temporarily, providing secure URLs for you to download them.
+Attachments on inbound emails are not delivered as separate files or download links. Every inbound email reaches your forwarding URL as one JSON payload, and the files are inside the complete raw message in `content.email_rfc822`. To get them, decode that field if needed and parse it with a MIME library in your handler.
 
-## Attachment Data Structure
+Lettr does not store attachments, so there is nothing to download later. Whatever your code does not keep when it handles the delivery is gone.
 
-Each attachment in the webhook payload includes:
+## Where Attachments Live
+
+Your forwarding URL receives a JSON array of events, each with a `msys.relay_message` object (see [Email Parsing](/learn/inbound/parsing) for every field). The fields that matter for attachments are:
 
 ```json
-{
-  "attachments": [
-    {
-      "filename": "invoice.pdf",
-      "contentType": "application/pdf",
-      "size": 245678,
-      "url": "https://inbound.lettr.com/attachments/abc123def456"
-    },
-    {
-      "filename": "screenshot.png",
-      "contentType": "image/png",
-      "size": 89012,
-      "url": "https://inbound.lettr.com/attachments/xyz789ghi012"
+[
+  {
+    "msys": {
+      "relay_message": {
+        "msg_from": "sender@example.com",
+        "rcpt_to": "invoices@inbound.example.com",
+        "content": {
+          "subject": "March invoice",
+          "text": "Invoice attached.",
+          "email_rfc822": "TUlNRS1WZXJzaW9uOiAxLjAKRnJvbTogLi4u...",
+          "email_rfc822_is_base64": true
+        }
+      }
     }
-  ]
-}
+  }
+]
 ```
 
 | Field | Type | Description |
-|-------|------|-------------|
-| `filename` | string | Original filename of the attachment |
-| `contentType` | string | MIME type of the file |
-| `size` | number | File size in bytes |
-| `url` | string | Temporary URL to download the attachment |
+|-|-|-|
+| `content.email_rfc822` | string | The complete raw MIME message, including every attachment and inline image |
+| `content.email_rfc822_is_base64` | boolean | When `true`, base64-decode `email_rfc822` before parsing it |
 
-## Downloading Attachments
+The `text` and `html` fields only carry the message body. There is no `attachments` field in the payload.
 
-Download attachments using the provided URLs:
+<Note>
+  The whole message, attachments included, arrives in a single request body. Make sure your web server and framework accept request bodies as large as the biggest email you want to receive. Express's `express.json()`, for example, rejects bodies over 100 KB unless you raise its `limit`.
+</Note>
 
-```javascript
-app.post('/webhooks/inbound', async (req, res) => {
-  const { attachments, from, subject } = req.body.data;
+## Extracting Attachments
 
-  // Process each attachment
-  for (const attachment of attachments) {
-    // Download the file
-    const response = await fetch(attachment.url);
-    const buffer = await response.arrayBuffer();
+The steps are the same in every language:
 
-    // Save to your storage
-    await saveToStorage({
-      filename: attachment.filename,
-      contentType: attachment.contentType,
-      data: Buffer.from(buffer)
-    });
+1. Loop over the events in the JSON array.
+2. Read `content.email_rfc822` and base64-decode it if `content.email_rfc822_is_base64` is `true`.
+3. Parse the raw message with a MIME library and read its attachment parts.
 
-    console.log(`Saved: ${attachment.filename} (${attachment.size} bytes)`);
+<CodeGroup>
+
+```javascript Node.js
+import express from 'express';
+import { simpleParser } from 'mailparser';
+
+const app = express();
+
+// The raw message sits inside the JSON body, so raise the default 100 KB limit
+app.post('/webhooks/inbound', express.json({ limit: '50mb' }), async (req, res) => {
+  for (const event of req.body) {
+    const relay = event.msys?.relay_message;
+    if (!relay) continue;
+
+    const parsed = await parseRawEmail(relay);
+
+    for (const attachment of parsed.attachments) {
+      console.log(
+        attachment.filename,           // may be undefined
+        attachment.contentType,        // e.g. "application/pdf"
+        attachment.size,               // bytes, after decoding
+        attachment.contentDisposition, // "attachment" or "inline"
+        attachment.cid                 // Content-ID for inline images
+      );
+      // attachment.content is a Buffer with the file data
+    }
   }
 
   res.sendStatus(200);
 });
+
+export function parseRawEmail(relay) {
+  const { email_rfc822, email_rfc822_is_base64 } = relay.content;
+
+  const raw = email_rfc822_is_base64
+    ? Buffer.from(email_rfc822, 'base64')
+    : email_rfc822;
+
+  return simpleParser(raw);
+}
 ```
 
-## Attachment URL Expiration
+```python Python
+import base64
+from email import message_from_bytes, policy
 
-<Warning>
-  Attachment URLs are valid for **24 hours** after the email is received. Download and store attachments if you need them longer.
-</Warning>
+from flask import Flask, request
 
-Handle expiration gracefully:
+app = Flask(__name__)
+
+
+def parse_raw_email(relay):
+    content = relay["content"]
+    raw = content["email_rfc822"]
+
+    if content.get("email_rfc822_is_base64"):
+        raw_bytes = base64.b64decode(raw)
+    else:
+        raw_bytes = raw.encode("utf-8")
+
+    return message_from_bytes(raw_bytes, policy=policy.default)
+
+
+@app.post("/webhooks/inbound")
+def inbound():
+    for event in request.get_json():
+        relay = event.get("msys", {}).get("relay_message")
+        if relay is None:
+            continue
+
+        message = parse_raw_email(relay)
+
+        for part in message.iter_attachments():
+            filename = part.get_filename()             # may be None
+            content_type = part.get_content_type()     # e.g. "application/pdf"
+            disposition = part.get_content_disposition()  # "attachment" or "inline"
+            content_id = part.get("Content-ID")        # for inline images
+            data = part.get_payload(decode=True) or b""  # bytes
+
+            print(filename, content_type, disposition, len(data))
+
+    return "", 200
+```
+
+```php PHP
+<?php
+
+// composer require zbateson/mail-mime-parser
+require 'vendor/autoload.php';
+
+use ZBateson\MailMimeParser\Message;
+
+function parseRawEmail(array $relay): Message
+{
+    $content = $relay['content'];
+    $raw = $content['email_rfc822'];
+
+    if (!empty($content['email_rfc822_is_base64'])) {
+        $raw = base64_decode($raw);
+    }
+
+    return Message::from($raw, false);
+}
+
+$events = json_decode(file_get_contents('php://input'), true);
+
+foreach ($events as $event) {
+    $relay = $event['msys']['relay_message'] ?? null;
+    if ($relay === null) {
+        continue;
+    }
+
+    $message = parseRawEmail($relay);
+
+    foreach ($message->getAllAttachmentParts() as $part) {
+        $filename = $part->getFilename();               // may be null
+        $contentType = $part->getContentType();         // e.g. "application/pdf"
+        $disposition = $part->getContentDisposition();  // "attachment" or "inline"
+        $contentId = $part->getContentId();             // for inline images
+        $data = $part->getBinaryContentStream()?->getContents() ?? ''; // decoded bytes
+
+        error_log("{$filename} {$contentType} " . strlen($data) . ' bytes');
+    }
+}
+
+http_response_code(200);
+```
+
+</CodeGroup>
+
+<Note>
+  Python's `iter_attachments()` only looks at the top level of the message. Inline images usually sit deeper, inside a `multipart/related` part, so use `message.walk()` to find them (see [Inline Images](#inline-images)). `mailparser` and `mail-mime-parser` return both regular attachments and inline images.
+</Note>
+
+## Respond First, Process Later
+
+Answer the delivery with a `2xx` as soon as you have the payload, and do slow work such as uploads, virus scans and file conversion in a background job. The same email can be delivered more than once, so key whatever you store on the email's `Message-ID` header to avoid saving the same files twice.
 
 ```javascript
-async function downloadAttachment(attachment) {
-  const response = await fetch(attachment.url);
-
-  if (response.status === 404 || response.status === 410) {
-    throw new Error(`Attachment URL expired: ${attachment.filename}`);
+app.post('/webhooks/inbound', express.json({ limit: '50mb' }), async (req, res) => {
+  for (const event of req.body) {
+    const relay = event.msys?.relay_message;
+    if (relay) {
+      await queue.add('inbound-email', relay); // your job queue
+    }
   }
 
-  if (!response.ok) {
-    throw new Error(`Failed to download: ${response.statusText}`);
+  res.sendStatus(200);
+});
+
+// In your worker (parseRawEmail is defined above)
+async function handleInboundEmail(relay) {
+  const parsed = await parseRawEmail(relay);
+  const messageId = parsed.messageId; // from the Message-ID header
+
+  if (await alreadyProcessed(messageId)) return;
+
+  for (const attachment of parsed.attachments) {
+    await saveAttachment(messageId, attachment);
   }
 
-  return response.arrayBuffer();
+  await markProcessed(messageId);
 }
 ```
 
 ## Storing Attachments
+
+Store every file you want to keep in your own storage while you handle the delivery. Use a key you generate yourself rather than the sender's filename, and keep the original filename as metadata.
 
 ### Save to Local Filesystem
 
 ```javascript
 import fs from 'fs/promises';
 import path from 'path';
+import { randomUUID } from 'crypto';
 
 async function saveAttachmentLocally(attachment, directory = './attachments') {
-  const response = await fetch(attachment.url);
-  const buffer = await response.arrayBuffer();
+  const safeFilename = sanitizeFilename(attachment.filename ?? 'attachment');
+  const filepath = path.join(directory, `${randomUUID()}-${safeFilename}`);
 
-  // Create safe filename
-  const safeFilename = sanitizeFilename(attachment.filename);
-  const filepath = path.join(directory, `${Date.now()}-${safeFilename}`);
-
-  await fs.writeFile(filepath, Buffer.from(buffer));
+  await fs.writeFile(filepath, attachment.content);
 
   return filepath;
 }
@@ -111,7 +237,7 @@ async function saveAttachmentLocally(attachment, directory = './attachments') {
 function sanitizeFilename(filename) {
   return filename
     .replace(/[^a-zA-Z0-9.-]/g, '_')
-    .substring(0, 255);
+    .substring(0, 200);
 }
 ```
 
@@ -119,23 +245,21 @@ function sanitizeFilename(filename) {
 
 ```javascript
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { randomUUID } from 'crypto';
 
 const s3 = new S3Client({ region: 'us-east-1' });
 
-async function saveToS3(attachment, emailId) {
-  const response = await fetch(attachment.url);
-  const buffer = await response.arrayBuffer();
-
-  const key = `inbound/${emailId}/${attachment.filename}`;
+async function saveToS3(attachment, messageId) {
+  const key = `inbound/${randomUUID()}`;
 
   await s3.send(new PutObjectCommand({
     Bucket: 'your-bucket',
     Key: key,
-    Body: Buffer.from(buffer),
+    Body: attachment.content,
     ContentType: attachment.contentType,
     Metadata: {
-      'original-filename': attachment.filename,
-      'email-id': emailId
+      'original-filename': encodeURIComponent(attachment.filename ?? ''),
+      'message-id': encodeURIComponent(messageId ?? '')
     }
   }));
 
@@ -147,31 +271,30 @@ async function saveToS3(attachment, emailId) {
 
 ```javascript
 import { Storage } from '@google-cloud/storage';
+import { randomUUID } from 'crypto';
 
-const storage = new Storage();
-const bucket = storage.bucket('your-bucket');
+const bucket = new Storage().bucket('your-bucket');
 
-async function saveToGCS(attachment, emailId) {
-  const response = await fetch(attachment.url);
-  const buffer = await response.arrayBuffer();
+async function saveToGCS(attachment, messageId) {
+  const name = `inbound/${randomUUID()}`;
 
-  const filename = `inbound/${emailId}/${attachment.filename}`;
-  const file = bucket.file(filename);
-
-  await file.save(Buffer.from(buffer), {
+  await bucket.file(name).save(attachment.content, {
     contentType: attachment.contentType,
     metadata: {
-      originalFilename: attachment.filename
+      metadata: {
+        originalFilename: attachment.filename ?? '',
+        messageId: messageId ?? ''
+      }
     }
   });
 
-  return `gs://your-bucket/${filename}`;
+  return `gs://your-bucket/${name}`;
 }
 ```
 
 ## Validating Attachments
 
-Always validate attachments before processing:
+Lettr passes on whatever the sender attached, so deciding which files you accept is up to your code. Check the type and size of each file before you process it, using limits that suit your application.
 
 ```javascript
 const ALLOWED_TYPES = [
@@ -181,42 +304,34 @@ const ALLOWED_TYPES = [
   'image/gif',
   'text/plain',
   'text/csv',
-  'application/msword',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'application/vnd.ms-excel',
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 ];
 
-const MAX_SIZE = 25 * 1024 * 1024; // 25 MB
+const MAX_SIZE = 10 * 1024 * 1024; // your own limit, here 10 MB
 
 function validateAttachment(attachment) {
   const errors = [];
 
-  // Check content type
   if (!ALLOWED_TYPES.includes(attachment.contentType)) {
     errors.push(`Unsupported file type: ${attachment.contentType}`);
   }
 
-  // Check file size
   if (attachment.size > MAX_SIZE) {
     errors.push(`File too large: ${attachment.size} bytes (max ${MAX_SIZE})`);
   }
 
-  // Check filename
   if (!attachment.filename || attachment.filename.length > 255) {
-    errors.push('Invalid filename');
+    errors.push('Missing or invalid filename');
   }
 
-  return {
-    valid: errors.length === 0,
-    errors
-  };
+  return { valid: errors.length === 0, errors };
 }
 
-app.post('/webhooks/inbound', async (req, res) => {
-  const { attachments } = req.body.data;
+async function handleInboundEmail(relay) {
+  const parsed = await parseRawEmail(relay);
 
-  for (const attachment of attachments) {
+  for (const attachment of parsed.attachments) {
     const validation = validateAttachment(attachment);
 
     if (!validation.valid) {
@@ -226,25 +341,23 @@ app.post('/webhooks/inbound', async (req, res) => {
 
     await processAttachment(attachment);
   }
-
-  res.sendStatus(200);
-});
+}
 ```
 
 ## Security Considerations
 
 <Warning>
-  Never trust attachment filenames or content types from emails. Always validate and sanitize before processing.
+  Filenames, content types and file contents all come from the sender. Never trust them. Validate and sanitize before you store, open or serve a file.
 </Warning>
 
 ### Virus Scanning
 
-Scan attachments for malware before storing:
+Scan files for malware in your handler before storing them, for example with ClamAV:
 
 ```javascript
-import ClamScan from 'clamscan';
+import NodeClam from 'clamscan';
 
-const clamscan = await new ClamScan().init({
+const clamscan = await new NodeClam().init({
   clamdscan: {
     host: 'localhost',
     port: 3310
@@ -252,11 +365,7 @@ const clamscan = await new ClamScan().init({
 });
 
 async function scanAndSave(attachment) {
-  const response = await fetch(attachment.url);
-  const buffer = Buffer.from(await response.arrayBuffer());
-
-  // Scan for viruses
-  const { isInfected, viruses } = await clamscan.scanBuffer(buffer);
+  const { isInfected, viruses } = await clamscan.scanBuffer(attachment.content);
 
   if (isInfected) {
     console.error(`Infected file detected: ${viruses.join(', ')}`);
@@ -264,24 +373,20 @@ async function scanAndSave(attachment) {
     return { saved: false, reason: 'malware_detected' };
   }
 
-  // Safe to save
-  await saveToStorage(attachment.filename, buffer);
+  await saveToStorage(attachment);
   return { saved: true };
 }
 ```
 
 ### File Type Verification
 
-Verify file contents match the declared content type:
+The `Content-Type` of an attachment is whatever the sender's mail client wrote. Check the actual bytes against it:
 
 ```javascript
 import { fileTypeFromBuffer } from 'file-type';
 
 async function verifyFileType(attachment) {
-  const response = await fetch(attachment.url);
-  const buffer = Buffer.from(await response.arrayBuffer());
-
-  const detected = await fileTypeFromBuffer(buffer);
+  const detected = await fileTypeFromBuffer(attachment.content);
 
   if (detected && detected.mime !== attachment.contentType) {
     console.warn(
@@ -294,7 +399,46 @@ async function verifyFileType(attachment) {
 }
 ```
 
+## Inline Images
+
+Images embedded in an HTML email (logos, signatures, pasted screenshots) are MIME parts with a `Content-ID` header. The HTML body refers to them as `cid:` URLs, for example `<img src="cid:logo@example.com">`, so `content.html` in the payload contains those references but not the images. You find the images in `email_rfc822`.
+
+With `mailparser`, inline images are part of `parsed.attachments`. Each has `cid` set and `related: true`. By default `simpleParser` also rewrites the `cid:` links in `parsed.html` into `data:` URLs, so the HTML displays on its own. To store the images and point the HTML at your own copies, keep the links and replace them yourself:
+
+```javascript
+import { simpleParser } from 'mailparser';
+
+async function htmlWithStoredImages(relay) {
+  const { email_rfc822, email_rfc822_is_base64 } = relay.content;
+  const raw = email_rfc822_is_base64 ? Buffer.from(email_rfc822, 'base64') : email_rfc822;
+
+  const parsed = await simpleParser(raw, { keepCidLinks: true });
+  let html = parsed.html || '';
+
+  for (const attachment of parsed.attachments) {
+    if (!attachment.cid) continue;
+
+    const url = await uploadToYourStorage(attachment); // returns a public URL
+    html = html.replaceAll(`cid:${attachment.cid}`, url);
+  }
+
+  return html;
+}
+```
+
+In Python, walk the whole message to find parts with a `Content-ID`:
+
+```python
+def inline_images(message):
+    for part in message.walk():
+        content_id = part.get("Content-ID")
+        if content_id and part.get_content_maintype() == "image":
+            yield content_id.strip("<>"), part.get_content_type(), part.get_payload(decode=True)
+```
+
 ## Processing Specific File Types
+
+Once you have an attachment's bytes, process them with whatever library fits. The examples below use `mailparser` attachments, where `attachment.content` is a `Buffer`.
 
 ### PDF Documents
 
@@ -302,10 +446,7 @@ async function verifyFileType(attachment) {
 import pdf from 'pdf-parse';
 
 async function extractPdfText(attachment) {
-  const response = await fetch(attachment.url);
-  const buffer = Buffer.from(await response.arrayBuffer());
-
-  const data = await pdf(buffer);
+  const data = await pdf(attachment.content);
 
   return {
     text: data.text,
@@ -321,22 +462,14 @@ async function extractPdfText(attachment) {
 import sharp from 'sharp';
 
 async function processImage(attachment) {
-  const response = await fetch(attachment.url);
-  const buffer = Buffer.from(await response.arrayBuffer());
+  const metadata = await sharp(attachment.content).metadata();
 
-  // Get image metadata
-  const metadata = await sharp(buffer).metadata();
-
-  // Create thumbnail
-  const thumbnail = await sharp(buffer)
+  const thumbnail = await sharp(attachment.content)
     .resize(200, 200, { fit: 'inside' })
     .jpeg({ quality: 80 })
     .toBuffer();
 
-  return {
-    metadata,
-    thumbnail
-  };
+  return { metadata, thumbnail };
 }
 ```
 
@@ -345,47 +478,56 @@ async function processImage(attachment) {
 ```javascript
 import { parse } from 'csv-parse/sync';
 
-async function parseCsv(attachment) {
-  const response = await fetch(attachment.url);
-  const text = await response.text();
-
-  const records = parse(text, {
+function parseCsv(attachment) {
+  return parse(attachment.content.toString('utf-8'), {
     columns: true,
     skip_empty_lines: true
   });
-
-  return records;
 }
 ```
 
-## Attachment Limits
-
-| Limit | Value |
-|-------|-------|
-| Max attachment size | 25 MB per file |
-| Max total attachments | 100 MB per email |
-| URL validity | 24 hours |
-| Max attachments per email | 50 files |
-
 ## Complete Example
+
+An Express endpoint that acknowledges the delivery right away and a worker that extracts PDF and image attachments, deduplicates on `Message-ID`, and uploads the files to S3:
 
 ```javascript
 import express from 'express';
+import { simpleParser } from 'mailparser';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { randomUUID } from 'crypto';
 
 const app = express();
 const s3 = new S3Client({ region: 'us-east-1' });
 
 const ALLOWED_TYPES = ['application/pdf', 'image/jpeg', 'image/png'];
-const MAX_SIZE = 10 * 1024 * 1024; // 10 MB
+const MAX_SIZE = 10 * 1024 * 1024; // your own limit
 
-app.post('/webhooks/inbound', express.json(), async (req, res) => {
-  const { id, from, subject, attachments } = req.body.data;
+app.post('/webhooks/inbound', express.json({ limit: '50mb' }), async (req, res) => {
+  for (const event of req.body) {
+    const relay = event.msys?.relay_message;
+    if (relay) {
+      await queue.add('inbound-email', relay); // your job queue
+    }
+  }
+
+  res.sendStatus(200);
+});
+
+// Runs in your queue worker
+export async function handleInboundEmail(relay) {
+  const { email_rfc822, email_rfc822_is_base64 } = relay.content;
+  const raw = email_rfc822_is_base64 ? Buffer.from(email_rfc822, 'base64') : email_rfc822;
+
+  const parsed = await simpleParser(raw);
+  const messageId = parsed.messageId;
+
+  if (await alreadyProcessed(messageId)) return;
 
   const savedAttachments = [];
 
-  for (const attachment of attachments) {
-    // Validate
+  for (const attachment of parsed.attachments) {
+    if (attachment.related) continue; // skip inline images
+
     if (!ALLOWED_TYPES.includes(attachment.contentType)) {
       console.warn(`Skipping unsupported type: ${attachment.contentType}`);
       continue;
@@ -396,49 +538,37 @@ app.post('/webhooks/inbound', express.json(), async (req, res) => {
       continue;
     }
 
-    try {
-      // Download
-      const response = await fetch(attachment.url);
-      if (!response.ok) throw new Error('Download failed');
+    const key = `inbound/${randomUUID()}`;
 
-      const buffer = Buffer.from(await response.arrayBuffer());
+    await s3.send(new PutObjectCommand({
+      Bucket: 'my-bucket',
+      Key: key,
+      Body: attachment.content,
+      ContentType: attachment.contentType
+    }));
 
-      // Upload to S3
-      const key = `inbound/${id}/${attachment.filename}`;
-      await s3.send(new PutObjectCommand({
-        Bucket: 'my-bucket',
-        Key: key,
-        Body: buffer,
-        ContentType: attachment.contentType
-      }));
-
-      savedAttachments.push({
-        filename: attachment.filename,
-        s3Key: key,
-        size: attachment.size
-      });
-    } catch (error) {
-      console.error(`Failed to process ${attachment.filename}:`, error);
-    }
+    savedAttachments.push({
+      filename: attachment.filename,
+      s3Key: key,
+      size: attachment.size
+    });
   }
 
-  // Store email record with attachment references
   await saveEmailRecord({
-    externalId: id,
-    from,
-    subject,
+    messageId,
+    from: relay.friendly_from,
+    to: relay.rcpt_to,
+    subject: relay.content.subject,
     attachments: savedAttachments
   });
-
-  res.sendStatus(200);
-});
+}
 ```
 
 ## Related Topics
 
 <CardGroup cols={2}>
-  <Card title="Webhooks" icon="webhook" href="/learn/webhooks/event-types">
-    Webhook payload structure
+  <Card title="Email Parsing" icon="file-code" href="/learn/inbound/parsing">
+    Every field in the inbound payload
   </Card>
   <Card title="Security" icon="shield" href="/learn/inbound/security">
     Security best practices

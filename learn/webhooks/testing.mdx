@@ -149,28 +149,26 @@ describe('Webhook Handler', () => {
     );
   });
 
-  it('handles relay delivery event', async () => {
-    const mockTicketService = {
-      create: vi.fn().mockResolvedValue({ id: 'ticket_123' })
+  it('alerts when inbound delivery permanently fails', async () => {
+    // Relay events are status events. The inbound message itself
+    // is posted to your inbound domain's forwarding URL, not here.
+    const mockAlerts = {
+      notify: vi.fn()
     };
 
     const event = {
       msys: {
         relay_event: {
-          type: 'relay_delivery',
-          rcpt_to: 'support@mail.example.com',
-          friendly_from: 'customer@example.com',
-          subject: 'Help needed'
+          type: 'relay_permfail'
         }
       }
     };
 
-    await handleWebhook(event, { ticketService: mockTicketService });
+    await handleWebhook(event, { alerts: mockAlerts });
 
-    expect(mockTicketService.create).toHaveBeenCalledWith({
-      sender: 'customer@example.com',
-      subject: 'Help needed'
-    });
+    expect(mockAlerts.notify).toHaveBeenCalledWith(
+      'Inbound delivery failed: relay_permfail'
+    );
   });
 });
 ```

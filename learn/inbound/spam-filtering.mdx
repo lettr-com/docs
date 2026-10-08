@@ -1,77 +1,92 @@
 ---
 title: Spam Filtering
-description: "Score and filter spam in incoming emails by analyzing content, headers, and sender reputation in your Lettr webhook handler"
+description: "Lettr doesn't score or filter inbound mail. Learn how to detect, block and quarantine spam yourself in the handler behind your forwarding URL."
 ---
 
-Lettr analyzes incoming emails for spam characteristics. You can implement your own spam filtering logic in your webhook handler based on content analysis, sender reputation, and other signals.
+Lettr doesn't score, filter or quarantine inbound mail. Every message accepted for your inbound domain is posted to your forwarding URL, spam included. There is no spam score in the payload and no spam setting in the dashboard. If you want spam handling, you build it into the handler behind your forwarding URL.
 
-## Spam Detection
-
-You can analyze incoming emails for spam characteristics by examining the email content and headers delivered in the relay webhook payload. Implement your own scoring based on patterns, sender reputation, and content analysis.
-
-| Score Range | Interpretation |
-|-------------|----------------|
-| 0.0 - 2.0 | Very unlikely to be spam |
-| 2.0 - 4.0 | Probably legitimate |
-| 4.0 - 6.0 | Suspicious, review recommended |
-| 6.0 - 8.0 | Likely spam |
-| 8.0 - 10.0 | Almost certainly spam |
-
-## Basic Spam Filtering
-
-Implement basic spam filtering based on the score:
-
-```javascript
-app.post('/webhooks/inbound', express.json(), async (req, res) => {
-  for (const event of req.body) {
-    const relay = event.msys?.relay_message;
-    if (!relay) continue;
-
-    const { msg_from, content } = relay;
-    const spamScore = analyzeForSpam({ from: msg_from, subject: content.subject, text: content.text, html: content.html });
-
-    // Reject obvious spam
-    if (spamScore >= 8) {
-      console.log(`Rejected spam from ${msg_from}: score ${spamScore}`);
-      await logRejectedSpam(relay);
-      continue;
-    }
-
-    // Quarantine suspicious emails
-    if (spamScore >= 5) {
-      console.log(`Quarantined suspicious email from ${msg_from}: score ${spamScore}`);
-      await quarantineEmail(relay);
-      continue;
-    }
-
-    // Process legitimate emails
-    await processEmail(relay);
-  }
-
-  res.sendStatus(200);
-});
-```
-
-## Configuring Spam Sensitivity
-
-You can configure spam filtering sensitivity for your inbound domain through the Lettr dashboard under **Domains** → **Inbound**, then selecting your domain.
+This page shows common techniques for doing that with the fields you actually receive.
 
 <Note>
-  Regardless of your dashboard filtering configuration, you can always implement your own filtering logic in your webhook handler.
+  Answer each request with a `2xx`, including for messages you decide to drop. The mail has already been accepted by the time it reaches your endpoint, so an error response can't reject it back to the sender. It only makes the delivery to your endpoint look failed.
 </Note>
 
-## Advanced Spam Detection
+## What You Have to Work With
 
-Combine spam score with additional checks:
+Your forwarding URL receives a JSON array of events. Each event carries one message in `event.msys.relay_message` (see [Email Parsing](/learn/inbound/parsing) for the full payload). The fields that matter for spam handling are:
+
+| Field | What it is |
+|-|-|
+| `msg_from` | Envelope sender (SMTP `MAIL FROM`) |
+| `friendly_from` | Display name and address from the `From` header |
+| `rcpt_to` | The address on your inbound domain the message was sent to |
+| `content.subject` | Subject line |
+| `content.text` / `content.html` | Plain text and HTML bodies. Either can be missing. |
+| `content.headers` | Message headers, as an array of single-key objects |
+| `content.email_rfc822` | The full raw MIME message, including attachments |
+
+Both sender fields are set by whoever sent the message, so treat them as claims, not proof of identity.
+
+Headers come as an array like `[{ "Received": "..." }, { "Subject": "..." }]`, and a name can appear more than once. A small helper makes them easier to read:
 
 ```javascript
-function analyzeForSpam(email) {
+// Returns every value of a header, matching the name case-insensitively
+function getHeaders(relay, name) {
+  const wanted = name.toLowerCase();
+  const values = [];
+
+  for (const header of relay.content?.headers ?? []) {
+    for (const [key, value] of Object.entries(header)) {
+      if (key.toLowerCase() === wanted) {
+        values.push(value);
+      }
+    }
+  }
+
+  return values;
+}
+
+function senderAddress(relay) {
+  return (relay.msg_from || '').toLowerCase();
+}
+
+function senderDomain(relay) {
+  return senderAddress(relay).split('@')[1] || '';
+}
+```
+
+## Check Authentication Results
+
+Some messages carry an `Authentication-Results` or `Received-SPF` header, added by a mail server that checked SPF, DKIM or DMARC along the way. Don't assume these headers are present, and remember that a sender can put a fake one in their own message. Use them as one signal among several, never as the only check.
+
+```javascript
+function authenticationSignals(relay) {
+  const results = getHeaders(relay, 'Authentication-Results').join(' ').toLowerCase();
+
+  if (!results) {
+    return { known: false };
+  }
+
+  return {
+    known: true,
+    spfFail: /\bspf=(fail|softfail)\b/.test(results),
+    dkimFail: /\bdkim=fail\b/.test(results),
+    dmarcFail: /\bdmarc=fail\b/.test(results)
+  };
+}
+```
+
+## Build Your Own Heuristics
+
+A simple approach is to add up points for suspicious signals and act on the total. The point scale below belongs to this example code. It isn't a Lettr score, so tune the weights and thresholds to your own traffic.
+
+```javascript
+function scoreMessage(relay) {
   const signals = [];
   let score = 0;
 
-  // Check for common spam patterns
-  const subject = (email.subject || '').toLowerCase();
-  const body = (email.text || email.html || '').toLowerCase();
+  const subject = (relay.content?.subject || '').toLowerCase();
+  const body = (relay.content?.text || relay.content?.html || '').toLowerCase();
 
   // Suspicious subject patterns
   const spamSubjectPatterns = [
@@ -79,8 +94,7 @@ function analyzeForSpam(email) {
     /\burgent\b.*\baction\b/,
     /\bwinner\b/,
     /\bcongratulations\b.*\bwon\b/,
-    /\blottery\b/,
-    /\bnigerian\b.*\bprince\b/i
+    /\blottery\b/
   ];
 
   for (const pattern of spamSubjectPatterns) {
@@ -90,98 +104,51 @@ function analyzeForSpam(email) {
     }
   }
 
-  // Check for excessive links
+  // Many links
   const linkCount = (body.match(/https?:\/\//g) || []).length;
   if (linkCount > 10) {
     score += 1;
-    signals.push(`Excessive links: ${linkCount}`);
+    signals.push(`Many links: ${linkCount}`);
   }
 
-  // Check for URL shorteners
-  const shorteners = ['bit.ly', 'tinyurl.com', 'goo.gl', 't.co'];
-  for (const shortener of shorteners) {
+  // URL shorteners
+  for (const shortener of ['bit.ly', 'tinyurl.com', 't.co']) {
     if (body.includes(shortener)) {
       score += 1.5;
-      signals.push(`URL shortener detected: ${shortener}`);
+      signals.push(`URL shortener: ${shortener}`);
     }
   }
 
-  // Check sender domain
-  const senderDomain = email.from.split('@')[1];
-  if (isSuspiciousDomain(senderDomain)) {
+  // Failed authentication, when the headers report it
+  const auth = authenticationSignals(relay);
+  if (auth.known && (auth.spfFail || auth.dkimFail || auth.dmarcFail)) {
+    score += 3;
+    signals.push('Authentication failed');
+  }
+
+  // Your own record of bad sender domains
+  if (isSuspiciousDomain(senderDomain(relay))) {
     score += 2;
-    signals.push(`Suspicious sender domain: ${senderDomain}`);
+    signals.push(`Suspicious sender domain: ${senderDomain(relay)}`);
   }
 
-  return {
-    score: Math.min(score, 10),
-    signals,
-    isSpam: score >= 6
-  };
-}
-```
-
-## Allowlisting and Blocklisting
-
-Maintain lists of trusted and blocked senders:
-
-```javascript
-const allowlist = new Set(['trusted@partner.com', 'noreply@bank.com']);
-const blocklist = new Set(['spammer@spam.com']);
-const allowedDomains = new Set(['trustedcompany.com']);
-const blockedDomains = new Set(['spamdomain.com']);
-
-function checkLists(email) {
-  const from = email.from.toLowerCase();
-  const domain = from.split('@')[1];
-
-  // Check exact email allowlist
-  if (allowlist.has(from)) {
-    return { action: 'allow', reason: 'Email allowlisted' };
-  }
-
-  // Check domain allowlist
-  if (allowedDomains.has(domain)) {
-    return { action: 'allow', reason: 'Domain allowlisted' };
-  }
-
-  // Check exact email blocklist
-  if (blocklist.has(from)) {
-    return { action: 'block', reason: 'Email blocklisted' };
-  }
-
-  // Check domain blocklist
-  if (blockedDomains.has(domain)) {
-    return { action: 'block', reason: 'Domain blocklisted' };
-  }
-
-  return { action: 'check', reason: 'Not in lists' };
+  return { score, signals };
 }
 
-app.post('/webhooks/inbound', express.json(), async (req, res) => {
+app.post('/webhooks/inbound', express.json({ limit: '50mb' }), async (req, res) => {
   for (const event of req.body) {
     const relay = event.msys?.relay_message;
     if (!relay) continue;
 
-    const email = { from: relay.msg_from, subject: relay.content.subject, text: relay.content.text, html: relay.content.html };
+    const { score, signals } = scoreMessage(relay);
 
-    // Check allowlist/blocklist first
-    const listResult = checkLists(email);
-
-    if (listResult.action === 'block') {
-      await logBlockedEmail(email, listResult.reason);
+    if (score >= 8) {
+      await logDroppedSpam(relay, signals); // drop it
       continue;
     }
 
-    if (listResult.action === 'allow') {
-      await processEmail(relay);
-      continue;
-    }
-
-    // Apply spam filtering for unlisted senders
-    const spamScore = analyzeForSpam(email);
-    if (spamScore >= 6) {
-      await quarantineEmail(relay);
+    if (score >= 5) {
+      await quarantine.add(relay, signals); // keep it for review
       continue;
     }
 
@@ -192,53 +159,92 @@ app.post('/webhooks/inbound', express.json(), async (req, res) => {
 });
 ```
 
-## Rate Limiting by Sender
+If you'd rather not write your own rules, your handler can pass the raw message in `content.email_rfc822` to a third-party spam filter. When `content.email_rfc822_is_base64` is `true`, base64-decode it first.
 
-Protect against email flooding:
+## Allow and Block Lists
+
+Keep your own lists of trusted and blocked senders, for example in your database, and check them before any other rule:
 
 ```javascript
-import { RateLimiterMemory } from 'rate-limiter-flexible';
+async function checkLists(relay) {
+  const from = senderAddress(relay);
+  const domain = senderDomain(relay);
 
-const senderLimiter = new RateLimiterMemory({
-  points: 10, // 10 emails
-  duration: 60 // per minute
-});
-
-const domainLimiter = new RateLimiterMemory({
-  points: 50, // 50 emails
-  duration: 60 // per minute
-});
-
-async function checkRateLimits(sender) {
-  const from = sender.toLowerCase();
-  const domain = from.split('@')[1];
-
-  try {
-    await senderLimiter.consume(from);
-    await domainLimiter.consume(domain);
-    return { allowed: true };
-  } catch (rateLimitError) {
-    return {
-      allowed: false,
-      reason: 'Rate limit exceeded',
-      retryAfter: Math.ceil(rateLimitError.msBeforeNext / 1000)
-    };
+  if ((await allowlist.has(from)) || (await allowedDomains.has(domain))) {
+    return 'allow';
   }
+
+  if ((await blocklist.has(from)) || (await blockedDomains.has(domain))) {
+    return 'block';
+  }
+
+  return 'check';
 }
 
-app.post('/webhooks/inbound', express.json(), async (req, res) => {
+app.post('/webhooks/inbound', express.json({ limit: '50mb' }), async (req, res) => {
   for (const event of req.body) {
     const relay = event.msys?.relay_message;
     if (!relay) continue;
 
-    const rateCheck = await checkRateLimits(relay.msg_from);
-    if (!rateCheck.allowed) {
+    const listResult = await checkLists(relay);
+
+    if (listResult === 'block') {
+      await logBlockedEmail(relay);
+      continue;
+    }
+
+    if (listResult === 'allow') {
+      await processEmail(relay);
+      continue;
+    }
+
+    // Unlisted sender: apply your heuristics
+    const { score, signals } = scoreMessage(relay);
+    if (score >= 5) {
+      await quarantine.add(relay, signals);
+      continue;
+    }
+
+    await processEmail(relay);
+  }
+
+  res.sendStatus(200);
+});
+```
+
+Because a sender address can be forged, an allowlist entry is safest when the message also shows a passing authentication result for that sender.
+
+## Rate Limiting by Sender
+
+Limit how many messages one sender or sender domain can push through your pipeline:
+
+```javascript
+import { RateLimiterMemory } from 'rate-limiter-flexible';
+
+const senderLimiter = new RateLimiterMemory({ points: 10, duration: 60 }); // 10 per minute
+const domainLimiter = new RateLimiterMemory({ points: 50, duration: 60 }); // 50 per minute
+
+async function withinRateLimits(relay) {
+  try {
+    await senderLimiter.consume(senderAddress(relay) || 'unknown');
+    await domainLimiter.consume(senderDomain(relay) || 'unknown');
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+app.post('/webhooks/inbound', express.json({ limit: '50mb' }), async (req, res) => {
+  for (const event of req.body) {
+    const relay = event.msys?.relay_message;
+    if (!relay) continue;
+
+    if (!(await withinRateLimits(relay))) {
       console.warn(`Rate limited: ${relay.msg_from}`);
       await logRateLimited(relay);
       continue;
     }
 
-    // Continue with spam checking and processing
     await processEmail(relay);
   }
 
@@ -246,37 +252,38 @@ app.post('/webhooks/inbound', express.json(), async (req, res) => {
 });
 ```
 
-## Quarantine Management
+`RateLimiterMemory` counts per process. If you run more than one instance of your handler, use a shared store such as Redis.
 
-Implement a quarantine system for suspicious emails:
+## Quarantine in Your Own Storage
+
+Lettr doesn't keep inbound messages, so a quarantine has to live in your own storage. Key each record on the `Message-ID` header, which also lets you ignore a message that arrives twice:
 
 ```javascript
+import crypto from 'node:crypto';
+
 class EmailQuarantine {
   constructor(storage) {
     this.storage = storage;
   }
 
-  async quarantine(email, reason) {
-    await this.storage.save({
-      id: email.id,
-      email: email,
-      reason: reason,
-      quarantinedAt: new Date().toISOString(),
+  async add(relay, reasons) {
+    const messageId = getHeaders(relay, 'Message-ID')[0] ?? crypto.randomUUID();
+
+    await this.storage.upsert(messageId, {
+      messageId,
+      relay, // the full relay_message, so you can process it later
+      reasons,
       status: 'pending',
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+      quarantinedAt: new Date().toISOString()
     });
   }
 
-  async release(emailId) {
-    const record = await this.storage.get(emailId);
-    if (!record) throw new Error('Email not found');
+  async release(messageId) {
+    const record = await this.storage.get(messageId);
+    if (!record) throw new Error('Message not found');
 
-    await this.storage.update(emailId, { status: 'released' });
-    return record.email;
-  }
-
-  async delete(emailId) {
-    await this.storage.update(emailId, { status: 'deleted' });
+    await this.storage.update(messageId, { status: 'released' });
+    return record.relay;
   }
 
   async listPending() {
@@ -286,56 +293,34 @@ class EmailQuarantine {
 
 const quarantine = new EmailQuarantine(quarantineStorage);
 
-app.post('/webhooks/inbound', express.json(), async (req, res) => {
-  for (const event of req.body) {
-    const relay = event.msys?.relay_message;
-    if (!relay) continue;
-
-    const email = { from: relay.msg_from, subject: relay.content.subject, text: relay.content.text };
-    const spamScore = analyzeForSpam(email);
-
-    if (spamScore >= 5) {
-      await quarantine.quarantine(relay, `Spam score: ${spamScore}`);
-      continue;
-    }
-
-    await processEmail(relay);
-  }
-
-  res.sendStatus(200);
-});
-
-// Admin endpoint to review quarantine
+// Admin endpoints for reviewing the quarantine
 app.get('/admin/quarantine', async (req, res) => {
-  const pending = await quarantine.listPending();
-  res.json(pending);
+  res.json(await quarantine.listPending());
 });
 
-app.post('/admin/quarantine/:id/release', async (req, res) => {
-  const email = await quarantine.release(req.params.id);
-  await processEmail(email);
+app.post('/admin/quarantine/release', express.json(), async (req, res) => {
+  const relay = await quarantine.release(req.body.messageId);
+  await processEmail(relay);
   res.json({ success: true });
 });
 ```
 
-## Reporting Spam
+Decide how long to keep quarantined messages and delete them on your own schedule.
 
-When spam gets through your filters, maintain a local blocklist to prevent future deliveries from the same sender:
+## Learning From Reports
+
+When spam gets through, let your users report it and add the sender to your blocklist:
 
 ```javascript
-// User reports an email as spam
-app.post('/api/report-spam', async (req, res) => {
-  const { emailId } = req.body;
+app.post('/api/report-spam', express.json(), async (req, res) => {
+  const { messageId } = req.body;
 
-  // Add sender to local blocklist
-  const email = await getEmailById(emailId);
-  await addToBlocklist(email.from);
+  const stored = await getStoredEmail(messageId); // a relay_message you saved earlier
+  await blocklist.add(stored.msg_from.toLowerCase());
 
-  // Log for analysis and tuning
   await logSpamReport({
-    emailId,
-    sender: email.from,
-    spamScore: email.spamScore,
+    messageId,
+    sender: stored.msg_from,
     reportedAt: new Date()
   });
 
@@ -346,39 +331,39 @@ app.post('/api/report-spam', async (req, res) => {
 ## Best Practices
 
 <AccordionGroup>
-  <Accordion title="Start with moderate filtering">
-    Begin with moderate spam filtering and adjust based on your false positive/negative rates. It's better to quarantine than outright reject initially.
+  <Accordion title="Quarantine before you drop">
+    Start by quarantining suspicious mail instead of discarding it. Once you know your false positive rate, you can drop the clearest cases.
   </Accordion>
 
-  <Accordion title="Log all filtering decisions">
-    Keep detailed logs of why emails were filtered, quarantined, or blocked. This helps debug issues and tune your filters.
-  </Accordion>
-
-  <Accordion title="Provide user feedback mechanisms">
-    Allow users to report spam that got through and legitimate emails that were blocked. Use this feedback to improve your filtering.
-  </Accordion>
-
-  <Accordion title="Review quarantine regularly">
-    Set up processes to review quarantined emails and release false positives promptly.
+  <Accordion title="Log every decision">
+    Record why each message was allowed, quarantined or dropped. Lettr doesn't keep a copy of inbound mail, so your logs are the only way to trace a missing email.
   </Accordion>
 
   <Accordion title="Combine multiple signals">
-    Don't rely solely on the spam score. Combine it with allowlists, blocklists, rate limiting, and content analysis.
+    No single check is reliable on its own. Combine allow and block lists, authentication results when present, rate limits and content rules.
+  </Accordion>
+
+  <Accordion title="Do slow checks asynchronously">
+    Answer the request quickly and run expensive checks, such as a third-party filter, from a queue.
+  </Accordion>
+
+  <Accordion title="Review the quarantine regularly">
+    Release false positives promptly and use them to tune your rules.
   </Accordion>
 </AccordionGroup>
 
 <Warning>
-  Be careful with aggressive spam filtering. False positives can cause you to miss important emails from customers or partners.
+  Be careful with aggressive filtering. False positives can make you miss important emails from customers or partners.
 </Warning>
 
 ## Related Topics
 
 <CardGroup cols={2}>
-  <Card title="Webhooks" icon="webhook" href="/learn/webhooks/event-types">
-    Webhook payload structure
+  <Card title="Email Parsing" icon="code" href="/learn/inbound/parsing">
+    The full inbound payload
   </Card>
   <Card title="Routing" icon="route" href="/learn/inbound/routing">
-    Route emails based on rules
+    Route emails in your handler
   </Card>
   <Card title="Security" icon="lock" href="/learn/inbound/security">
     Security best practices

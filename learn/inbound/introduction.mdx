@@ -1,6 +1,6 @@
 ---
 title: Inbound Introduction
-description: "Receive and process inbound email programmatically with Lettr by configuring an inbound domain that forwards parsed messages to your application."
+description: "Receive and process inbound email programmatically with Lettr by configuring an inbound domain that posts each received message to your application as JSON."
 ---
 
 Lettr allows you to receive and process incoming emails programmatically. By configuring an inbound domain with a forwarding URL, your application can capture replies to transactional emails, process support requests, parse incoming data, and trigger automated workflows whenever an email arrives.
@@ -11,12 +11,12 @@ Lettr allows you to receive and process incoming emails programmatically. By con
 - **Reply Tracking** - Capture replies to your transactional emails and thread conversations
 - **Email-to-Action Workflows** - Trigger processes when specific emails arrive
 - **Data Extraction** - Parse structured data from incoming emails (orders, receipts, notifications)
-- **Email Forwarding** - Receive, process, and forward emails with transformations
+- **Per-User Addresses** - Give each user, record, or workflow its own address, since mail to any address at the domain is forwarded
 - **Unsubscribe Processing** - Handle unsubscribe requests via email
 
 ## How It Works
 
-Lettr's inbound email processing follows a four-step flow. You configure DNS to route emails to Lettr's mail servers, and Lettr parses each email into structured data and posts it to your application's forwarding URL.
+Lettr's inbound email processing follows a four-step flow. You configure DNS to route emails to Lettr's mail servers, and Lettr posts each email to your application's forwarding URL as JSON.
 
 <Steps>
   <Step title="Build a Receiving Endpoint">
@@ -26,7 +26,7 @@ Lettr's inbound email processing follows a four-step flow. You configure DNS to 
     Add an inbound domain in your Lettr dashboard with your forwarding URL, then configure MX records to route incoming emails to Lettr's mail servers.
   </Step>
   <Step title="Receive and Process">
-    When someone sends an email to your inbound domain, Lettr parses it and posts the structured data to your forwarding URL.
+    When someone sends an email to any address on your inbound domain, Lettr posts it to your forwarding URL as JSON.
   </Step>
   <Step title="Build Your Logic">
     Route emails, extract data, trigger workflows, and respond programmatically.
@@ -34,10 +34,10 @@ Lettr's inbound email processing follows a four-step flow. You configure DNS to 
 </Steps>
 
 ```
-Sender → MX Records → Lettr Mail Servers → Parse & Extract → Forwarding URL → Your Application
+Sender → MX Records → Lettr Inbound Servers → Forwarding URL (JSON POST) → Your Application
 ```
 
-Lettr handles the low-level SMTP reception, MIME parsing, attachment extraction, and spam scoring. Your application receives clean, structured JSON with the email's sender, recipients, subject, body (both plain text and HTML), headers, and attachment URLs.
+Lettr's inbound servers handle SMTP reception and post each message to your forwarding URL. Your application receives JSON with the email's sender, recipients, subject, body (plain text and HTML, when present), headers, and the complete raw MIME message. Attachments and inline images are only available inside that raw message. Lettr doesn't score, filter, or store the messages it forwards: anything beyond delivery, such as spam checks, routing, or saving attachments, happens in your handler.
 
 ## Quick Start
 
@@ -56,16 +56,16 @@ The forwarding URL is required and is tested with a `POST` request before the do
 Add the provided MX records to your domain:
 
 | Type | Priority | Value |
-|------|----------|-------|
+|-|-|-|
 | MX | 10 | `rx1.sparkpostmail.com` |
 | MX | 10 | `rx2.sparkpostmail.com` |
 | MX | 10 | `rx3.sparkpostmail.com` |
 
-Multiple MX records with equal priority provide load balancing — sending servers distribute email across all three servers. If one is unavailable, the others handle delivery. See the [Setup Guide](/learn/inbound/setup) for DNS propagation details.
+Multiple MX records with equal priority provide load balancing: sending servers distribute email across all three servers. If one is unavailable, the others handle delivery. See the [Setup Guide](/learn/inbound/setup) for DNS propagation details.
 
 ### 3. Handle Incoming Emails
 
-Handle parsed emails at your forwarding URL:
+Handle incoming emails at your forwarding URL:
 
 ```javascript
 import crypto from 'node:crypto';
@@ -114,7 +114,7 @@ app.post('/webhooks/inbound', (req, res, next) => {
 
 ## Webhook Payload
 
-When an email is received, Lettr posts it to your domain's forwarding URL. The payload is delivered as a JSON array of event objects, each containing an `msys.relay_message` with the parsed email:
+When an email is received, Lettr posts it to your domain's forwarding URL. The payload is a JSON array of event objects (one request can carry more than one email), each containing an `msys.relay_message`:
 
 ```json
 [
@@ -125,7 +125,7 @@ When an email is received, Lettr posts it to your domain's forwarding URL. The p
         "rcpt_to": "support@mail.example.com",
         "friendly_from": "John Sender <sender@example.com>",
         "customer_id": "1234",
-        "webhook_id": "wh_abc123",
+        "webhook_id": "4839201967643219",
         "content": {
           "html": "<p>HTML content of the email...</p>",
           "text": "Plain text content of the email...",
@@ -136,7 +136,8 @@ When an email is received, Lettr posts it to your domain's forwarding URL. The p
             { "In-Reply-To": "<original@example.com>" }
           ],
           "to": ["support@mail.example.com"],
-          "email_rfc822": "...raw MIME content..."
+          "email_rfc822": "...raw MIME content...",
+          "email_rfc822_is_base64": false
         }
       }
     }
@@ -144,13 +145,13 @@ When an email is received, Lettr posts it to your domain's forwarding URL. The p
 ]
 ```
 
-Lettr automatically handles MIME parsing and delivers both the structured content fields and the raw RFC 822 message. For a complete breakdown of each field and how to work with them, see [Email Parsing](/learn/inbound/parsing).
+The payload was produced by SparkPost, the mail infrastructure behind Lettr's inbound servers. Alongside the convenience fields (`subject`, `text`, `html`, `headers`), `email_rfc822` holds the complete raw message, base64-encoded when `email_rfc822_is_base64` is `true`. Either `text` or `html` can be missing, so handle both cases. There is no attachments array, spam score, or event ID in the payload. For a complete breakdown of each field, see [Email Parsing](/learn/inbound/parsing).
 
 ## Key Capabilities
 
 ### Email Routing
 
-Route incoming emails to different handlers based on recipient, content, or custom rules:
+Mail sent to any address at your inbound domain is forwarded to the same URL, so routing happens in your handler. Route incoming emails based on recipient, content, or your own rules:
 
 ```javascript
 app.post('/webhooks/inbound', express.json(), async (req, res) => {
@@ -179,35 +180,49 @@ The `reply+` pattern above is called variable addressing (or plus addressing). I
 
 ### Spam Filtering
 
-Every email includes a spam score, and you can configure automatic filtering:
+Lettr adds no spam score and doesn't filter, quarantine, or drop inbound mail for you. Every message that reaches your inbound domain is forwarded. If you want spam handling, implement it in your handler, for example by checking authentication results when the receiving server added them, the sender's domain, or a third-party filter:
 
 ```javascript
-// Filter based on spam score from your own analysis
-if (spamScore >= 6) {
-  await quarantineAsSpam(email);
-  return;
+// Headers arrive as an array of single-key objects
+function getHeader(headers, name) {
+  for (const header of headers ?? []) {
+    for (const [key, value] of Object.entries(header)) {
+      if (key.toLowerCase() === name.toLowerCase()) return value;
+    }
+  }
+  return undefined;
+}
+
+function looksSuspicious(relay) {
+  // Not every message carries this header, so treat a missing one as "unknown"
+  const authResults = getHeader(relay.content.headers, 'Authentication-Results');
+  return Boolean(authResults && /dmarc=fail/i.test(authResults));
 }
 ```
 
-You can also configure spam filtering sensitivity for your inbound domain through the dashboard under **Domains** → **Inbound**. Regardless of dashboard settings, you can implement your own filtering logic in your webhook handler. See [Spam Filtering](/learn/inbound/spam-filtering) for advanced detection patterns and allowlist/blocklist management.
+See [Spam Filtering](/learn/inbound/spam-filtering) for more patterns you can build in your handler.
 
 ### Attachment Handling
 
-Attachments are automatically extracted and made available via secure URLs:
+Attachments aren't sent as separate fields or URLs. They are inside the raw MIME message in `content.email_rfc822`, so parse it with a MIME library such as [mailparser](https://nodemailer.com/extras/mailparser/) for Node.js:
 
 ```javascript
-for (const attachment of email.attachments) {
-  const response = await fetch(attachment.url);
-  const buffer = await response.arrayBuffer();
-  await saveToStorage(attachment.filename, Buffer.from(buffer));
+import { simpleParser } from 'mailparser';
+
+const { content } = relay;
+const raw = content.email_rfc822_is_base64
+  ? Buffer.from(content.email_rfc822, 'base64')
+  : content.email_rfc822;
+
+const parsed = await simpleParser(raw);
+
+for (const attachment of parsed.attachments) {
+  // filename, contentType, size, and the file itself as a Buffer
+  await saveToStorage(attachment.filename, attachment.content);
 }
 ```
 
-<Warning>
-  Attachment URLs expire after 24 hours. Download and store attachments promptly if you need them longer.
-</Warning>
-
-Each attachment includes `filename`, `contentType`, `size` (in bytes), and a download `url`. See [Attachments](/learn/inbound/attachments) for storage examples (S3, GCS) and security best practices including file type verification and malware scanning.
+Lettr doesn't store inbound messages or their attachments, so the payload is your only copy. Save what you need when the request arrives. See [Attachments](/learn/inbound/attachments) for storage examples and security practices such as file type checks and malware scanning.
 
 ### Reply Tracking
 
@@ -224,10 +239,10 @@ await lettr.emails.send({
 });
 
 // When receiving the reply
-const match = recipient.match(/^reply\+ticket_([^@]+)@/);
+const match = relay.rcpt_to.toLowerCase().match(/^reply\+ticket_([^@]+)@/);
 if (match) {
   const ticketId = match[1];
-  await addReplyToTicket(ticketId, emailData);
+  await addReplyToTicket(ticketId, { from: relay.msg_from, body: relay.content.text });
 }
 ```
 
@@ -320,8 +335,8 @@ app.post('/webhooks/inbound', express.json(), async (req, res) => {
 
 We recommend using a subdomain for inbound email to keep it separate from your primary email:
 
-| Subdomain | Use Case |
-|-----------|----------|
+|Subdomain|Use Case|
+|-|-|
 | `mail.example.com` | General inbound processing |
 | `reply.example.com` | Reply tracking for transactional emails |
 | `support.example.com` | Customer support emails |
@@ -331,10 +346,10 @@ This lets you keep your root domain's MX records pointing to your regular email 
 
 ## Processing Best Practices
 
-- **Respond quickly** — Return a `200` status from your webhook endpoint within a few seconds. If processing is complex, accept the webhook and process asynchronously via a queue.
-- **Handle duplicates** — Webhooks may be delivered more than once. Use the event `id` to deduplicate.
-- **Store before processing** — Save the raw webhook payload before doing any processing, so you can replay events if something fails.
-- **Validate attachments** — Verify file types and scan for malware before processing attachments from unknown senders.
+- **Respond quickly**: Return a `2xx` status as soon as you have the payload, and do slow work asynchronously via a queue.
+- **Handle duplicates**: The same email can be delivered more than once. The payload has no event ID, so deduplicate on the email's `Message-ID` header.
+- **Store before processing**: Save the raw request body before doing any processing, so you can replay it if something fails. Lettr keeps no copy.
+- **Validate attachments**: If you extract attachments from `email_rfc822`, verify file types and scan for malware before using them.
 
 See [Best Practices](/learn/inbound/best-practices) for architecture patterns, reliability strategies, and monitoring recommendations.
 
@@ -344,23 +359,20 @@ See [Best Practices](/learn/inbound/best-practices) for architecture patterns, r
   <Card title="Setup Guide" icon="gear" href="/learn/inbound/setup">
     Step-by-step domain and forwarding URL configuration
   </Card>
-  <Card title="Webhooks" icon="webhook" href="/learn/webhooks/introduction">
-    Webhook configuration and event handling
-  </Card>
   <Card title="Routing" icon="route" href="/learn/inbound/routing">
     Route emails to different handlers
   </Card>
   <Card title="Attachments" icon="paperclip" href="/learn/inbound/attachments">
-    Handle incoming file attachments
+    Get attachments out of the raw MIME message
   </Card>
   <Card title="Spam Filtering" icon="shield" href="/learn/inbound/spam-filtering">
-    Filter and manage spam
+    Add your own spam checks in your handler
   </Card>
   <Card title="Reply Tracking" icon="reply" href="/learn/inbound/reply-tracking">
     Track and thread email replies
   </Card>
   <Card title="Email Parsing" icon="code" href="/learn/inbound/parsing">
-    Understanding parsed email data
+    Every field in the forwarding URL payload
   </Card>
   <Card title="Security" icon="lock" href="/learn/inbound/security">
     Secure your inbound processing
@@ -377,6 +389,6 @@ See [Best Practices](/learn/inbound/best-practices) for architecture patterns, r
     Domain configuration details
   </Card>
   <Card title="Webhooks Overview" icon="bell" href="/learn/webhooks/introduction">
-    General webhook documentation
+    Lettr webhooks for event notifications, including relay delivery status
   </Card>
 </CardGroup>
