@@ -64,20 +64,19 @@ Create a key in the Lettr dashboard under **API Keys**. The key's value is shown
 </Tabs>
 
 <Warning>
-  A key in a client config file is a password in plain text. Prefer a key scoped to only what the agent needs, and keep config files out of version control.
+  A key in a client config file is a password in plain text. Give an agent that only sends email a **Sending only** key, and keep config files out of version control.
 </Warning>
 
 ## What a Key Can Reach
 
-A key's permissions decide which tools it sees at all. A tool the key has no scope for is **not listed**, so an agent never offers to do something the key cannot do.
+A key's permission level decides which tools it sees at all. A tool the key has no scope for is **not listed**, so an agent never offers to do something the key cannot do.
 
 | Key permissions | Tools available |
-|---|---|
+|-|-|
 | **Full access** | Everything except `list_api_keys` and `browse_api_logs` |
-| **Sending only** | `send_email`, `send_template_email`, `schedule_email`, `cancel_scheduled_email` |
-| **Custom scopes** | The tools covered by the scopes you granted, matching the REST endpoints those scopes allow |
+| **Sending only** | `send_email`, `send_template_email`, `schedule_email`, `cancel_scheduled_email`, plus `current_team` and `list_teams` |
 
-Scopes map to the same permissions the REST API uses — a key with `audience:read` can list contacts but not create them, exactly as on `/api`.
+Each tool checks the same [scope](/learn/api-keys/permissions#scopes) as its REST endpoint (listing contacts needs `audience:read`, sending a campaign needs `campaigns:write`), and the permission level decides which scopes the key holds. The server checks permissions on every request, so a downgraded key loses those tools on its next call, even before the client refreshes its tool list.
 
 <Note>
   `list_api_keys` and `browse_api_logs` are never available to a key, whatever its permissions. They have no REST equivalent, so a key cannot read them. Use OAuth if an agent needs them.
@@ -85,7 +84,7 @@ Scopes map to the same permissions the REST API uses — a key with `audience:re
 
 ### Sandbox Keys
 
-A sandbox key can read and send, but not write. Creating, updating and deleting templates, domains, audiences and campaigns are all unavailable to it — the same restriction those endpoints have on REST.
+A sandbox key can read and send, but not write. Creating, updating and deleting templates, domains, audiences and campaigns, and sending or scheduling a campaign, are all unavailable to it — the same restriction those endpoints have on REST.
 
 Sandbox sends are rewritten server-side: the sender becomes Lettr's sandbox domain and the recipient becomes the key owner's own email address, whatever address the agent asked for. That makes a sandbox key safe to hand to an agent you are still testing.
 
@@ -116,7 +115,7 @@ With a team pinned, `team_id` disappears from the tools entirely, so the AI cann
 
 ## Rate Limits
 
-Key-authenticated MCP calls count against the same per-team budget as that key's REST calls, so an agent cannot get extra throughput by going through MCP.
+Key-authenticated MCP calls draw on the same per-team budget as the team's REST calls, so MCP traffic also pushes REST towards its limit. The MCP ceiling is higher (10 requests per second against REST's 3) because connecting a client costs several requests before it does any work.
 
 | Key type | Limit on `/mcp` |
 |---|---|
@@ -151,7 +150,7 @@ Use a **key** when no human is present, or when you want an agent restricted to 
     The header did not reach the server, so the request fell through to OAuth. Check the header is exactly `Authorization: Bearer lttr_…`, and that your client sends headers for MCP servers at all.
   </Accordion>
   <Accordion title="A tool I expected is missing">
-    The key's permissions do not cover it, so it is hidden rather than refused. Check the key's scopes in the dashboard, and remember that `list_api_keys` and `browse_api_logs` are never available to a key. Tool lists are cached per session, so restart your client after changing a key's permissions.
+    The key's permissions do not cover it, so it is hidden rather than refused. Check the key's permission level in the dashboard, and remember that `list_api_keys` and `browse_api_logs` are never available to a key. Tool lists are cached per session, so restart your client after changing a key's permissions.
   </Accordion>
   <Accordion title="Tool [name] not found.">
     The same thing: a tool the key cannot use is not registered, so calling it reports it as missing rather than naming the missing scope.

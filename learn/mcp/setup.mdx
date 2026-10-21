@@ -27,46 +27,28 @@ When configuring your AI client, use the following settings:
 
 <Tabs>
   <Tab title="Claude">
-    ### Claude Desktop
+    ### Claude.ai and Claude Desktop
 
-    Claude Desktop supports MCP servers through its configuration file.
+    Claude connects to remote MCP servers as custom connectors. A connector added on Claude.ai is also available in Claude Desktop.
 
     <Steps>
-      <Step title="Open Claude Desktop Settings">
-        Open Claude Desktop and go to **Settings** (gear icon in the bottom left).
+      <Step title="Open Connectors">
+        Open **Customize** → **Connectors**, click **+**, and select **Add custom connector**.
       </Step>
-      <Step title="Navigate to MCP Servers">
-        Select **Developer** → **MCP Servers** from the settings menu.
+      <Step title="Add the Lettr Server">
+        Enter "Lettr" as the name and `https://app.lettr.com/mcp` as the remote MCP server URL, then click **Add**.
       </Step>
-      <Step title="Add Lettr Server">
-        Click **Add Server** and enter "Lettr" as the name with `https://app.lettr.com/mcp` as the URL.
-      </Step>
-      <Step title="Authenticate">
+      <Step title="Sign In">
         Click **Connect**. A browser window opens to Lettr's OAuth flow. Sign in and authorize Claude to access your account.
       </Step>
       <Step title="Verify Connection">
-        Once connected, you'll see "Lettr" listed under your active MCP servers. Start a new conversation and ask Claude about your email infrastructure.
+        Start a new conversation and ask Claude about your email infrastructure.
       </Step>
     </Steps>
 
-    ### Claude.ai (Web)
-
-    Claude on the web supports MCP through the integrations panel.
-
-    <Steps>
-      <Step title="Open Integrations">
-        In a Claude conversation, click the **Integrations** icon (plug symbol) in the composer area.
-      </Step>
-      <Step title="Add MCP Server">
-        Click **Add Integration** → **MCP Server**.
-      </Step>
-      <Step title="Enter Server URL">
-        Enter `https://app.lettr.com/mcp` as the server URL.
-      </Step>
-      <Step title="Complete OAuth">
-        Follow the OAuth prompts to sign in to Lettr and authorize access.
-      </Step>
-    </Steps>
+    <Note>
+      On Claude Team and Enterprise plans, an Owner adds the connector once under **Organization settings** → **Connectors**. Each member then finds Lettr in their connector list, marked **Custom**, and clicks **Connect** to sign in with their own Lettr account.
+    </Note>
   </Tab>
   <Tab title="Claude Code">
     ### Claude Code
@@ -98,23 +80,25 @@ When configuring your AI client, use the following settings:
   <Tab title="ChatGPT">
     ### ChatGPT
 
-    ChatGPT supports MCP through its plugins and integrations system.
+    ChatGPT connects to remote MCP servers as custom plugins, on the web. Custom plugins aren't available on every ChatGPT plan, and on Business, Enterprise, and Edu workspaces, an admin decides who has permission to create plugins with MCP servers. See [OpenAI's guide](https://help.openai.com/en/articles/12584461-creating-custom-mcp-apps-in-chatgpt) for current availability.
 
     <Steps>
-      <Step title="Open GPT Settings">
-        In ChatGPT, click your profile icon and select **Settings**.
+      <Step title="Open Plugins">
+        In ChatGPT, open **Plugins**, click **+**, and choose **Add custom MCP server**.
       </Step>
-      <Step title="Navigate to Connections">
-        Go to **Data controls** → **Connected apps**.
-      </Step>
-      <Step title="Add MCP Connection">
-        Click **Connect new app** and search for "MCP" or enter the server URL manually:
+      <Step title="Add the Lettr Server">
+        Enter "Lettr" as the name and this server URL:
 
         ```
         https://app.lettr.com/mcp
         ```
+
+        Choose **OAuth** for authentication.
       </Step>
-      <Step title="Authorize Access">
+      <Step title="Create the Plugin">
+        Review the risk warning, confirm it, and create the plugin. Install it from your plugins before using it in a conversation.
+      </Step>
+      <Step title="Sign In">
         Complete the OAuth flow by signing in to Lettr and granting permission.
       </Step>
     </Steps>

@@ -1,9 +1,9 @@
 ---
 title: Permissions
-description: "Set Lettr API key permission levels, choosing Full Access, Sending Only, or custom scopes to control access to API resources"
+description: "Set Lettr API key permission levels, Full Access or Sending Only, and see which scope each API endpoint requires"
 ---
 
-When creating an API key, you assign a permission level that controls which API endpoints the key can access. Lettr supports two dashboard permission levels — **Full Access** and **Sending Only** — plus a **Custom** scope system available via the API.
+When creating an API key, you assign a permission level that controls which API endpoints the key can access: **Full Access** or **Sending Only**. Each level is a preset of [scopes](#scopes), which the API's endpoints check.
 
 ## Permission Levels
 
@@ -17,6 +17,8 @@ Full Access keys provide complete access to all API endpoints and operations:
 - Create, verify, and delete sending domains
 - Configure and manage webhooks
 - List projects
+- Manage contacts, lists, topics, properties, and segments
+- Create, send, schedule, and report on campaigns
 
 **Use Full Access keys for:**
 - Backend services that need complete platform control
@@ -40,11 +42,9 @@ Sending Only keys are restricted to email sending operations only. Requests to a
 - Third-party integrations that don't need administrative access
 - Services where you want to limit the blast radius of a potential key compromise
 
-### Custom
+## Scopes
 
-Custom scopes provide fine-grained access control by letting you specify exactly which operations a key can perform. Custom scopes are currently available via the API and DynamoDB — a dashboard UI for selecting individual scopes is coming soon.
-
-#### Available Scopes
+API endpoints are guarded by scopes, and a key holds the scopes in its permission level's preset. There is no way to create a key with an individual selection of scopes; every key is Full Access or Sending Only.
 
 | Scope | Description |
 |-|-|
@@ -59,18 +59,19 @@ Custom scopes provide fine-grained access control by letting you specify exactly
 | `projects:read` | List projects |
 | `sms:send` | Send SMS messages |
 | `whatsapp:send` | Send WhatsApp messages |
-| `audience:read` | List and retrieve contacts, lists, and segments |
-| `audience:write` | Create, update, and delete contacts, lists, and segments |
+| `audience:read` | List and retrieve contacts, lists, topics, properties, and segments |
+| `audience:write` | Create, update, and delete contacts, lists, topics, properties, and segments |
+| `campaigns:read` | List and retrieve campaigns, their stats, and their events |
+| `campaigns:write` | Create, send, schedule, and unschedule campaigns |
+| `automations:read` | List and retrieve automations, their runs, and event definitions |
+| `automations:write` | Create, update, publish, and delete automations, delete their runs, and manage event definitions |
+| `events:send` | Send custom events with `POST /events` |
 
 <Note>
-  The **Full Access** preset includes all 13 scopes. The **Sending Only** preset includes `emails:send`, `sms:send`, and `whatsapp:send`.
+  The **Full Access** preset includes all 18 scopes. The **Sending Only** preset includes `emails:send`, `sms:send`, and `whatsapp:send`.
 </Note>
 
-**Use Custom keys for:**
-- Template management services that only need `templates:read` and `templates:write`
-- Webhook automation tools that only need `webhooks:read` and `webhooks:write`
-- Audience management integrations that need `audience:read` and `audience:write` without sending permissions
-- Monitoring dashboards that only need read scopes (`emails:read`, `domains:read`, etc.)
+A request to an endpoint whose scope the key doesn't hold is rejected with `403` and `error_code: insufficient_scope`. The same scopes decide which tools a key sees on the [MCP server](/learn/mcp/api-key-auth#what-a-key-can-reach).
 
 ## Creating Keys with Specific Permissions
 
@@ -82,7 +83,6 @@ Custom scopes provide fine-grained access control by letting you specify exactly
 4. Select the permission level:
    - **Full Access** — Complete access to all endpoints
    - **Sending Only** — Restricted to email, SMS, and WhatsApp sending
-   - ~~**Custom** — Select individual scopes (coming soon to the dashboard; available via API)~~
 5. Configure optional IP restrictions
 6. Click **Create**
 
