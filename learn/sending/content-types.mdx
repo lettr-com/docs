@@ -149,7 +149,7 @@ Email client CSS support is inconsistent. This reference table covers the most c
     Enable the `inline_css` option or write styles inline directly. Many email clients strip `<style>` tags from the document head, which means class-based CSS will not be applied. Inline styles survive this stripping and render consistently.
   </Accordion>
   <Accordion title="Always Include Plain Text">
-    Include a `text` version alongside your HTML. Some recipients configure their clients to display plain text only, and spam filters view emails without a text alternative as a negative signal. The text version should contain the same core information as the HTML, without formatting.
+    Include a `text` version alongside your HTML. Some recipients configure their clients to display plain text only, and spam filters view emails without a text alternative as a negative signal. The text version should contain the same core information as the HTML, without formatting. When you send with a template (`template_slug`), Lettr generates the text version from the template HTML unless you pass your own `text`.
   </Accordion>
   <Accordion title="Test Across Clients">
     Rendering varies significantly between Gmail (web vs mobile), Outlook (Windows vs Mac), Apple Mail, and mobile clients. Send test emails to accounts on each platform and verify that layouts, images, and links display correctly before sending to your full audience.

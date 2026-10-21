@@ -237,7 +237,7 @@ curl -X POST https://app.lettr.com/api/emails \
 ```
 
 <Tip>
-  When using Lettr templates built in the Topol editor, you can configure a plain text version alongside the HTML version directly in the template settings.
+  When you send with a Lettr template (`template_slug`), Lettr generates the plain text version from the template HTML for you, and sends both parts as `multipart/alternative`. Merge tags are kept as they are, links become `[text](url)`, and the hidden preheader is left out. To use your own wording instead, pass `text` in the same request; it replaces the generated version. Campaigns and automation emails get a generated text version too. You can see it on the **Plain text** tab of the template preview.
 </Tip>
 
 ---
@@ -303,7 +303,7 @@ The email client reads all parts and picks the one it prefers — typically HTML
   <Accordion title="Marketing Emails (newsletters, promotions, announcements)">
     **Send HTML as the primary format with a plain text fallback.** Marketing emails rely on visual design to drive engagement, so HTML is essential. Always include a text version for deliverability and for recipients who disable HTML rendering.
 
-    Use Lettr's [Topol editor](/learn/templates/topol-editor) to design your HTML visually, and provide a corresponding text version in the template settings.
+    Use Lettr's [Topol editor](/learn/templates/topol-editor) to design your HTML visually. Lettr generates the matching text version when the email is sent.
   </Accordion>
 
   <Accordion title="AMP Interactive Emails">
