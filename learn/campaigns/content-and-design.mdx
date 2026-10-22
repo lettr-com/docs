@@ -194,6 +194,8 @@ See [Previewing what a specific contact received](/learn/multilingual-campaigns/
 
 The previews and screenshot are useful for layout and personalization checks. Test emails are the only way to see what the email looks like when fully rendered in a real client (Gmail, Outlook, Apple Mail) — always test in at least one before committing to a real send.
 
+Every campaign email also carries a plain text version that Lettr generates from its HTML, one per language, so text-only clients and spam filters get a text alternative without any extra work. Test emails include it too. See [Automatic Plain Text for Templates](/learn/sending/content-types#automatic-plain-text-for-templates) for what the generated text keeps and leaves out.
+
 ### Sending a Test Email
 
 From the Compose or Review step, click **Send test email** and enter one or more recipient addresses (yourself, teammates, a QA address). The test arrives as a transactional email; tracking is disabled on tests to keep them out of campaign analytics. Tests are rate-limited to prevent accidents.

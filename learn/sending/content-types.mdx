@@ -57,6 +57,25 @@ await lettr.emails.send({
 });
 ```
 
+## Automatic Plain Text for Templates
+
+When an email's content comes from a template, you don't have to write the plain text version. Lettr generates it from the template's HTML and sends both parts together. This covers:
+
+- API sends with `template_slug`, including [scheduled emails](/api-reference/emails/schedule-email)
+- [Campaigns](/learn/campaigns/introduction), with a separate text version for each language
+- Test emails sent from the editor and from a campaign
+
+To send your own text instead, pass `text` together with `template_slug`. Lettr sends it as is and generates nothing. Emails sent with inline `html` and no template are unchanged: they carry a plain text version only when you include `text`.
+
+The generated text follows a few rules:
+
+- **Links keep their address.** A link is written as `[link text](https://example.com)`, so readers of the text version can still see and copy it.
+- **Hidden content is left out.** Elements with an inline `display: none` style, such as the preheader, don't appear in the text. Sections set to **Hide on desktop** in the visual editor are kept, because they often hold the only copy of the mobile content.
+- **Merge tags are kept** and filled in when the email is sent, just like in the HTML. Triple-brace tags such as `{{{signature}}}` appear as `{{signature}}`, since the text version is never HTML-escaped.
+- **A send never fails because of it.** If a text version can't be generated, for example because removing the hidden preheader would leave an `{{if}}` block without its `{{end}}`, the email goes out with HTML only.
+
+To read the text before you send, open the template's detail page and choose the **Plain text** tab next to **Desktop** and **Mobile**. The tab follows the language and version shown on the page, and merge tags appear unfilled.
+
 ## AMP Emails
 
 AMP for Email enables interactive content directly inside the inbox — carousels, forms, live data, and accordion menus — without requiring the recipient to click through to a website. Support is currently limited to Gmail, Yahoo Mail, and Mail.ru, so you must always include an HTML fallback:
@@ -149,7 +168,7 @@ Email client CSS support is inconsistent. This reference table covers the most c
     Enable the `inline_css` option or write styles inline directly. Many email clients strip `<style>` tags from the document head, which means class-based CSS will not be applied. Inline styles survive this stripping and render consistently.
   </Accordion>
   <Accordion title="Always Include Plain Text">
-    Include a `text` version alongside your HTML. Some recipients configure their clients to display plain text only, and spam filters view emails without a text alternative as a negative signal. The text version should contain the same core information as the HTML, without formatting. When you send with a template (`template_slug`), Lettr generates the text version from the template HTML unless you pass your own `text`.
+    Include a `text` version alongside your HTML. Some recipients configure their clients to display plain text only, and spam filters view emails without a text alternative as a negative signal. The text version should contain the same core information as the HTML, without formatting. When you send with a template (`template_slug`), Lettr generates the text version from the template HTML unless you pass your own `text`, and campaigns get one too. See [Automatic Plain Text for Templates](#automatic-plain-text-for-templates).
   </Accordion>
   <Accordion title="Test Across Clients">
     Rendering varies significantly between Gmail (web vs mobile), Outlook (Windows vs Mac), Apple Mail, and mobile clients. Send test emails to accounts on each platform and verify that layouts, images, and links display correctly before sending to your full audience.

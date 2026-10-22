@@ -46,7 +46,7 @@ curl -X POST https://app.lettr.com/api/emails \
 | `to` | string[] | Yes | Recipient address(es), max 50 |
 | `subject` | string | Conditional | Email subject line (max 998 chars). Required unless `template_slug` is provided — when omitted with a template, the template's stored subject is used (or the template name if no subject is set). |
 | `html` | string | No* | HTML content |
-| `text` | string | No* | Plain text content |
+| `text` | string | No* | Plain text content. With `template_slug`, Lettr [generates it from the template](/learn/sending/content-types#automatic-plain-text-for-templates) when you leave it out |
 | `amp_html` | string | No | AMP HTML content |
 | `cc` | string[] | No | CC recipients |
 | `bcc` | string[] | No | BCC recipients |
