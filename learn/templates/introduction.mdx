@@ -115,8 +115,8 @@ Choose the approach that fits your use case:
 When both a template and inline content are provided in the same request:
 
 1. **Template content takes precedence**—the template version's HTML replaces any `html` parameter
-2. The `subject` in your request is always used—templates do not provide a fallback subject
-3. Inline `html` or `text` is only used when no `template_slug` is provided
+2. The `subject` in your request is used when you send one. Without it, the template's stored subject is used, or the template name if no subject is set
+3. Inline `text` is sent as the plain text version. Without it, Lettr generates one from the template's HTML. See [Automatic Plain Text for Templates](/learn/sending/content-types#automatic-plain-text-for-templates)
 
 ```bash
 curl -X POST https://app.lettr.com/api/emails \
