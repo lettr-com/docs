@@ -40,7 +40,7 @@ Your application connects to Lettr's SMTP server and sends the email using the S
 # Example: Send via SMTP using curl
 curl --url "smtp://smtp.lettr.com:587" \
   --ssl-reqd \
-  --user "api:your-api-key" \
+  --user "lettr" \
   --mail-from "notifications@mail.example.com" \
   --mail-rcpt "recipient@example.com" \
   --upload-file email.eml
@@ -55,7 +55,7 @@ const transporter = nodemailer.createTransport({
   port: 587,
   secure: false, // STARTTLS
   auth: {
-    user: 'api',
+    user: 'lettr',
     pass: 'your-api-key'
   }
 });
@@ -118,7 +118,7 @@ SMTP is the right choice when:
 |---------|-------|
 | Host | `smtp.lettr.com` |
 | Port | `587` (STARTTLS) or `465` (TLS) |
-| Authentication | Username: `api`, Password: your API key |
+| Authentication | Username: `lettr`, Password: your API key |
 | Encryption | Required (TLS or STARTTLS) |
 
 <Warning>
