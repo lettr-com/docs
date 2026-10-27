@@ -511,7 +511,7 @@ See [List Hygiene](/knowledge-base/best-practices/list-hygiene).
 
 ### List-Unsubscribe Header
 
-An email header that provides a machine-readable unsubscribe mechanism. Google and Yahoo require the `List-Unsubscribe-Post` header (RFC 8058) for one-click unsubscribe in bulk email. Lettr adds this header automatically to campaigns. It does not add it to API sends, including those marked as marketing (`transactional: false`).
+An email header that provides a machine-readable unsubscribe mechanism. Google and Yahoo require the `List-Unsubscribe-Post` header (RFC 8058) for one-click unsubscribe in bulk email. Lettr adds this header automatically to campaigns. It does not add it to API sends, including those marked as marketing (`transactional: false`); check the headers of a delivered message.
 
 See [Unsubscribe Best Practices](/knowledge-base/compliance/unsubscribe-best-practices).
 
@@ -883,7 +883,7 @@ See [List Hygiene](/knowledge-base/best-practices/list-hygiene) and [Sending Rep
 
 ### Suppression List
 
-A list of email addresses that Lettr will not send to, regardless of whether they appear in a send request. Addresses are added automatically (hard bounces, complaints, unsubscribes). Suppression lists protect sender reputation by preventing email to known-bad addresses.
+A list of email addresses that Lettr will not send to, regardless of whether they appear in a send request. Addresses are added automatically after hard bounces and spam complaints. Unsubscribes from API sends can also be recorded there; campaign unsubscribes update the contact's status instead. Suppression lists protect sender reputation by preventing email to known-bad addresses.
 
 See [Understanding Suppression Lists](/knowledge-base/fundamentals/suppression-lists).
 

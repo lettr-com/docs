@@ -61,7 +61,7 @@ When emails are not reaching your recipients, work through the steps below to id
   </Accordion>
 
   <Accordion title="Recipient Suppressed">
-    If a recipient previously hard-bounced, filed a spam complaint, or unsubscribed, Lettr automatically adds them to your suppression list. Any future sends to that address are rejected and counted in the `rejected` total of the API response.
+    If a recipient hard-bounced or filed a spam complaint, the address is added to your suppression list, and later sends to it are rejected and counted in the `rejected` total of the API response. Unsubscribes work differently: a campaign unsubscribe only changes the contact's status, and an unsubscribe entry on the suppression list only blocks sends with `transactional: false`. See [Unsubscribes, Pauses and Suppressions](/knowledge-base/fundamentals/unsubscribe-vs-suppression).
 
     There is no suppressions page in the dashboard and no API endpoint for suppressions. To check an address, ask [Adamko](/learn/ai-assistant/troubleshooting-and-diagnostics) *"is jane@acme.com suppressed?"* — he tells you why and when it was suppressed. You cannot lift a suppression yourself. If the original reason no longer applies (the recipient re-opted in, or you fixed the cause of a hard bounce and confirmed the mailbox is valid), email [support@lettr.com](mailto:support@lettr.com) with the address and what has changed. Removal is reviewed case by case and is unlikely for spam complaints.
 
@@ -142,11 +142,11 @@ app.post("/webhooks/lettr", (req, res) => {
 
     if (data?.type === "bounce") {
       console.log(`Bounce for ${data.rcpt_to}`);
-      console.log(`Class: ${data.bounce_class}`);  // 10, 30, 100 = hard
+      console.log(`Class: ${data.bounce_class}`);  // 10, 30, 90 = hard
       console.log(`Code: ${data.error_code}`);
       console.log(`Message: ${data.raw_reason}`);
 
-      if (["10", "30", "100"].includes(data.bounce_class)) {
+      if (["10", "30", "90"].includes(data.bounce_class)) {
         // Remove address from your mailing list
       }
     }

@@ -117,7 +117,7 @@ SMTP uses different ports depending on the type of connection and its purpose.
 | **587** | Submission | The standard port for email clients and applications to submit outgoing mail to a relay server. | STARTTLS (required by most servers) |
 
 <Note>
-  When connecting to Lettr's SMTP relay, use **port 587** with STARTTLS or **port 465** with implicit TLS. Port 25 is not available for submission — it is reserved for server-to-server relay and is commonly blocked by ISPs and cloud providers.
+  When connecting to Lettr's SMTP relay, use **port 587** with STARTTLS or **port 465** with implicit TLS (`2587` and `2465` are alternates for networks that block the standard ports). Port 25 isn't recommended for submission: it is meant for server-to-server relay, and many ISPs and cloud providers block outbound connections to it.
 </Note>
 
 ### Which Port Should You Use?

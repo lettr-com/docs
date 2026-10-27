@@ -70,7 +70,7 @@ Hard bounces are definitive rejections. The receiving server will not accept thi
 | **554** | 5.7.1        | Transaction failed — general rejection       | Investigate the full bounce message for details. May indicate blocklisting or content issues. |
 
 <Warning>
-  Continuing to send to hard-bounced addresses damages your sender reputation and can lead to your IP or domain being blocklisted. Lettr suppresses these addresses automatically — do not remove them from your suppression list unless you have confirmed the address is valid again.
+  Continuing to send to hard-bounced addresses damages your sender reputation and can lead to your IP or domain being blocklisted. Lettr suppresses these addresses automatically — only ask support to lift a suppression once you have confirmed the address is valid again.
 </Warning>
 
 ---
@@ -143,7 +143,7 @@ Major mailbox providers often return custom error messages alongside standard SM
 Lettr assigns every bounce a numeric **bounce class** that appears on the **Events** page and in the `bounce_class` field of `message.bounce` and `message.out_of_band` webhook payloads, alongside the raw SMTP response in `raw_reason`. This makes it easier to take action without interpreting SMTP codes directly.
 
 | Bounce Class | Category | Type |
-| ------------ | -------- | ---- |
+|-|-|-|
 | `10` | Invalid recipient | Hard |
 | `21`, `22`, `24` | DNS failure, mailbox full, timeout | Soft |
 | `30` | Generic bounce, no RCPT | Hard |

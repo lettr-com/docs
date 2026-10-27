@@ -161,7 +161,7 @@ After the 7th failed attempt the delivery is marked permanently failed. A `410 G
 
 ### Deduplicate on event_id
 
-Each event in the batch carries an `event_id`. A webhook request body is a JSON array, and each item wraps the event in an `msys` object. The event sits under `message_event` for delivery, bounce and delay events, and under `track_event` for opens and clicks.
+Each event in the batch carries an `event_id`. A webhook request body is a JSON array, and each item wraps the event in an `msys` object. The event sits under `message_event` for message events such as delivery, bounce and delay, under `track_event` for opens and clicks, and under `unsubscribe_event`, `gen_event` or `relay_message` for the rest.
 
 ```json
 [

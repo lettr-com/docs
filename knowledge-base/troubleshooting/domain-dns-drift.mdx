@@ -49,7 +49,7 @@ What each domain type is checked for:
 
 Before judging your domain, the check confirms Lettr's own DNS resolution is working by looking up a control domain. If that lookup fails, the run is skipped, so a problem on Lettr's side does not produce false alarms for your team.
 
-The result is stored on every run, healthy or not. When you fix the DNS record, the next 03:00 run clears the warning on its own.
+The result is stored on every run, healthy or not. When you fix the DNS record, the next 03:00 run clears the warning on its own, as long as **Enable alerts** and **Domain DNS Health** alerts are both on.
 
 <Warning>
   The daily check, and with it the Not working badge, only updates while alerts are enabled (**Settings → Alerts → Enable alerts**) and **Domain DNS Health** alerts are on. With either turned off, the check does not record new results, so an existing badge stays as it was.
@@ -100,7 +100,7 @@ You can change the base cooldown (1 to 720 hours) or turn DNS health alerts off 
 
 ## The Grace Period and the Three-Failure Rule
 
-The daily check only warns. The stored status of a record changes through verification, and verification is deliberately forgiving so that one flaky DNS lookup does not knock out a working domain.
+The daily check only warns. The stored status of a record changes through verification, and verification is deliberately forgiving so that one flaky DNS lookup does not knock out a working domain. This applies to sending, tracking and storage domains; inbound MX verification has no grace period.
 
 When a record that was `valid` fails a verification run, Lettr does not mark it `invalid` straight away:
 
@@ -166,7 +166,7 @@ How much a broken record affects you depends on what is broken and what the stor
 
 Two different things can need clearing, and they clear differently:
 
-- **Health warning only** (the Not working badge, warning panel, and dashboard alert): these are written only by the daily check, so they clear at the first 03:00 run after the record resolves again, provided DNS health alerts are still enabled. Re-verifying does not clear them, and you do not need to.
+- **Health warning only** (the Not working badge, warning panel, and dashboard alert): these are written only by the daily check, so they clear at the first 03:00 run after the record resolves again, provided **Enable alerts** and **Domain DNS Health** are both still on in **Settings → Alerts**. Re-verifying does not clear them, and you do not need to.
 - **Stored status flipped to invalid** (the record card shows a failing status and sends are refused): this changes only through verification, so it returns to `valid` only when you click **Verify DNS Records**. Do this as soon as the DNS is fixed rather than waiting for the daily check, because the badge can disappear overnight while the stored status is still invalid.
 
 <Tip>

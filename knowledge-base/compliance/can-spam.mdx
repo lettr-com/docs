@@ -90,7 +90,7 @@ CAN-SPAM applies to any sender of **"commercial electronic mail messages"** — 
     ```
 
     <Tip>
-      Lettr handles unsubscribe processing automatically when you use the `data-msys-unsubscribe="1"` attribute on your unsubscribe link. The recipient is added to your suppression list and no further action is needed on your part.
+      Lettr handles the click automatically when your unsubscribe link has the `data-msys-unsubscribe="1"` attribute: it records the unsubscribe and fires an `unsubscribe.link_unsubscribe` webhook. The entry only blocks later sends that use `transactional: false`, so keep your own do-not-email record as well.
     </Tip>
   </Step>
 
@@ -173,7 +173,7 @@ Use the `data-msys-unsubscribe="1"` attribute on any link to enable Lettr's auto
 When a recipient clicks this link, Lettr will:
 1. Add the recipient to your suppression list
 2. Fire an `unsubscribe.link_unsubscribe` webhook event
-3. Prevent future emails from being delivered to that address
+3. Block later sends to that address that use `transactional: false`
 
 ### Accurate From Address
 

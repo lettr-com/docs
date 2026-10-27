@@ -74,7 +74,7 @@ BIMI requires several components to be in place:
 Your BIMI logo must meet these specifications:
 
 | Requirement | Specification |
-|-------------|---------------|
+|-|-|
 | Format | SVG Tiny 1.2 Portable/Secure |
 | Shape | Square (1:1 aspect ratio) |
 | Background | Solid color (no transparency) |
@@ -111,7 +111,7 @@ Example SVG header:
 Add a TXT record to your domain:
 
 | Field | Value |
-|-------|-------|
+|-|-|
 | Type | TXT |
 | Name | `default._bimi` |
 | Value | `v=BIMI1; l=https://example.com/logo.svg; a=https://example.com/vmc.pem` |
@@ -119,7 +119,7 @@ Add a TXT record to your domain:
 ### Record Parameters
 
 | Parameter | Required | Description |
-|-----------|----------|-------------|
+|-|-|-|
 | `v=BIMI1` | Yes | BIMI version identifier |
 | `l=` | Yes | URL to your SVG logo (HTTPS required) |
 | `a=` | No* | URL to your VMC certificate |
@@ -149,7 +149,7 @@ A VMC proves you own the trademark for the logo you're displaying. It's issued b
 ### VMC Providers
 
 | Provider | Website |
-|----------|---------|
+|-|-|
 | DigiCert | digicert.com |
 | Entrust | entrust.com |
 
@@ -191,7 +191,7 @@ BIMI is configured entirely through DNS records — there is no BIMI configurati
 BIMI support varies by email client:
 
 | Client | VMC Required | Support Level |
-|--------|--------------|---------------|
+|-|-|-|
 | Gmail | Yes | Full support |
 | Yahoo Mail | Yes | Full support |
 | Apple Mail | No | Basic support |

@@ -43,12 +43,14 @@ Every bounce event includes a numeric `bounce_class` that describes the specific
 | `25` | Admin Failure | Soft | Review the reason and retry later |
 | `30` | Generic Bounce (no RCPT) | Hard | Remove from your list immediately |
 | `40` | Generic Bounce | Soft | Wait for automatic retry; no immediate action needed |
-| `50` | Mail Block (General) | Soft | Investigate the cause with the receiving provider |
-| `51` | Mail Block (Spam Related) | Soft | Review your email content and sender reputation |
-| `52` | Mail Block (Content) | Soft | Review your email content |
+| `50` | Mail Block (General) | Block | Investigate the cause with the receiving provider |
+| `51` | Mail Block (Spam Related) | Block | Review your email content and sender reputation |
+| `52` | Mail Block (Content) | Block | Review your email content |
+| `53` | Mail Block (Attachment) | Block | Remove or change the attachment |
+| `54` | Mail Block (Relay Denied) | Block | Investigate the cause with the receiving provider |
 | `60` | Auto-Reply | N/A | No action needed |
 | `70` | Transient Failure | Soft | Wait for automatic retry; no immediate action needed |
-| `100` | Relay Denied | Hard | Remove from your list immediately |
+| `90` | Unsubscribe | Hard | Remove from your list immediately |
 
 ---
 
@@ -115,8 +117,8 @@ The most reliable way to monitor bounces is through webhooks. When an email boun
 This handler processes bounce events, updates your subscriber records, and alerts your team when reputation-threatening bounces occur:
 
 ```javascript
-const HARD_BOUNCE_CLASSES = [10, 30, 100];
-const BLOCK_CLASSES = [50, 51, 52];
+const HARD_BOUNCE_CLASSES = [10, 30, 90];
+const BLOCK_CLASSES = [50, 51, 52, 53, 54];
 
 app.post('/webhooks/lettr', express.json(), async (req, res) => {
   for (const event of req.body) {

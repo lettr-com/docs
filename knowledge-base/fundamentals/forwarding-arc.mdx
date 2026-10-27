@@ -102,14 +102,14 @@ ARC does not override DMARC by itself. The RFC leaves the decision to the final 
 Because trust is local, ARC helps with legitimate forwarding and mailing lists but gives no guarantee. A forwarder with no reputation, or a broken chain (`cv=fail`), earns nothing. Microsoft documents this model in [Configure trusted ARC sealers](https://learn.microsoft.com/en-us/defender-office-365/email-authentication-arc-configure), where an admin lists the intermediaries whose ARC results Microsoft 365 should honor.
 
 <Note>
-  ARC is implemented by the intermediaries, not by you. Signing your mail with ARC is not part of sending through Lettr, and publishing an ARC record in your DNS is not a thing. As a sender, you improve your odds by making your own authentication strong enough that you do not need ARC.
+  ARC is implemented by the intermediaries, not by you. Signing your mail with ARC is not part of sending through Lettr, and there is no ARC record to publish in your DNS. As a sender, you improve your odds by making your own authentication strong enough that you do not need ARC.
 </Note>
 
 ---
 
 ## What This Means for Mail You Send With Lettr
 
-Lettr signs every message with DKIM on **your** domain. The signing domain is the sending domain you verified, and the public key lives at `selector._domainkey.yourdomain.com` as the TXT record shown in the domain's DKIM card. Its value has the form `v=DKIM1;k=rsa;h=sha256;p=...`. See [Sending Domains](/learn/domains/sending-domains) and [DKIM](/learn/domains/dkim) for the setup.
+Lettr signs every message with DKIM on **your** domain. The signing domain is the sending domain you verified, and the public key lives at `selector._domainkey.yourdomain.com` as the TXT record shown in the domain's **TXT Record (DKIM)** card. Its value has the form `v=DKIM1;k=rsa;h=sha256;p=...`. See [Sending Domains](/learn/domains/sending-domains) and [DKIM](/learn/domains/dkim) for the setup.
 
 That is exactly the combination that survives forwarding:
 

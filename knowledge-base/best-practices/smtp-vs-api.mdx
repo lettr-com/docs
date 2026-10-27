@@ -119,10 +119,10 @@ SMTP is the right choice when:
 | Host | `smtp.lettr.com` |
 | Port | `587` (STARTTLS) or `465` (TLS) |
 | Authentication | Username: `lettr`, Password: your API key |
-| Encryption | Required (TLS or STARTTLS) |
+| Encryption | Use TLS: STARTTLS on 587, implicit TLS on 465 |
 
 <Warning>
-  Never use port 25 for sending through Lettr. Port 25 is unencrypted and is blocked by most cloud providers. Always use port 587 with STARTTLS or port 465 with implicit TLS.
+  Don't use port 25 for sending through Lettr. Most cloud providers and ISPs block outbound port 25, so connections often fail. Use port 587 with STARTTLS or port 465 with implicit TLS, and always enable TLS in your client: your API key is the SMTP password.
 </Warning>
 
 ---

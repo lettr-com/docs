@@ -40,13 +40,7 @@ Mailbox providers treat new sending domains with suspicion. If you send thousand
 
 ### Recommended Warm-Up Schedule
 
-| Week | Daily Volume | Notes |
-|------|-------------|-------|
-| 1 | 50–100 | Send to your most engaged recipients first |
-| 2 | 200–500 | Monitor bounce and complaint rates closely |
-| 3 | 500–2,000 | Continue only if metrics remain healthy |
-| 4 | 2,000–5,000 | Gradually approach your target volume |
-| 5+ | Scale as needed | Maintain consistent sending patterns |
+Follow the week-by-week volume schedule in [IP and Domain Warm-Up](/knowledge-base/best-practices/ip-domain-warmup).
 
 <Warning>
   Sending high volumes immediately from a new domain will damage your reputation before you've built one. This damage can take weeks to recover from.
@@ -56,7 +50,7 @@ Mailbox providers treat new sending domains with suspicion. If you send thousand
 
 - **Start with engaged recipients**: Send first to users who regularly open and click your emails. Positive engagement signals help establish reputation.
 - **Be consistent**: Send every day during warm-up. Sporadic large sends look suspicious.
-- **Watch your metrics**: If bounce rates exceed 5% or spam complaints exceed 0.3%, slow down and investigate before continuing.
+- **Watch your metrics**: If bounce or complaint rates climb, slow down and investigate before continuing; the thresholds are in [IP and Domain Warm-Up](/knowledge-base/best-practices/ip-domain-warmup).
 - **Separate transactional and marketing**: If you send both types, consider using separate subdomains so marketing reputation issues don't affect transactional delivery.
 
 ---
@@ -172,7 +166,7 @@ Beyond the metrics above, providers also weigh these signals:
 - **Sending consistency**: Stable day-to-day volume reads as legitimate. Sudden spikes or long gaps look suspicious.
 
 <Note>
-  Lettr doesn't expose a single reputation score. Monitor the individual signals through your dashboard and webhook data (`message.bounce`, `message.spam_complaint`, `message.delay`, `engagement.open`, `engagement.click`).
+  Lettr doesn't expose a single reputation score. Monitor the individual signals: bounce and open rates on the dashboard, spam complaint counts on the Analytics page, and webhook data (`message.bounce`, `message.spam_complaint`, `message.delay`, `engagement.open`, `engagement.click`).
 </Note>
 
 ### Domain vs IP Reputation
@@ -215,7 +209,7 @@ If emails are going to spam, delivery rates have dropped, or deferrals are incre
     Restrict sending to recipients who opened or clicked within the last 30 days. Positive engagement is what rebuilds reputation.
   </Step>
   <Step title="Gradually increase volume">
-    Follow the warm-up schedule above. Increase volume only while bounce rate stays below 2% and complaint rate below 0.1%.
+    Follow the warm-up schedule linked above. Increase volume only while bounce rate stays below 2% and complaint rate below 0.1%.
   </Step>
   <Step title="Monitor daily until metrics stabilize">
     Check your dashboard and webhook data every day. Recovery typically takes 2–6 weeks of consistently good behavior, depending on the severity of the damage.
