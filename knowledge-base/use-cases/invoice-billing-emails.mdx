@@ -189,11 +189,11 @@ const response = await fetch('https://app.lettr.com/api/emails', {
     subject: `Invoice #${invoice.number} — ${invoice.currency} ${invoice.total}`,
     html: invoiceEmailHtml,
     text: invoiceEmailText,
-    tags: ['invoice', 'billing'],
+    tag: 'invoice',
     metadata: {
-      invoiceId: invoice.id,
-      customerId: customer.id,
-      amount: invoice.total,
+      invoiceId: String(invoice.id),
+      customerId: String(customer.id),
+      amount: String(invoice.total),
     },
   }),
 });
@@ -227,12 +227,12 @@ const response = await fetch('https://app.lettr.com/api/emails', {
     text: invoiceEmailText,
     attachments: [
       {
-        filename: `invoice-${invoice.number}.pdf`,
-        content: pdfBase64,
-        contentType: 'application/pdf',
+        name: `invoice-${invoice.number}.pdf`,
+        data: pdfBase64,
+        type: 'application/pdf',
       },
     ],
-    tags: ['invoice'],
+    tag: 'invoice',
   }),
 });
 ```
@@ -270,11 +270,11 @@ await fetch('https://app.lettr.com/api/emails', {
     subject: 'Action required: Your payment could not be processed',
     html: failedPaymentHtml,
     text: failedPaymentText,
-    tags: ['billing', 'payment-failed', `dunning-${attempt}`],
+    tag: 'payment-failed',
     metadata: {
-      customerId: customer.id,
-      dunningStep: attempt,
-      failedAmount: invoice.total,
+      customerId: String(customer.id),
+      dunningStep: String(attempt),
+      failedAmount: String(invoice.total),
     },
   }),
 });

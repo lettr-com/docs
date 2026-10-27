@@ -67,6 +67,7 @@ Guidance for optimizing your email sending.
 - [Dark Mode Email Design](/knowledge-base/best-practices/dark-mode-design) — Defensive CSS strategies for dark mode rendering
 - [Personalization and Dynamic Content](/knowledge-base/best-practices/personalization-dynamic-content) — Merge tags, conditional blocks, and dynamic sections
 - [Multilingual Email Campaigns](/knowledge-base/best-practices/multilingual-campaigns) — Collect and clean language data, choose the fallback deliberately, translate the subject and sender
+- [Email Editor Best Practices](/knowledge-base/best-practices/email-editor-best-practices) — Structures, content blocks, responsive layouts, and common mistakes in the email editor
 
 ### Compliance & Regulations
 
@@ -104,9 +105,23 @@ Diagnose and fix common issues.
 Step-by-step DNS configuration for specific providers.
 
 - [AWS Route 53](/knowledge-base/dns-guides/aws-route53)
+- [Azure DNS](/knowledge-base/dns-guides/azure-dns)
 - [Cloudflare](/knowledge-base/dns-guides/cloudflare)
+- [DigitalOcean](/knowledge-base/dns-guides/digitalocean)
+- [DreamHost](/knowledge-base/dns-guides/dreamhost)
+- [Dynadot](/knowledge-base/dns-guides/dynadot)
+- [Gandi](/knowledge-base/dns-guides/gandi)
 - [GoDaddy](/knowledge-base/dns-guides/godaddy)
+- [Google Cloud DNS](/knowledge-base/dns-guides/google-cloud-dns)
 - [Hetzner](/knowledge-base/dns-guides/hetzner)
+- [Hostinger](/knowledge-base/dns-guides/hostinger)
+- [IONOS](/knowledge-base/dns-guides/ionos)
+- [Linode](/knowledge-base/dns-guides/linode)
+- [Namecheap](/knowledge-base/dns-guides/namecheap)
+- [Netlify](/knowledge-base/dns-guides/netlify)
+- [Porkbun](/knowledge-base/dns-guides/porkbun)
+- [Squarespace](/knowledge-base/dns-guides/squarespace)
+- [Strato](/knowledge-base/dns-guides/strato)
 - [Vercel](/knowledge-base/dns-guides/vercel)
 
 ### Use Cases / Recipes
@@ -135,10 +150,10 @@ Practical guides for implementing common email workflows.
     Common causes include missing authentication (DKIM, DMARC), poor sender reputation, spam trigger words in content, or missing unsubscribe links. See [Emails Landing in Spam](/knowledge-base/troubleshooting/spam-placement) for a step-by-step diagnosis guide.
   </Accordion>
   <Accordion title="How do I verify my domain?">
-    Add the DNS records shown in your dashboard (CNAME, DKIM, DMARC), wait for propagation, then click Verify. See [Domains](/learn/domains/introduction) for details or [Domain Verification](/knowledge-base/troubleshooting/domain-verification) if you're having issues.
+    Add the DNS records shown in your dashboard (DKIM, DMARC, and a bounce CNAME or SPF record), wait for propagation, then click Verify. See [Domains](/learn/domains/introduction) for details or [Domain Verification](/knowledge-base/troubleshooting/domain-verification) if you're having issues.
   </Accordion>
   <Accordion title="What are the API rate limits?">
-    Standard: 300 requests per 5 minutes. High-volume: 2,000 requests per 5 minutes. See [Rate Limits](/knowledge-base/troubleshooting/rate-limits) for details and handling strategies.
+    3 requests per second per team, shared across all live API keys. Sandbox keys have separate limits. See [Rate Limit](/api-reference/rate-limit) for details and [Rate Limits](/knowledge-base/troubleshooting/rate-limits) for handling strategies.
   </Accordion>
   <Accordion title="Do I need an unsubscribe link?">
     Marketing and promotional emails require an unsubscribe link by law (CAN-SPAM, GDPR). Since February 2024, Google and Yahoo also require one-click unsubscribe for bulk senders. See [Unsubscribe Best Practices](/knowledge-base/compliance/unsubscribe-best-practices).

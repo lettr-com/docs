@@ -28,7 +28,7 @@ When you send email through Lettr, the following data is stored:
 |-----------|-------------|-------------------|
 | **Sender and recipient addresses** | From, To, CC, BCC addresses | Delivery, history, analytics |
 | **Subject line** | The email subject | History, debugging |
-| **Email content** | Full HTML or plain text body | History, preview, debugging |
+| **Email content** | Full HTML or plain text body | Delivery |
 | **Metadata** | Custom key-value pairs you attach via the API | Webhook delivery, your internal tracking |
 | **Delivery events** | Injection, delivery, bounce, open, click, unsubscribe timestamps | Analytics, deliverability monitoring |
 | **Tracking data** | Open and click tracking events with timestamps | Engagement analytics |
@@ -46,9 +46,8 @@ Lettr retains different categories of data for different periods:
 
 | Data Category | Retention Period | Notes |
 |---------------|-----------------|-------|
-| **Email content and history** | 30 days | Full email body, subject, headers available in dashboard |
-| **Delivery and engagement events** | 90 days | Open, click, bounce, delivery timestamps |
-| **Aggregated analytics** | 12 months | Summary statistics without individual-level data |
+| **Email history and events** | About 10 days | Recipients, subject, metadata, and delivery, bounce, open, and click events, shown on the Events page and returned by the email history API |
+| **Aggregated analytics** | About 6 months | Summary statistics without individual-level data |
 | **Suppression lists** | Indefinite | Required to prevent sending to suppressed addresses |
 | **API request logs** | 30 days | Request/response logs for debugging |
 | **Account and billing data** | Duration of account + legal retention period | Required for billing and legal compliance |
@@ -70,13 +69,13 @@ Pass internal IDs instead of personally identifiable information in your API cal
 ```bash
 # Avoid — PII in metadata
 curl -X POST https://app.lettr.com/api/emails \
-  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxx" \
   -H "Content-Type: application/json" \
   -d '{
     "from": "orders@shop.com",
     "to": "customer@example.com",
     "subject": "Order confirmation",
-    "template_id": "order-confirm",
+    "template_slug": "order-confirm",
     "metadata": {
       "customer_name": "Jane Smith",
       "customer_phone": "+1-555-0123"
@@ -85,13 +84,13 @@ curl -X POST https://app.lettr.com/api/emails \
 
 # Better — opaque identifiers only
 curl -X POST https://app.lettr.com/api/emails \
-  -H "Authorization: Bearer YOUR_API_KEY" \
-  -H "Content-Type": "application/json" \
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxx" \
+  -H "Content-Type: application/json" \
   -d '{
     "from": "orders@shop.com",
     "to": "customer@example.com",
     "subject": "Order confirmation",
-    "template_id": "order-confirm",
+    "template_slug": "order-confirm",
     "metadata": {
       "user_id": "usr_8a3f2b",
       "order_id": "ord_19x7k4"
@@ -206,7 +205,7 @@ When you use Lettr to send email, you are the **data controller** and Lettr is t
   </Accordion>
 
   <Accordion title="Ignoring data in metadata and substitution_data">
-    Metadata and substitution data are stored by Lettr and visible in the dashboard. If you pass PII in these fields, it becomes part of the data you must account for in access and deletion requests. Use opaque identifiers instead.
+    Metadata is stored with your email events and shown in the dashboard, and substitution data is merged into the email content Lettr delivers. If you pass PII in these fields, it becomes part of the data you must account for in access and deletion requests. Use opaque identifiers instead.
   </Accordion>
 
   <Accordion title="No internal process for handling requests">

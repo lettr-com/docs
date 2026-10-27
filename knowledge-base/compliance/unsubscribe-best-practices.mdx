@@ -32,7 +32,7 @@ Google and Yahoo enforce one-click unsubscribe for bulk senders. Messages that l
 | Apple Mail | Yes |
 | Microsoft Outlook | Yes |
 
-Lettr automatically includes the `List-Unsubscribe` and `List-Unsubscribe-Post` headers on messages sent through marketing streams when an unsubscribe link is present in the body.
+Lettr automatically adds the `List-Unsubscribe` and `List-Unsubscribe-Post` headers to marketing email: every campaign, and API sends with `transactional: false`. You can't set these two headers yourself through the API's `headers` field.
 
 ---
 
@@ -42,7 +42,7 @@ Lettr automatically includes the `List-Unsubscribe` and `List-Unsubscribe-Post` 
   Lettr has two unsubscribe mechanisms depending on how you're sending:
 
   - **Marketing campaigns** built in the Lettr UI use the `{{unsubscribe_link}}` merge tag, which Lettr replaces with a unique per-recipient signed URL. The link is mandatory, and Lettr appends a default footer automatically if it's missing. See [Content & Design](/learn/campaigns/content-and-design#the-unsubscribe-link).
-  - **Transactional sends via the API** use a link you host on your own domain, marked with the `data-msys-unsubscribe="1"` attribute described below.
+  - **Emails sent through the API** use a link you host on your own domain, marked with the `data-msys-unsubscribe="1"` attribute described below.
 
   The rest of this article focuses on the API-level mechanism.
 </Note>
@@ -59,21 +59,27 @@ To track unsubscribe events in Lettr, add the `data-msys-unsubscribe="1"` attrib
 ```
 
 <Warning>
-  Click tracking must be **enabled** on the sending domain for the unsubscribe event to fire. If click tracking is disabled, Lettr cannot detect the click and no unsubscribe webhook event will be generated.
+  Click tracking must be **enabled** for the message for the unsubscribe event to fire. It is on by default; if you send with `click_tracking: false`, Lettr cannot detect the click and no unsubscribe webhook event will be generated.
 </Warning>
 
 ### Handling Unsubscribe Webhook Events
 
-When a recipient clicks an unsubscribe link tagged with `data-msys-unsubscribe="1"`, Lettr sends a webhook event to your configured endpoint. Use this event to update your suppression list or database.
+When a recipient clicks an unsubscribe link tagged with `data-msys-unsubscribe="1"`, Lettr sends an `unsubscribe.link_unsubscribe` webhook event to your configured endpoint. Use this event to update your suppression list or database.
 
 ```json
-{
-  "event": "unsubscribe",
-  "recipient": "recipient@example.com",
-  "timestamp": "2025-03-15T14:22:00Z",
-  "message_id": "abc123",
-  "tag": "welcome_series"
-}
+[{
+  "msys": {
+    "unsubscribe_event": {
+      "type": "link_unsubscribe",
+      "timestamp": "1710512520",
+      "message_id": "abcd-1234-efgh",
+      "rcpt_to": "recipient@example.com",
+      "rcpt_meta": {
+        "user_id": "usr_8a3f2b"
+      }
+    }
+  }
+}]
 ```
 
 You should process unsubscribe webhook events by immediately removing the recipient from future mailings. Do not delay this action.
