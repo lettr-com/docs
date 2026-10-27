@@ -44,7 +44,7 @@ For transactional emails that are landing in Promotions:
 
 ## Setting Up Google Postmaster Tools
 
-Google Postmaster Tools (GPT) is the most important diagnostic tool for Gmail delivery. It shows domain reputation, spam rate, authentication status, and delivery errors — data that is not available anywhere else.
+Google Postmaster Tools (GPT) is the most important diagnostic tool for Gmail delivery. It shows whether you meet Gmail's sender requirements, your user-reported spam rate, authentication results, and delivery errors — data that is not available anywhere else.
 
 <Steps>
   <Step title="Go to Google Postmaster Tools">
@@ -63,19 +63,23 @@ Google Postmaster Tools (GPT) is the most important diagnostic tool for Gmail de
     Click **Verify** once the record is published. Propagation usually takes a few minutes but can take up to 48 hours.
   </Step>
   <Step title="Wait for data">
-    Data appears after you send a sufficient volume to Gmail addresses (typically 100+ messages per day). Dashboards populate within 24–48 hours of reaching this threshold.
+    Data appears once you send enough volume to Gmail addresses. Dashboards are generally updated within 24 hours but can take longer. After you fix an item marked **Needs work**, the Compliance status dashboard can take up to 7 days to reflect it.
   </Step>
 </Steps>
 
 ### Key Dashboards
 
 | Dashboard | What It Shows | What to Watch For |
-|-----------|--------------|-------------------|
-| **Spam Rate** | Percentage of emails marked as spam by recipients | Keep below 0.1%. Action required above 0.3%. |
-| **Domain Reputation** | Overall trust level: High, Medium, Low, Bad | Low or Bad causes most email to go to spam |
-| **IP Reputation** | Trust level of sending IP addresses | Relevant if using dedicated IPs |
-| **Authentication** | DKIM, SPF, and DMARC pass rates | Should be 100%. Any failures need investigation. |
+|-|-|-|
+| **Compliance status** | Whether you meet Gmail's sender requirements (SPF/DKIM, DNS records, message format, encryption, spam rate, plus DMARC and one-click unsubscribe for bulk senders) | Every requirement should read **Compliant**. Fix anything marked **Needs work**. |
+| **Spam Rate** | Percentage of your messages that recipients manually mark as spam | Keep below 0.10% and never reach 0.30% |
+| **Authentication** | DKIM, SPF, and DMARC pass rates | Google says senders typically reach 95% or higher when set up correctly. Investigate any failures. |
+| **Encryption** | Share of messages sent over TLS | Should be as close to 100% as possible |
 | **Delivery Errors** | Temporary and permanent rejection reasons | Identifies specific blocks and rate limits |
+
+<Note>
+  Google is retiring the **Domain Reputation** and **IP Reputation** dashboards along with the legacy Postmaster Tools interface. The newer Postmaster Tools (v2) keeps the other dashboards, so rely on Compliance status and Spam Rate instead. Google has postponed the legacy interface's shutdown and has not announced a date. Gmail uses "bulk sender" for anyone sending about 5,000 or more messages to Gmail accounts in 24 hours.
+</Note>
 
 ---
 
@@ -162,7 +166,7 @@ Gmail weighs recipient engagement more heavily than most providers. Low engageme
 
 <AccordionGroup>
   <Accordion title="Check Google Postmaster Tools first">
-    Most Gmail delivery problems are visible in Postmaster Tools. Check domain reputation, spam rate, and authentication dashboards before investigating anything else.
+    Most Gmail delivery problems are visible in Postmaster Tools. Check the Compliance status, Spam Rate, and Authentication dashboards before investigating anything else.
   </Accordion>
   <Accordion title="Verify authentication passes">
     Send a test email to a Gmail account. Open the message, click the three-dot menu, and select **Show original**. Confirm `dkim=pass`, `spf=pass`, and `dmarc=pass` all appear in the Authentication-Results header.

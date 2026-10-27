@@ -1,11 +1,11 @@
 ---
 title: "BIMI: Brand Indicators for Message Identification"
-description: "How BIMI displays your verified brand logo in recipient inboxes, plus the DMARC enforcement and VMC certificate requirements it needs."
+description: "How BIMI displays your verified brand logo in recipient inboxes, plus the DMARC enforcement and VMC or CMC certificate requirements it needs."
 ---
 
 BIMI (Brand Indicators for Message Identification) is an email standard that lets you display your brand's logo next to your messages in recipient inboxes. Instead of a generic avatar or the recipient's initials, your verified logo appears — increasing brand recognition and signaling authenticity.
 
-BIMI builds on top of existing email authentication. It requires a fully enforced [DMARC policy](/knowledge-base/fundamentals/spf-dkim-dmarc) and, for most mailbox providers, a Verified Mark Certificate (VMC) that proves you own the logo's trademark.
+BIMI builds on top of existing email authentication. It requires a fully enforced [DMARC policy](/knowledge-base/fundamentals/spf-dkim-dmarc) and, for most mailbox providers, a mark certificate: a Verified Mark Certificate (VMC) for a trademarked logo, or a Common Mark Certificate (CMC) if your logo is not trademarked.
 
 ---
 
@@ -19,7 +19,7 @@ BIMI uses a DNS TXT record to point mailbox providers to your brand's logo. When
   </Step>
 
   <Step title="BIMI DNS Lookup">
-    The receiving server queries DNS for a BIMI record at `default._bimi.yourdomain.com`. This TXT record contains the URL of your logo file and, optionally, a URL to your VMC certificate.
+    The receiving server queries DNS for a BIMI record at `default._bimi.yourdomain.com`. This TXT record contains the URL of your logo file and, optionally, a URL to your VMC or CMC certificate.
 
     ```
     default._bimi.yourdomain.com  TXT  "v=BIMI1; l=https://example.com/logo.svg; a=https://example.com/cert.pem"
@@ -27,7 +27,7 @@ BIMI uses a DNS TXT record to point mailbox providers to your brand's logo. When
   </Step>
 
   <Step title="Logo Validation">
-    The server fetches the logo file and, if a VMC is provided, validates the certificate to confirm the logo is trademarked and the certificate is issued by an authorized Certificate Authority.
+    The server fetches the logo file and, if a certificate is provided, validates it to confirm the logo belongs to you and the certificate is issued by an authorized Certificate Authority.
   </Step>
 
   <Step title="Logo Display">
@@ -69,18 +69,26 @@ Your logo must meet specific format requirements:
   SVG Tiny PS is a restricted subset of SVG designed for security. It does not allow JavaScript, external references, or animations. Standard SVG files from design tools will need to be converted. Tools like the BIMI Group's SVG converter can help: [bimigroup.org](https://bimigroup.org/implementation-guide).
 </Note>
 
-### Verified Mark Certificate (VMC)
+### Mark Certificates: VMC and CMC
 
-A VMC is a digital certificate that proves your logo is a registered trademark and that you have the right to use it. VMCs are issued by authorized Certificate Authorities.
+A mark certificate is a digital certificate that ties your logo to your organization. Two types exist, and both are issued by authorized Certificate Authorities.
+
+- **Verified Mark Certificate (VMC)** requires a logo registered as a trademark with an intellectual property office that the issuer recognizes. Gmail shows its verified checkmark only for VMC senders.
+- **Common Mark Certificate (CMC)** is for logos that are not trademarked. Gmail accepts it in place of a VMC, but without the checkmark.
 
 | Detail | Information |
-|--------|-------------|
-| **Required by** | Gmail (required), Apple Mail (required for blue checkmark) |
-| **Not required by** | Yahoo Mail, Fastmail (will display logo without VMC) |
-| **Trademark requirement** | Your logo must be registered with a recognized trademark office (e.g., USPTO, EUIPO, UKIPO) |
-| **Certificate Authorities** | DigiCert and Entrust are the current authorized VMC issuers |
+|-|-|
+| **Required by** | Gmail (a VMC or a CMC), Apple Mail (required for blue checkmark) |
+| **Not required by** | Yahoo Mail, Fastmail (will display logo without a certificate) |
+| **VMC trademark requirement** | Your logo must be registered with a trademark office the issuer recognizes (e.g., USPTO, EUIPO, UKIPO). Registration can take 6 to 12 months. |
+| **CMC trademark requirement** | None. Check the issuer's own validation rules for what proof of logo use it asks for. |
+| **Certificate Authorities** | The BIMI Group lists DigiCert, GlobalSign, and SSL.com as authorized issuers. Check [its issuer list](https://bimigroup.org/vmc-issuers/) for the current set. |
 | **Validity period** | Typically 1 year — must be renewed |
-| **Cost** | VMCs are a paid product — check with DigiCert or Entrust for current pricing |
+| **Cost** | Mark certificates are a paid product — check with the issuer or a reseller for current pricing |
+
+<Note>
+  Gmail only supports BIMI with a PEM file that embeds both your logo and the certificate. A standalone SVG referenced in `l=` is not enough for Gmail.
+</Note>
 
 ---
 
@@ -115,13 +123,13 @@ A VMC is a digital certificate that proves your logo is a registered trademark a
     ```
   </Step>
 
-  <Step title="Obtain a VMC (if targeting Gmail)">
+  <Step title="Obtain a VMC or CMC (if targeting Gmail)">
     If you want your logo to appear in Gmail:
 
-    1. Ensure your logo is a registered trademark
-    2. Contact DigiCert or Entrust to apply for a VMC
-    3. Complete the validation process (trademark verification, domain ownership)
-    4. Receive your VMC certificate file (PEM format)
+    1. Decide which certificate fits: a VMC if your logo is a registered trademark, a CMC if it is not
+    2. Apply through an issuer listed by the BIMI Group (for example DigiCert, GlobalSign, or SSL.com)
+    3. Complete the validation process (trademark or logo verification, domain ownership)
+    4. Receive your certificate file (PEM format)
     5. Host the certificate at a publicly accessible HTTPS URL
 
     ```
@@ -136,7 +144,7 @@ A VMC is a digital certificate that proves your logo is a registered trademark a
     default._bimi.yourdomain.com  TXT  "v=BIMI1; l=https://yourdomain.com/brand/logo.svg; a=https://yourdomain.com/brand/vmc.pem"
     ```
 
-    If you do not have a VMC, you can omit the `a=` parameter:
+    If you do not have a certificate, you can omit the `a=` value:
 
     ```
     default._bimi.yourdomain.com  TXT  "v=BIMI1; l=https://yourdomain.com/brand/logo.svg; a="
@@ -160,12 +168,12 @@ A VMC is a digital certificate that proves your logo is a registered trademark a
 
 BIMI adoption is growing but not yet universal. Here is the current state of support among major providers.
 
-| Provider | BIMI Support | VMC Required? | Notes |
+| Provider | BIMI Support | Certificate Required? | Notes |
 |----------|-------------|---------------|-------|
-| **Gmail** | Yes | Yes | Displays logo as sender avatar. Shows a blue verified checkmark. |
-| **Apple Mail** | Yes | Yes (for checkmark) | Displays logo in macOS and iOS Mail. Blue checkmark with VMC. |
-| **Yahoo Mail** | Yes | No | Displays logo without VMC. One of the earliest BIMI adopters. |
-| **Fastmail** | Yes | No | Displays logo without VMC. |
+| **Gmail** | Yes | Yes (VMC or CMC) | Displays logo as sender avatar. The verified checkmark is shown for VMC senders. |
+| **Apple Mail** | Yes | Yes (for checkmark) | Displays logo in macOS and iOS Mail. Blue checkmark with a certificate. |
+| **Yahoo Mail** | Yes | No | Displays logo without a certificate. One of the earliest BIMI adopters. |
+| **Fastmail** | Yes | No | Displays logo without a certificate. |
 | **Outlook / Microsoft 365** | Limited | — | Microsoft has its own brand verification program (not BIMI-based). |
 | **Thunderbird** | No | — | Does not support BIMI. |
 
@@ -183,7 +191,7 @@ v=BIMI1; l=<logo-url>; a=<vmc-url>
 |-----|----------|-------------|
 | `v=BIMI1` | Yes | Version identifier |
 | `l=` | Yes | HTTPS URL pointing to your SVG Tiny PS logo file |
-| `a=` | No | HTTPS URL pointing to your VMC certificate in PEM format. Set to empty (`a=`) if you don't have a VMC. |
+| `a=` | No | HTTPS URL pointing to your VMC or CMC certificate in PEM format. Set to empty (`a=`) if you don't have a certificate. |
 
 ### Selector-Based BIMI
 

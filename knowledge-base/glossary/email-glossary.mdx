@@ -395,13 +395,13 @@ See [GDPR and Email Sending](/knowledge-base/compliance/gdpr-email).
 
 ### Generation Failure
 
-A webhook event indicating a template failed to render before transmission. Generation failures occur when template syntax errors, missing merge tags, or invalid substitution data prevent rendering. These errors occur before the email enters the SMTP transmission phase and should be caught during development and testing.
+A webhook event (`generation.generation_failure`) triggered when something goes wrong while preparing a message for delivery. It is typically an infrastructure-level issue rather than something caused by your email content. It happens before the email is transmitted.
 
-See [Webhook Event Types](/learn/webhooks/event-types) and [Template Language](/learn/templates/template-language).
+See [Webhook Event Types](/learn/webhooks/event-types).
 
 ### Generation Rejection
 
-A webhook event indicating template content was rejected during the generation phase before transmission. Generation rejections occur when content fails validation rules (prohibited content, missing required fields). These errors occur before the email enters the SMTP transmission phase.
+A webhook event (`generation.generation_rejection`) triggered when a message is blocked during the generation phase, the point where the email is assembled and prepared for sending. It happens before the email is transmitted.
 
 See [Webhook Event Types](/learn/webhooks/event-types).
 

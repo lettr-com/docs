@@ -85,10 +85,18 @@ Ask Adamko about a single address, for example *"is jane@acme.com suppressed?"*,
 
 ### Removing a suppression
 
-You cannot remove a suppression yourself. To have an address removed, contact [support@lettr.com](mailto:support@lettr.com) with the address and the reason it should receive email again.
+You cannot remove a suppression yourself. There is no dashboard page or API endpoint for it, so a removal is a request to the Lettr team. Support reviews each request individually and does not guarantee removal.
+
+A request makes sense when you can show that the original reason no longer applies, for example:
+
+- The recipient asked to receive your email again, and you can show their opt-in
+- A hard bounce came from a mistake that has since been fixed, such as a typo, and you have confirmed the mailbox is valid
+- The address was suppressed after an unsubscribe and the recipient has re-subscribed
+
+If so, email [support@lettr.com](mailto:support@lettr.com) with the address, why it was suppressed, and what has changed. Requests to lift a suppression caused by a spam complaint are unlikely to succeed: the recipient has told their mailbox provider they don't want your mail.
 
 <Warning>
-  Only remove a suppression if you have confirmed that the address is valid and that the recipient genuinely wants to receive your email. Removing a suppression for an address that hard bounced or filed a spam complaint will harm your sender reputation.
+  Only remove a suppression if you have confirmed that the address is valid and that the recipient genuinely wants to receive your email. Sending to an address that hard bounced again, or to someone who filed a spam complaint, will harm your sender reputation.
 </Warning>
 
 ---

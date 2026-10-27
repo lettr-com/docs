@@ -63,10 +63,10 @@ When emails are not reaching your recipients, work through the steps below to id
   <Accordion title="Recipient Suppressed">
     If a recipient previously hard-bounced, filed a spam complaint, or unsubscribed, Lettr automatically adds them to your suppression list. Any future sends to that address are rejected and counted in the `rejected` total of the API response.
 
-    There is no suppressions page in the dashboard and no API endpoint for suppressions. To check an address, ask [Adamko](/learn/ai-assistant/troubleshooting-and-diagnostics) *"is jane@acme.com suppressed?"* — he tells you why and when it was suppressed. If you believe the issue has been resolved, contact [support@lettr.com](mailto:support@lettr.com).
+    There is no suppressions page in the dashboard and no API endpoint for suppressions. To check an address, ask [Adamko](/learn/ai-assistant/troubleshooting-and-diagnostics) *"is jane@acme.com suppressed?"* — he tells you why and when it was suppressed. You cannot lift a suppression yourself. If the original reason no longer applies (the recipient re-opted in, or you fixed the cause of a hard bounce and confirmed the mailbox is valid), email [support@lettr.com](mailto:support@lettr.com) with the address and what has changed. Removal is reviewed case by case and is unlikely for spam complaints.
 
     <Warning>
-      Repeatedly sending to addresses that have hard-bounced damages your sender reputation. Only remove a suppression if you have confirmed the mailbox is valid again.
+      Repeatedly sending to addresses that have hard-bounced damages your sender reputation. Only ask for a suppression to be lifted if you have confirmed the mailbox is valid again.
     </Warning>
 
     See [Bounce Suppressions](/learn/suppressions/bounces) for more detail on how Lettr handles suppression rules.
