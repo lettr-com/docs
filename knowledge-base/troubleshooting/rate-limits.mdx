@@ -1,31 +1,33 @@
 ---
 title: Rate Limits
-description: "Understand Lettr API rate limits and monthly quotas, handle 429 responses, and adjust your sending to avoid hitting thresholds"
+description: "Troubleshoot 429 responses from the Lettr API: read the Retry-After and X-RateLimit headers, back off correctly, and understand sandbox and per-IP limits"
 ---
 
-Lettr enforces rate limits to protect infrastructure stability and ensure consistent performance for all users. If you are receiving `429` errors or hitting monthly quotas, this guide covers how to identify the issue and adjust your sending approach.
+If your requests return `429`, you've hit a rate limit. This guide covers how to read the response, back off correctly, and tell the different kinds of `429` apart. For the full list of limits and headers, see the [Rate Limit reference](/api-reference/rate-limit).
 
 ---
 
-## Rate Limit Overview
+## Which limit did I hit?
 
-Lettr applies limits at the API request level, per team. The request limit is shared across all live API keys that belong to the same team:
-
-| Limit | Threshold | Window |
-|-------|-----------|--------|
-| API rate limit | 3 requests | 1 second |
-| SMTP authentication failures | 5 failures | 5 minutes (triggers 15-minute block) |
-| Recipients per request | 50 | Per request (combined to, cc, bcc) |
+| Limit | Applies to | Details |
+|-|-|-|
+| 3 requests per second | Each team, shared by all of its live API keys | The usual cause of `rate_limit_exceeded` |
+| Sandbox limits | [Sandbox API keys](/learn/api-keys/sandbox#rate-limits) only | Separate from the team limit; sandbox traffic never counts toward it |
+| Per-IP limits | Requests from a single IP address | Enforced at the network edge (600 requests per 5 minutes on web routes, 2,000 per 5 minutes on API routes) |
 
 <Note>
-  [Sandbox API keys](/learn/api-keys/sandbox) have their own separate limits and don't count toward the team limit. Contact [sales@lettr.com](mailto:sales@lettr.com) to discuss your volume needs.
+  Sandbox keys are exempt from the team limit and have their own per-second, per-minute and per-day limits, so a `429` on a sandbox key means you hit a sandbox limit. A live key hitting `429` while another live key is busy is expected: they share one limit.
 </Note>
+
+A per-IP `429` can also hit live-key traffic. It comes from the network edge, so it is not produced by the team limiter and its body differs from the one below. On API routes its JSON body uses `error_code` `api_rate_limited` instead of `rate_limit_exceeded`.
+
+If the `429` body has `error_code` set to `quota_exceeded` or `daily_quota_exceeded`, you've hit a sending quota, not a rate limit. Slowing down won't help. See [Email Usage & Quotas](/learn/sending/usage-quotas).
 
 ---
 
-## Rate Limit Response
+## Reading the response
 
-When you exceed the rate limit, the API returns an HTTP `429` status code with the following response body:
+When you exceed the team limit, the API returns HTTP `429` with this body:
 
 ```json
 {
@@ -34,7 +36,14 @@ When you exceed the rate limit, the API returns an HTTP `429` status code with t
 }
 ```
 
-The `Retry-After` response header indicates how many seconds you should wait before making another request. Every API response also carries `X-RateLimit-Limit`, `X-RateLimit-Remaining`, and `X-RateLimit-Reset` headers.
+| Header | Meaning |
+|-|-|
+| `Retry-After` | Seconds to wait before retrying. Only on `429` responses. |
+| `X-RateLimit-Limit` | Requests allowed per second (3 for live keys). |
+| `X-RateLimit-Remaining` | Requests left in the current window. `0` on a `429`. |
+| `X-RateLimit-Reset` | Unix timestamp (seconds) when the window resets. |
+
+Every API response carries the `X-RateLimit-*` headers, so you can slow down before you hit a `429`. Sandbox keys also get `X-Sandbox-RateLimit-*` headers, described on the [sandbox page](/learn/api-keys/sandbox#rate-limits).
 
 <Warning>
   Requests sent before the window resets are rejected with another `429`. Always respect the `Retry-After` header before retrying.
@@ -42,9 +51,9 @@ The `Retry-After` response header indicates how many seconds you should wait bef
 
 ---
 
-## Handling Rate Limits — Implementing Backoff
+## Implementing backoff
 
-When your application receives a `429` response, it should pause and retry with exponential backoff. The following example reads the `Retry-After` header from the response and backs off accordingly:
+When your application receives a `429`, it should pause and retry with exponential backoff. This example reads `Retry-After` and backs off accordingly:
 
 ```javascript
 async function sendWithBackoff(url, payload, maxRetries = 5) {
@@ -74,27 +83,11 @@ async function sendWithBackoff(url, payload, maxRetries = 5) {
 }
 ```
 
-```bash
-# Send a request and check for 429 status
-curl -s -w "\nHTTP Status: %{http_code}\n" \
-  -X POST https://app.lettr.com/api/emails \
-  -H "Authorization: Bearer YOUR_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "from": "you@example.com",
-    "to": ["recipient@example.com"],
-    "subject": "Hello",
-    "html": "<p>Hi there</p>"
-  }'
-```
-
-If the response status is `429`, wait for the number of seconds specified in the `Retry-After` header before retrying.
-
 ---
 
-## Efficient Sending
+## Sending fewer requests
 
-Each API request supports up to 50 recipients across the `to`, `cc`, and `bcc` fields combined. To minimize the number of API calls and stay within rate limits, always fill each request to capacity before sending the next.
+Each request supports up to 50 recipients across `to`, `cc` and `bcc` combined, so fill each request before sending the next. Sending one recipient per request burns through the 3 requests per second for no benefit.
 
 ```javascript
 function chunkRecipients(recipients, size = 50) {
@@ -121,117 +114,16 @@ async function sendToAll(recipients, emailPayload) {
 ```
 
 <Tip>
-  Sending to 10,000 recipients at 50 per request requires only 200 API calls. With a 1-second delay between each, that completes in under 4 minutes — well within the rate limit of 3 requests per second.
+  Sending to 10,000 recipients at 50 per request takes 200 API calls. With a 1-second pause between each, that finishes in under 4 minutes, well within the limit.
 </Tip>
 
----
-
-## Monthly Email Quotas
-
-Each plan includes a monthly email quota. Every recipient on every request counts toward this quota.
-
-| Plan | Monthly Quota |
-|------|--------------|
-| Free | 3,000 emails |
-| Pro 50K | 50,000 emails |
-| Pro 100K | 100,000 emails |
-| Pro 200K | 200,000 emails |
-| Pro 500K | 500,000 emails |
-| Pro 1M | 1,000,000 emails |
-| Enterprise | Custom |
-
-<Note>
-  On paid plans, emails beyond your tier limit are charged at $0.80 per 1,000 emails. The free tier is a hard cap (with an additional limit of 100 emails per day), and sends past it return `429` with `quota_exceeded` or `daily_quota_exceeded`. Check your current plan details in the Lettr dashboard under **Settings > Billing**.
-</Note>
+Rather than polling the API for email status, use [webhooks](/learn/webhooks/introduction) to receive delivery events. For large sends, see [Batch Sending](/learn/sending/batch-sending).
 
 ---
 
-## Monitoring Usage
+## Still getting unexpected 429s?
 
-You can track your current API usage and monthly email quota in the Lettr dashboard:
-
-1. Go to **Settings > Usage** to view your current month's email volume.
-2. Review your remaining quota and historical usage trends.
-3. On the free tier, read the `X-Daily-Remaining` and `X-Monthly-Remaining` headers returned by the Send Email endpoint to alert your own team when you're approaching the limit.
-
-<Tip>
-  Check your usage regularly, especially when launching new campaigns or onboarding large recipient lists. This helps you avoid unexpected quota exhaustion mid-send.
-</Tip>
-
----
-
-## Queuing Strategies
-
-For large sends, queue outbound requests and pace them with a controlled delay to stay within rate limits:
-
-```javascript
-async function processQueue(queue, emailPayload, delayMs = 1000) {
-  const chunks = chunkRecipients(queue, 50);
-  let sent = 0;
-
-  for (const chunk of chunks) {
-    try {
-      await sendWithBackoff("https://app.lettr.com/api/emails", {
-        ...emailPayload,
-        to: chunk,
-      });
-      sent += chunk.length;
-      console.log(`Sent ${sent} / ${queue.length}`);
-    } catch (error) {
-      console.error(`Failed at ${sent} sent. Error: ${error.message}`);
-      // Re-queue remaining recipients
-      const remaining = queue.slice(sent);
-      console.log(`Re-queuing ${remaining.length} recipients for retry.`);
-      return processQueue(remaining, emailPayload, delayMs);
-    }
-
-    await new Promise((resolve) => setTimeout(resolve, delayMs));
-  }
-
-  console.log(`All ${queue.length} recipients processed.`);
-}
-```
-
-This approach uses a simple in-memory queue with `setTimeout` pacing. For production workloads, consider persisting the queue to a database so incomplete sends can be resumed after a restart.
-
----
-
-## Best Practices
-
-<AccordionGroup>
-  <Accordion title="Implement exponential backoff">
-    Always handle `429` responses by reading the `Retry-After` header and backing off exponentially. Never retry immediately — the retry is rejected with another `429` and wastes a request.
-  </Accordion>
-
-  <Accordion title="Batch recipients efficiently">
-    Include up to 50 recipients per API request. Sending one recipient per request wastes your rate limit allowance and dramatically slows throughput.
-  </Accordion>
-
-  <Accordion title="Monitor usage in the dashboard">
-    Regularly check your email volume and quota in the Lettr dashboard. Catching usage spikes early prevents disruptions to scheduled campaigns.
-  </Accordion>
-
-  <Accordion title="Use webhooks instead of polling">
-    Rather than polling the API repeatedly to check email status, configure [webhooks](/learn/webhooks/introduction) to receive delivery events in real time. This eliminates unnecessary API calls and keeps you well under rate limits.
-  </Accordion>
-
-  <Accordion title="Queue large sends">
-    For sends to thousands of recipients, queue requests and pace them with a consistent delay. This avoids bursts that trigger rate limiting and gives you control over throughput.
-  </Accordion>
-</AccordionGroup>
-
----
-
-## Increasing Your Limits
-
-If you are consistently hitting rate limits or approaching your monthly quota, you have two options:
-
-1. **Upgrade your plan.** Higher plans include larger monthly quotas. Visit **Settings > Billing** in the dashboard to compare plans.
-2. **Contact sales for Enterprise.** If you need custom rate limits, dedicated infrastructure, or quotas beyond 1,000,000 emails per month, reach out to [sales@lettr.com](mailto:sales@lettr.com).
-
-<Note>
-  If you are experiencing rate limit issues that seem incorrect — for example, receiving `429` errors well below the documented thresholds — contact [support@lettr.com](mailto:support@lettr.com) with your API key prefix and timestamps of the affected requests.
-</Note>
+If you receive `429` errors well below the limits above, contact [support@lettr.com](mailto:support@lettr.com) with your API key prefix and the timestamps of the affected requests. If you need higher limits for your volume, contact [sales@lettr.com](mailto:sales@lettr.com).
 
 ---
 
@@ -239,10 +131,10 @@ If you are consistently hitting rate limits or approaching your monthly quota, y
 
 <CardGroup cols={3}>
   <Card title="Rate Limits Reference" icon="gauge" href="/api-reference/rate-limit">
-    Full reference for API rate limits, quotas, and response codes.
+    Full reference for API rate limits, quota headers and error codes.
   </Card>
-  <Card title="Batch Sending" icon="envelopes-bulk" href="/learn/sending/batch-sending">
-    Guide to sending emails to multiple recipients efficiently.
+  <Card title="Email Usage & Quotas" icon="chart-simple" href="/learn/sending/usage-quotas">
+    How monthly and daily sending quotas work.
   </Card>
   <Card title="Delivery Issues" icon="circle-exclamation" href="/knowledge-base/troubleshooting/delivery-issues">
     Troubleshoot common email delivery problems.
