@@ -1,0 +1,198 @@
+---
+title: "Letting AI Agents Send Email Safely"
+description: "How to give an AI agent access to Lettr over MCP with a restricted API key, a sandbox rehearsal, IP limits, and idempotent sends."
+---
+
+An AI agent that can send email can also send the wrong email: to the wrong person, twice, or in bulk. Before you hand one a Lettr key, decide what it should be able to do, rehearse it with its email sends contained, and limit the damage if it misbehaves or the key leaks. This guide covers the controls Lettr gives you for that and how to combine them.
+
+---
+
+## What Can Go Wrong
+
+Agents fail differently from deterministic code. A script sends what you wrote. An agent sends what it decided to write, from instructions and data you did not fully control.
+
+| Risk | Example |
+|-|-|
+| **Too much reach** | An agent that only needed to send a receipt can also delete templates or send a campaign |
+| **Wrong recipient** | A prompt, a document or a support ticket the agent read steers it toward an address you never intended |
+| **Duplicate sends** | A timeout makes the agent retry, and the first attempt had already gone out |
+| **Leaked credential** | The key sits in plain text in a client config file, a CI log or a shared chat |
+| **Untested behavior** | The first real run of a new prompt is also the first time anyone sees what it sends |
+
+None of these is solved by writing a better prompt. Each is solved by a limit the agent cannot talk its way past.
+
+---
+
+## How Agents Reach Lettr
+
+Lettr hosts a remote [MCP](/learn/mcp/introduction) server at `https://app.lettr.com/mcp`. It accepts either a Lettr sign-in (OAuth) or a `lttr_` API key sent as `Authorization: Bearer lttr_...`. Each tool maps to the same operation as a REST endpoint.
+
+The two ways of connecting give you very different control:
+
+| | API key | OAuth |
+|-|-|-|
+| **Acts as** | A team | A person |
+| **Scoped access** | Yes, by the key's permission level | No, full account access |
+| **Needs a human** | No | Yes, once, in a browser |
+| **Best for** | Unattended agents, CI, restricted access | Your own interactive use |
+
+For an agent you want to restrict, use a key. OAuth gives the assistant everything you can do in the dashboard, so it suits supervised, personal use rather than an autonomous agent.
+
+---
+
+## Give the Agent the Least Access It Needs
+
+### Choose a permission level
+
+Every key is one of two permission levels, picked when you create it under **API Keys**:
+
+| Level | What the key can do |
+|-|-|
+| **Full access** | Everything the API offers: send, read, manage templates, domains, webhooks, audience, campaigns |
+| **Sending only** | Send email, SMS and WhatsApp, and nothing else |
+
+A Sending Only key that calls any other endpoint gets `403` with `error_code: insufficient_scope`. The level is a preset of scopes, and you cannot pick scopes one by one. See [Permissions](/learn/api-keys/permissions) for the full scope list.
+
+For an agent whose job is to send, such as a support assistant that emails order updates or a workflow that sends a template, use **Sending only**.
+
+### What the agent sees through MCP
+
+The server checks the key on every request and hides tools the key has no scope for, so an agent never offers an action it cannot perform. Each tool needs the same scope as its REST endpoint.
+
+| Key | Tools the agent sees |
+|-|-|
+| **Sending only** | `send_email`, `send_template_email`, `schedule_email`, `cancel_scheduled_email`, plus `current_team` and `list_teams`. Tools such as `send_event`, which can start automations, are absent because the key has no `events:send` scope. |
+| **Full access** | Everything above, plus read and write tools for emails, templates, domains, webhooks, audience, campaigns and automations, and `send_event` |
+
+Two details matter for safety:
+
+- A tool that declares no scope is unavailable to every key. A new tool cannot reach key-authenticated agents by accident.
+- `list_api_keys` and `browse_api_logs` are never available to a key. An agent holding a key cannot list your other keys.
+
+If you change a key's permission level, the agent loses the affected tools on its next call, even if its client still has the old tool list cached.
+
+<Warning>
+  A Full access key lets an agent call `send_campaign`, which sends to a campaign's whole audience, and delete tools such as `delete_template`. If an agent does not need these, do not give it a Full access key.
+</Warning>
+
+---
+
+## Rehearse With a Sandbox Key
+
+Before an agent touches real recipients, run it on a **sandbox key**. Create one under **API Keys** by setting **Type** to **Sandbox**. Sandbox keys start with `lttr_sandbox_`.
+
+A sandbox key behaves like a live key with its email sends contained:
+
+- **Recipients are replaced.** Every `to`, `cc` and `bcc` address becomes the email address of the user who created the key, whatever the agent asked for.
+- **The sender domain is replaced.** The `from` domain becomes `dev.uselettr.com`. You do not need a verified sending domain.
+- **Most writes are blocked.** On REST, a sandbox key can send email and read, but creating, updating or deleting templates, domains, webhooks and similar resources is refused, and so are SMS and WhatsApp sends. On MCP, any tool that needs a `:write` scope is unavailable to a sandbox key.
+- **Email sends are isolated.** Sandbox email sends use a separate subaccount, do not count toward your sending quota, and do not trigger your webhooks.
+
+Email sends are redirected to the key owner, so an agent whose prompt you are still tuning can pick recipients badly, loop, or hallucinate an address without a real recipient receiving that email.
+
+One difference between REST and MCP matters here. Over REST, a sandbox key cannot call `POST /events`. Over MCP, `send_event` stays available to a Full access sandbox key, and the event it sends is not redirected, so it can start automations that email real recipients. A Sending only sandbox key does not hold the `events:send` scope, so `send_event` is not available to it.
+
+For that reason, rehearse on a sandbox key with **Sending only** permissions. It holds only the sending scopes, so the agent has the send and schedule tools and nothing that acts on your audience or automations.
+
+To see what the agent sent, open the **Events** page in the dashboard and turn on the **Sandbox** toggle. Sandbox events are not shown without it.
+
+<Note>
+  Sandbox keys have their own rate limits, separate from your team's live traffic. See [Sandbox API Keys](/learn/api-keys/sandbox#rate-limits) for the figures.
+</Note>
+
+A reasonable rollout:
+
+1. Give the agent a Sending only sandbox key and run the real task several times.
+2. Read the emails in your own inbox: subject, body, merge data, tone.
+3. Check the **Events** page with the **Sandbox** toggle for anything unexpected.
+4. Swap in a live Sending only key and start with a small, low-stakes workflow.
+
+---
+
+## Restrict Where the Key Can Be Used
+
+A key can be limited to specific source addresses. In the **Allowed IPs** field, enter comma-separated IP addresses or CIDR ranges, for example `10.20.30.40, 10.20.30.0/24`. Leave it blank to allow any address.
+
+Requests from other addresses are refused with `403` and the message `Access denied. Your IP address is not allowed.` The same check applies to key-authenticated MCP connections.
+
+This limits the value of a leaked key. If an agent always runs from a known server or CI runner, a key copied out of its config is useless from anywhere else.
+
+<Tip>
+  Cloud CI runners often have changing addresses. If you cannot pin a range, rely on a Sending only key and keep the key out of logs instead.
+</Tip>
+
+---
+
+## Make Retries Safe
+
+Agents retry. When a tool call times out, the model often cannot tell whether the email went out, so it sends again.
+
+Both `send_email` and `send_template_email` accept an `idempotency_key`. Reuse the same value on a retry and Lettr does not send the email a second time. Without it, a retry after a timeout can send the email twice.
+
+The key must be 1 to 255 characters, using letters, digits, periods, underscores and hyphens. Instruct the agent to derive it from the business event, not to generate a fresh one on each attempt:
+
+```text
+When sending an order update, call send_template_email with
+idempotency_key set to "order-update-<order id>-<status>".
+Reuse the same key if you retry the same message.
+```
+
+The REST API has the same protection for code that calls it directly. See [Idempotency](/learn/sending/idempotency).
+
+---
+
+## Keep a Human in the Loop for Risky Actions
+
+Tools that send email, overwrite data or delete it carry the MCP **destructive** annotation, including `send_email`, `send_template_email`, `cancel_scheduled_email` and `send_campaign`. Clients that support the annotation, such as Claude, can ask you to approve each call before it runs.
+
+An approval prompt is only as good as your review of it. Check the recipients, the template and the audience before you approve. For an unattended agent there is no prompt, so the key's permission level and a sandbox rehearsal are the controls that count.
+
+If the agent works across several teams through OAuth, pin the team in the connection URL (`https://app.lettr.com/mcp?team=41`) so it cannot act on another one. A key is already bound to a single team.
+
+---
+
+## Protect the Key
+
+A key in a client config file is a plain-text password.
+
+- Use a separate key per agent, named for its job, so you can revoke one without affecting others.
+- Keep config files that hold keys out of version control.
+- Delete a key to revoke it. Keys are revoked by deletion.
+- Key-authenticated MCP calls appear in your API logs with the key's id. Filter by key name under **Logs** to see what an agent has done.
+
+---
+
+## A Safe Setup, End to End
+
+For an agent that sends order updates:
+
+1. Create a **sandbox** key with **Sending only** permissions, named `order-agent-test`. Connect the agent and run it until the emails look right.
+2. Create a **Sending only** live key named `order-agent-prod`, with **Allowed IPs** set to the server that runs the agent.
+3. Connect the agent in Claude Code:
+
+```bash
+claude mcp add --transport http lettr https://app.lettr.com/mcp \
+  --header "Authorization: Bearer lttr_xxxxxxxxx"
+```
+
+4. Tell the agent to use saved templates and to set an `idempotency_key` on every send.
+5. Watch the first live runs in **Logs** and **Events**.
+
+---
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Connect with an API Key" icon="key" href="/learn/mcp/api-key-auth">
+    Set up key-based MCP access and see what each key can reach
+  </Card>
+  <Card title="API Key Permissions" icon="shield" href="/learn/api-keys/permissions">
+    Permission levels, scopes and IP restrictions
+  </Card>
+  <Card title="Sandbox API Keys" icon="flask" href="/learn/api-keys/sandbox">
+    Test without sending to real recipients
+  </Card>
+  <Card title="Security Best Practices" icon="shield-check" href="/knowledge-base/best-practices/security">
+    Protect your API keys, webhooks, and account
+  </Card>
+</CardGroup>
