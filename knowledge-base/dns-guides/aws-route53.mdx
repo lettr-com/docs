@@ -16,14 +16,16 @@ A sending domain authenticates your outgoing emails with DKIM and DMARC, ensurin
 To create a sending domain in Lettr:
 1. Select **Domains** in the navigation panel
 2. Select **Sending Domains**
-3. Click **Create Sending Domain**
+3. Click **Create Sending Domain** (**New Sending Domain** if you already have one)
 4. Enter your desired sending subdomain (e.g. `mailing.company.com`)
 5. Click **Create Domain**
 
 
 <Tip>
   Use a subdomain (e.g. `mailing.company.com`) instead of the root domain (`company.com`). A subdomain provides proper
-  reputation segmentation and is required if you also plan to receive emails with Lettr.
+  reputation segmentation and is required if you also plan to receive emails with Lettr. If you do use the root domain,
+  Lettr asks for an SPF TXT record (`v=spf1 include:_spf.sparkpostmail.com ~all`, or your existing SPF record with
+  `include:_spf.sparkpostmail.com` added) instead of the CNAME record below.
 </Tip>
 
 Click your new domain in the Sending Domains list. This will display a list of DNS records that need to be configured. Keep this page open — you will need these values soon.
@@ -56,7 +58,7 @@ This will open the Hosted zone details page, where you can manage your DNS recor
 
 ### Add CNAME Record
 
-The CNAME record verifies domain ownership with Lettr's email infrastructure.
+The CNAME record points your sending domain to `sparkpostmail.com` for bounce handling. Lettr requires it to verify a subdomain. Once it is verified, you can optionally switch on **Use this sending domain as bounce domain** in the domain's **Bounce Domain** card, so bounces use your own domain as the Return-Path.
 
 Copy the CNAME values from Lettr to Route 53:
 
@@ -194,7 +196,7 @@ A tracking domain allows Lettr to track email opens and link clicks using your o
 
 ### Add Tracking Domain to Lettr
 
-In the Lettr dashboard, select **Domains** in the navigation panel, then select **Tracking Domains** and click **Create Tracking Domain**. Enter your desired tracking subdomain (e.g. `track.company.com`) and click **Create Tracking Domain**.
+In the Lettr dashboard, select **Domains** in the navigation panel, then select **Tracking Domains** and click **Create Tracking Domain** (**New Tracking Domain** if you already have one). Enter your desired tracking subdomain (e.g. `track.company.com`) and click **Create Tracking Domain**.
 
 
 Click on the name of your new tracking domain in the Tracking Domains list. This will display the CNAME records that need to be configured. Keep this page open — you will need these values in the next steps.
@@ -207,7 +209,7 @@ The SSL Certificate CNAME record provisions an SSL certificate for your custom t
 Add the record in Route 53:
 
 1. Click **Create record** in your hosted zone.
-2. Copy the **Hostname** from Lettr and paste it into the **Record name** field in Route 53.
+2. Copy the **Name** from Lettr and paste it into the **Record name** field in Route 53.
 3. Select **CNAME** from the **Record type** dropdown.
 4. Copy the **Value** from Lettr and paste it into the **Value** field in Route 53.
 5. Leave **TTL** set to 300 or adjust as needed.
@@ -215,7 +217,7 @@ Add the record in Route 53:
 7. Click **Create records**.
 
 <Info>
-Omit your domain suffix from the Hostname when pasting into Route 53. For example, instead of `track.lettr-demo.com`, paste only `track`.
+Omit your domain suffix from the Name when pasting into Route 53. For example, instead of `_acme-challenge.track.lettr-demo.com`, paste only `_acme-challenge.track`.
 </Info>
 
 <img src="/images/route-tracking-1.png" alt="Adding SSL Certificate CNAME record in AWS Route 53" />
@@ -227,7 +229,7 @@ The Traffic CNAME record routes click and open tracking requests from your custo
 Add the record in Route 53:
 
 1. Click **Create record** in your hosted zone.
-2. Copy the **Hostname** from Lettr and paste it into the **Record name** field in Route 53.
+2. Copy the **Name** from Lettr and paste it into the **Record name** field in Route 53.
 3. Select **CNAME** from the **Record type** dropdown.
 4. Copy the **Value** from Lettr and paste it into the **Value** field in Route 53.
 5. Leave **TTL** set to 300 or adjust as needed.
@@ -235,7 +237,7 @@ Add the record in Route 53:
 7. Click **Create records**.
 
 <Info>
-Omit your domain suffix from the Hostname when pasting into Route 53. For example, instead of `track.lettr-demo.com`, paste only `track`.
+Omit your domain suffix from the Name when pasting into Route 53. For example, instead of `track.lettr-demo.com`, paste only `track`.
 </Info>
 
 <img src="/images/route-tracking-2.png" alt="Adding Traffic CNAME record in AWS Route 53" />
@@ -253,7 +255,7 @@ A storage domain lets you serve email assets (images, attachments) from your own
 
 ### Add Storage Domain to Lettr
 
-In the Lettr dashboard, select **Domains** in the navigation panel, then select **Storage Domains** and click **Create Storage Domain**. Enter your desired storage subdomain (e.g. `assets.company.com`) and click **Create Storage Domain**.
+In the Lettr dashboard, select **Domains** in the navigation panel, then select **Storage Domains** and click **Connect Custom Domain**. Enter your desired storage subdomain (e.g. `assets.company.com`) and click **Connect Domain**.
 
 
 Click on your new domain in the Storage Domains list. This will display the TXT and CNAME records that need to be configured. Keep this page open — you will need these values in the next steps.
@@ -274,7 +276,7 @@ Add the record in Route 53:
 7. Click **Create records**.
 
 <Info>
-Omit your domain suffix from the Hostname when pasting into Route 53. For example, instead of `assets.lettr-demo.com`, paste only `assets`.
+Omit your domain suffix from the Hostname when pasting into Route 53. For example, instead of `_acme-challenge.assets.lettr-demo.com`, paste only `_acme-challenge.assets`.
 </Info>
 
 <img src="/images/route-storage-1.png" alt="Adding Certificate Validation TXT record in AWS Route 53" />
@@ -298,7 +300,7 @@ If the Record name is the same as the Certificate Validation TXT record above, R
 </Warning>
 
 <Info>
-Omit your domain suffix from the Hostname when pasting into Route 53. For example, instead of `assets.lettr-demo.com`, paste only `assets`.
+Omit your domain suffix from the Hostname when pasting into Route 53. For example, instead of `_cf-custom-hostname.assets.lettr-demo.com`, paste only `_cf-custom-hostname.assets`.
 </Info>
 
 <img src="/images/route-storage-2.png" alt="Adding Hostname Pre-validation TXT record in AWS Route 53" />
@@ -312,7 +314,7 @@ Add the record in Route 53:
 1. Click **Create record** in your hosted zone.
 2. Copy the **Hostname** from Lettr and paste it into the **Record name** field in Route 53.
 3. Select **CNAME** from the **Record type** dropdown.
-4. Copy the **Value** from Lettr and paste it into the **Value** field in Route 53.
+4. Copy the **Target** from Lettr and paste it into the **Value** field in Route 53.
 5. Leave **TTL** set to 300 or adjust as needed.
 6. Ensure **Routing policy** is set to **Simple routing**.
 7. Click **Create records**.
