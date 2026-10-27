@@ -1,6 +1,6 @@
 ---
 title: Deliverability Best Practices
-description: "Maximize email deliverability and inbox placement with proper SPF, DKIM, and DMARC authentication, tracking domains, and domain warm-up."
+description: "Maximize inbox placement with SPF, DKIM, and DMARC authentication, domain warm-up, list hygiene, and sending reputation practices, including recovery."
 ---
 
 Deliverability is the measure of how successfully your emails reach recipients' inboxes rather than spam folders or getting rejected entirely. Even well-crafted emails fail if they never arrive. This guide covers the foundational practices that keep your emails landing in the inbox.
@@ -159,6 +159,88 @@ Track these key indicators to catch problems early:
 
 ---
 
+## Sending Reputation
+
+Mailbox providers like Gmail, Outlook, and Yahoo assign a reputation to every sender based on observed behavior, and that reputation decides how your future emails are treated. For what reputation is and how providers evaluate it, see [Email Deliverability](/knowledge-base/concepts/email-deliverability).
+
+### Signals to Watch
+
+Beyond the metrics above, providers also weigh these signals:
+
+- **Spam trap hits**: Sending to addresses that exist only to catch spammers. Any hit points to a list-quality problem, usually an old, purchased, or scraped list.
+- **Authentication results**: Every message should pass DKIM and DMARC. See [Authentication](#authentication-is-non-negotiable).
+- **Sending consistency**: Stable day-to-day volume reads as legitimate. Sudden spikes or long gaps look suspicious.
+
+<Note>
+  Lettr doesn't expose a single reputation score. Monitor the individual signals through your dashboard and webhook data (`message.bounce`, `message.spam_complaint`, `message.delay`, `engagement.open`, `engagement.click`).
+</Note>
+
+### Domain vs IP Reputation
+
+Reputation attaches to both your sending domain and the IP address that delivers your email. Most major providers, Gmail in particular, weigh domain reputation heavily, and it's the part you control through your own sending practices. On shared IPs, your IP reputation is also influenced by other senders on the same infrastructure. See [Dedicated vs Shared IPs](/knowledge-base/concepts/dedicated-vs-shared-ips) for when a dedicated IP makes sense.
+
+### Separate Streams by Subdomain
+
+Each subdomain builds its own reputation. If transactional and marketing email share one domain, a bad campaign can delay password resets and order confirmations. At a minimum, send each type from its own subdomain:
+
+| Email Type | Subdomain Example |
+|-|-|
+| Transactional | `mail.example.com` |
+| Marketing | `news.example.com` |
+| Automated / Drip | `updates.example.com` |
+
+Add each subdomain as a separate sending domain in Lettr, configure the records Lettr shows for it, and wait for it to be verified before sending. See [Subdomain vs Root Domain](/knowledge-base/fundamentals/subdomain-vs-root) for more guidance.
+
+### Recovering from Reputation Damage
+
+If emails are going to spam, delivery rates have dropped, or deferrals are increasing, you can recover, but it takes time and discipline.
+
+<Steps>
+  <Step title="Reduce your sending volume immediately">
+    Cut volume to 10–20% of your current level. Sending at full volume while your reputation is damaged makes things worse with every send.
+  </Step>
+  <Step title="Identify and fix the root cause">
+    Common causes include:
+    - Sending to a purchased or scraped list
+    - Failing to process bounces, leading to repeated sends to invalid addresses
+    - A spike in spam complaints after a poorly targeted campaign
+    - Broken authentication (DKIM/DMARC failures)
+
+    Check your webhook logs for `message.bounce`, `message.spam_complaint`, and `message.delay` events to pinpoint the issue.
+  </Step>
+  <Step title="Clean your recipient list aggressively">
+    Remove all hard-bounced addresses, all spam complainants, and anyone who hasn't engaged in the last 6 months.
+  </Step>
+  <Step title="Send only to your most engaged recipients">
+    Restrict sending to recipients who opened or clicked within the last 30 days. Positive engagement is what rebuilds reputation.
+  </Step>
+  <Step title="Gradually increase volume">
+    Follow the warm-up schedule above. Increase volume only while bounce rate stays below 2% and complaint rate below 0.1%.
+  </Step>
+  <Step title="Monitor daily until metrics stabilize">
+    Check your dashboard and webhook data every day. Recovery typically takes 2–6 weeks of consistently good behavior, depending on the severity of the damage.
+  </Step>
+</Steps>
+
+### Warning Signs
+
+<AccordionGroup>
+  <Accordion title="Increasing deferrals">
+    A growing number of `message.delay` events means receiving servers are delaying your emails instead of accepting them. This is often the first sign a provider is losing trust in your domain. Check which providers are deferring and whether it correlates with a volume increase or a change in your recipient list.
+  </Accordion>
+  <Accordion title="Sudden drop in open rates">
+    A sharp decline, especially at one provider like Gmail or Outlook, usually means your emails are being routed to spam. Test with a seed account at the affected provider to confirm inbox placement.
+  </Accordion>
+  <Accordion title="Bounce rate creeping up">
+    A gradually rising bounce rate means your list is aging. If you aren't processing `message.bounce` events in real time, stale addresses pile up and accelerate reputation damage. Confirm suppression is working.
+  </Accordion>
+  <Accordion title="Spam placement at one provider only">
+    If you reach the inbox at most providers but land in spam at one, that provider has flagged your domain, often because your complaint rate crossed its threshold. Reduce volume to that provider, send only to engaged recipients there, and confirm DKIM and DMARC pass. See [Emails Landing in Spam](/knowledge-base/troubleshooting/spam-placement).
+  </Accordion>
+</AccordionGroup>
+
+---
+
 ## Testing Before Sending
 
 ### Pre-Send Checklist
@@ -210,8 +292,8 @@ See [Test Emails](/learn/sending/test-emails) for how to send test emails throug
 ## Related Topics
 
 <CardGroup cols={2}>
-  <Card title="Sending Reputation" icon="chart-line" href="/knowledge-base/best-practices/sending-reputation">
-    Build and protect your sender reputation
+  <Card title="Email Deliverability" icon="inbox" href="/knowledge-base/concepts/email-deliverability">
+    What deliverability is and how it's measured
   </Card>
   <Card title="List Hygiene" icon="broom" href="/knowledge-base/best-practices/list-hygiene">
     Maintain healthy recipient lists

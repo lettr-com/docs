@@ -593,7 +593,6 @@
             "pages": [
               "knowledge-base/best-practices/email-editor-best-practices",
               "knowledge-base/best-practices/deliverability",
-              "knowledge-base/best-practices/sending-reputation",
               "knowledge-base/best-practices/list-hygiene",
               "knowledge-base/best-practices/security",
               "knowledge-base/best-practices/transactional-vs-marketing",
@@ -669,6 +668,10 @@
     "options": ["copy", "view", "chatgpt", "claude", "perplexity"]
   },
   "redirects": [
+    {
+      "source": "/knowledge-base/best-practices/sending-reputation",
+      "destination": "/knowledge-base/best-practices/deliverability"
+    },
     {
       "source": "/mcp/introduction",
       "destination": "/learn/mcp/introduction"
