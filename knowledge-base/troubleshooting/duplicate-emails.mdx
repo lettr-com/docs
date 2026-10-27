@@ -1,0 +1,270 @@
+---
+title: Duplicate Emails
+description: "Find out why recipients get the same email twice from Lettr and prevent it with Idempotency-Key, stable retries, and deduplication of webhook events"
+---
+
+A customer says they received the same order confirmation twice, or your own system processed the same bounce twice. Before blaming the platform, find out which layer repeated the work. Almost every duplicate comes from a retry: your code, your queue, or a webhook delivery ran the same step a second time and nothing recognised it as a repeat. This guide covers how to tell the cases apart and how to stop each one.
+
+---
+
+## Which Kind of Duplicate Is It?
+
+| Symptom | Likely layer | Jump to |
+|-|-|-|
+| The recipient has two copies of the email with different request IDs | Your app sent the request twice | [Duplicate API sends](#duplicate-api-sends) |
+| The recipient has two copies and both show the same request ID | Not a second send by Lettr; check forwarding rules and mail client filters on the recipient side | [Check the recipient side](#check-the-recipient-side) |
+| A campaign draft appears twice in the dashboard | A campaign creation request was retried without a key | [Duplicate campaigns](#duplicate-campaigns) |
+| Your database has two rows, two refunds or two CRM updates for one event | Your webhook handler received the same event twice | [Duplicate webhook events](#duplicate-webhook-events) |
+
+<Tip>
+  Look both messages up in the dashboard or through the API and compare their request IDs. Two different request IDs mean two accepted send requests. One request ID means Lettr accepted the request once.
+</Tip>
+
+---
+
+## Duplicate API Sends
+
+### Why a retry sends twice
+
+A timeout or a dropped connection means your client got no answer, but Lettr may already have accepted the email. If your code retries with no way to say "this is the same email", the retry is a brand new request and the recipient gets a second copy. The same thing happens when a queue worker crashes after the API call but before it records success, or when a serverless platform invokes your function twice for one event.
+
+The retry itself is correct behavior. What is missing is a stable identity for the email.
+
+### Fix it with an Idempotency-Key
+
+Send an `Idempotency-Key` header on `POST /api/emails`. Lettr remembers the key together with your payload and your API key for 24 hours. A repeat of the same request within that window returns the original result and does not send another email.
+
+```bash
+curl -X POST https://app.lettr.com/api/emails \
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: order-confirmation-10482" \
+  -d '{
+    "from": "orders@example.com",
+    "to": ["customer@example.net"],
+    "subject": "Order #10482 confirmed",
+    "template_slug": "order-confirmation",
+    "substitution_data": { "order_id": "10482" }
+  }'
+```
+
+What to expect:
+
+- **First request:** the email is queued and the response carries `data.request_id`.
+- **Replay with the same key and payload:** the response carries the same `data.request_id` plus an `Idempotency-Replayed: true` header. No second email goes out.
+- **Same key, different payload:** `409` with `error_code` `idempotency_key_conflict`. Lettr refuses it rather than sending a second, different email.
+- **Same key while the first request is still being processed:** `409` with `error_code` `idempotency_in_progress` and a `Retry-After: 1` header.
+
+A replay is a success. Treat it as one in your code.
+
+### Handle idempotency_in_progress
+
+`idempotency_in_progress` means your retry arrived while the original request was still running. Nothing is wrong. Wait the number of seconds in `Retry-After` (1 second) and send the identical request again. By then you get either the original result as a replay or, if the first attempt failed, a fresh attempt.
+
+```javascript
+const response = await fetch('https://app.lettr.com/api/emails', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${process.env.LETTR_API_KEY}`,
+    'Content-Type': 'application/json',
+    'Idempotency-Key': idempotencyKey,
+  },
+  body,
+});
+
+const data = await response.json().catch(() => ({}));
+
+if (response.status === 409 && data.error_code === 'idempotency_in_progress') {
+  const seconds = Number(response.headers.get('Retry-After')) || 1;
+  await new Promise((resolve) => setTimeout(resolve, seconds * 1000));
+  // Send the same request again with the same key and the same body.
+}
+```
+
+The full retry helper, with backoff for `429` and `5xx` responses, is in [Idempotency](/learn/sending/idempotency) and [Errors & Retries](/learn/sending/errors-retries).
+
+### Choose a key that survives retries
+
+The most common reason an `Idempotency-Key` does not help is that the key changes between attempts.
+
+| Key | Result |
+|-|-|
+| `order-confirmation-10482` | Good. Derived from the business event, identical on every retry |
+| A UUID generated once and stored with the order | Good. Persisted, so every retry reuses it |
+| `crypto.randomUUID()` inside the retry loop | Bad. Every attempt gets a new key, so nothing is deduplicated |
+| `Date.now()` or an attempt counter | Bad. Changes on every attempt |
+| `email-123` for every email type | Bad. Two different emails for the same entity collide, and the second gets a `409` |
+
+Keys are 1 to 255 characters from letters, numbers, `.`, `_` and `-`. Anything else is rejected with a `422`.
+
+### Keep the payload identical
+
+A reused key with any change in the payload returns `409 idempotency_key_conflict`. In practice that happens when:
+
+- the payload is rebuilt from a record that changed between attempts, for example an order object whose total was updated
+- the template was edited between the first attempt and the retry, so the resolved content differs
+- a timestamp or a random value is part of `substitution_data`
+
+Pass only the fields the template needs and build the request body once, before the retry loop.
+
+### Know the limits
+
+- **24 hours.** A retry after the window is a new request and sends a new email. Idempotency is not an unlimited exactly-once guarantee.
+- **Scoped to your API key.** The same key sent with a different API key is treated as a different key.
+- **Only `POST /emails`.** Scheduled sends (`POST /emails/scheduled`) ignore the header. Lettr already protects its own dispatch of a scheduled email, so a worker that dies mid-send does not deliver it twice, but a duplicate request that creates a second scheduled email is still your responsibility.
+- **Quota and rate limits still apply.** A retry after you used up your quota gets a `429`, not a replay.
+- **Metadata does not deduplicate.** Putting an `idempotency_key` field inside `metadata` stores it on the message and echoes it in webhooks. Only the header enables deduplication.
+- **SMTP has no header.** The `Idempotency-Key` header is part of the HTTP API, and Lettr's SMTP service has no equivalent. If you send over SMTP, deduplicate in your own application before you submit the message.
+
+<Note>
+  If you use the Laravel package, queued mail gets an idempotency key derived automatically from the queue job, so a retried job cannot deliver twice. Synchronous sends get no automatic key. See [Idempotency](/learn/sending/idempotency).
+</Note>
+
+---
+
+## Duplicate Campaigns
+
+Creating a campaign with `POST /api/campaigns` also accepts an `Idempotency-Key` header, with the same key format as email sends. A client that retries after a timeout would otherwise create two identical drafts, and sending both would deliver the same campaign to your audience twice.
+
+- **Same key, same payload:** you get the original campaign back with `201` and an `Idempotency-Replayed: true` header, not a second draft.
+- **Same key, different payload:** `409` `idempotency_key_conflict`.
+- **Same key while the first request is still running:** `409` `idempotency_in_progress` with `Retry-After: 1`.
+- **Retention:** the key is remembered for 24 hours.
+- **Scope:** campaign keys are scoped to your team.
+
+Use one key per intended campaign, for example `newsletter-2026-10`, and reuse it on every retry. The request details are in the [Create a campaign](/api-reference/campaigns/create-a-campaign) reference.
+
+---
+
+## Duplicate Webhook Events
+
+A duplicate in your own system is often not a duplicate send at all. Lettr retries a webhook delivery whenever your endpoint does not answer with a `2xx` within 30 seconds, so your handler can legitimately receive the same event more than once.
+
+### Why the same event arrives twice
+
+- Your server processed the event and returned `200`, but the response never reached Lettr.
+- Your handler did slow work before responding and crossed the 30 second limit.
+
+The retry schedule is 7 attempts over about 35 hours:
+
+| Attempt | Delay | Cumulative time |
+|-|-|-|
+| 1 | Immediate | 0 |
+| 2 | 1 minute | 1 minute |
+| 3 | 5 minutes | 6 minutes |
+| 4 | 30 minutes | 36 minutes |
+| 5 | 2 hours | 2.6 hours |
+| 6 | 8 hours | 10.6 hours |
+| 7 | 24 hours | 34.6 hours |
+
+After the 7th failed attempt the delivery is marked permanently failed. A `410 Gone` response disables the webhook instead of retrying. Full details are in [Retries](/learn/webhooks/retries).
+
+### Deduplicate on event_id
+
+Each event in the batch carries an `event_id`. A webhook request body is a JSON array, and each item wraps the event in an `msys` object. The event sits under `message_event` for delivery, bounce and delay events, and under `track_event` for opens and clicks.
+
+```json
+[
+  {
+    "msys": {
+      "message_event": {
+        "type": "delivery",
+        "event_id": "92356927693813856",
+        "transmission_id": "84273662514790325",
+        "rcpt_to": "customer@example.net",
+        "timestamp": "1460989507"
+      }
+    }
+  }
+]
+```
+
+Read `event_id` from the object inside `msys`, store it, and skip any event you have already seen. A unique constraint in your database makes the check safe even when two deliveries arrive at the same moment:
+
+```javascript
+app.post('/webhooks/lettr', async (req, res) => {
+  // Acknowledge first so the delivery does not time out.
+  res.sendStatus(200);
+
+  for (const item of req.body) {
+    const event = Object.values(item.msys ?? {})[0];
+    if (!event?.event_id) continue;
+
+    try {
+      // Unique constraint on event_id
+      await db.processedWebhooks.insert({ event_id: event.event_id });
+    } catch (err) {
+      if (err.code === '23505') continue; // PostgreSQL unique violation: already handled
+      throw err;
+    }
+
+    await handleEvent(event);
+  }
+});
+```
+
+Keep the stored IDs for at least as long as the retry window (about 35 hours). A 48 hour expiry covers it with margin.
+
+<Warning>
+  Return `2xx` for events you recognise as duplicates. Returning an error makes Lettr retry the whole delivery again.
+</Warning>
+
+### Make the effect idempotent as well
+
+Deduplicating on `event_id` stops repeat deliveries. It does not protect you when the same real-world change is reported twice, for example a recipient clicking a link twice. Make the handler's effect safe to repeat: set a status to a value rather than incrementing a counter, or key an update on the `transmission_id` and recipient (`rcpt_to`). The `transmission_id` matches the `data.request_id` returned when you sent the email, so you can map any event back to the send that caused it.
+
+Webhooks also arrive in approximate order only. Compare the event `timestamp` before you overwrite a newer status with an older one.
+
+---
+
+## Check the Recipient Side
+
+If two copies share one request ID, Lettr accepted a single request. The extra copy comes from somewhere downstream:
+
+- **Forwarding rules.** The recipient's mailbox forwards to a second address that is also read in the same mail client.
+- **Mailing lists and aliases.** One alias that expands to several mailboxes delivered to the same person.
+- **The same address twice.** The address appears in both `to` and `cc`, or a list of recipients you built contains it twice with different capitalisation. Deduplicate your recipient list before sending.
+- **Client sync issues.** Some mail clients show a message twice after a failed sync.
+
+If you cannot explain it, collect the request ID, the recipient address and both message headers (including `Message-ID` and the `Received` chain) before you contact support.
+
+---
+
+## Prevention Checklist
+
+<Steps>
+  <Step title="Send an Idempotency-Key on every transactional send">
+    Derive it from the business event, such as `password-reset-{reset_request_id}`, and store or recompute it identically on every retry.
+  </Step>
+  <Step title="Build the payload once">
+    Create the request body before the retry loop so no field changes between attempts.
+  </Step>
+  <Step title="Retry only what is safe to retry">
+    Retry timeouts, connection resets, `429`, `5xx` and `idempotency_in_progress`. Do not retry `4xx` validation errors or `idempotency_key_conflict`.
+  </Step>
+  <Step title="Add a key to campaign creation">
+    Send `Idempotency-Key` on `POST /api/campaigns` so a retried request returns the same draft.
+  </Step>
+  <Step title="Respond to webhooks fast and deduplicate on event_id">
+    Return `200` first, do the work afterwards, and record each `event_id` with a unique constraint.
+  </Step>
+</Steps>
+
+---
+
+## Related Pages
+
+<CardGroup cols={2}>
+  <Card title="Idempotency" icon="fingerprint" href="/learn/sending/idempotency">
+    The full Idempotency-Key contract, SDK examples and a retry helper
+  </Card>
+  <Card title="Errors & Retries" icon="rotate" href="/learn/sending/errors-retries">
+    Which errors are safe to retry and how to back off
+  </Card>
+  <Card title="Webhook Retries" icon="clock-rotate-left" href="/learn/webhooks/retries">
+    The retry schedule, success criteria and the 410 response
+  </Card>
+  <Card title="Webhook Delivery Failures" icon="webhook" href="/knowledge-base/troubleshooting/webhook-failures">
+    Diagnose endpoints that time out or return errors
+  </Card>
+</CardGroup>
