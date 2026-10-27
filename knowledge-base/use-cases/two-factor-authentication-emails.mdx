@@ -20,10 +20,10 @@ Two-factor authentication (2FA) emails deliver one-time passcodes (OTPs) that us
 
 ### Optimizing for Speed
 
-- **Send immediately** — never queue 2FA emails behind other sends. Use the highest priority in your sending pipeline.
-- **Keep the email tiny** — minimal HTML, no images, no tracking pixels. Every byte adds processing time at each hop in the delivery pipeline.
-- **Use a warmed, reputable domain** — established sending domains are processed faster by receiving servers. See [IP and Domain Warm-Up](/knowledge-base/best-practices/ip-domain-warmup).
-- **Monitor delivery latency** — alert if the time between your API call and the `email.delivered` webhook event exceeds 10 seconds.
+- **Send immediately**: never queue 2FA emails behind other sends. Use the highest priority in your sending pipeline.
+- **Keep the email tiny**: minimal HTML, no images, no tracking pixels. Every byte adds processing time at each hop in the delivery pipeline.
+- **Use a warmed, reputable domain**: established sending domains are processed faster by receiving servers. See [IP and Domain Warm-Up](/knowledge-base/best-practices/ip-domain-warmup).
+- **Monitor delivery latency**: alert if the time between your API call and the `message.delivery` webhook event exceeds 10 seconds.
 
 <Warning>
   Do not include open or click tracking in 2FA emails. Tracking pixels add processing overhead, increase email size, and provide no useful data — you already know the user received the code if they successfully log in.
@@ -191,9 +191,9 @@ async function sendOTPEmail(user, code) {
       subject: `${code} is your verification code`,
       html: otpEmailHtml(code),
       text: otpEmailText(code),
-      tags: ['2fa', 'otp'],
+      tag: '2fa',
       metadata: {
-        userId: user.id,
+        userId: String(user.id),
         action: 'login',
       },
     }),
@@ -307,8 +307,5 @@ Consider offering fallback options when email delivery is slow:
   </Card>
   <Card title="Deliverability Best Practices" icon="inbox" href="/knowledge-base/best-practices/deliverability">
     Maximize inbox placement and delivery speed
-  </Card>
-  <Card title="Sending Reputation" icon="star" href="/knowledge-base/best-practices/sending-reputation">
-    Build and protect your sender reputation
   </Card>
 </CardGroup>

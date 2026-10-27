@@ -79,14 +79,14 @@ When an email hard-bounces, the address is permanently invalid. Continuing to se
 
 ```javascript
 app.post('/webhooks/lettr', (req, res) => {
-  const event = req.body;
+  // The body is a JSON array; each item is { msys: { <category>: { type, ... } } }
+  for (const item of req.body) {
+    const event = Object.values(item.msys)[0];
 
-  if (event.type === 'message.bounce') {
-    const { to, bounceType } = event.data;
-
-    if (bounceType === 'hard') {
+    // Hard bounce classes: 10 (invalid recipient), 30 (no RCPT), 90 (unsubscribe bounce)
+    if (event.type === 'bounce' && [10, 30, 90].includes(parseInt(event.bounce_class))) {
       // Remove from all lists immediately
-      removeFromAllLists(to);
+      removeFromAllLists(event.rcpt_to);
     }
   }
 
@@ -164,8 +164,13 @@ Polling the API for delivery status wastes rate limit budget and introduces late
 ```javascript
 // Use webhooks for real-time delivery updates
 app.post('/webhooks/lettr', (req, res) => {
-  if (req.body.type === 'message.delivery') {
-    updateDeliveryStatus(req.body.data);
+  // The body is a JSON array; each item is { msys: { <category>: { type, ... } } }
+  for (const item of req.body) {
+    const event = Object.values(item.msys)[0];
+
+    if (event.type === 'delivery') {
+      updateDeliveryStatus(event);
+    }
   }
   res.sendStatus(200);
 });

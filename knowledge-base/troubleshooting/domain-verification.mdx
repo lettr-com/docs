@@ -14,16 +14,16 @@ Domain verification confirms that you own the domain and have correctly configur
     Add a domain in the Lettr dashboard or via the API. Lettr generates the DNS records you need to configure.
   </Step>
   <Step title="Copy the DNS Records">
-    Lettr provides a CNAME record for verification, a DKIM TXT record for email signing, and a DMARC TXT record for policy enforcement. Copy each value exactly as shown.
+    Lettr provides a DKIM TXT record for email signing and a DMARC TXT record for policy enforcement, plus an SPF TXT record for a root domain (`yourdomain.com`) or a CNAME record for a subdomain (`mail.yourdomain.com`). Copy each value exactly as shown.
   </Step>
   <Step title="Add Records to Your DNS Provider">
     Log in to your DNS provider (Cloudflare, GoDaddy, Namecheap, Route 53, etc.) and create the records with the exact names, types, and values provided.
   </Step>
   <Step title="Verify the Domain">
-    Return to Lettr and click **Verify**, or call the verification API endpoint. Lettr queries your DNS records and checks that they match the expected values.
+    Return to Lettr and click **Verify DNS Records**, or call the verification API endpoint. Lettr queries your DNS records and checks that they match the expected values.
   </Step>
   <Step title="Lettr Confirms the Records">
-    Each DNS record receives a status: `valid`, `unverified`, `invalid`, or `missing`. The domain is approved only when all required records are valid.
+    Each DNS record receives a status: `valid`, `unverified`, `invalid`, `missing`, or `not_applicable` (for the record your domain type doesn't use). Sending from the domain requires all required records to be valid and the domain to have **Approved** status.
   </Step>
 </Steps>
 
@@ -68,12 +68,23 @@ The DKIM record is a long TXT value that must be copied exactly as Lettr provide
 
 ### CNAME Conflicts
 
-A CNAME record cannot coexist with other record types at the same name (this is a DNS specification requirement). If you already have an A, MX, or TXT record at the root of your domain, adding a CNAME at the root will conflict.
+Lettr only asks for a CNAME record on subdomains; root domains use an SPF record instead. A CNAME record cannot coexist with other record types at the same name (this is a DNS specification requirement). If you already have an A, MX, or TXT record at the subdomain you're adding (for example, `mail.yourdomain.com`), the CNAME will conflict.
 
 **Solutions:**
 
-- **Use a subdomain** — Add the CNAME to a subdomain (e.g., `mail.yourdomain.com`) instead of the root domain.
-- **Use CNAME flattening** — Some DNS providers (such as Cloudflare) support CNAME flattening, which resolves CNAME records at the root without conflicting with other record types.
+- **Remove the conflicting records**: If the existing records at that subdomain are no longer used, delete them and add the CNAME.
+- **Use a different subdomain**: Add a subdomain that has no other records (e.g., `send.yourdomain.com`) as your sending domain instead.
+
+---
+
+### SPF Record Issues
+
+Root domains need an SPF TXT record that includes `_spf.sparkpostmail.com`, for example `v=spf1 include:_spf.sparkpostmail.com ~all`.
+
+**Common problems:**
+
+- **Multiple SPF records**: A domain can have only one SPF record. If you already have one, add `include:_spf.sparkpostmail.com` to it instead of creating a second record.
+- **Missing include**: An existing SPF record that doesn't include `_spf.sparkpostmail.com` will not validate.
 
 ---
 
@@ -95,7 +106,8 @@ Using the wrong record type is a common mistake, especially when DNS providers p
 
 | Record | Correct Type | Common Mistake |
 |--------|-------------|----------------|
-| Verification CNAME | CNAME | Creating an A record instead |
+| CNAME (subdomains) | CNAME | Creating an A record instead |
+| SPF (root domains) | TXT | Creating an SPF-type record instead of TXT |
 | DKIM | TXT | Creating a CNAME instead of TXT |
 | DMARC | TXT | Creating a CNAME instead of TXT |
 | Tracking domain | CNAME | Creating an A record instead |
@@ -120,13 +132,21 @@ dig TXT scph0724._domainkey.yourdomain.com +short
 
 You should see the full DKIM key value starting with `v=DKIM1;`.
 
-**Check the CNAME verification record:**
+**Check the CNAME record (subdomains):**
 
 ```bash
-dig CNAME yourdomain.com +short
+dig CNAME mail.yourdomain.com +short
 ```
 
-The output should point to `sparkpostmail.com` or the value shown in your dashboard.
+The output should point to `sparkpostmail.com`, the value shown in your dashboard.
+
+**Check the SPF record (root domains):**
+
+```bash
+dig TXT yourdomain.com +short
+```
+
+There should be exactly one `v=spf1` record, and it must contain `include:_spf.sparkpostmail.com`.
 
 **Check the DMARC record:**
 
@@ -140,7 +160,8 @@ You should see your DMARC policy (e.g., `v=DMARC1; p=none;`).
 
 ```bash
 nslookup -type=TXT scph0724._domainkey.yourdomain.com
-nslookup -type=CNAME yourdomain.com
+nslookup -type=CNAME mail.yourdomain.com
+nslookup -type=TXT yourdomain.com
 nslookup -type=TXT _dmarc.yourdomain.com
 ```
 
@@ -153,7 +174,7 @@ nslookup -type=TXT _dmarc.yourdomain.com
 ## Verifying via API
 
 <Note>
-  Verification is not a one-time event: once a domain is verified, Lettr's daily [DNS health check](/learn/settings/alerts#domain-dns-health-alerts) keeps watching it and alerts you if a record later stops resolving. If you see a **Not working** badge on a previously verified domain, fix the DNS record at your provider — the warning clears automatically on the next check.
+  Verification is not a one-time event: once a domain is verified, Lettr's daily [DNS health check](/learn/settings/alerts#domain-dns-health-alerts) keeps watching it and alerts you if a record later stops resolving. A **Not working** badge on a previously verified domain means a record needs fixing. Fix the DNS record at your provider; the warning clears automatically on the next check. See [Verified Domain Stopped Working](/knowledge-base/troubleshooting/domain-dns-drift) for the full fix.
 </Note>
 
 ### Trigger Verification
@@ -169,12 +190,15 @@ curl -X POST https://app.lettr.com/api/domains/yourdomain.com/verify \
 
 ```json
 {
-  "domain": "yourdomain.com",
-  "status": "approved",
-  "dns_records": {
-    "cname": "valid",
-    "dkim": "valid",
-    "dmarc": "valid"
+  "message": "Domain verification completed.",
+  "data": {
+    "domain": "yourdomain.com",
+    "dkim_status": "valid",
+    "cname_status": "not_applicable",
+    "dmarc_status": "valid",
+    "spf_status": "valid",
+    "ownership_verified": true,
+    "is_primary_domain": true
   }
 }
 ```
@@ -192,12 +216,17 @@ curl -X GET https://app.lettr.com/api/domains/yourdomain.com \
 
 ```json
 {
-  "domain": "yourdomain.com",
-  "status": "pending",
-  "dns_records": {
-    "cname": "valid",
-    "dkim": "unverified",
-    "dmarc": "missing"
+  "message": "Domain retrieved successfully.",
+  "data": {
+    "domain": "mail.yourdomain.com",
+    "status": "pending",
+    "status_label": "Pending Review",
+    "can_send": false,
+    "cname_status": "valid",
+    "dkim_status": "unverified",
+    "dmarc_status": "missing",
+    "spf_status": "not_applicable",
+    "is_primary_domain": false
   }
 }
 ```
@@ -207,9 +236,10 @@ Each DNS record will have one of these statuses:
 | Status | Meaning |
 |--------|---------|
 | `valid` | Record found and matches the expected value |
-| `unverified` | Record found but has not been confirmed yet |
+| `unverified` | Record not yet detected |
 | `invalid` | Record found but the value does not match |
 | `missing` | Record not found at the expected DNS name |
+| `not_applicable` | Record not required for this domain type (SPF on subdomains, CNAME on root domains) |
 
 ---
 
@@ -253,7 +283,7 @@ If you have confirmed your DNS records are correct using the `dig` commands abov
 **Contact support when:**
 
 - Your domain has been stuck in `pending` status for more than 48 hours after adding the correct DNS records.
-- Your domain shows a `blocked` status. This may indicate a policy issue that requires manual review.
+- Your domain shows a `blocked` status. This may indicate a policy issue that requires manual review. See [Blocked Domain or Account](/knowledge-base/troubleshooting/blocked-domain-or-account).
 - You see `invalid` status on a record that matches the expected value exactly.
 
 Reach out at **support@lettr.com** or through the in-app chat widget with your domain name and the output of the `dig` commands listed above.

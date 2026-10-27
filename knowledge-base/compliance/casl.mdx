@@ -117,14 +117,14 @@ Maintain records of how and when consent was obtained. For express consent, stor
 const response = await fetch("https://app.lettr.com/api/emails", {
   method: "POST",
   headers: {
-    "Authorization": "Bearer YOUR_API_KEY",
+    "Authorization": "Bearer lttr_xxxxxxxxxxxx",
     "Content-Type": "application/json",
   },
   body: JSON.stringify({
     from: "updates@yourcompany.com",
     to: "recipient@example.ca",
     subject: "Your weekly product update",
-    template_id: "weekly-update",
+    template_slug: "weekly-update",
     metadata: {
       consent_type: "express",
       consent_date: "2025-06-15T10:30:00Z",
@@ -193,7 +193,7 @@ Include your organization name, mailing address, and contact information in ever
 | **Implied consent** | Yes, time-limited (2 years / 6 months) | N/A — no consent required | No — consent must be explicit |
 | **Unsubscribe processing** | Within 10 business days | Within 10 business days | Without undue delay |
 | **Physical address required** | Yes | Yes | Not explicitly, but data controller must be identifiable |
-| **Maximum penalties** | $10M per violation (organizations) | ~$50,120 per email | 4% of global revenue or €20M |
+| **Maximum penalties** | $10M per violation (organizations) | Up to $53,088 per email (2025 amount) | 4% of global revenue or €20M |
 | **Transactional email exempt** | Largely exempt | Largely exempt | Requires lawful basis (contractual necessity) |
 
 <Tip>

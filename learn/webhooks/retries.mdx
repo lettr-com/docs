@@ -102,24 +102,27 @@ const redis = new Redis(process.env.REDIS_URL);
 const PROCESSED_EVENT_TTL = 86400; // 24 hours
 
 app.post('/webhooks/lettr', async (req, res) => {
-  const event = req.body;
+  // The body is a JSON array; each item is { msys: { <category>: { event_id, type, ... } } }
+  for (const item of req.body) {
+    const event = Object.values(item.msys)[0];
 
-  // Check if already processed
-  const key = `webhook:${event.id}`;
-  const alreadyProcessed = await redis.get(key);
+    // Check if already processed
+    const key = `webhook:${event.event_id}`;
+    const alreadyProcessed = await redis.get(key);
 
-  if (alreadyProcessed) {
-    console.log(`Duplicate event ${event.id}, skipping`);
-    return res.sendStatus(200); // Still return 200!
+    if (alreadyProcessed) {
+      console.log(`Duplicate event ${event.event_id}, skipping`);
+      continue;
+    }
+
+    // Mark as processed (with TTL)
+    await redis.set(key, '1', 'EX', PROCESSED_EVENT_TTL);
+
+    // Process the event
+    await handleEvent(event);
   }
 
-  // Mark as processed (with TTL)
-  await redis.set(key, '1', 'EX', PROCESSED_EVENT_TTL);
-
-  // Process the event
-  await handleEvent(event);
-
-  res.sendStatus(200);
+  res.sendStatus(200); // Still return 200 for duplicates!
 });
 ```
 
@@ -133,25 +136,28 @@ If you don't have Redis, use your database:
 
 ```javascript
 app.post('/webhooks/lettr', async (req, res) => {
-  const event = req.body;
+  for (const item of req.body) {
+    const event = Object.values(item.msys)[0];
 
-  try {
-    // Insert with unique constraint on event_id
-    await db.processedWebhooks.insert({
-      event_id: event.id,
-      event_type: event.type,
-      received_at: new Date()
-    });
-  } catch (err) {
-    if (err.code === '23505') { // PostgreSQL unique violation
-      console.log(`Duplicate event ${event.id}, skipping`);
-      return res.sendStatus(200);
+    try {
+      // Insert with unique constraint on event_id
+      await db.processedWebhooks.insert({
+        event_id: event.event_id,
+        event_type: event.type,
+        received_at: new Date()
+      });
+    } catch (err) {
+      if (err.code === '23505') { // PostgreSQL unique violation
+        console.log(`Duplicate event ${event.event_id}, skipping`);
+        continue;
+      }
+      throw err;
     }
-    throw err;
+
+    // Process the event
+    await handleEvent(event);
   }
 
-  // Process the event
-  await handleEvent(event);
   res.sendStatus(200);
 });
 ```
@@ -252,10 +258,14 @@ import { Queue } from 'bullmq';
 const webhookQueue = new Queue('webhooks');
 
 app.post('/webhooks/lettr', async (req, res) => {
-  // Add to queue with deduplication
-  await webhookQueue.add(req.body.type, req.body, {
-    jobId: req.body.id // Prevents duplicate jobs
-  });
+  // Add each event to the queue with deduplication
+  for (const item of req.body) {
+    const event = Object.values(item.msys)[0];
+
+    await webhookQueue.add(event.type, item, {
+      jobId: event.event_id // Prevents duplicate jobs
+    });
+  }
 
   res.sendStatus(200);
 });
@@ -300,7 +310,8 @@ const metrics = {
 app.post('/webhooks/lettr', async (req, res) => {
   metrics.received++;
 
-  const isDuplicate = await checkDuplicate(req.body.id);
+  const eventId = Object.values(req.body[0].msys)[0].event_id;
+  const isDuplicate = await checkDuplicate(eventId);
   if (isDuplicate) {
     metrics.duplicates++;
     return res.sendStatus(200);
@@ -365,8 +376,9 @@ Webhooks are delivered in approximate order, but strict ordering is not guarante
 Design your handlers to be order-independent when possible:
 
 ```javascript
-async function handleEmailStatus(event) {
-  const { emailId, status, timestamp } = event.data;
+async function handleEmailStatus(item) {
+  // Each array item wraps one event: { msys: { <category>: { message_id, type, timestamp, ... } } }
+  const { message_id: emailId, type: status, timestamp } = Object.values(item.msys)[0];
 
   // Use timestamp to handle out-of-order updates
   await db.emails.update(

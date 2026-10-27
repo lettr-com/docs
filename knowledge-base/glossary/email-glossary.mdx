@@ -41,7 +41,7 @@ See [API Reference Introduction](/api-reference/introduction).
 
 ### API Key
 
-A secret token used to authenticate requests to the Lettr API. API keys should be stored in environment variables and never committed to source code or shared publicly. Each key can be scoped to specific permissions.
+A secret token used to authenticate requests to the Lettr API. API keys should be stored in environment variables and never committed to source code or shared publicly. Each key has a permission level, Full Access or Sending Only, that controls which endpoints it can call.
 
 See [API Keys](/learn/api-keys/introduction) and [Security Best Practices](/knowledge-base/best-practices/security).
 
@@ -99,7 +99,7 @@ See [BIMI: Brand Indicators for Message Identification](/knowledge-base/fundamen
 
 A database of IP addresses or domains identified as sources of spam. Mailbox providers and spam filters check incoming email against blocklists. Being listed on a major blocklist (Spamhaus, Barracuda, SORBS) can severely impact deliverability. Monitor your status and request delisting if listed.
 
-See [Sending Reputation](/knowledge-base/best-practices/sending-reputation).
+See [Sending Reputation](/knowledge-base/best-practices/deliverability#sending-reputation).
 
 ### Bounce
 
@@ -155,7 +155,7 @@ See [Attachments](/learn/sending/attachments).
 
 ### CNAME Record
 
-A DNS record type that creates an alias from one domain name to another. Lettr uses CNAME records for sending domain verification and tracking domain configuration. A CNAME points your subdomain to Lettr's infrastructure, delegating email authentication.
+A DNS record type that creates an alias from one domain name to another. Lettr uses CNAME records for sending subdomain verification and tracking domain configuration. A CNAME points your subdomain to Lettr's infrastructure, delegating email authentication.
 
 ### Complaint
 
@@ -263,7 +263,7 @@ See [Domain Verification](/knowledge-base/troubleshooting/domain-verification).
 
 ### Domain Connect
 
-An open protocol that enables one-click DNS record configuration through cryptographically signed URLs. When a sender's domain is hosted on a supporting DNS provider (such as Cloudflare), Lettr can generate a Domain Connect link that automatically adds the required SPF, DKIM, DMARC, and verification records without manual DNS editing. This streamlines domain verification and reduces configuration errors.
+An open protocol that enables one-click DNS record configuration through cryptographically signed URLs. When a sender's domain is hosted on a supporting DNS provider (such as Cloudflare), Lettr can generate a Domain Connect link that automatically adds the required DNS records (such as SPF or CNAME, DKIM, and DMARC) without manual DNS editing. This streamlines domain verification and reduces configuration errors.
 
 See [Domains Introduction](/learn/domains/introduction).
 
@@ -271,11 +271,11 @@ See [Domains Introduction](/learn/domains/introduction).
 
 A score or classification that mailbox providers assign to your sending domain based on the quality and history of email sent from it. Domain reputation is independent of [IP reputation](#ip-reputation) and is increasingly the primary factor in filtering decisions at providers like Gmail. Factors include bounce rates, complaint rates, spam trap hits, and engagement.
 
-See [Sending Reputation](/knowledge-base/best-practices/sending-reputation) and [IP and Domain Warm-Up Guide](/knowledge-base/best-practices/ip-domain-warmup).
+See [Sending Reputation](/knowledge-base/best-practices/deliverability#sending-reputation) and [IP and Domain Warm-Up Guide](/knowledge-base/best-practices/ip-domain-warmup).
 
 ### Domain Status
 
-The current state of a sending domain in Lettr's approval workflow. Domains progress through three statuses: **Pending** (awaiting manual review), **Approved** (cleared for sending), and **Blocked** (prohibited from sending due to policy violations or abuse). Only approved domains can send email. Domain status is returned in API responses and displayed in the Lettr dashboard.
+The current state of a sending domain in Lettr's approval workflow. Domains progress through three statuses: **Pending** (awaiting review; most domains are approved automatically), **Approved** (cleared for sending), and **Blocked** (prohibited from sending due to policy violations or abuse). Only approved domains can send email. Domain status is returned in API responses and displayed in the Lettr dashboard.
 
 See [Domains Introduction](/learn/domains/introduction).
 
@@ -395,13 +395,13 @@ See [GDPR and Email Sending](/knowledge-base/compliance/gdpr-email).
 
 ### Generation Failure
 
-A webhook event indicating a template failed to render before transmission. Generation failures occur when template syntax errors, missing merge tags, or invalid substitution data prevent rendering. These errors occur before the email enters the SMTP transmission phase and should be caught during development and testing.
+A webhook event (`generation.generation_failure`) triggered when something goes wrong while preparing a message for delivery. It is typically an infrastructure-level issue rather than something caused by your email content. It happens before the email is transmitted.
 
-See [Webhook Event Types](/learn/webhooks/event-types) and [Template Language](/learn/templates/template-language).
+See [Webhook Event Types](/learn/webhooks/event-types).
 
 ### Generation Rejection
 
-A webhook event indicating template content was rejected during the generation phase before transmission. Generation rejections occur when content fails validation rules (prohibited content, missing required fields). These errors occur before the email enters the SMTP transmission phase.
+A webhook event (`generation.generation_rejection`) triggered when a message is blocked during the generation phase, the point where the email is assembled and prepared for sending. It happens before the email is transmitted.
 
 See [Webhook Event Types](/learn/webhooks/event-types).
 
@@ -461,7 +461,7 @@ Whether an email appears in the recipient's primary inbox, as opposed to the spa
 
 ### Initial Open
 
-The first time a recipient opens an email, tracked as a distinct event from subsequent opens. Initial open metrics provide a more accurate measure of unique engagement than total opens (which count every time the tracking pixel loads). Lettr fires `initial_open` webhook events separately from generic `open` events.
+The first time a recipient opens an email, tracked as a distinct event from subsequent opens. Initial open metrics provide a more accurate measure of unique engagement than total opens (which count every time the tracking pixel loads). Lettr fires `engagement.initial_open` webhook events separately from generic `engagement.open` events.
 
 See [Event Types](/learn/events/event-types) and [Tracking Accuracy](/knowledge-base/troubleshooting/tracking-accuracy).
 
@@ -487,7 +487,7 @@ See [Dedicated vs Shared IPs](/knowledge-base/concepts/dedicated-vs-shared-ips).
 
 A score assigned to an IP address based on the quality and history of email sent from it. Mailbox providers track bounce rates, complaint rates, spam trap hits, and engagement from each IP. A poor IP reputation leads to spam filtering or rejection.
 
-See [Sending Reputation](/knowledge-base/best-practices/sending-reputation).
+See [Sending Reputation](/knowledge-base/best-practices/deliverability#sending-reputation).
 
 ---
 
@@ -511,7 +511,7 @@ See [List Hygiene](/knowledge-base/best-practices/list-hygiene).
 
 ### List-Unsubscribe Header
 
-An email header that provides a machine-readable unsubscribe mechanism. Google and Yahoo require the `List-Unsubscribe-Post` header (RFC 8058) for one-click unsubscribe in bulk email. Lettr adds this header automatically when unsubscribe tracking is enabled.
+An email header that provides a machine-readable unsubscribe mechanism. Google and Yahoo require the `List-Unsubscribe-Post` header (RFC 8058) for one-click unsubscribe in bulk email. Lettr adds this header automatically to campaigns. It does not add it to API sends, including those marked as marketing (`transactional: false`); check the headers of a delivered message.
 
 See [Unsubscribe Best Practices](/knowledge-base/compliance/unsubscribe-best-practices).
 
@@ -523,7 +523,7 @@ See [Unsubscribe Best Practices](/knowledge-base/compliance/unsubscribe-best-pra
 
 ### Loop Block
 
-A special template block in Lettr that repeats for each item in an array passed as substitution data. Loop blocks enable dynamic list rendering (order items, feature lists, product catalogs) without manually creating individual blocks for each item. Loop blocks use a `{{ #each items }}...{{ /each }}` syntax and can access array properties using merge tags.
+A special template block in Lettr that repeats for each item in an array passed as substitution data. Loop blocks enable dynamic list rendering (order items, feature lists, product catalogs) without manually creating individual blocks for each item. Loop blocks are configured in the visual editor and can access array properties using merge tags; in raw HTML, the equivalent is the `{{each items}}...{{end}}` statement.
 
 See [Loop Blocks](/learn/templates/loop-blocks) and [Template Language](/learn/templates/template-language).
 
@@ -555,7 +555,7 @@ See [Transactional vs Marketing](/knowledge-base/best-practices/transactional-vs
 
 ### MCP (Model Context Protocol)
 
-An open protocol for connecting AI assistants (like Claude) to external data sources and tools. Lettr provides two MCP servers: a [remote server](/learn/mcp/setup) hosted at `https://app.lettr.com/mcp` with OAuth sign-in for AI clients such as Claude, ChatGPT, Claude Code, and Cursor, and a [local server](/learn/mcp/local-setup) (`lettr-mcp` npm package) with API key authentication. Both expose the same tools for sending and scheduling email, templates, domains, webhooks, campaigns, and audience management, which AI assistants can invoke on behalf of users.
+An open protocol for connecting AI assistants (like Claude) to external data sources and tools. Lettr's [remote MCP server](/learn/mcp/setup) is hosted at `https://app.lettr.com/mcp` and accepts either a Lettr sign-in (OAuth) or a `lttr_` API key, for AI clients such as Claude, ChatGPT, Claude Code, and Cursor. It exposes tools for sending and scheduling email, templates, domains, webhooks, campaigns, and audience management, which AI assistants can invoke on behalf of users. The older [local server](/learn/mcp/local-setup) (`lettr-mcp` npm package) still works but is no longer updated.
 
 See [MCP Introduction](/learn/mcp/introduction), [Remote Server](/learn/mcp/setup), [Local Server](/learn/mcp/local-setup), and [Tools Reference](/learn/mcp/tools-reference).
 
@@ -651,7 +651,7 @@ A social engineering attack where a fraudulent email impersonates a trusted send
 
 ### Policy Rejection
 
-When an email is rejected by the recipient's mail server due to policy violations rather than technical delivery issues. Policy rejections include: failing DMARC checks, sender IP/domain blocklisting, content filtering rules, or recipient-side anti-spam policies. Unlike hard bounces (invalid address), policy rejections indicate the recipient exists but the server refuses the message based on filtering rules.
+When an email is rejected by the recipient's mail server due to policy violations rather than technical delivery issues. Policy rejections include: failing DMARC checks, sender IP/domain blocklisting, content filtering rules, or recipient-side anti-spam policies. Unlike hard bounces (invalid address), policy rejections indicate the recipient exists but the server refuses the message based on filtering rules. In Lettr, a `message.policy_rejection` event means the message was rejected by a policy rule before delivery was attempted, for example because the recipient is on your suppression list.
 
 See [Event Types](/learn/events/event-types) and [Bounce Diagnosis](/knowledge-base/troubleshooting/bounce-diagnosis).
 
@@ -679,7 +679,7 @@ See [Premade Templates](/learn/templates/premade-templates) and [Templates Intro
 
 ### Project
 
-An organizational container in Lettr that groups related email templates into folders. Projects help teams organize templates by application, feature, or campaign type (e.g., "User Authentication," "E-commerce," "Notifications"). Templates within a project can share settings, and projects can have their own access controls in team environments.
+An organizational container in Lettr that groups related email templates into folders. Projects help teams organize templates by application, feature, or campaign type (e.g., "User Authentication," "E-commerce," "Notifications").
 
 See [Projects & Folders](/learn/templates/projects).
 
@@ -711,7 +711,7 @@ See [Email Parsing](/learn/inbound/parsing) and [Content Types](/knowledge-base/
 
 ### Rate Limiting
 
-A server's restriction on how many requests or emails a sender can submit within a given time period. Lettr enforces rate limits to protect infrastructure and deliverability (standard: 300 requests per 5 minutes). Exceeding limits returns a 429 HTTP status code with a `retry_after` value.
+A server's restriction on how many requests or emails a sender can submit within a given time period. Lettr enforces rate limits to protect infrastructure and deliverability (3 API requests per second per team). Exceeding limits returns a 429 HTTP status code with a `Retry-After` header.
 
 See [Rate Limits](/knowledge-base/troubleshooting/rate-limits) and [Rate Limits](/api-reference/rate-limit).
 
@@ -765,9 +765,9 @@ See [List Hygiene](/knowledge-base/best-practices/list-hygiene).
 
 ### Sandbox Mode
 
-A testing environment that allows you to verify your email integration without sending to real recipients or affecting your sending reputation. In Lettr's sandbox mode, the API accepts requests and returns success responses, but emails are logged rather than transmitted to recipients. Sandbox mode is used during development and CI/CD testing to validate API requests, check response formats, and test webhook handling before going to production.
+A testing environment that allows you to verify your email integration without sending to real recipients or affecting your sending reputation. In Lettr, sandbox mode is a [sandbox API key](/learn/api-keys/sandbox) (`lttr_sandbox_` prefix): every email it sends is redirected to the key creator's own inbox from a pre-verified sandbox domain, and is free of quota. Sandbox keys are used during development and CI/CD testing to validate API requests and check response formats before going to production.
 
-See [Sandbox and Testing Mode](/knowledge-base/troubleshooting/sandbox-testing).
+See [Sandbox API Keys](/learn/api-keys/sandbox).
 
 ### Saved Block
 
@@ -783,7 +783,7 @@ A list of test email addresses across multiple mailbox providers used to verify 
 
 A score or classification assigned to your sending domain and/or IP address by mailbox providers, based on historical sending behavior. Factors include bounce rate, complaint rate, spam trap hits, engagement, and sending consistency. Reputation is the single biggest factor in deliverability.
 
-See [Sending Reputation](/knowledge-base/best-practices/sending-reputation).
+See [Sending Reputation](/knowledge-base/best-practices/deliverability#sending-reputation).
 
 ### Shared IP
 
@@ -879,11 +879,11 @@ See [Subdomain vs Root Domain](/knowledge-base/fundamentals/subdomain-vs-root).
 
 A rule that automatically removes or suppresses recipients who haven't engaged with your email over a defined period (e.g., no opens or clicks in 90 days). Sunset policies prevent list decay, reduce complaints from disengaged recipients, and protect sender reputation.
 
-See [List Hygiene](/knowledge-base/best-practices/list-hygiene) and [Sending Reputation](/knowledge-base/best-practices/sending-reputation).
+See [List Hygiene](/knowledge-base/best-practices/list-hygiene) and [Sending Reputation](/knowledge-base/best-practices/deliverability#sending-reputation).
 
 ### Suppression List
 
-A list of email addresses that Lettr will not send to, regardless of whether they appear in a send request. Addresses are added automatically (hard bounces, complaints, unsubscribes) or manually. Suppression lists protect sender reputation by preventing email to known-bad addresses.
+A list of email addresses that Lettr will not send to, regardless of whether they appear in a send request. Addresses are added automatically after hard bounces and spam complaints. Unsubscribes from API sends can also be recorded there; campaign unsubscribes update the contact's status instead. Suppression lists protect sender reputation by preventing email to known-bad addresses.
 
 See [Understanding Suppression Lists](/knowledge-base/fundamentals/suppression-lists).
 
@@ -941,7 +941,7 @@ See [Tracking Accuracy](/knowledge-base/troubleshooting/tracking-accuracy).
 
 Email triggered by a user action or system event — password resets, order confirmations, shipping notifications, account alerts, and similar. Transactional email is expected by the recipient and typically has high open rates. It is generally exempt from CAN-SPAM's unsubscribe requirements but must still include accurate sender information.
 
-See [What Is Transactional Email?](/knowledge-base/concepts/transactional-email) and [Transactional vs Marketing](/knowledge-base/best-practices/transactional-vs-marketing).
+See [Transactional vs Marketing](/knowledge-base/best-practices/transactional-vs-marketing).
 
 ### TXT Record
 
@@ -977,7 +977,7 @@ See [Custom Return-Path](/knowledge-base/fundamentals/custom-return-path).
 
 The process of gradually increasing email volume from a new IP address or domain to build sender reputation with mailbox providers. Warm-up typically takes 2–4 weeks. Sending too much too fast from a new IP or domain triggers spam filters and can permanently damage reputation.
 
-See [IP and Domain Warm-Up Guide](/knowledge-base/best-practices/ip-domain-warmup) and [Sending Reputation](/knowledge-base/best-practices/sending-reputation).
+See [IP and Domain Warm-Up Guide](/knowledge-base/best-practices/ip-domain-warmup) and [Sending Reputation](/knowledge-base/best-practices/deliverability#sending-reputation).
 
 ### WCAG (Web Content Accessibility Guidelines)
 
@@ -993,7 +993,7 @@ See [Webhooks](/learn/webhooks/introduction).
 
 ### Webhook Signature
 
-A cryptographic hash (typically HMAC-SHA256) included in webhook request headers that allows the receiver to verify the webhook was sent by the expected source and has not been tampered with. Verifying webhook signatures prevents malicious third parties from sending fake events to your endpoint.
+A cryptographic hash (typically HMAC-SHA256) included in webhook request headers that allows the receiver to verify the webhook was sent by the expected source and has not been tampered with. Verifying webhook signatures prevents malicious third parties from sending fake events to your endpoint. Lettr doesn't sign its webhooks; it authenticates them with Basic or OAuth 2.0 credentials configured on the webhook instead.
 
 See [Webhook Delivery Failures](/knowledge-base/troubleshooting/webhook-failures) and [Security Best Practices](/knowledge-base/best-practices/security).
 

@@ -16,14 +16,16 @@ A sending domain authenticates your outgoing emails with DKIM and DMARC, ensurin
 To create a sending domain in Lettr:
 1. Select **Domains** in the navigation panel
 2. Select **Sending Domains**
-3. Click **Create Sending Domain**
+3. Click **Create Sending Domain** (**New Sending Domain** if you already have one)
 4. Enter your desired sending subdomain (e.g. `mailing.company.com`)
 5. Click **Create Domain**
 
 
 <Tip>
   Use a subdomain (e.g. `mailing.company.com`) instead of the root domain (`company.com`). A subdomain provides proper
-  reputation segmentation and is required if you also plan to receive emails with Lettr.
+  reputation segmentation and is required if you also plan to receive emails with Lettr. If you do use the root domain,
+  Lettr asks for an SPF TXT record (`v=spf1 include:_spf.sparkpostmail.com ~all`, or your existing SPF record with
+  `include:_spf.sparkpostmail.com` added) instead of the CNAME record below.
 </Tip>
 
 Click your new domain in the Sending Domains list.
@@ -59,7 +61,7 @@ Log in to your [Squarespace account](https://account.squarespace.com/domains), c
 
 ### Add CNAME Record
 
-The CNAME record verifies domain ownership with Lettr's email infrastructure.
+The CNAME record points your sending domain to `sparkpostmail.com` for bounce handling. Lettr requires it to verify a subdomain. Once it is verified, you can optionally switch on **Use this sending domain as bounce domain** in the domain's **Bounce Domain** card, so bounces use your own domain as the Return-Path.
 
 Copy the CNAME values from Lettr to Squarespace:
 
@@ -185,9 +187,9 @@ A tracking domain allows Lettr to track email opens and link clicks using your o
 To create a Tracking domain in Lettr:
 1. Select **Domains** in the navigation panel
 2. Select **Tracking Domains**
-3. Click **Create Tracking Domain**
+3. Click **Create Tracking Domain** (**New Tracking Domain** if you already have one)
 4. Enter your desired tracking subdomain (e.g. `tracking.company.com`)
-5. Click **Create Domain**
+5. Click **Create Tracking Domain**
 
 
 Click on your new domain in the Tracking Domains list.
@@ -204,13 +206,13 @@ Add the record in Squarespace:
 
 1. Click **Add record** in the DNS Settings panel.
 2. Set **Type** to **CNAME**.
-3. Copy the **Hostname** from Lettr and paste it into the **Host** field (without your domain suffix).
+3. Copy the **Name** from Lettr and paste it into the **Host** field (without your domain suffix).
 4. Copy the **Value** from Lettr and paste it into the **Alias Data** field.
 5. Click **Save**.
 
 <Info>
   Squarespace automatically appends your domain to the Host field. Always paste only the subdomain portion (e.g.
-  `tracking`, not `tracking.company.com`).
+  `_acme-challenge.tracking`, not `_acme-challenge.tracking.company.com`).
 </Info>
 
 ### Add Traffic CNAME Record
@@ -221,7 +223,7 @@ Add the record in Squarespace:
 
 1. Click **Add record** in the DNS Settings panel.
 2. Set **Type** to **CNAME**.
-3. Copy the **Hostname** from Lettr and paste it into the **Host** field (without your domain suffix).
+3. Copy the **Name** from Lettr and paste it into the **Host** field (without your domain suffix).
 4. Copy the **Value** from Lettr and paste it into the **Alias Data** field.
 5. Click **Save**.
 
@@ -246,9 +248,9 @@ A storage domain lets you serve email assets (images, attachments) from your own
 To create a Storage domain in Lettr:
 1. Select **Domains** in the navigation panel
 2. Select **Storage Domains**
-3. Click **Create Storage Domain**
+3. Click **Connect Custom Domain**
 4. Enter your desired storage subdomain (e.g. `assets.company.com`)
-5. Click **Create Domain**
+5. Click **Connect Domain**
 
 
 Click on your new domain in the Storage Domains list.
@@ -294,7 +296,7 @@ Add the record in Squarespace:
 1. Click **Add record** in the DNS Settings panel.
 2. Set **Type** to **CNAME**.
 3. Copy the **Hostname** from Lettr and paste it into the **Host** field (without your domain suffix).
-4. Copy the **Value** from Lettr and paste it into the **Alias Data** field.
+4. Copy the **Target** from Lettr and paste it into the **Alias Data** field.
 5. Click **Save**.
 
 <Info>

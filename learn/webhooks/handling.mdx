@@ -38,21 +38,23 @@ Webhooks may be delivered more than once due to retries, network issues, or edge
 
 ### Using Event IDs
 
-Every webhook event has a unique `id`. Store processed event IDs to detect and skip duplicates:
+Every webhook event has a unique `event_id`. Store processed event IDs to detect and skip duplicates:
 
 ```javascript
 import { Redis } from 'ioredis';
 
 const redis = new Redis(process.env.REDIS_URL);
 
-async function processEventIdempotently(event) {
-  const eventKey = `webhook:processed:${event.id}`;
+async function processEventIdempotently(item) {
+  // Each array item wraps one event: { msys: { <category>: { event_id, type, ... } } }
+  const event = Object.values(item.msys)[0];
+  const eventKey = `webhook:processed:${event.event_id}`;
 
   // Try to set the key with NX (only if not exists) and EX (expiry)
   const isNew = await redis.set(eventKey, '1', 'NX', 'EX', 86400); // 24 hour expiry
 
   if (!isNew) {
-    console.log(`Event ${event.id} already processed, skipping`);
+    console.log(`Event ${event.event_id} already processed, skipping`);
     return;
   }
 
@@ -66,13 +68,15 @@ async function processEventIdempotently(event) {
 For applications without Redis, use your database:
 
 ```javascript
-async function processEventIdempotently(event) {
+async function processEventIdempotently(item) {
+  const event = Object.values(item.msys)[0];
+
   // Use a transaction with a unique constraint
   try {
     await db.transaction(async (trx) => {
       // This will fail if event already exists
       await trx('processed_webhooks').insert({
-        event_id: event.id,
+        event_id: event.event_id,
         event_type: event.type,
         processed_at: new Date()
       });
@@ -82,7 +86,7 @@ async function processEventIdempotently(event) {
     });
   } catch (err) {
     if (err.code === '23505') { // PostgreSQL unique violation
-      console.log(`Event ${event.id} already processed`);
+      console.log(`Event ${event.event_id} already processed`);
       return;
     }
     throw err;
@@ -186,6 +190,7 @@ Proper error handling ensures you don't lose events and can debug issues effecti
 ### Categorizing Errors
 
 ```javascript
+// `event` is the inner event object: Object.values(item.msys)[0]
 async function processEvent(event) {
   try {
     await handleEvent(event);
@@ -193,12 +198,12 @@ async function processEvent(event) {
     // Determine if error is retryable
     if (isRetryableError(err)) {
       // Log and let the webhook retry mechanism handle it
-      console.error(`Retryable error for event ${event.id}:`, err.message);
+      console.error(`Retryable error for event ${event.event_id}:`, err.message);
       throw err; // Will trigger webhook retry
     }
 
     // Non-retryable errors - log and store for manual review
-    console.error(`Non-retryable error for event ${event.id}:`, err);
+    console.error(`Non-retryable error for event ${event.event_id}:`, err);
     await storeFailedEvent(event, err);
   }
 }
@@ -213,7 +218,7 @@ function isRetryableError(err) {
 
 async function storeFailedEvent(event, error) {
   await db.failedWebhooks.insert({
-    event_id: event.id,
+    event_id: event.event_id,
     event_type: event.type,
     payload: JSON.stringify(event),
     error_message: error.message,
@@ -224,7 +229,7 @@ async function storeFailedEvent(event, error) {
   // Optionally alert your team
   await slack.send({
     channel: '#webhook-failures',
-    text: `Webhook failed: ${event.type} (${event.id})\nError: ${error.message}`
+    text: `Webhook failed: ${event.type} (${event.event_id})\nError: ${error.message}`
   });
 }
 ```
@@ -298,6 +303,7 @@ const webhookProcessingTime = new Histogram({
   labelNames: ['event_type']
 });
 
+// `event` is the inner event object: Object.values(item.msys)[0]
 async function processEvent(event) {
   const timer = webhookProcessingTime.startTimer({ event_type: event.type });
 

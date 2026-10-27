@@ -562,7 +562,6 @@
             "group": "Concepts",
             "pages": [
               "knowledge-base/concepts/email-deliverability",
-              "knowledge-base/concepts/transactional-email",
               "knowledge-base/concepts/feedback-loops",
               "knowledge-base/concepts/email-service-provider",
               "knowledge-base/concepts/dedicated-vs-shared-ips"
@@ -573,12 +572,15 @@
             "pages": [
               "knowledge-base/fundamentals/how-email-delivery-works",
               "knowledge-base/fundamentals/spf-dkim-dmarc",
+              "knowledge-base/fundamentals/forwarding-arc",
               "knowledge-base/fundamentals/email-headers",
               "knowledge-base/fundamentals/bounce-codes-reference",
               "knowledge-base/fundamentals/suppression-lists",
+              "knowledge-base/fundamentals/unsubscribe-vs-suppression",
               "knowledge-base/fundamentals/content-types",
               "knowledge-base/fundamentals/subdomain-vs-root",
               "knowledge-base/fundamentals/smtp-protocol-basics",
+              "knowledge-base/fundamentals/email-transport-security",
               "knowledge-base/fundamentals/email-address-anatomy",
               "knowledge-base/fundamentals/bimi",
               "knowledge-base/fundamentals/custom-return-path",
@@ -590,7 +592,6 @@
             "pages": [
               "knowledge-base/best-practices/email-editor-best-practices",
               "knowledge-base/best-practices/deliverability",
-              "knowledge-base/best-practices/sending-reputation",
               "knowledge-base/best-practices/list-hygiene",
               "knowledge-base/best-practices/security",
               "knowledge-base/best-practices/transactional-vs-marketing",
@@ -607,6 +608,7 @@
             "group": "Compliance & Regulations",
             "pages": [
               "knowledge-base/compliance/google-yahoo-requirements",
+              "knowledge-base/compliance/microsoft-requirements",
               "knowledge-base/compliance/can-spam",
               "knowledge-base/compliance/gdpr-email",
               "knowledge-base/compliance/unsubscribe-best-practices",
@@ -621,17 +623,20 @@
             "group": "Troubleshooting",
             "pages": [
               "knowledge-base/troubleshooting/delivery-issues",
+              "knowledge-base/troubleshooting/campaign-recipient-count",
               "knowledge-base/troubleshooting/spam-placement",
               "knowledge-base/troubleshooting/bounce-diagnosis",
               "knowledge-base/troubleshooting/authentication",
               "knowledge-base/troubleshooting/rate-limits",
               "knowledge-base/troubleshooting/domain-verification",
+              "knowledge-base/troubleshooting/domain-dns-drift",
+              "knowledge-base/troubleshooting/blocked-domain-or-account",
               "knowledge-base/troubleshooting/tracking-accuracy",
               "knowledge-base/troubleshooting/gmail-delivery",
               "knowledge-base/troubleshooting/outlook-delivery",
               "knowledge-base/troubleshooting/webhook-failures",
-              "knowledge-base/troubleshooting/rendering-issues",
-              "knowledge-base/troubleshooting/sandbox-testing"
+              "knowledge-base/troubleshooting/duplicate-emails",
+              "knowledge-base/troubleshooting/rendering-issues"
             ]
           },
           {
@@ -643,7 +648,9 @@
               "knowledge-base/use-cases/two-factor-authentication-emails",
               "knowledge-base/use-cases/invoice-billing-emails",
               "knowledge-base/use-cases/adamko-in-action",
-              "knowledge-base/use-cases/multilingual-newsletter"
+              "knowledge-base/use-cases/multilingual-newsletter",
+              "knowledge-base/use-cases/ai-agent-email",
+              "knowledge-base/use-cases/inbound-support-inbox"
             ]
           },
           {
@@ -661,8 +668,20 @@
   },
   "redirects": [
     {
+      "source": "/knowledge-base/concepts/transactional-email",
+      "destination": "/knowledge-base/best-practices/transactional-vs-marketing"
+    },
+    {
+      "source": "/knowledge-base/best-practices/sending-reputation",
+      "destination": "/knowledge-base/best-practices/deliverability"
+    },
+    {
       "source": "/mcp/introduction",
       "destination": "/learn/mcp/introduction"
+    },
+    {
+      "source": "/knowledge-base/troubleshooting/sandbox-testing",
+      "destination": "/learn/api-keys/sandbox"
     },
     {
       "source": "/learn/sending/rate-limits",

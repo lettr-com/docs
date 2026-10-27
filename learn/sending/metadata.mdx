@@ -26,22 +26,24 @@ await lettr.emails.send({
 
 ## Metadata in Webhooks
 
-When Lettr delivers a webhook event for an email that carries metadata, the full metadata object is included in the payload. This means your webhook handler can read the same keys you attached at send time and use them to look up the relevant order, customer, or transaction in your database without making additional API calls.
+When Lettr delivers a webhook event for an email that carries metadata, the full metadata object is included in the payload as `rcpt_meta`. This means your webhook handler can read the same keys you attached at send time and use them to look up the relevant order, customer, or transaction in your database without making additional API calls.
 
 ```json
-{
-  "type": "message.delivery",
-  "data": {
-    "request_id": "7582751837467401763",
-    "to": "recipient@example.com",
-    "metadata": {
-      "orderId": "order_12345",
-      "customerId": "cust_67890",
-      "orderTotal": "99.99",
-      "source": "checkout"
+[{
+  "msys": {
+    "message_event": {
+      "type": "delivery",
+      "message_id": "abcd-1234-efgh",
+      "rcpt_to": "recipient@example.com",
+      "rcpt_meta": {
+        "orderId": "order_12345",
+        "customerId": "cust_67890",
+        "orderTotal": "99.99",
+        "source": "checkout"
+      }
     }
   }
-}
+}]
 ```
 
 ## Use Cases

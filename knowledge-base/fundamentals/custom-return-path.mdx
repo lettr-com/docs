@@ -1,9 +1,9 @@
 ---
 title: "Custom Return-Path and MAIL FROM"
-description: "What the Return-Path and MAIL FROM addresses do, and how a custom MAIL FROM domain fixes SPF alignment and removes via labels in Lettr."
+description: "What the Return-Path and MAIL FROM addresses do, and how using your sending subdomain as a custom bounce domain in Lettr gives you SPF alignment."
 ---
 
-Every email has two "from" addresses: the one the recipient sees in their inbox (the **From header**) and a hidden technical address used for bounce handling (the **Return-Path**, also called the envelope sender or MAIL FROM). These two addresses are often different — and understanding why is key to diagnosing authentication issues, eliminating "via" labels in recipient inboxes, and achieving full DMARC alignment.
+Every email has two "from" addresses: the one the recipient sees in their inbox (the **From header**) and a hidden technical address used for bounce handling (the **Return-Path**, also called the envelope sender or MAIL FROM). These two addresses are often different, and understanding why is key to diagnosing authentication issues and achieving full DMARC alignment.
 
 ---
 
@@ -14,13 +14,13 @@ When you send an email through Lettr, the message carries two distinct sender ad
 | Address | Where It Appears | Purpose | Example |
 |---------|-----------------|---------|---------|
 | **From header** | Visible to the recipient in their inbox | Identifies the sender to the reader | `hello@yourapp.com` |
-| **Return-Path** (MAIL FROM) | Hidden in message headers; set during the SMTP `MAIL FROM` command | Receives bounce notifications when delivery fails | `bounces+abc123@bounce.lettr.com` |
+| **Return-Path** (MAIL FROM) | Hidden in message headers; set during the SMTP `MAIL FROM` command | Receives bounce notifications when delivery fails | `bounces-12345@sparkpostmail.com` |
 
 The `From` header is what your recipients see and recognize. The Return-Path is a technical address that mail servers use behind the scenes. When a message bounces, the bounce notification is sent to the Return-Path address — not to the From address.
 
 ### Why They Differ
 
-By default, Lettr sets the Return-Path to an address on Lettr's bounce-processing domain (e.g., `bounces+abc123@bounce.lettr.com`). This allows Lettr to receive and process bounce notifications automatically — parsing bounce codes, classifying bounce types, updating suppression lists, and surfacing bounce data in your dashboard and webhooks.
+By default, Lettr sets the Return-Path to an address on the bounce domain of its delivery infrastructure (e.g., `bounces-12345@sparkpostmail.com`). This allows Lettr to receive and process bounce notifications automatically: parsing bounce codes, classifying bounce types, updating suppression lists, and surfacing bounce data in your dashboard and webhooks.
 
 If Lettr used your From address as the Return-Path, bounces would go directly to your mailbox instead, and Lettr would have no way to track or process them.
 
@@ -30,11 +30,11 @@ If Lettr used your From address as the Return-Path, bounces would go directly to
 
 Having a different Return-Path domain creates a specific authentication challenge: **SPF alignment failure**.
 
-[SPF](/knowledge-base/fundamentals/spf-dkim-dmarc) is verified against the **Return-Path domain**, not the From header domain. When the Return-Path is `bounces@bounce.lettr.com` but the From header shows `hello@yourapp.com`, SPF passes for `bounce.lettr.com` — but it does not align with `yourapp.com`.
+[SPF](/knowledge-base/fundamentals/spf-dkim-dmarc) is verified against the **Return-Path domain**, not the From header domain. When the Return-Path is `bounces-12345@sparkpostmail.com` but the From header shows `hello@yourapp.com`, SPF passes for `sparkpostmail.com`, but it does not align with `yourapp.com`.
 
 ```
 From:        hello@yourapp.com        ← what the recipient sees
-Return-Path: bounces@bounce.lettr.com ← what SPF checks
+Return-Path: bounces-12345@sparkpostmail.com ← what SPF checks
 ```
 
 DMARC requires that at least one of SPF or DKIM passes **and** aligns with the From domain. In the default Lettr configuration, DKIM handles alignment (Lettr signs with your domain), so DMARC still passes. But you are relying entirely on DKIM for DMARC alignment, with no SPF alignment as a fallback.
@@ -49,8 +49,8 @@ A custom Return-Path (also called a custom MAIL FROM domain or custom bounce dom
 
 ```
 From:        hello@yourapp.com
-Return-Path: bounces+abc123@bounce.lettr.com
-SPF aligns:  No  (bounce.lettr.com ≠ yourapp.com)
+Return-Path: bounces-12345@sparkpostmail.com
+SPF aligns:  No  (sparkpostmail.com ≠ yourapp.com)
 DKIM aligns: Yes (signed with d=yourapp.com)
 DMARC:       Pass (via DKIM alignment only)
 ```
@@ -70,7 +70,7 @@ DMARC:       Pass (via both SPF and DKIM alignment)
 | Benefit | Explanation |
 |---------|-------------|
 | **Full DMARC alignment** | Both SPF and DKIM align with your From domain, providing redundancy. If one fails (e.g., DKIM breaks during forwarding), the other can still satisfy DMARC. |
-| **Removes "via" labels** | Some email clients (notably Gmail) display a "via lettr.com" label when the Return-Path domain differs from the From domain. A custom Return-Path eliminates this. |
+| **Branded "mailed-by"** | Gmail's message details show the Return-Path domain as "mailed-by". With a custom Return-Path, that shows your domain instead of the delivery provider's. |
 | **Improved deliverability** | Some mailbox providers give a slight deliverability boost to messages with full alignment across both SPF and DKIM. |
 | **Professional appearance** | The bounce domain matches your brand rather than showing a third-party infrastructure domain in the headers. |
 
@@ -78,7 +78,7 @@ DMARC:       Pass (via both SPF and DKIM alignment)
 
 ## Setting Up a Custom Return-Path in Lettr
 
-Lettr uses the sending domain itself as the bounce domain — there is no separate subdomain to configure. Once a sending domain's CNAME record is verified, you can enable it as the bounce domain with a single toggle.
+Lettr uses the sending domain itself as the bounce domain. There is no separate subdomain to configure. Once a sending domain's CNAME record is verified, you can enable it as the bounce domain with a single toggle. Only subdomain sending domains (such as `mail.yourapp.com`) have a CNAME record (Lettr verifies root domains with SPF instead), so the bounce domain must be a subdomain.
 
 <Steps>
   <Step title="Verify the CNAME Record">
@@ -109,13 +109,13 @@ Lettr uses the sending domain itself as the bounce domain — there is no separa
     Send a test email and inspect the headers. You should see:
 
     ```
-    Return-Path: <bounces+abc123@yourapp.com>
+    Return-Path: <bounces+abc123@mail.yourapp.com>
     ```
 
     And in the `Authentication-Results` header:
 
     ```
-    spf=pass smtp.mailfrom=yourapp.com
+    spf=pass smtp.mailfrom=mail.yourapp.com
     dkim=pass header.d=yourapp.com
     dmarc=pass header.from=yourapp.com
     ```
@@ -171,7 +171,7 @@ dig TXT mail.yourapp.com
 
 ### Check via Lettr Dashboard
 
-The domain settings page in your Lettr dashboard shows the verification status of your custom Return-Path configuration, including whether DNS records are correctly published and whether SPF alignment is passing.
+The domain's page under **Domains → Sending Domains** shows whether its CNAME record is verified and whether **Use this sending domain as bounce domain** is switched on. It doesn't test SPF alignment. Check the `Authentication-Results` header of a test email for that.
 
 ---
 
@@ -187,7 +187,7 @@ The domain settings page in your Lettr dashboard shows the verification status o
   </Accordion>
 
   <Accordion title="Forgetting to update SPF when changing providers">
-    If you migrate between email service providers, your SPF include statements need to be updated to authorize the new provider's sending IPs. An outdated SPF record will cause SPF failures even with a custom Return-Path configured. Verify your SPF record includes the correct `include:` directive for Lettr.
+    If you migrate between email service providers, your SPF include statements need to be updated to authorize the new provider's sending IPs. An outdated SPF record will cause SPF failures even with a custom Return-Path configured. Verify your SPF record includes the correct `include:` directive for Lettr (`include:_spf.sparkpostmail.com` on a root sending domain).
   </Accordion>
 
   <Accordion title="Using strict DMARC alignment with a subdomain sending domain">
@@ -211,5 +211,8 @@ The domain settings page in your Lettr dashboard shows the verification status o
   </Card>
   <Card title="Authentication Troubleshooting" icon="wrench" href="/knowledge-base/troubleshooting/authentication">
     Diagnose and fix SPF, DKIM, and DMARC failures.
+  </Card>
+  <Card title="Forwarding, SRS, and ARC" icon="arrow-right" href="/knowledge-base/fundamentals/forwarding-arc">
+    How SPF behaves when mail is forwarded.
   </Card>
 </CardGroup>

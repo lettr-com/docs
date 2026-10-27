@@ -7,13 +7,7 @@ A storage domain is a custom subdomain used to serve email assets like images, f
 
 ## Why Use Storage Domains?
 
-When you use Lettr's email editor or upload images, they're hosted on Lettr's storage. By default, these assets are served from Lettr's domain:
-
-```
-https://storage.lettr.dev/your-team/image.png
-```
-
-With a custom storage domain, assets are served from your brand:
+Without a storage domain, images you add in the email editor are hosted on Topol's image storage and served from its domain. With a custom storage domain, assets are served from your brand:
 
 ```
 https://assets.yourcompany.com/image.png
@@ -45,13 +39,13 @@ Storage domains serve content from Lettr's cloud storage:
   <Step title="Navigate to Storage Domains">
     Go to **Domains** → **Storage** in your dashboard.
   </Step>
-  <Step title="Add Domain">
-    Click **Add Domain** and enter your storage subdomain (e.g., `assets.example.com`).
+  <Step title="Connect Domain">
+    Click **Connect Custom Domain** and enter your storage subdomain (e.g., `assets.example.com`).
   </Step>
   <Step title="Add DNS Records">
     Add the provided DNS records to your domain:
     - A CNAME record pointing to Lettr's storage
-    - TXT records for domain ownership verification
+    - Two TXT records: one for certificate validation and one for hostname pre-validation
   </Step>
   <Step title="Verify Domain">
     Click **Verify** to check DNS configuration and activate your storage domain.
@@ -76,24 +70,24 @@ Points your subdomain to Lettr's storage servers:
 | Name | `assets` (your chosen subdomain) |
 | Value | `r2-proxy.uselettr.com` |
 
-### SSL Validation TXT Record
+### Certificate Validation TXT Record
 
 Required for SSL certificate provisioning:
 
 | Field | Value |
 |-------|-------|
 | Type | TXT |
-| Name | `_cf-custom-hostname.assets` |
+| Name | `_acme-challenge.assets` |
 | Value | (provided by Lettr) |
 
-### Ownership TXT Record (if required)
+### Hostname Pre-validation TXT Record
 
-Additional ownership verification (may be required by Cloudflare):
+Verifies that you own the hostname:
 
 | Field | Value |
 |-------|-------|
 | Type | TXT |
-| Name | (provided by Lettr) |
+| Name | `_cf-custom-hostname.assets` |
 | Value | (provided by Lettr) |
 
 <Note>

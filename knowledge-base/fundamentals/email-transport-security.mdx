@@ -1,0 +1,234 @@
+---
+title: "Email in Transit: STARTTLS, MTA-STS, and TLS-RPT"
+description: "How email is encrypted between your app, your provider, and the recipient's server, and what STARTTLS, MTA-STS, and TLS-RPT each protect."
+---
+
+Email is encrypted in transit one connection at a time. A message crosses at least two separate connections before it reaches an inbox, and each one is secured by different mechanisms. This guide explains how TLS protects each hop, why plain STARTTLS can be downgraded, and what MTA-STS and TLS-RPT add.
+
+For the protocol basics, read [SMTP Protocol Basics](/knowledge-base/fundamentals/smtp-protocol-basics). For the end-to-end journey of a message, see [How Email Delivery Works](/knowledge-base/fundamentals/how-email-delivery-works).
+
+---
+
+## Two Hops, Two Kinds of Security
+
+A message sent through Lettr travels over two legs:
+
+1. **Submission: your application to Lettr.** The sender controls this leg, including the protocol (the HTTPS API or SMTP) and, for SMTP, the port and encryption mode.
+2. **Relay: Lettr to the recipient's mail server.** The receiving server decides what it supports and what it advertises in DNS. The sender can only offer encryption; it cannot force a receiver to accept it unless the receiver publishes a policy asking for it.
+
+TLS on either leg protects the message **in transit**. It does not encrypt the message at rest in a mailbox, and it is not end-to-end encryption: every server that handles the message can read it. S/MIME and PGP solve a different problem.
+
+<Note>
+  Transport encryption is separate from [SPF, DKIM, and DMARC](/knowledge-base/fundamentals/spf-dkim-dmarc). Those prove who sent a message. TLS protects the connection the message travels over.
+</Note>
+
+---
+
+## Leg 1: Submission to Lettr
+
+### The HTTPS API
+
+The Lettr API is served over HTTPS at `https://app.lettr.com/api`. Every request is encrypted by TLS, the same mechanism that protects a website, and requests authenticate with a bearer token:
+
+```bash
+curl -X POST https://app.lettr.com/api/emails \
+  -H "Authorization: Bearer lttr_your_api_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "from": "you@yourdomain.com",
+    "to": ["recipient@example.com"],
+    "subject": "Hello",
+    "html": "<p>Sent over HTTPS.</p>"
+  }'
+```
+
+Use the `https://` URL only. HTTP clients verify the server certificate by default, so the main thing to avoid is disabling certificate verification in your own code.
+
+### SMTP: STARTTLS and Implicit TLS
+
+SMTP clients can encrypt the connection in two ways:
+
+| Mode | How it works | Typical port |
+|-|-|-|
+| STARTTLS (explicit TLS) | The connection starts in plaintext, the client sends `STARTTLS`, and both sides upgrade to TLS before authenticating | 587 |
+| Implicit TLS (SMTPS) | The connection is encrypted from the first byte, with no plaintext phase | 465 |
+
+The standards behind these: STARTTLS for SMTP is defined in [RFC 3207](https://www.rfc-editor.org/rfc/rfc3207), mail submission on port 587 in [RFC 6409](https://www.rfc-editor.org/rfc/rfc6409), and [RFC 8314](https://www.rfc-editor.org/rfc/rfc8314) recommends implicit TLS (port 465) over STARTTLS for submission, because it removes the plaintext phase entirely.
+
+### Lettr's SMTP Ports
+
+Connect to `smtp.lettr.com` with username `lettr` and your API key as the password:
+
+| Type | Ports | Encryption |
+|-|-|-|
+| STARTTLS | `587`, `2587` | Starts unencrypted, upgrades with `STARTTLS` |
+| Implicit TLS | `465`, `2465` | Encrypted immediately |
+
+Ports `2465` and `2587` are alternates for networks that block the standard ones. On `465` and `2465`, the TLS session is terminated at Lettr's edge with a managed certificate; on the STARTTLS ports, the certificate is presented by the SMTP service itself. Both sides negotiate TLS 1.2 or newer.
+
+<Warning>
+  Always configure your client for TLS, whichever port you use. The API key is the SMTP password, so a connection that sends `AUTH` before encryption exposes the key to anyone on the network path. Rotate the key if you suspect it was ever sent in plaintext.
+</Warning>
+
+Pick the encryption setting that matches the port. A mismatch is the most common cause of handshake errors:
+
+- Port `465` or `2465`: choose "SSL/TLS" or "implicit TLS" in your client.
+- Port `587` or `2587`: choose "STARTTLS" (some clients call it "TLS" or "explicit TLS").
+
+For setup details and copy-paste examples, see the [SMTP quickstart](/quickstart/smtp/introduction). To decide between SMTP and the API, see [SMTP vs API](/knowledge-base/best-practices/smtp-vs-api).
+
+---
+
+## Leg 2: Server to Server
+
+Once Lettr has your message, it delivers it to the recipient's mail server over SMTP. The receiving server is found through the recipient domain's MX records, and the two servers negotiate encryption the same way a client does: with STARTTLS.
+
+### Why Plain STARTTLS Is Not Enough
+
+Server-to-server STARTTLS is normally **opportunistic**. The sending server asks whether the receiver supports encryption, and if it does, the connection is upgraded. If it does not, delivery falls back to plaintext, because refusing to deliver would break mail to older servers.
+
+That fallback creates two weaknesses:
+
+- **STARTTLS stripping.** The `STARTTLS` offer is sent in plaintext before encryption starts. An attacker on the network path can remove it from the server's reply, so the sender believes TLS is unsupported and continues in the clear.
+- **Unauthenticated certificates.** With opportunistic TLS, senders typically do not validate the certificate, because a failed check would block delivery. An attacker can present a forged certificate or redirect the connection to the wrong host, for example by tampering with DNS answers.
+
+MTA-STS addresses both weaknesses. It lets a receiving domain declare, in advance and over a trusted channel, that its servers always support TLS with a valid certificate at specific hostnames, and that mail should not be delivered without it.
+
+---
+
+## MTA-STS: Publishing a TLS Policy
+
+MTA-STS (Mail Transfer Agent Strict Transport Security) is defined in [RFC 8461](https://www.rfc-editor.org/rfc/rfc8461). It lets a **receiving** domain publish a policy that sending servers fetch and enforce.
+
+### How It Works
+
+1. The receiving domain publishes a DNS TXT record at `_mta-sts.yourdomain.com` that signals a policy exists and carries an `id` that changes whenever the policy changes.
+2. The policy itself is a small text file served over HTTPS at `https://mta-sts.yourdomain.com/.well-known/mta-sts.txt`. Because it is fetched over HTTPS with a valid certificate, an attacker cannot easily tamper with it.
+3. A sending server that supports MTA-STS fetches the policy, caches it for the lifetime the policy declares, and then checks every delivery against it.
+
+A policy looks like this:
+
+```text
+version: STSv1
+mode: enforce
+mx: mail.yourdomain.com
+mx: *.mail.yourdomain.com
+max_age: 604800
+```
+
+The matching DNS record:
+
+```text
+_mta-sts.yourdomain.com.  IN  TXT  "v=STSv1; id=20261027T000000"
+```
+
+| Policy field | Meaning |
+|-|-|
+| `mode` | `none` (policy disabled), `testing` (report failures but still deliver), or `enforce` (do not deliver if TLS validation fails) |
+| `mx` | The hostnames allowed to receive mail for the domain; the certificate must match one of them |
+| `max_age` | How long, in seconds, senders may cache the policy |
+
+In `enforce` mode, a compliant sender delivers only over a TLS connection to a listed MX host with a certificate that validates. Otherwise it delays and retries rather than falling back to plaintext.
+
+### What It Means for Your Domain
+
+- MTA-STS is published by the **domain that receives mail**. A domain that only sends through Lettr and has no inboxes does not need a policy for its outbound mail to work.
+- For a domain that also receives mail (for example at Google Workspace or Microsoft 365), MTA-STS protects what other senders deliver **to** it. The mailbox provider's documentation explains how to set it up for their MX hosts.
+- MTA-STS depends on the sender implementing it. Large mailbox providers do; many smaller servers do not.
+
+<Info>
+  MTA-STS and TLS-RPT are separate from the DNS records Lettr asks you to add for a [sending domain](/learn/domains/sending-domains). Verifying a sending domain does not publish either of them.
+</Info>
+
+---
+
+## TLS-RPT: Finding Out When TLS Fails
+
+Under an enforced MTA-STS policy, compliant senders defer mail when a certificate has expired or an MX hostname no longer matches the policy, so turning it on without monitoring is risky. TLS-RPT (SMTP TLS Reporting), defined in [RFC 8460](https://www.rfc-editor.org/rfc/rfc8460), gives receiving domains visibility into those failures.
+
+### How It Works
+
+1. The receiving domain publishes a TXT record at `_smtp._tls.yourdomain.com` that says where to send reports.
+2. Participating sending servers aggregate their TLS results for the domain, usually once a day, into a JSON report.
+3. They deliver the report to the address in the record, typically as a compressed attachment by email.
+
+```text
+_smtp._tls.yourdomain.com.  IN  TXT  "v=TLSRPTv1; rua=mailto:tls-reports@yourdomain.com"
+```
+
+A report summarizes successful and failed TLS sessions and lists failure types, such as an expired certificate, a certificate that does not match the MX host, or a policy that could not be fetched.
+
+### A Sensible Rollout
+
+1. Publish TLS-RPT first, so reports start arriving.
+2. Publish an MTA-STS policy in `testing` mode and watch the reports for failures.
+3. Fix any certificate or MX mismatches you find.
+4. Move the policy to `enforce` and raise `max_age` once reports stay clean.
+
+After any change to the policy file, update the `id` in the `_mta-sts` TXT record, or senders keep using their cached copy.
+
+---
+
+## How This Fits Together With Lettr
+
+| Question | Answer |
+|-|-|
+| Is the API call to Lettr encrypted? | Yes, as long as the request goes to the `https://app.lettr.com/api` URL. |
+| Is my SMTP connection to Lettr encrypted? | Yes, if the client uses TLS settings that match the port. See the port table above. |
+| Is delivery to the recipient encrypted? | It depends on what the recipient's server supports and publishes. |
+| Do I need to publish MTA-STS or TLS-RPT to send with Lettr? | No. They are optional, and they protect mail delivered to your domain. |
+
+Lettr's documentation does not currently describe how Lettr applies MTA-STS or TLS-RPT to outbound deliveries, so this guide treats them as general email standards rather than Lettr features.
+
+---
+
+## Checking TLS Yourself
+
+OpenSSL shows the TLS handshake for any SMTP endpoint:
+
+```bash
+# Implicit TLS (port 465)
+openssl s_client -connect smtp.lettr.com:465 -crlf
+
+# STARTTLS (port 587)
+openssl s_client -starttls smtp -connect smtp.lettr.com:587 -crlf
+```
+
+The output shows the negotiated protocol version, the cipher, and the certificate chain. Look for `Verify return code: 0 (ok)`.
+
+To check what another domain publishes, query its records:
+
+```bash
+dig +short TXT _mta-sts.example.com
+dig +short TXT _smtp._tls.example.com
+curl -s https://mta-sts.example.com/.well-known/mta-sts.txt
+```
+
+For received messages, the `Received` headers often include a line such as `with ESMTPS` and a TLS version or cipher. That line means the hop was encrypted. See [Email Headers](/knowledge-base/fundamentals/email-headers) for how to read them.
+
+---
+
+## Troubleshooting
+
+- **Handshake or SSL errors connecting to `smtp.lettr.com`:** the encryption setting does not match the port. Use implicit TLS on `465`/`2465` and STARTTLS on `587`/`2587`. Also update old TLS libraries, since TLS 1.2 or newer is needed.
+- **Certificate verification fails in your client:** check that you connect to the hostname `smtp.lettr.com`, not an IP address, and that your system trust store is current.
+- **Port blocked by a firewall:** try an alternate (`2465` or `2587`), or use the HTTPS API, which runs on port 443.
+
+---
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="SMTP Protocol Basics" icon="server" href="/knowledge-base/fundamentals/smtp-protocol-basics">
+    Ports, commands, and the SMTP conversation.
+  </Card>
+  <Card title="SMTP Quickstart" icon="plug" href="/quickstart/smtp/introduction">
+    Connect your application to Lettr over SMTP.
+  </Card>
+  <Card title="SMTP vs API" icon="scale-balanced" href="/knowledge-base/best-practices/smtp-vs-api">
+    Choose the right sending method for your application.
+  </Card>
+  <Card title="SPF, DKIM, and DMARC" icon="shield-check" href="/knowledge-base/fundamentals/spf-dkim-dmarc">
+    Authenticate who sent a message.
+  </Card>
+</CardGroup>

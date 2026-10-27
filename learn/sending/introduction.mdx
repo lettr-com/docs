@@ -122,7 +122,7 @@ await lettr.emails.send({
 
 ### Unsubscribe Handling
 
-When you send a marketing email (`transactional: false`), Lettr automatically adds the `List-Unsubscribe` and `List-Unsubscribe-Post` headers. This enables one-click unsubscribe in email clients that support it (Gmail, Apple Mail, Outlook, etc.), which is required by major mailbox providers.
+Lettr automatically adds the `List-Unsubscribe` and `List-Unsubscribe-Post` headers to campaigns, which enables one-click unsubscribe in email clients that support it (Gmail, Apple Mail, Outlook, etc.) and is required by major mailbox providers. For API sends with `transactional: false`, Lettr does not add these headers itself, so check the headers of a delivered message. The custom `headers` field can't set them.
 
 For an **HTML unsubscribe link** in the email body, add the `data-msys-unsubscribe="1"` attribute to your link. The URL should point to a simple "Sorry to see you go" page — Lettr handles the unsubscribe automatically:
 

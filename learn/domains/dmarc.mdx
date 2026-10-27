@@ -149,7 +149,7 @@ A gradual rollout minimizes the risk of blocking legitimate emails:
 
 ## DMARC Alignment with Lettr
 
-When you verify a sending domain in Lettr, the SPF and DKIM records are configured to pass DMARC alignment automatically. Here's how Lettr's infrastructure interacts with each check:
+When you verify a sending domain in Lettr, Lettr signs your mail with a DKIM key for your domain, which passes DMARC alignment by default. SPF alignment is optional and depends on the bounce domain setting. Here's how Lettr's infrastructure interacts with each check:
 
 ### DKIM Alignment
 
@@ -159,16 +159,18 @@ When you verify a sending domain in Lettr, the SPF and DKIM records are configur
 
 ### SPF Alignment
 
-- Lettr uses a return-path domain (configured via the bounce CNAME record) that aligns with your sending domain
-- This means the envelope sender domain matches your From domain for SPF alignment
-- Supports both relaxed and strict alignment
+- By default, Lettr uses a shared SparkPost bounce domain as the Return-Path, so SPF passes but does not align with your From domain
+- To get SPF alignment, turn on **Use this sending domain as bounce domain** on the domain's detail page. The toggle requires a valid bounce CNAME record. See [Configuring a Custom Bounce Domain](/learn/domains/sending-domains#configuring-a-custom-bounce-domain)
+- With the toggle on, the envelope sender domain matches your From domain, and both relaxed and strict alignment are supported
 
 ### What This Means for Your DMARC Policy
 
-Because Lettr handles DKIM signing and SPF return-path alignment for you, emails sent through Lettr will pass DMARC as long as:
+DMARC needs only one of SPF or DKIM to pass with alignment. Because Lettr handles DKIM signing for you, emails sent through Lettr will pass DMARC as long as:
 
-1. Your sending domain is **verified** in Lettr (SPF and DKIM DNS records are in place)
-2. Your DMARC record exists at `_dmarc.yourdomain.com`
+1. The sending domain is **verified** in Lettr (the DKIM DNS records are in place)
+2. A DMARC record exists at `_dmarc.yourdomain.com`
+
+Turning on the custom bounce domain adds SPF alignment as a second aligned check.
 
 If you also send email from other services (marketing platforms, CRM tools, help desks), make sure those services are also configured for DMARC alignment. A `p=reject` policy will block emails from any source that fails authentication — not just Lettr.
 

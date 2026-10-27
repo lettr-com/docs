@@ -30,7 +30,7 @@ const apiKey = process.env.LETTR_API_KEY;
 curl -X POST https://app.lettr.com/api/emails \
   -H "Authorization: Bearer $LETTR_API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"to": "user@example.com", "subject": "Hello"}'
+  -d '{"from": "you@example.com", "to": ["user@example.com"], "subject": "Hello", "html": "<p>Hello</p>"}'
 ```
 
 ### Keep Keys Out of Version Control
@@ -67,10 +67,10 @@ See [API Key Permissions](/learn/api-keys/permissions) for details on what each 
 
 Create distinct API keys for each environment:
 
-- **Development** — a Sending Only key pointing to test recipients
-- **Staging** — a Sending Only key for pre-production testing
-- **Production** — a Sending Only key for live email sending
-- **Admin** — a Full Access key used only for dashboard-level operations
+- **Development**: a [sandbox key](/learn/api-keys/sandbox) (`lttr_sandbox_` prefix), which delivers every email to your own inbox
+- **Staging**: a Sending Only key for pre-production testing
+- **Production**: a Sending Only key for live email sending
+- **Admin**: a Full Access key used only for dashboard-level operations
 
 If one environment is compromised, you only need to rotate that key without affecting other environments.
 
@@ -84,47 +84,48 @@ Rotate your API keys periodically and immediately if you suspect exposure. You c
 
 Webhooks push event data to your server. Without verification, anyone who discovers your webhook URL could send fake events to your application.
 
-### Verify Webhook Signatures
+### Authenticate Webhook Requests
 
-Every webhook request from Lettr includes a `lettr-signature` header. Verify this signature before processing any event:
+When you create a webhook, choose **Basic** or **OAuth 2.0** authentication rather than none. Lettr then sends credentials with every webhook request, and your handler should reject any request without them:
 
 ```javascript
 const crypto = require('crypto');
 const express = require('express');
 const app = express();
 
-// IMPORTANT: Use the raw body for signature verification
-app.post('/webhooks/lettr', express.raw({ type: 'application/json' }), (req, res) => {
-  const signature = req.headers['lettr-signature'];
-  const webhookSecret = process.env.LETTR_WEBHOOK_SECRET;
+function hasValidCredentials(req) {
+  const header = req.headers.authorization || '';
+  const expected = 'Basic ' + Buffer.from(
+    `${process.env.WEBHOOK_USERNAME}:${process.env.WEBHOOK_PASSWORD}`
+  ).toString('base64');
 
-  const expectedSignature = crypto
-    .createHmac('sha256', webhookSecret)
-    .update(req.body)
-    .digest('hex');
+  // Constant-time comparison to avoid timing attacks
+  return header.length === expected.length &&
+    crypto.timingSafeEqual(Buffer.from(header), Buffer.from(expected));
+}
 
-  if (signature !== expectedSignature) {
-    console.error('Invalid webhook signature');
+app.post('/webhooks/lettr', express.json(), (req, res) => {
+  if (!hasValidCredentials(req)) {
+    console.error('Invalid webhook credentials');
     return res.sendStatus(401);
   }
 
-  // Signature is valid — safe to process
-  const event = JSON.parse(req.body);
-  handleEvent(event);
+  // Credentials are valid; safe to process
+  handleEvents(req.body);
 
   res.sendStatus(200);
 });
 ```
 
 <Warning>
-  You must use the **raw request body** for signature verification, not a parsed JSON object. If your framework parses the body before your handler runs, the re-serialized JSON may differ from the original payload and the signature will not match.
+  A webhook with no authentication accepts events from anyone who discovers its URL. Use a long, random password for Basic auth and store it in environment variables, not in your source code.
 </Warning>
 
 ### Use HTTPS for Webhook Endpoints
 
 Always use an `https://` URL for your webhook endpoint. HTTP endpoints transmit event data — including recipient email addresses — in plain text across the network.
 
-See [Webhook Authorization](/learn/webhooks/authorization) for the full signature verification reference.
+See [Webhook Authorization](/learn/webhooks/authorization) for Basic and OAuth 2.0 setup and verification examples.
 
 ---
 
@@ -132,10 +133,10 @@ See [Webhook Authorization](/learn/webhooks/authorization) for the full signatur
 
 ### Enable Two-Factor Authentication
 
-Enable 2FA for every team member in the Lettr dashboard under your account security settings. This protects against password compromise — even if an attacker obtains a password, they can't access the dashboard without the second factor.
+Enable 2FA for every team member in the Lettr dashboard under **Settings** → **Two-Factor Auth**. This protects against password compromise: even if an attacker obtains a password, they can't access the dashboard without the second factor.
 
 <Note>
-  2FA is configured per user in the dashboard. If you manage a team, require all members to enable it as part of your onboarding process.
+  2FA is configured per user in the dashboard. If you own the team, turn on **Require Two-Factor Authentication** under **Settings** → **Team** so every member must enable it before accessing team resources.
 </Note>
 
 ### Review Team Access
@@ -148,7 +149,7 @@ Periodically review who has access to your Lettr account through the dashboard:
 
 ### Configure IP Restrictions
 
-If your API requests originate from known IP addresses (such as production servers), configure IP restrictions in the Lettr dashboard to reject requests from unrecognized sources. This adds a layer of defense even if an API key is leaked.
+If your API requests originate from known IP addresses (such as production servers), set **Allowed IPs** on the API key in the Lettr dashboard to reject requests from unrecognized sources. This adds a layer of defense even if an API key is leaked.
 
 ---
 
@@ -183,32 +184,25 @@ Any data you attach to an email — custom headers, metadata fields, tags — is
 Set up webhook handlers to flag abnormal patterns:
 
 ```javascript
-const crypto = require('crypto');
-const express = require('express');
-const app = express();
-
-app.post('/webhooks/lettr', express.raw({ type: 'application/json' }), (req, res) => {
-  const signature = req.headers['lettr-signature'];
-  const webhookSecret = process.env.LETTR_WEBHOOK_SECRET;
-
-  const expectedSignature = crypto
-    .createHmac('sha256', webhookSecret)
-    .update(req.body)
-    .digest('hex');
-
-  if (signature !== expectedSignature) {
+// Uses hasValidCredentials() from the webhook authentication example above
+app.post('/webhooks/lettr', express.json(), (req, res) => {
+  if (!hasValidCredentials(req)) {
     return res.sendStatus(401);
   }
 
-  const event = JSON.parse(req.body);
+  // Lettr delivers webhook events as a JSON array
+  for (const event of req.body) {
+    const data = event.msys?.message_event;
 
-  if (event.type === 'email.bounced' && event.data.bounceType === 'hard') {
-    trackBounce(event.data.to);
+    // Hard bounce classes: 10 (invalid recipient), 30 (no RCPT), 90 (unsubscribe)
+    if (data?.type === 'bounce' && [10, 30, 90].includes(parseInt(data.bounce_class))) {
+      trackBounce(data.rcpt_to);
 
-    // Alert if hard bounces spike — could indicate a compromised key
-    // sending to purchased or invalid lists
-    if (getRecentBounceCount() > BOUNCE_THRESHOLD) {
-      alertSecurityTeam('Unusual hard bounce spike detected');
+      // Alert if hard bounces spike; could indicate a compromised key
+      // sending to purchased or invalid lists
+      if (getRecentBounceCount() > BOUNCE_THRESHOLD) {
+        alertSecurityTeam('Unusual hard bounce spike detected');
+      }
     }
   }
 
@@ -245,8 +239,8 @@ Use this checklist when setting up a new Lettr integration or auditing an existi
   <Step title="Use separate keys per environment">
     Create distinct keys for development, staging, and production so a compromise in one doesn't affect the others.
   </Step>
-  <Step title="Verify webhook signatures">
-    Confirm your webhook handler checks the `lettr-signature` header using the raw request body before processing any event.
+  <Step title="Authenticate webhook requests">
+    Confirm your webhooks use Basic or OAuth 2.0 authentication and that your handler rejects requests without valid credentials before processing any event.
   </Step>
   <Step title="Use HTTPS for all endpoints">
     Ensure your webhook URLs and any client-side requests use HTTPS, not HTTP.
@@ -274,9 +268,12 @@ Use this checklist when setting up a new Lettr integration or auditing an existi
     Understand Full Access vs Sending Only permission levels
   </Card>
   <Card title="Webhook Authorization" icon="shield-check" href="/learn/webhooks/authorization">
-    Full reference for webhook signature verification
+    Authenticate webhook requests with Basic or OAuth 2.0 credentials
   </Card>
   <Card title="Authentication Troubleshooting" icon="circle-exclamation" href="/knowledge-base/troubleshooting/authentication">
     Diagnose and fix API authentication errors
+  </Card>
+  <Card title="Letting AI Agents Send Email Safely" icon="robot" href="/knowledge-base/use-cases/ai-agent-email">
+    Give an AI agent restricted access to Lettr over MCP.
   </Card>
 </CardGroup>

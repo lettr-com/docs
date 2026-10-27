@@ -1,0 +1,175 @@
+---
+title: "Microsoft Outlook Sender Requirements"
+description: "What Outlook.com, Hotmail, and Live.com require from senders over 5,000 messages a day, why mail gets 550 5.7.515, and how to fix it in Lettr."
+---
+
+Microsoft has its own requirements for high-volume senders to its consumer mailboxes (Outlook.com, Hotmail, Live.com). They look like the Google and Yahoo rules, but the enforcement is different: mail that fails is rejected with `550 5.7.515`.
+
+This page explains who the rules apply to, what they require, and how a Lettr sending domain meets them. For the Google and Yahoo side, see [Google & Yahoo Sender Requirements](/knowledge-base/compliance/google-yahoo-requirements).
+
+---
+
+## Who Is Affected
+
+Microsoft announced the rules in spring 2025, for domains sending **more than 5,000 emails per day** to its consumer mail services. Its support article for the rejection error words the threshold as 5,000 or more messages to Microsoft consumer email services, all using the same domain in the `5322.From` address.
+
+That means the count is per **From domain**, not per account, API key, or IP address. An account that sends from several domains has each domain counted on its own.
+
+<Note>
+  Microsoft says every sender benefits from these practices, even below 5,000 a day. The enforcement targets large senders first. Authenticating below the threshold costs nothing and keeps a domain ready if its volume grows.
+</Note>
+
+---
+
+## What Microsoft Requires
+
+| Check | Microsoft's requirement |
+|-|-|
+| SPF | Must pass for the sending domain |
+| DKIM | Must pass |
+| DMARC | A record with at least `p=none`, and alignment with SPF or DKIM (Microsoft prefers both) |
+
+Three points are easy to miss:
+
+- **SPF and DKIM must both pass.** DMARC needs only one of them to align, but Microsoft requires both checks to pass.
+- **Alignment means the domains match.** The `From` domain must match, or be a subdomain of, the domain SPF or DKIM validated. Microsoft's FAQ describes it as ensuring the "From" domain matches the domain used by SPF and/or DKIM.
+- **`p=none` is enough.** Microsoft accepts `p=none`, `p=quarantine`, or `p=reject`. It recommends moving gradually toward `p=reject` once all legitimate sources are aligned.
+
+These requirements match the authentication rules in the Google and Yahoo article, so the same DNS setup covers both. Google and Yahoo add further rules, such as a spam-rate limit and one-click unsubscribe, so meeting Microsoft's rules does not mean you meet theirs.
+
+### Hygiene Recommendations
+
+Microsoft also lists practices it recommends for large senders. They sit outside the authentication gate, but Microsoft reserves the right to filter or block non-compliant senders.
+
+- A valid `From` or `Reply-To` address that reflects the real sending domain and can receive replies
+- A functional unsubscribe link that is easy to find, particularly for marketing or bulk mail
+- Regular list cleaning and bounce management
+- Accurate subject lines, no deceptive headers, and recipients who consented
+
+---
+
+## Enforcement and the 550 5.7.515 Error
+
+Microsoft's announcement went through two stages. The original plan was to route non-compliant mail to the Junk folder first and reject later. In a later update to the announcement, Microsoft said it had decided to **reject** messages that fail the requirements, with enforcement starting May 5, 2025.
+
+A rejected message gets this response:
+
+```text
+550 5.7.515 Access denied, sending domain [SendingDomain] does not meet the required authentication level.
+```
+
+Microsoft's support article for this error says it means the domain in the `5322.From` address did not pass the required authentication level.
+
+<Warning>
+  The announcement page still contains the older junk-folder wording alongside the update. Treat rejection as the current behavior and plan for it.
+</Warning>
+
+A `550` is a permanent failure code, so fix the cause before you send again.
+
+---
+
+## How Lettr Meets the Requirements
+
+A sending domain that is fully verified in Lettr covers the SPF and DKIM checks. DMARC is a record you publish yourself.
+
+| Requirement | How it is met in Lettr |
+|-|-|
+| DKIM | Lettr signs messages with the DKIM key for your sending domain. The DKIM TXT record is required for verification. |
+| SPF | A subdomain uses the CNAME record, which points to `sparkpostmail.com`. A root domain uses an SPF TXT record with `include:_spf.sparkpostmail.com`. |
+| DMARC | Lettr shows a DMARC TXT record, `v=DMARC1;p=none;`, for you to add. Add it to `_dmarc` on your domain. |
+| Sending allowed | Sending works only when the domain is approved and every required record is valid. |
+
+### SPF Alignment Needs the Bounce Domain
+
+By default, bounce notifications use SparkPost's shared bounce domain as the Return-Path. SPF can pass in that setup, but it does not align with your `From` domain. DMARC then passes through DKIM alignment alone.
+
+That satisfies Microsoft's DMARC rule, which needs only one aligned check. To align SPF as well, which Microsoft prefers, switch on **Use this sending domain as bounce domain** in the domain's **Bounce Domain** card. The toggle stays disabled until the CNAME record shows as valid. See [Sending Domains](/learn/domains/sending-domains) and [Custom Return-Path and MAIL FROM](/knowledge-base/fundamentals/custom-return-path).
+
+### Check Your DMARC Record
+
+```bash
+dig TXT _dmarc.yourdomain.com +short
+```
+
+A compliant record looks like this:
+
+```text
+"v=DMARC1; p=none; rua=mailto:dmarc@yourdomain.com"
+```
+
+If the command returns nothing, the record is missing. Add it and see [DMARC](/learn/domains/dmarc).
+
+---
+
+## Unsubscribe Headers in Lettr
+
+Microsoft lists a functional unsubscribe link as a hygiene recommendation. In Lettr, outgoing mail falls into three groups:
+
+- **Campaigns**: every campaign email carries the `List-Unsubscribe` header and the `List-Unsubscribe-Post: List-Unsubscribe=One-Click` header. Lettr adds them automatically.
+- **API sends with transactional set to false**: Lettr's own code does not add these headers to API sends. It passes `options.transactional` through to the sending infrastructure, and the default is `true`. To rely on unsubscribe headers for an API send, check the headers of a delivered test message instead of assuming they are present.
+- **Transactional API sends**: these don't get the headers, and they cannot be added by hand either. `List-Unsubscribe` and `List-Unsubscribe-Post` are blocked in the custom `headers` field of the send request.
+
+A marketing send through the API should set `transactional` to `false`, which marks it as non-transactional:
+
+```bash
+curl -X POST https://app.lettr.com/api/emails \
+  -H "Authorization: Bearer lttr_your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "from": "news@yourdomain.com",
+    "to": ["reader@example.com"],
+    "subject": "This month at Example",
+    "html": "<p>Hello</p>",
+    "options": { "transactional": false }
+  }'
+```
+
+For the visible link in the body, use the `data-msys-unsubscribe="1"` attribute described in [Sending Introduction](/learn/sending/introduction) and the Google and Yahoo article. See also [Unsubscribe Best Practices](/knowledge-base/compliance/unsubscribe-best-practices).
+
+---
+
+## Fixing a 550 5.7.515 Rejection
+
+<Steps>
+  <Step title="Read the authentication results">
+    Find which of SPF, DKIM, or DMARC failed. Microsoft's support article suggests checking the message header's authentication results, and confirming the Return-Path domain matches the From domain.
+  </Step>
+  <Step title="Check the domain in Lettr">
+    Open the sending domain and confirm every record is **valid** and the domain is approved. See [Domain Verification Failures](/knowledge-base/troubleshooting/domain-verification).
+  </Step>
+  <Step title="Publish a DMARC record">
+    Add the `_dmarc` TXT record if it is missing. `p=none` is enough.
+  </Step>
+  <Step title="Check other senders on the same domain">
+    Microsoft counts volume per From domain. If a CRM, help desk, or marketing tool also sends as your domain, it needs its own aligned SPF or DKIM. A missing record there can trigger the rejection even when Lettr is configured correctly.
+  </Step>
+  <Step title="Look at the SPF lookup limit">
+    Microsoft's FAQ warns that more than 10 DNS lookups in an SPF record can make the check fail. Reduce the number of `include:` entries if the record has several.
+  </Step>
+  <Step title="Send again">
+    After the records validate, send a new message.
+  </Step>
+</Steps>
+
+<Tip>
+  Forwarding and mailing lists can break DMARC alignment. Microsoft's FAQ points to ARC, which preserves the original authentication results, as the mitigation for forwarded mail.
+</Tip>
+
+---
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Google & Yahoo Requirements" icon="envelope" href="/knowledge-base/compliance/google-yahoo-requirements">
+    The matching rules for Gmail and Yahoo
+  </Card>
+  <Card title="SPF, DKIM, and DMARC" icon="shield-halved" href="/knowledge-base/fundamentals/spf-dkim-dmarc">
+    How the three protocols work together
+  </Card>
+  <Card title="Custom Return-Path" icon="route" href="/knowledge-base/fundamentals/custom-return-path">
+    Align SPF with your From domain
+  </Card>
+  <Card title="Bounce Diagnosis" icon="magnifying-glass" href="/knowledge-base/troubleshooting/bounce-diagnosis">
+    Read bounce codes and decide what to do
+  </Card>
+</CardGroup>

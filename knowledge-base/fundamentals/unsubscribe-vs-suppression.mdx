@@ -1,0 +1,185 @@
+---
+title: "Unsubscribes, Pauses and Suppressions"
+description: "What stops which email in Lettr: how a contact unsubscribe, a pause and a suppression differ, and why API sends can still reach an unsubscribed address."
+---
+
+Lettr has **two separate places** where an address can be stopped from receiving email: the contact status in your Audience and the suppression list in the delivery layer. They don't share data, so an address that is unsubscribed in your Audience can still receive an API send.
+
+This guide explains the difference between an audience unsubscribe, a pause and a suppression, which of your sends each one affects, and what to do about the gaps.
+
+---
+
+## Two Systems, Two Jobs
+
+| | Audience (contact status) | Suppression list |
+|-|-|-|
+| **Lives in** | Lettr's Audience, on the contact record | The delivery layer underneath Lettr, per account |
+| **Used by** | Campaigns | Sends through the API or SMTP |
+| **Set by** | The recipient (preferences page, unsubscribe link, one-click), you (status change, import, API) | Hard bounces, spam complaints, and in some cases unsubscribe events recorded by SparkPost |
+| **Visible to you** | Contact status, `paused_until`, topics | Through [Adamko](/learn/ai-assistant/troubleshooting-and-diagnostics) only |
+| **Changeable by you** | Yes, any time | No. Removal is a request to Lettr support |
+
+An audience unsubscribe only updates the Lettr contact and is never copied to the suppression list. Nothing registers it with the delivery layer, so the contact status check is the only thing that stops the next campaign email.
+
+---
+
+## Contact Statuses
+
+Every contact in your Audience has exactly one of five statuses:
+
+| Status | Receives campaigns? | How a contact gets here |
+|-|-|-|
+| `subscribed` | Yes, unless paused | The default for new contacts |
+| `unsubscribed` | No | The recipient unsubscribed, or you changed the status |
+| `bounced` | No | A previous email bounced permanently |
+| `complained` | No | The contact marked an email as spam |
+| `unverified` | No | Created through [double opt-in](/learn/audience/double-opt-in) and not yet confirmed |
+
+Campaigns only go to `subscribed` contacts who are not paused. Consent is checked again for each batch, not just when the campaign is scheduled, so an opt-out taken halfway through a large send still takes effect. Contacts who fail the re-check are marked `skipped` for that campaign.
+
+See [Contacts](/learn/audience/contacts#contact-status) for the full status reference.
+
+---
+
+## Pauses
+
+A pause is a time-boxed opt-out for marketing email. On the [Manage email preferences](/learn/audience/email-preferences) page that every campaign unsubscribe link opens, a recipient can pause for **30, 60 or 90 days**.
+
+- The contact stays `subscribed` and gets a `paused_until` date. Campaigns skip them until that date passes, then sends resume on their own.
+- Only `subscribed` contacts can be paused. Pausing never resubscribes anyone.
+- A full unsubscribe clears any active pause.
+- A pause applies to campaigns only. It has no effect on API or SMTP sends.
+
+A pause keeps the contact on your list and gives a recipient who wants less email an option short of unsubscribing or marking mail as spam.
+
+---
+
+## What Stops Which Email
+
+Which mechanism applies depends on how the email was sent and on the `options.transactional` flag.
+
+### Transactional vs Non-Transactional
+
+`options.transactional` is a boolean on the [send endpoint](/api-reference/emails/send-email). It **defaults to `true`**. Campaigns are always sent as non-transactional.
+
+- `transactional: true` is for one-to-one, operational email: password resets, receipts, security alerts.
+- `transactional: false` is for marketing-shaped email: newsletters, promotions, announcements. Lettr does not add `List-Unsubscribe` headers to API sends itself (it does for campaigns), so check a delivered message's headers and include your own unsubscribe link if you need one. See [Sending](/learn/sending/introduction#unsubscribe-handling).
+
+### The Comparison
+
+| Event | Campaign | API send, `transactional: false` | API send, `transactional: true` (default) |
+|-|-|-|-|
+| Contact is `unsubscribed`, `bounced`, `complained` or `unverified` in Audience | Skipped | Not checked. Audience status is not consulted | Not checked |
+| Contact is paused | Skipped until `paused_until` | Not checked | Not checked |
+| Recipient unsubscribes through the campaign's link | Contact becomes `unsubscribed`. Future campaigns skip them | No effect on the contact | No effect on the contact |
+| Recipient unsubscribes through SparkPost's own unsubscribe handling on an API send | Not applicable | SparkPost can record this on the suppression list as a non-transactional entry | Don't rely on it |
+| Address is on the suppression list as a non-transactional entry | The contact status is what stops campaigns, not this entry | Blocked, per [Suppression Lists](/knowledge-base/fundamentals/suppression-lists) | Not blocked, per the same page |
+| Address is suppressed after a hard bounce or spam complaint | Contact status is what stops campaigns | Rejected, as described in [Suppression Lists](/knowledge-base/fundamentals/suppression-lists) | Rejected, as described in [Suppression Lists](/knowledge-base/fundamentals/suppression-lists) |
+
+<Warning>
+  Because `transactional` defaults to `true`, an API send that leaves the option at its default is not held back by unsubscribe suppressions (see [Suppression Lists](/knowledge-base/fundamentals/suppression-lists)), so a recipient who unsubscribed can still receive it. Set `transactional: false` on every marketing-shaped API send.
+</Warning>
+
+<Note>
+  Audience status is never checked on API or SMTP sends. For a newsletter sent through the API, Lettr doesn't look at whether the address is `unsubscribed` in your Audience. Either send it as a campaign, or filter recipients against your own records before calling the API.
+</Note>
+
+### Where Each Unsubscribe Is Recorded
+
+| How the recipient unsubscribed | Result |
+|-|-|
+| Campaign `{{unsubscribe_link}}` and the preferences page | Contact status becomes `unsubscribed`, topics are detached, any pause is cleared |
+| One-click unsubscribe from a campaign (mail client button) | Contact status becomes `unsubscribed` immediately, with no preferences page |
+| Unsubscribe handled by SparkPost on an API send | SparkPost can record it on the suppression list as a non-transactional entry. The suppression-list API lists "List Unsubscribe" and "Unsubscribe Link" as entry sources |
+| The contact's status is changed in the Audience, via import or the API | Contact status changes. Nothing is added to the suppression list |
+
+The `List-Unsubscribe` header on a campaign points at a signed Lettr URL for that one contact, so a campaign unsubscribe lands on the contact record in Lettr, not on the suppression list.
+
+---
+
+## Topics Are Narrower Still
+
+A topic opt-out is a third, narrower kind of "no". A contact who unticks one topic stays `subscribed` and still gets campaigns for their other topics. Topics are a Lettr concept, so they only affect campaigns that target a topic. Nothing on the suppression list knows about them.
+
+See [Topics](/learn/audience/topics) for how topic-targeted campaigns work.
+
+---
+
+## Practical Steps
+
+<Steps>
+  <Step title="Send marketing mail as a campaign">
+    Campaigns are the only send type that checks contact status, pauses and topics for every batch. They also add the unsubscribe link and headers for you.
+  </Step>
+  <Step title="Set transactional to false on marketing API sends">
+    If you must send marketing-style email through the API or SMTP, set `options.transactional` to `false` so SparkPost treats it as non-transactional and unsubscribe entries on the suppression list can apply to it.
+
+    ```json
+    {
+      "from": "news@yourdomain.com",
+      "to": ["jane@example.com"],
+      "subject": "Our October update",
+      "template_slug": "october-update",
+      "options": { "transactional": false }
+    }
+    ```
+  </Step>
+  <Step title="Mirror unsubscribes into your own system">
+    Subscribe to the `unsubscribe.list_unsubscribe`, `unsubscribe.link_unsubscribe`, `message.bounce` and `message.spam_complaint` webhooks, and keep your own do-not-email record. See [Complaints & Unsubscribes](/learn/suppressions/complaints-unsubscribes).
+  </Step>
+  <Step title="Check a suppressed address with Adamko">
+    There is no Suppressions page. Ask Adamko *"is jane@example.com suppressed?"* to see the reason and date.
+  </Step>
+</Steps>
+
+---
+
+## Getting Someone Back
+
+The way back depends on which system stopped them.
+
+- **Unsubscribed in your Audience:** the recipient can resubscribe from the preferences page, or you can change the status yourself once you have their fresh consent. If you use double opt-in, ask them to confirm again.
+- **Paused:** nothing to do. Sends resume when `paused_until` passes, or the recipient can resume from the preferences page.
+- **On the suppression list:** you cannot remove it yourself. Email [support@lettr.com](mailto:support@lettr.com) with the address and what has changed. Requests are reviewed case by case and aren't guaranteed, and a removal after a spam complaint is unlikely. Details are in [Understanding Suppression Lists](/knowledge-base/fundamentals/suppression-lists#removing-a-suppression).
+
+<Tip>
+  Re-adding someone who unsubscribed, or who complained, without fresh consent is the quickest way to a complaint. Keep proof of the opt-in. See [Unsubscribe Best Practices](/knowledge-base/compliance/unsubscribe-best-practices).
+</Tip>
+
+---
+
+## Quick Diagnosis
+
+<AccordionGroup>
+  <Accordion title="An unsubscribed contact got an API email">
+    Check `options.transactional`. If it was `true` or omitted, unsubscribe entries on the suppression list don't apply, and Audience status is never checked on API sends. Set it to `false` for marketing mail, or send a campaign.
+  </Accordion>
+  <Accordion title="A contact missed a campaign">
+    Check their status and `paused_until` in the Audience. Campaigns skip anyone not `subscribed`, anyone paused, and anyone who left the targeted topic.
+  </Accordion>
+  <Accordion title="An API send shows the recipient in rejected">
+    The address is on the suppression list. Ask Adamko why, and see [Delivery Issues](/knowledge-base/troubleshooting/delivery-issues).
+  </Accordion>
+  <Accordion title="A contact looks fine in Audience but you still see bounces">
+    Contact status and the suppression list are separate. Clean the contact up, and watch your bounce rate. See [List Hygiene](/knowledge-base/best-practices/list-hygiene).
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Understanding Suppression Lists" icon="ban" href="/knowledge-base/fundamentals/suppression-lists">
+    Which events add an address to the suppression list, and how to ask for a removal.
+  </Card>
+  <Card title="Email Preferences Page" icon="sliders" href="/learn/audience/email-preferences">
+    The hosted page behind every campaign unsubscribe link, with topics and pauses.
+  </Card>
+  <Card title="Complaints & Unsubscribes" icon="flag" href="/learn/suppressions/complaints-unsubscribes">
+    Webhook events and handling code for complaints and unsubscribes.
+  </Card>
+  <Card title="Unsubscribe Best Practices" icon="shield-check" href="/knowledge-base/compliance/unsubscribe-best-practices">
+    Legal requirements and honoring opt-outs.
+  </Card>
+</CardGroup>

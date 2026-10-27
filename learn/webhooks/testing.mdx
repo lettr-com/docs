@@ -480,7 +480,9 @@ The Lettr dashboard shows webhook status information:
       await handleWebhook(event);
 
       // Should only have one record
-      const records = await db.deliveries.count({ eventId: event.id });
+      const records = await db.deliveries.count({
+        eventId: Object.values(event.msys)[0].event_id
+      });
       expect(records).toBe(1);
     });
     ```

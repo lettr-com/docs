@@ -32,7 +32,7 @@ await sendEmail({
   from: 'welcome@mail.yourapp.com',
   to: user.email,
   subject: 'Welcome to YourApp — verify your email',
-  tags: ['welcome', 'transactional'],
+  tag: 'welcome',
   // Account verification link, getting started steps
 });
 
@@ -41,11 +41,9 @@ await sendEmail({
   from: 'tips@mail.yourapp.com',
   to: user.email,
   subject: 'Get the most out of YourApp',
-  tags: ['onboarding', 'marketing'],
-  headers: {
-    'List-Unsubscribe': '<https://yourapp.com/unsubscribe?token=xxx>',
-    'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
-  },
+  tag: 'onboarding',
+  // Marketing send: unsubscribe suppression applies
+  options: { transactional: false },
   // Feature tips, tutorials, best practices
 });
 ```
@@ -97,7 +95,7 @@ async function sendOnboardingEmail(user, emailNumber) {
     to: user.email,
     subject: onboardingSubjects[emailNumber],
     html: onboardingTemplates[emailNumber](user),
-    tags: ['onboarding', `onboarding-${emailNumber}`],
+    tag: `onboarding-${emailNumber}`,
   });
 
   scheduleNextEmail(user, emailNumber + 1);
@@ -189,14 +187,14 @@ const response = await fetch('https://app.lettr.com/api/emails', {
   },
   body: JSON.stringify({
     from: 'welcome@mail.yourapp.com',
-    replyTo: 'support@yourapp.com',
+    reply_to: 'support@yourapp.com',
     to: user.email,
     subject: `Welcome to YourApp, ${user.firstName}`,
     html: welcomeEmailHtml,
     text: welcomeEmailText,
-    tags: ['welcome', 'onboarding-1'],
+    tag: 'onboarding-1',
     metadata: {
-      userId: user.id,
+      userId: String(user.id),
       signupSource: user.source,
     },
   }),
@@ -267,7 +265,7 @@ Track these metrics to evaluate your onboarding sequence:
 | **Unsubscribe rate** | If above 1% per email, the content isn't relevant or you're sending too often |
 | **Time to first value** | How quickly users reach their first success — the primary metric to optimize |
 
-Use Lettr webhook events (`email.opened`, `email.clicked`) combined with your product analytics to connect email engagement to product activation.
+Use Lettr webhook events (`engagement.open`, `engagement.click`) combined with your product analytics to connect email engagement to product activation.
 
 ---
 

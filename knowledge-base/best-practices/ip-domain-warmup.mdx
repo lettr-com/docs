@@ -81,10 +81,10 @@ All DNS records must be verified and passing before you send your first warm-up 
 
 <Steps>
   <Step title="Add your sending domain in Lettr">
-    Navigate to **Domains** → **Add Domain** and enter your sending subdomain (e.g., `mail.example.com`).
+    Go to **Domains** → **Sending Domains**, click **New Sending Domain** and enter your sending subdomain (e.g., `mail.example.com`).
   </Step>
   <Step title="Configure DNS records">
-    Add the CNAME and DKIM records shown in your Lettr dashboard to your DNS provider.
+    Add the CNAME and DKIM records shown in your Lettr dashboard to your DNS provider (a root domain uses an SPF record instead of the CNAME).
   </Step>
   <Step title="Set up DMARC">
     Publish a DMARC record for your domain. Start with `p=none` during warm-up so you can monitor without risking rejections.
@@ -100,23 +100,27 @@ Check your metrics in the Lettr dashboard after each warm-up send. Set up webhoo
 
 ```javascript
 app.post('/webhooks/lettr', (req, res) => {
-  const event = req.body;
+  // Lettr delivers webhook events as a JSON array
+  for (const event of req.body) {
+    const data = event.msys?.message_event;
+    if (!data) continue;
 
-  switch (event.type) {
-    case 'email.bounced':
-      logWarmupMetric('bounce', event.data);
-      break;
-    case 'email.complained':
-      logWarmupMetric('complaint', event.data);
-      // Immediately suppress this recipient
-      suppressRecipient(event.data.to, 'spam_complaint');
-      break;
-    case 'email.deferred':
-      logWarmupMetric('deferral', event.data);
-      break;
-    case 'email.delivered':
-      logWarmupMetric('delivered', event.data);
-      break;
+    switch (data.type) {
+      case 'bounce':
+        logWarmupMetric('bounce', data);
+        break;
+      case 'spam_complaint':
+        logWarmupMetric('complaint', data);
+        // Lettr suppresses the address automatically; mirror it in your own list
+        suppressRecipient(data.rcpt_to, 'spam_complaint');
+        break;
+      case 'delay':
+        logWarmupMetric('deferral', data);
+        break;
+      case 'delivery':
+        logWarmupMetric('delivered', data);
+        break;
+    }
   }
 
   res.sendStatus(200);
@@ -133,7 +137,7 @@ Pause your warm-up and investigate immediately if you observe any of these:
 |--------|-----------|--------|
 | Bounce rate | > 5% on any single send | Stop sending. Clean your list before resuming. |
 | Complaint rate | > 0.3% | Stop sending. Review content and targeting. |
-| Deferrals spike | Sudden increase in `email.deferred` events | Reduce volume by 50%. Resume previous volume after deferrals normalize. |
+| Deferrals spike | Sudden increase in `message.delay` events | Reduce volume by 50%. Resume previous volume after deferrals normalize. |
 | Block messages | 421 or 550 responses mentioning reputation | Stop sending to that provider. Wait 24–48 hours before retrying at reduced volume. |
 
 <Warning>
@@ -166,7 +170,7 @@ Microsoft uses SmartScreen filtering and has its own reputation system:
 
 Yahoo was an early adopter of domain-based reputation:
 
-- Yahoo provides feedback loops (FBL) — ensure Lettr is processing these
+- Yahoo provides feedback loops (FBL). Lettr processes these complaints and suppresses the address automatically
 - Yahoo tends to defer rather than block during warm-up, so watch for deferral patterns
 
 ---
@@ -180,7 +184,7 @@ If you're recovering from reputation damage rather than starting fresh, the warm
     Cut sending to 10–20% of your pre-damage volume, or pause entirely for 48 hours.
   </Step>
   <Step title="Identify and fix the root cause">
-    Check webhook logs for `email.bounced`, `email.complained`, and `email.deferred` events. Common causes: stale list, broken authentication, sudden volume spike.
+    Check webhook logs for `message.bounce`, `message.spam_complaint`, and `message.delay` events. Common causes: stale list, broken authentication, sudden volume spike.
   </Step>
   <Step title="Clean your list aggressively">
     Remove all hard bounces, all complainants, and anyone who hasn't engaged in 6 months.
@@ -220,9 +224,6 @@ If you're recovering from reputation damage rather than starting fresh, the warm
 ## Related Topics
 
 <CardGroup cols={2}>
-  <Card title="Sending Reputation" icon="chart-line" href="/knowledge-base/best-practices/sending-reputation">
-    Build and protect your sender reputation over time
-  </Card>
   <Card title="List Hygiene" icon="broom" href="/knowledge-base/best-practices/list-hygiene">
     Maintain clean, engaged recipient lists
   </Card>

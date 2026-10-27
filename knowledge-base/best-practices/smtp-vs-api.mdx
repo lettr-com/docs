@@ -22,14 +22,14 @@ const response = await fetch('https://app.lettr.com/api/emails', {
   },
   body: JSON.stringify({
     from: 'notifications@mail.example.com',
-    to: 'recipient@example.com',
+    to: ['recipient@example.com'],
     subject: 'Your order has shipped',
     html: '<h1>Order #1234 shipped</h1><p>Track your package...</p>'
   })
 });
 
-const data = await response.json();
-console.log(data.id); // Email ID for tracking
+const { data } = await response.json();
+console.log(data.request_id); // Request ID for tracking
 ```
 
 ### SMTP Relay
@@ -40,7 +40,7 @@ Your application connects to Lettr's SMTP server and sends the email using the S
 # Example: Send via SMTP using curl
 curl --url "smtp://smtp.lettr.com:587" \
   --ssl-reqd \
-  --user "api:your-api-key" \
+  --user "lettr:your-api-key" \
   --mail-from "notifications@mail.example.com" \
   --mail-rcpt "recipient@example.com" \
   --upload-file email.eml
@@ -55,7 +55,7 @@ const transporter = nodemailer.createTransport({
   port: 587,
   secure: false, // STARTTLS
   auth: {
-    user: 'api',
+    user: 'lettr',
     pass: 'your-api-key'
   }
 });
@@ -74,13 +74,13 @@ await transporter.sendMail({
 
 | Feature | REST API | SMTP |
 |---------|----------|------|
-| **Template rendering** | Yes — pass template ID and variables in the request | No — you must render the email before sending |
-| **Batch sending** | Yes — send to multiple recipients in one request | No — one connection per message (or per SMTP session) |
-| **Immediate response with email ID** | Yes | No — SMTP returns only a queue acknowledgment |
-| **Metadata and tags** | Yes — include custom metadata in the JSON payload | Limited — use custom headers (X-Lettr-Metadata) |
-| **Scheduled sending** | Yes — set `scheduledAt` in the request | No |
-| **Attachments** | Yes — base64-encoded in JSON | Yes — native MIME attachments |
-| **Idempotency keys** | Yes — via `Idempotency-Key` header | No |
+| **Template rendering** | Yes: pass `template_slug` and `substitution_data` in the request | No: the email must be rendered the email before sending |
+| **Batch sending** | Yes: up to 50 recipients in one request | Yes: up to 50 recipients (`RCPT TO`) per message |
+| **Immediate response with request ID** | Yes | No: SMTP returns only a queue acknowledgment |
+| **Metadata and tags** | Yes: include `metadata` and `tag` in the JSON payload | No: metadata and tags are API-only |
+| **Scheduled sending** | Yes: `POST /emails/scheduled` with `scheduled_at` | No |
+| **Attachments** | Yes: base64-encoded in JSON | Yes: native MIME attachments |
+| **Idempotency keys** | Yes: via `Idempotency-Key` header | No |
 | **Works with legacy systems** | Requires HTTP client support | Works with any SMTP-capable system |
 | **Connection overhead** | New HTTPS connection per request (or connection pooling) | Persistent TCP connection with reuse |
 | **Firewall compatibility** | Port 443 (HTTPS) — rarely blocked | Port 587 — sometimes blocked in hosted environments |
@@ -92,9 +92,9 @@ await transporter.sendMail({
 The API is the recommended method for most use cases. Choose it when:
 
 - **You're building a new integration.** The API provides the richest feature set and the most straightforward developer experience.
-- **You use Lettr templates.** The API lets you pass a template ID and substitution variables — the rendering happens server-side.
-- **You need batch sending.** Send to multiple recipients in a single API call.
-- **You want immediate feedback.** The API response includes the email ID and any validation errors.
+- **Using Lettr templates.** The API accepts a template slug and substitution variables, and the rendering happens server-side.
+- **You need batch sending.** Send to up to 50 recipients in a single API call.
+- **You want immediate feedback.** The API response includes the request ID and any validation errors.
 - **You're in a serverless environment.** Lambda, Cloud Functions, and similar platforms handle HTTP requests natively but may not support long-lived SMTP connections.
 
 <Tip>
@@ -118,11 +118,11 @@ SMTP is the right choice when:
 |---------|-------|
 | Host | `smtp.lettr.com` |
 | Port | `587` (STARTTLS) or `465` (TLS) |
-| Authentication | Username: `api`, Password: your API key |
-| Encryption | Required (TLS or STARTTLS) |
+| Authentication | Username: `lettr`, Password: your API key |
+| Encryption | Use TLS: STARTTLS on 587, implicit TLS on 465 |
 
 <Warning>
-  Never use port 25 for sending through Lettr. Port 25 is unencrypted and is blocked by most cloud providers. Always use port 587 with STARTTLS or port 465 with implicit TLS.
+  Don't use port 25 for sending through Lettr. Most cloud providers and ISPs block outbound port 25, so connections often fail. Use port 587 with STARTTLS or port 465 with implicit TLS, and always enable TLS in your client: your API key is the SMTP password.
 </Warning>
 
 ---
@@ -134,32 +134,32 @@ SMTP is the right choice when:
 The REST API generally achieves higher throughput because:
 
 - JSON payloads are smaller than full MIME messages
-- Batch endpoints let you send multiple emails per request
+- Each request can carry up to 50 recipients
 - HTTP/2 connection multiplexing reduces overhead
 
 SMTP throughput can be improved by reusing connections (sending multiple messages per session), but it still involves more protocol overhead per message (EHLO, AUTH, MAIL FROM, RCPT TO, DATA, QUIT).
 
 ### Latency
 
-For a single email, the difference is negligible — both methods typically complete in under 200ms. For high-volume sending, the API's batch endpoint reduces the number of round trips.
+For a single email, the difference is negligible, as both methods typically complete in under 200ms. For high-volume sending, putting up to 50 recipients in each API request reduces the number of round trips.
 
 ### Error Handling
 
 | Scenario | REST API | SMTP |
 |----------|----------|------|
-| Invalid recipient | Immediate 422 response with error details | 550 response during RCPT TO command |
-| Rate limited | 429 response with Retry-After header | 421 response with retry guidance |
+| Invalid recipient | Immediate 422 response with error details | 451 temporary failure after `DATA`, naming the API's HTTP status |
+| Rate limited | 429 response with Retry-After header | 451 temporary failure after `DATA` |
 | Server error | 500 response | 451 temporary failure code |
-| Authentication failure | 401 response | 535 authentication failed |
+| Authentication failure | 401 response | 535 authentication failed (421 after repeated failures) |
 
 The API provides structured JSON errors that are easier to parse programmatically:
 
 ```json
 {
-  "error": {
-    "code": "validation_error",
-    "message": "The 'to' field must be a valid email address",
-    "field": "to"
+  "message": "Validation failed.",
+  "error_code": "validation_error",
+  "errors": {
+    "to.0": ["The to.0 field must be a valid email address."]
   }
 }
 ```
@@ -167,7 +167,7 @@ The API provides structured JSON errors that are easier to parse programmaticall
 SMTP errors are text-based status codes that require parsing:
 
 ```
-550 5.1.1 <invalid@example.com>: Recipient address rejected
+451 4.7.1 Temporary error forwarding message: API error: API returned status 422
 ```
 
 ---

@@ -6,7 +6,7 @@ description: "Seven worked examples of solving everyday email problems with Adam
 The [AI Assistant section](/learn/ai-assistant/introduction) explains what Adamko can do feature by feature. This article shows the same abilities the way you'll actually meet them: as everyday situations. Each scenario gives you the situation, what to type, and what happens — copy the prompts and adapt them.
 
 <Note>
-  Adamko is rolling out gradually and may not be enabled in your account yet. If you don't see the **Ask Adamko** button, these workflows will become available when he reaches your team.
+  Adamko is available to every team. Open him with the **Ask Adamko** button in your dashboard.
 </Note>
 
 ## 1. Launch Day: From Empty Account to First Email
@@ -33,7 +33,7 @@ Total time in Lettr: about ten minutes, most of it at your DNS provider.
 
 > This address hard-bounced 12 days ago ("550 5.1.1 user unknown") and was automatically suppressed. All sends since were skipped before reaching the mail server.
 
-Now you know the fix and the conversation to have: the customer's address was mistyped or their mailbox was full/deleted at some point. If the address is actually valid, remove it from [suppressions](/learn/suppressions/introduction) and have them retry. Follow-up prompts that pay off: *"is anyone else at bigcorp.example suppressed?"* and *"show me all hard bounces this week."*
+Now you know the fix and the conversation to have: the customer's address was mistyped or their mailbox was full/deleted at some point. If the address is actually valid, ask [support@lettr.com](mailto:support@lettr.com) to lift the suppression (see [Removing a suppression](/knowledge-base/fundamentals/suppression-lists#removing-a-suppression)) and have them retry. Follow-up prompts that pay off: *"is anyone else at bigcorp.example suppressed?"* and *"show me all hard bounces this week."*
 
 <Tip>
   Ask soon after the incident — detailed event data is retained for a limited window, and Adamko will tell you if the evidence has already aged out.
@@ -50,9 +50,9 @@ Now you know the fix and the conversation to have: the customer's address was mi
 **What happens:** Adamko runs live DNS lookups and compares each record against what Lettr expects — not what your registrar's UI shows, but what the internet actually resolves. The usual culprits he catches:
 
 - The record was added at `notify.acme.io.acme.io` because the registrar auto-appends the domain
-- The tracking CNAME is **proxied** through Cloudflare (orange cloud) when it must be DNS-only
+- The bounce CNAME is **proxied** through Cloudflare (orange cloud) when it must be DNS-only
 - Two SPF records exist, which invalidates both
-- The DMARC record sits at the subdomain instead of the organizational domain
+- The DMARC record sits at the domain itself instead of at the `_dmarc` host
 
 Each finding comes as a verdict with the expected value, the found value, and the fix. Click **Guide me** and he walks you through the domain page highlighting each record as you correct it. When the last lookup returns clean, he confirms the domain is verified — he never claims verification without a live check.
 

@@ -18,10 +18,10 @@ When emails are not reaching your recipients, work through the steps below to id
     Open the [Domains page](https://app.lettr.com/domains) in the Lettr dashboard. Your sending domain must show a status of **approved** and all DNS records must be **valid**. If anything shows `pending`, `unverified`, or `invalid`, resolve that first.
   </Step>
   <Step title="Check the suppression list">
-    Navigate to **Suppressions** in the dashboard and search for the recipient address. If the address appears on the list, it was suppressed due to a previous bounce or complaint and Lettr will not attempt delivery.
+    Ask [Adamko](/learn/ai-assistant/troubleshooting-and-diagnostics) whether the recipient address is suppressed, or search for it on the **Events** page and look for an earlier bounce or spam complaint. If the address is suppressed, Lettr will not attempt delivery.
   </Step>
   <Step title="Check the email status">
-    Go to **Emails** in the dashboard and locate the specific message. The status and any error details will tell you whether the email was accepted, bounced, or failed to send.
+    Go to **Events** in the dashboard and search for the recipient address. The event history and any error details will tell you whether the email was accepted, delivered, bounced, or failed to send.
   </Step>
   <Step title="Review bounce messages">
     If the email bounced, expand the event details in the dashboard to see the SMTP response code and message returned by the recipient server. These codes are explained further below.
@@ -34,14 +34,14 @@ When emails are not reaching your recipients, work through the steps below to id
 
 <AccordionGroup>
   <Accordion title="Domain Not Verified">
-    Lettr requires a verified sending domain before it will transmit any email. If your domain status is `pending` or DNS records show `unverified` / `invalid`, emails will fail with an `unconfigured_domain` or `invalid_domain` error.
+    Lettr requires a verified sending domain before it will transmit any email. If your domain status is `pending` or DNS records show `unverified` / `invalid`, emails will fail with an `unconfigured_domain` error.
 
     **To fix this:**
 
     1. Open the [Domains page](https://app.lettr.com/domains) in the dashboard.
-    2. Click on the domain in question and review the required DNS records (SPF, DKIM, DMARC).
+    2. Click on the domain in question and review the required DNS records (DKIM and DMARC, plus SPF for a root domain or a CNAME for a subdomain).
     3. Add or correct the records with your DNS provider.
-    4. Click **Verify** in the dashboard, or trigger verification via the API:
+    4. Click **Verify DNS Records** in the dashboard, or trigger verification via the API:
 
     ```bash
     curl -X POST https://app.lettr.com/api/domains/yourdomain.com/verify \
@@ -61,12 +61,12 @@ When emails are not reaching your recipients, work through the steps below to id
   </Accordion>
 
   <Accordion title="Recipient Suppressed">
-    If a recipient previously hard-bounced or filed a spam complaint, Lettr automatically adds them to your suppression list. Any future sends to that address will be silently blocked.
+    If a recipient hard-bounced or filed a spam complaint, the address is added to your suppression list, and later sends to it are rejected and counted in the `rejected` total of the API response. Unsubscribes work differently: a campaign unsubscribe only changes the contact's status, and an unsubscribe entry on the suppression list only blocks sends with `transactional: false`. See [Unsubscribes, Pauses and Suppressions](/knowledge-base/fundamentals/unsubscribe-vs-suppression).
 
-    Suppressions are managed entirely through the dashboard — there is no API endpoint for suppressions. Navigate to **Suppressions**, search for the address, and remove it if you believe the issue has been resolved.
+    There is no suppressions page in the dashboard and no API endpoint for suppressions. To check an address, ask [Adamko](/learn/ai-assistant/troubleshooting-and-diagnostics) *"is jane@acme.com suppressed?"*, and he reports why and when it was suppressed. A suppression can't be lifted from the dashboard or API. If the original reason no longer applies (the recipient re-opted in, or you fixed the cause of a hard bounce and confirmed the mailbox is valid), email [support@lettr.com](mailto:support@lettr.com) with the address and what has changed. Removal is reviewed case by case and is unlikely for spam complaints.
 
     <Warning>
-      Repeatedly sending to addresses that have hard-bounced damages your sender reputation. Only remove a suppression if you have confirmed the mailbox is valid again.
+      Repeatedly sending to addresses that have hard-bounced damages your sender reputation. Only ask for a suppression to be lifted if you have confirmed the mailbox is valid again.
     </Warning>
 
     See [Bounce Suppressions](/learn/suppressions/bounces) for more detail on how Lettr handles suppression rules.
@@ -92,8 +92,8 @@ When emails are not reaching your recipients, work through the steps below to id
     | Error Code | HTTP Status | Meaning |
     |---|---|---|
     | `validation_error` | 422 | The `from` field is missing or malformed. |
-    | `invalid_domain` | 400 | The domain in the `from` address is not recognized. |
-    | `unconfigured_domain` | 400 | The domain exists but DNS is not properly configured. |
+    | `invalid_domain` | 400 | The sender domain could not be determined from the `from` address. |
+    | `unconfigured_domain` | 400 | The domain isn't added to your team, isn't approved, or its DNS records aren't all valid. |
 
     Make sure your `from` address matches a domain with **approved** status and **valid** DNS in the dashboard.
   </Accordion>
@@ -103,12 +103,12 @@ When emails are not reaching your recipients, work through the steps below to id
 
 ## Checking Email Status
 
-The fastest way to check the status of a specific email is through the **Emails** section of the Lettr dashboard, where you can search by recipient, subject, or request ID.
+The fastest way to check the status of a specific email is through the **Events** section of the Lettr dashboard, where you can search by recipient address and open the full event history of each message.
 
-You can also retrieve an email by its ID through the API:
+An email can also be retrieved by the request ID returned when it was sent:
 
 ```bash
-curl https://app.lettr.com/api/emails/{id} \
+curl https://app.lettr.com/api/emails/{requestId} \
   -H "Authorization: Bearer lttr_xxxxxxxxxxxx"
 ```
 
@@ -118,7 +118,7 @@ The response will include the current delivery status and any error information 
 
 ## Reading Bounce Messages
 
-When a recipient server rejects an email, it returns an SMTP status code. Lettr surfaces these codes in the dashboard and through the `email.bounced` webhook event. Here are the most common codes and what to do about them:
+When a recipient server rejects an email, it returns an SMTP status code. Lettr surfaces these codes in the dashboard and through the `message.bounce` webhook event. Here are the most common codes and what to do about them:
 
 | SMTP Code | Meaning | Action |
 |---|---|---|
@@ -127,7 +127,7 @@ When a recipient server rejects an email, it returns an SMTP status code. Lettr 
 | `452 4.2.2` | Mailbox full. | This is a soft bounce. Lettr will retry automatically. If it persists, the recipient may have abandoned the mailbox. |
 | `421 4.7.0` | Temporary rate limit from the recipient server. | No action needed. Lettr will retry delivery. If the problem persists across many recipients at the same domain, slow your sending rate. |
 
-You can handle bounces programmatically using webhooks. The `email.bounced` event includes the bounce type and SMTP details:
+Bounces can be handled programmatically using webhooks. The `message.bounce` event includes the bounce class and SMTP details:
 
 ```javascript
 const express = require("express");
@@ -136,17 +136,19 @@ const app = express();
 app.use(express.json());
 
 app.post("/webhooks/lettr", (req, res) => {
-  const { type, data } = req.body;
+  // Lettr delivers events in batches, as an array
+  for (const event of req.body) {
+    const data = event.msys?.message_event;
 
-  if (type === "email.bounced") {
-    console.log(`Bounce for ${data.to}`);
-    console.log(`Type: ${data.bounceType}`);       // "hard" or "soft"
-    console.log(`Category: ${data.bounceCategory}`);
-    console.log(`Code: ${data.bounceCode}`);
-    console.log(`Message: ${data.message}`);
+    if (data?.type === "bounce") {
+      console.log(`Bounce for ${data.rcpt_to}`);
+      console.log(`Class: ${data.bounce_class}`);  // 10, 30, 90 = hard
+      console.log(`Code: ${data.error_code}`);
+      console.log(`Message: ${data.raw_reason}`);
 
-    if (data.bounceType === "hard") {
-      // Remove address from your mailing list
+      if (["10", "30", "90"].includes(data.bounce_class)) {
+        // Remove address from your mailing list
+      }
     }
   }
 
@@ -198,5 +200,8 @@ If you have worked through the steps above and emails are still not being delive
   </Card>
   <Card title="Domains" icon="globe" href="/learn/domains/introduction">
     Set up and verify your sending domains.
+  </Card>
+  <Card title="Campaign Reached Fewer Contacts" icon="users" href="/knowledge-base/troubleshooting/campaign-recipient-count">
+    Why a campaign reaches fewer contacts than your list size.
   </Card>
 </CardGroup>

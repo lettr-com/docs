@@ -1,0 +1,175 @@
+---
+title: "Campaign Reached Fewer Contacts Than Expected"
+description: "Why a Lettr campaign reaches fewer contacts than your list size: contact status, pauses, topic opt-outs, mid-send changes and suppressed addresses"
+---
+
+A campaign can show fewer recipients than the list it targets, or finish with fewer sends than its Recipients total. In most cases nothing is broken. Lettr only emails contacts who currently consent, and several rules can remove a contact between the audience selection and the send. This guide explains each rule in the order they apply and how to find which one affected a campaign.
+
+---
+
+## How Lettr Counts Recipients
+
+A campaign goes through three filters before an email leaves. Each one removes contacts for a different reason.
+
+<Steps>
+  <Step title="Recipients are resolved when the campaign is prepared">
+    When the campaign is sent (or a scheduled campaign fires), it enters **Preparing** and Lettr builds the recipient list from your audience selection. Only contacts with status `subscribed` who are not paused are included, and if the campaign targets a [topic](/learn/audience/topics), only contacts subscribed to that topic. The resulting number is the campaign's **Recipients** total.
+  </Step>
+  <Step title="Consent is re-checked for every batch">
+    Emails go out in batches, and a large send can take a while. Before each batch, Lettr checks every pending recipient again: the contact must still be `subscribed`, not paused, and (for topic campaigns) still in the topic. Anyone who opted out, paused, or left the topic since the list was built is dropped from that batch.
+  </Step>
+  <Step title="The delivery infrastructure applies its suppression list">
+    Separately from contact status, SparkPost does not deliver to addresses on your suppression list, so a suppressed address never gets the email and never produces a delivery event, even though the contact in your audience may still say `subscribed`. See [Suppressed Addresses](#suppressed-addresses) below.
+  </Step>
+</Steps>
+
+<Note>
+  The Recipients total is fixed when the campaign is prepared. Contacts dropped by the per-batch re-check do not lower it, which is why a finished campaign can show fewer sends than recipients.
+</Note>
+
+---
+
+## Cause 1: Contact Status
+
+Only `subscribed` contacts receive campaigns. This applies even when you choose **All contacts**, a list or a segment.
+
+| Status | Receives campaigns? | Typical reason |
+|-|-|-|
+| `subscribed` | Yes | Eligible |
+| `unsubscribed` | No | The contact opted out |
+| `bounced` | No | A previous email hard bounced |
+| `complained` | No | The contact marked a previous email as spam |
+| `unverified` | No | The contact hasn't confirmed [double opt-in](/learn/audience/double-opt-in) |
+
+**How to check:** open the list or the Audiences page and filter by status. The difference between the list size and the number of `subscribed` contacts is usually most of the gap.
+
+---
+
+## Cause 2: Paused Contacts
+
+A recipient can pause marketing email for 30, 60 or 90 days from the [preferences page](/learn/audience/email-preferences). A paused contact stays `subscribed`, so they look eligible in the status filter, but campaigns skip them until the pause ends.
+
+**How to check:** in Audiences, use the **Paused** filter. Paused contacts also carry a violet **Paused** badge with the end date, and exports and the API include a `paused_until` value.
+
+<Note>
+  Pauses are set by recipients only. Neither the app nor the API can create or edit one, and the pause expires on its own, so there is nothing to fix on the sender's side. A contact whose pause ends after the campaign finishes is not sent that campaign afterwards.
+</Note>
+
+---
+
+## Cause 3: Topic Opt-Outs
+
+If the campaign targets a topic, only contacts subscribed to that topic are included. A contact who unticked the topic on the preferences page stays `subscribed` overall but no longer receives campaigns for that topic.
+
+**How to check:** open the **Topics** page and compare the topic's **Subscribers** figure with the list you expected. See [Topics](/learn/audience/topics) for how subscriptions are managed.
+
+---
+
+## Cause 4: Changes While the Campaign Is Sending
+
+Recipients are fixed when the campaign is prepared, but their consent is not. On a large send, hours can pass between the first and last batch. A contact who unsubscribes, pauses or leaves the topic in that window is left out of the next batch.
+
+Lettr marks these recipients as `skipped`. A skipped recipient was deliberately not emailed, and it is final: it stays skipped even if the pause ends later or the contact resubscribes. Once all batches finish, any recipient who was never sent to because of the consent re-check is closed out as `skipped`.
+
+| Recipient state | Meaning |
+|-|-|
+| `pending` | Resolved, not sent yet |
+| `sent` | Accepted for delivery |
+| `failed` | The batch could not be delivered |
+| `skipped` | Dropped by the consent re-check before sending |
+
+<Warning>
+  The campaign page does not show a skipped count. It shows the **Recipients** total, a sent-over-total progress figure only while the campaign is sending, and the campaign stats once it has finished. For a final comparison, use the campaign stats, the Events page, or the API `sent_count` against `total_recipients`; the difference is contacts that were skipped or failed.
+</Warning>
+
+The same gap appears over the API, where the campaign object carries `total_recipients` and `sent_count`.
+
+```bash
+curl -X GET https://app.lettr.com/api/campaigns \
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxx"
+```
+
+Compare `total_recipients` with `sent_count` for the campaign in question.
+
+---
+
+## Suppressed Addresses
+
+Suppression is a different mechanism from contact status, and the two don't always agree.
+
+- **Contact status** is a field in your Lettr audience. It is what the campaign recipient filter reads.
+- **The suppression list** is the delivery infrastructure's list of addresses it will not send to: hard bounces, spam complaints and unsubscribes recorded on that side. See [Suppression Lists](/knowledge-base/fundamentals/suppression-lists).
+
+An address can be on the suppression list while the contact is still `subscribed` in your audience. Lettr's campaign recipient filter does not read the suppression list, so such a contact is counted as a recipient and passed on for delivery, where SparkPost does not deliver to the suppressed address. The contact does not receive the email.
+
+The reverse also holds. Unsubscribing a contact in Lettr's audience updates only their contact record. It does not add the address to the suppression list.
+
+<Info>
+  In practice the two usually line up: a hard bounce or spam complaint normally also turns the contact into `bounced` or `complained`, which removes them at step 1. The mismatch shows up for older contacts, imported lists, or addresses that were suppressed through other sending (for example, transactional email to the same address).
+</Info>
+
+**How to check:** open the Events page and search for the address. Ask [Adamko](/learn/ai-assistant/troubleshooting-and-diagnostics) *"is jane@acme.com suppressed?"* to see whether the address is on the suppression list and why. Lettr has no separate Suppressions page in the app.
+
+<Warning>
+  Don't try to push a suppressed address through by re-sending. A suppressed address was added because earlier mail failed permanently, or the person complained or opted out. Fix the cause (a typo, a closed mailbox, a lost consent) rather than the symptom.
+</Warning>
+
+---
+
+## Diagnosing Your Campaign
+
+<Steps>
+  <Step title="Read the numbers">
+    Note **Recipients** on the campaign page. Compare it with the list or segment size you expected. A gap before sending is causes 1 to 3. A gap between Recipients and the final sent figure (from the campaign stats, Events or the API `sent_count`) is cause 4, a failed batch, or suppression.
+  </Step>
+  <Step title="Break the audience down by status">
+    Filter the list by status and by **Paused**. Add up `unsubscribed`, `bounced`, `complained`, `unverified` and paused contacts. For a topic campaign, also compare topic subscribers with list members.
+  </Step>
+  <Step title="Check the live estimate next time">
+    The Audience step of the campaign builder shows a live recipient estimate using the same resolution logic as a real send. An estimate lower than expected means the reason is one of causes 1 to 3.
+  </Step>
+  <Step title="Look up specific missing contacts">
+    For a named contact, open their record and check status, **Paused** badge and topics. If all three are fine, search Events for the address and check for suppression.
+  </Step>
+</Steps>
+
+---
+
+## Common Questions
+
+<AccordionGroup>
+  <Accordion title="The estimate was higher than the final Recipients total">
+    The estimate is computed live. Between the estimate and the moment the campaign is prepared, contacts may have unsubscribed, paused or changed segment membership. Segments are re-evaluated at send time, so the final total reflects the audience at that moment.
+  </Accordion>
+  <Accordion title="Can I send to the skipped contacts afterwards?">
+    Only if they are consenting again. Skipped contacts were removed because they withdrew consent, so don't email them. If a paused contact returns when the pause ends, include them in your next campaign.
+  </Accordion>
+  <Accordion title="Can I exclude a list from a campaign?">
+    Lettr has no exclusion control in the audience builder. Build a [segment](/learn/audience/segments) such as "in List A and not in List B" instead.
+  </Accordion>
+  <Accordion title="Why did my campaign fail immediately?">
+    If no contact matches the audience selection when the campaign is prepared, the campaign has no one to send to and fails. Check statuses and the audience selection.
+  </Accordion>
+  <Accordion title="Sent equals Recipients, but deliveries are lower">
+    Sent means the message was accepted for delivery. Bounces, deferrals and suppressed addresses reduce deliveries afterwards. See [Bounce Diagnosis](/knowledge-base/troubleshooting/bounce-diagnosis) and [Delivery Issues](/knowledge-base/troubleshooting/delivery-issues).
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Audience Selection" icon="users" href="/learn/campaigns/audience-selection">
+    How campaign recipients are chosen and filtered.
+  </Card>
+  <Card title="Sending & Scheduling" icon="paper-plane" href="/learn/campaigns/sending-and-scheduling">
+    Campaign states and how batches are sent.
+  </Card>
+  <Card title="Email Preferences" icon="sliders" href="/learn/audience/email-preferences">
+    Topics, pauses and unsubscribes on the recipient side.
+  </Card>
+  <Card title="Understanding Suppression Lists" icon="ban" href="/knowledge-base/fundamentals/suppression-lists">
+    What the suppression list is and what adds to it.
+  </Card>
+</CardGroup>

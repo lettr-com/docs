@@ -291,15 +291,18 @@ Failures after the API accepts an email never surface in the send response. A we
 
 ```javascript
 app.post('/webhooks/lettr', (req, res) => {
-  const event = req.body;
+  // The body is a JSON array; each item is { msys: { <category>: { type, ... } } }
+  for (const item of req.body) {
+    const event = Object.values(item.msys)[0];
 
-  if (event.type === 'generation.generation_failure' || event.type === 'message.bounce') {
-    alertTeam({
-      type: event.type,
-      email_id: event.data.email_id,
-      recipient: event.data.to,
-      error: event.data.error_message
-    });
+    if (event.type === 'generation_failure' || event.type === 'bounce') {
+      alertTeam({
+        type: event.type,
+        email_id: event.message_id,
+        recipient: event.rcpt_to,
+        error: event.raw_reason
+      });
+    }
   }
 
   res.sendStatus(200);

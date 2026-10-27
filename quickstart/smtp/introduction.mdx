@@ -83,7 +83,7 @@ The port you choose determines the security protocol for your SMTP connection:
 | SMTPS    | `465`, `2465`    | Implicit TLS — establishes a secure connection immediately               |
 | STARTTLS | `25`, `587`, `2587` | Explicit TLS — starts unencrypted, then upgrades to a secure connection |
 
-We recommend using **port 465** with implicit TLS for the best security and compatibility. Port 587 with STARTTLS is also widely supported.
+We recommend **port 587** with STARTTLS, the most widely supported option. Use **port 465** if your client supports implicit TLS.
 
 <Tip>
   If you're behind a restrictive firewall, port `2465` and `2587` are alternate ports that often work when standard ports are blocked.
@@ -224,6 +224,7 @@ Choose your framework or library for specific setup instructions:
     - Ensure you're using the correct encryption setting for your port (implicit TLS for 465, STARTTLS for 587)
     - Update your TLS/SSL libraries if you're using older versions
     - Some older SMTP clients may not support modern TLS versions — consider upgrading or using the HTTP API instead
+    - For background on TLS between mail servers, see [Email in Transit: STARTTLS, MTA-STS, and TLS-RPT](/knowledge-base/fundamentals/email-transport-security)
   </Accordion>
 </AccordionGroup>
 

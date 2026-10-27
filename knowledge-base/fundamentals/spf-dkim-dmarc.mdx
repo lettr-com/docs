@@ -25,24 +25,27 @@ SPF lets you declare which mail servers are allowed to send email on behalf of y
 A typical SPF record looks like this:
 
 ```
-v=spf1 include:sparkpostmail.com ~all
+v=spf1 include:_spf.sparkpostmail.com ~all
 ```
 
-- `v=spf1` — identifies this as an SPF record
-- `include:sparkpostmail.com` — authorizes all servers listed in sparkpostmail.com's own SPF record (this is how Lettr's infrastructure is authorized)
-- `~all` — soft-fail any server not on the list (meaning treat it as suspicious but don't outright reject)
+- `v=spf1`: identifies this as an SPF record
+- `include:_spf.sparkpostmail.com`: authorizes all servers listed in that domain's own SPF record (this is how Lettr's infrastructure is authorized)
+- `~all`: soft-fail any server not on the list (meaning treat it as suspicious but don't outright reject)
 
 ### How Lettr Handles SPF
 
-When you add a sending domain in Lettr, you configure a **CNAME record** that delegates SPF verification to Lettr's infrastructure. This approach means you don't need to manually manage IP addresses — Lettr's CNAME points to `sparkpostmail.com`, which maintains the authoritative SPF record for all sending IPs.
+What you publish depends on whether your sending domain is a subdomain or a root domain:
+
+- **Subdomain** (e.g., `mail.yourdomain.com`): add a **CNAME record** pointing the subdomain to `sparkpostmail.com`, which maintains the authoritative SPF record for Lettr's sending IPs. No IP addresses or SPF TXT record need to be managed for the subdomain.
+- **Root domain** (e.g., `yourdomain.com`): DNS doesn't allow a CNAME at the zone apex, so Lettr checks your SPF TXT record instead. It must contain `include:_spf.sparkpostmail.com`.
 
 <Note>
-  You do not need to create a separate SPF TXT record for Lettr. The CNAME record handles this automatically. If you already have an SPF record for other services, the CNAME delegation works alongside it without conflict.
+  If your root domain already has an SPF record for other services, add `include:_spf.sparkpostmail.com` to that record rather than creating a second one. A subdomain's CNAME doesn't touch the root domain's SPF record at all.
 </Note>
 
 ### Limitations
 
-SPF has one well-known weakness: **it breaks when emails are forwarded.** When a server forwards your email, the forwarding server's IP address is what the next receiver sees — and that IP won't be in your SPF record. This is one of the reasons SPF alone isn't enough, and why DKIM and DMARC exist.
+SPF has one well-known weakness: **it breaks when emails are forwarded.** When a server forwards your email, the forwarding server's IP address is what the next receiver sees, and that IP won't be in your SPF record. This is one of the reasons SPF alone isn't enough, and why DKIM and DMARC exist. See [Forwarding, SRS, and ARC](/knowledge-base/fundamentals/forwarding-arc) for how this is repaired.
 
 ---
 
@@ -200,12 +203,12 @@ This is why configuring both SPF and DKIM is recommended — if one fails (for e
     A domain can only have **one** SPF TXT record. If you add a second one (for example, when configuring a new email service), DNS lookups will return both and SPF validation may fail. Instead, merge all your authorized senders into a single SPF record using multiple `include:` directives:
 
     ```
-    v=spf1 include:sparkpostmail.com include:_spf.google.com ~all
+    v=spf1 include:_spf.sparkpostmail.com include:_spf.google.com ~all
     ```
   </Accordion>
 
   <Accordion title="Using a DKIM key that is too short">
-    DKIM keys should be at least **1024 bits**, and **2048 bits** is the recommended standard. Keys shorter than 1024 bits are considered insecure and may be rejected by some receiving servers. Lettr provides a 2048-bit key by default when you add a sending domain.
+    DKIM keys should be at least **1024 bits**, and **2048 bits** is the recommended standard. Keys shorter than 1024 bits are considered insecure and may be rejected by some receiving servers. Lettr generates the key pair for you when you add a sending domain.
   </Accordion>
 
   <Accordion title="Starting with DMARC p=reject">
@@ -229,10 +232,10 @@ Use these commands to verify your DNS records are published correctly.
 dig TXT yourdomain.com | grep spf
 ```
 
-Or check the CNAME record Lettr uses:
+For a subdomain, check the CNAME record Lettr uses instead:
 
 ```bash
-dig CNAME yourdomain.com
+dig CNAME mail.yourdomain.com
 ```
 
 ### Check DKIM

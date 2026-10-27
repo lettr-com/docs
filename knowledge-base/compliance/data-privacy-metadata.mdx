@@ -21,7 +21,7 @@ Every email sent through Lettr results in the following data being stored:
 | Delivery events | Timestamps for injection, delivery, bounces, opens, clicks, and other events |
 | Tracking data | Open and click tracking information when enabled |
 
-This data is visible in the Lettr dashboard under your email history and is used for analytics, debugging, and webhook delivery.
+Apart from the email content, this data is visible on the **Events** page of the Lettr dashboard and is used for analytics, debugging, and webhook delivery.
 
 ---
 
@@ -38,7 +38,7 @@ Custom key-value pairs passed alongside the email for **your** tracking purposes
 Template variables that are rendered **into** the email content. These are used for personalization — things like the recipient's name, order details, or any dynamic content in your template.
 
 <Note>
-  Both `metadata` and `substitution_data` are stored by Lettr and visible in the dashboard. Treat both as data that will be persisted and accessible to your team members with dashboard access.
+  `metadata` is stored with your email events and visible in the dashboard, and `substitution_data` becomes part of the email content you send. Treat both as data that will be persisted and accessible to others, including your team members with dashboard access.
 </Note>
 
 ---
@@ -66,13 +66,13 @@ Use opaque identifiers in metadata instead of personally identifiable informatio
 ```bash
 # Bad — PII in metadata
 curl -X POST https://app.lettr.com/api/emails \
-  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxx" \
   -H "Content-Type: application/json" \
   -d '{
     "from": "orders@shop.com",
     "to": "customer@example.com",
     "subject": "Your order confirmation",
-    "template_id": "order-confirmation",
+    "template_slug": "order-confirmation",
     "metadata": {
       "customer_name": "Jane Smith",
       "customer_email": "jane.smith@example.com",
@@ -82,13 +82,13 @@ curl -X POST https://app.lettr.com/api/emails \
 
 # Good — opaque identifiers only
 curl -X POST https://app.lettr.com/api/emails \
-  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Authorization: Bearer lttr_xxxxxxxxxxxx" \
   -H "Content-Type: application/json" \
   -d '{
     "from": "orders@shop.com",
     "to": "customer@example.com",
     "subject": "Your order confirmation",
-    "template_id": "order-confirmation",
+    "template_slug": "order-confirmation",
     "metadata": {
       "user_id": "usr_8a3f2b",
       "order_id": "ord_19x7k4",
@@ -114,14 +114,14 @@ Do not pass sensitive data through `substitution_data` that should not appear in
 const response = await fetch("https://app.lettr.com/api/emails", {
   method: "POST",
   headers: {
-    "Authorization": "Bearer YOUR_API_KEY",
+    "Authorization": "Bearer lttr_xxxxxxxxxxxx",
     "Content-Type": "application/json",
   },
   body: JSON.stringify({
     from: "support@yourapp.com",
     to: "user@example.com",
     subject: "Your password reset request",
-    template_id: "password-reset",
+    template_slug: "password-reset",
     substitution_data: {
       first_name: "Jane",
       reset_link: "https://yourapp.com/reset?token=abc123",
@@ -143,9 +143,9 @@ const response = await fetch("https://app.lettr.com/api/emails", {
 
 ## Email Content Considerations
 
-Email content — the full HTML or text body — is stored by Lettr to support delivery history and debugging. Keep this in mind when building your templates:
+Email content (the full HTML or text body) is processed by Lettr for delivery and then stays in the recipient's mailbox. Keep this in mind when building your templates:
 
-- **Do not embed sensitive data in HTML** that you would not want stored or visible in the dashboard.
+- **Do not embed sensitive data in HTML** that you would not want stored or visible to anyone who sees the email.
 - **Use secure links** for sensitive actions like password resets and account verification instead of embedding sensitive data directly in the email body.
 - **Avoid including full account details** in transactional emails. Show partial or masked information (e.g., "card ending in 4242") rather than complete values.
 

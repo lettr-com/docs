@@ -90,7 +90,7 @@ CAN-SPAM applies to any sender of **"commercial electronic mail messages"** — 
     ```
 
     <Tip>
-      Lettr handles unsubscribe processing automatically when you use the `data-msys-unsubscribe="1"` attribute on your unsubscribe link. The recipient is added to your suppression list and no further action is needed on your part.
+      Lettr handles the click automatically when your unsubscribe link has the `data-msys-unsubscribe="1"` attribute: it records the unsubscribe and fires an `unsubscribe.link_unsubscribe` webhook. The entry only blocks later sends that use `transactional: false`, so keep your own do-not-email record as well.
     </Tip>
   </Step>
 
@@ -98,7 +98,7 @@ CAN-SPAM applies to any sender of **"commercial electronic mail messages"** — 
     Once a recipient opts out, you must stop sending them commercial email within **10 business days**. You cannot charge a fee, require any information beyond an email address, or make the recipient take any step other than sending a reply email or visiting a single web page.
 
     <Note>
-      When using Lettr's built-in unsubscribe mechanism, opt-outs are processed **immediately** — well within the 10-business-day requirement. You can monitor unsubscribe activity through the `unsubscribe` webhook event.
+      When using Lettr's built-in unsubscribe mechanism, opt-outs are processed **immediately**, well within the 10-business-day requirement. Unsubscribe activity is available through the `unsubscribe.link_unsubscribe` webhook event.
     </Note>
   </Step>
 
@@ -172,8 +172,8 @@ Use the `data-msys-unsubscribe="1"` attribute on any link to enable Lettr's auto
 
 When a recipient clicks this link, Lettr will:
 1. Add the recipient to your suppression list
-2. Fire an `unsubscribe` webhook event
-3. Prevent future emails from being delivered to that address
+2. Fire an `unsubscribe.link_unsubscribe` webhook event
+3. Block later sends to that address that use `transactional: false`
 
 ### Accurate From Address
 
@@ -197,7 +197,7 @@ Use Lettr's template variables to create dynamic but accurate subject lines:
 ## Penalties
 
 <Warning>
-  Violations of the CAN-SPAM Act can result in fines of up to **$50,120 per email** per violation. Both the sender and the company whose product is promoted can be held liable. In severe cases, criminal penalties including imprisonment may apply.
+  Violations of the CAN-SPAM Act can result in fines of up to **$53,088 per email** per violation (the 2025 inflation-adjusted amount, which the FTC raises each year). Both the sender and the company whose product is promoted can be held liable. In severe cases, criminal penalties including imprisonment may apply.
 </Warning>
 
 Multiple parties can be held responsible for a single violation:
@@ -245,7 +245,7 @@ If you send email to recipients in both the US and the EU/EEA, you need to under
 | **Consent standard** | No prior consent required for commercial email | Freely given, specific, informed, and unambiguous consent required |
 | **Unsubscribe requirement** | Must provide opt-out mechanism in every email | Must provide opt-out, and consent must be as easy to withdraw as to give |
 | **Record keeping** | No specific consent record requirements | Must maintain records proving valid consent |
-| **Maximum penalties** | Up to $50,120 per violation per email | Up to 4% of annual global turnover or €20 million |
+| **Maximum penalties** | Up to $53,088 per violation per email (2025 amount) | Up to 4% of annual global turnover or €20 million |
 
 <Tip>
   If you send to both US and EU audiences, the simplest approach is to comply with GDPR for all recipients, since its requirements are stricter and encompass CAN-SPAM compliance.
