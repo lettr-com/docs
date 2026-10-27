@@ -49,7 +49,7 @@ Soft bounces are transient failures. Lettr automatically retries delivery for so
 | **454** | 4.7.0        | TLS negotiation failed; TLS not available    | Retry without TLS if your sending policy allows opportunistic encryption. |
 
 <Info>
-  Lettr retries soft bounces automatically with exponential backoff. You do not need to resend these messages manually. Watch for `Delayed` events on the **Events** page of your dashboard to track retry progress.
+  Lettr retries soft bounces automatically with exponential backoff. Messages don't need to be resent manually. Watch for `Delayed` events on the **Events** page of your dashboard to track retry progress.
 </Info>
 
 ---
@@ -70,7 +70,7 @@ Hard bounces are definitive rejections. The receiving server will not accept thi
 | **554** | 5.7.1        | Transaction failed — general rejection       | Investigate the full bounce message for details. May indicate blocklisting or content issues. |
 
 <Warning>
-  Continuing to send to hard-bounced addresses damages your sender reputation and can lead to your IP or domain being blocklisted. Lettr suppresses these addresses automatically — only ask support to lift a suppression once you have confirmed the address is valid again.
+  Continuing to send to hard-bounced addresses damages your sender reputation and can lead to your IP or domain being blocklisted. Lettr suppresses these addresses automatically; only ask support to lift a suppression once you have confirmed the address is valid again.
 </Warning>
 
 ---
@@ -147,7 +147,7 @@ Lettr assigns every bounce a numeric **bounce class** that appears on the **Even
 | `10` | Invalid recipient | Hard |
 | `21`, `22`, `24` | DNS failure, mailbox full, timeout | Soft |
 | `30` | Generic bounce, no RCPT | Hard |
-| `50`–`54` | Blocked by the receiving server (general, spam, content, attachment, relay) | Block |
+| `50`-`54` | Blocked by the receiving server (general, spam, content, attachment, relay) | Block |
 | `60` | Auto-reply | Not a failure |
 | `70` | Transient failure | Soft |
 | `90` | Unsubscribe | Hard |
@@ -155,7 +155,7 @@ Lettr assigns every bounce a numeric **bounce class** that appears on the **Even
 Hard bounce classes (`10`, `30`, `90`) are added to your suppression list automatically. Block classes usually point to reputation or authentication problems rather than a bad address.
 
 <Tip>
-  You can filter by event type on the **Events** page of your dashboard, or read the `bounce_class` field in `message.bounce` webhook events to automate list management in your application. See [Bounces](/learn/suppressions/bounces) for the full list of classes.
+  Filter by event type on the **Events** page of your dashboard, or read the `bounce_class` field in `message.bounce` webhook events to automate list management in your application. See [Bounces](/learn/suppressions/bounces) for the full list of classes.
 </Tip>
 
 ---

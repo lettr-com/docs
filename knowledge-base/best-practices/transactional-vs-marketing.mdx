@@ -3,7 +3,7 @@ title: Transactional vs Marketing Email
 description: "Understand the differences between transactional and marketing email, why separating them matters, and how to manage both in Lettr"
 ---
 
-Not all email is created equal. The distinction between transactional and marketing email affects everything from legal compliance to deliverability to how recipients perceive your brand. Understanding and properly separating these two streams is one of the most impactful things you can do for your email program.
+Transactional and marketing email differ in why they are sent, and email law, mailbox providers and recipients all treat them differently. This page defines both types, covers the gray areas between them and shows how to keep them on separate sending streams in Lettr.
 
 ---
 
@@ -11,14 +11,10 @@ Not all email is created equal. The distinction between transactional and market
 
 ### Transactional Email
 
-Transactional emails are triggered by a specific user action or event. They contain information the recipient expects or needs — a password reset link, an order confirmation, a shipping update. The recipient initiated the interaction, and the email is a direct response to that action.
+Transactional emails are a direct response to something the recipient did or something that happened to their account, such as a password reset link, an order confirmation or a shipping update. An email is transactional when it meets both of these criteria:
 
-An email is transactional when it meets two criteria:
-
-1. **Triggered by a user action or system event** — The recipient did something (placed an order, requested a password reset, logged in from a new device) or something happened to their account (payment failed, subscription renewed).
-2. **Contains information the recipient expects or needs** — The email delivers information directly related to that action or event and is not promotional in nature.
-
-Transactional email is the backbone of every modern application. When it fails, users cannot log in, do not know their order shipped, and lose trust in your product.
+1. **Triggered by a user action or system event**: the recipient did something (placed an order, requested a password reset, logged in from a new device) or something happened to their account (payment failed, subscription renewed).
+2. **Contains information the recipient expects or needs**: the content relates directly to that action or event and is not promotional.
 
 ### Marketing Email
 
@@ -28,24 +24,24 @@ Marketing emails are sent at the sender's initiative to promote products, share 
 
 ## Why the Distinction Matters
 
-The difference between transactional and marketing email is not just semantic. It has real consequences across three areas:
+The distinction has practical consequences in three areas:
 
-- **Legal requirements** — Most email regulations treat transactional and marketing email differently. Marketing email typically requires explicit consent and an unsubscribe mechanism. Transactional email has more lenient requirements because the recipient expects it.
-- **User expectations** — A user waiting for a password reset link has zero tolerance for delay. A user receiving a weekly newsletter has different expectations entirely. Mixing the two degrades the experience for both.
-- **Deliverability** — Mailbox providers evaluate sender reputation based on engagement signals. Marketing email naturally has lower open rates and higher complaint rates than transactional email. If both types share the same sending infrastructure, poor marketing metrics can drag down transactional delivery.
+- **Legal requirements**: most email regulations treat transactional and marketing email differently. Marketing email typically requires explicit consent and an unsubscribe mechanism. Transactional email has more lenient requirements because the recipient expects it.
+- **User expectations**: a user waiting for a password reset link has to get it in seconds; a weekly newsletter can wait.
+- **Deliverability**: mailbox providers evaluate sender reputation based on engagement signals. Marketing email naturally has lower open rates and higher complaint rates than transactional email, so when both types share the same sending infrastructure, the weaker marketing metrics count against transactional delivery too.
 
 ---
 
 ## Comparison Table
 
 | | Transactional | Marketing |
-|---|---|---|
+|-|-|-|
 | **Trigger** | User action or system event | Sender-initiated schedule or campaign |
 | **Consent requirement** | Implied by the user's action (e.g., creating an account) | Explicit opt-in required in most jurisdictions |
 | **Unsubscribe requirement** | Generally not required | Required by law (CAN-SPAM, GDPR, etc.) |
 | **Timing** | Immediate or near-immediate | Scheduled or batched |
 | **Examples** | Password resets, order confirmations, 2FA codes | Newsletters, promotions, product announcements |
-| **Typical open rates** | 60–80% | 15–25% |
+| **Engagement** | Opened far more often, because the recipient is waiting for it | Opened less often |
 | **Legal basis** | Legitimate interest / contractual necessity | Consent |
 
 ---
@@ -76,50 +72,50 @@ The difference between transactional and marketing email is not just semantic. I
 
 ## Gray Areas
 
-Some emails don't fit neatly into one category. These gray areas require careful judgment.
+Some emails don't fit neatly into either category.
 
 <Tip>
-  **When in doubt, treat it as marketing.** If an email contains any promotional content beyond what the user explicitly requested, apply marketing rules — include an unsubscribe link and ensure you have proper consent. It is always safer to over-comply than to risk a violation.
+  **When in doubt, treat it as marketing.** If an email contains any promotional content beyond what the user explicitly requested, apply marketing rules: include an unsubscribe link and make sure you have proper consent.
 </Tip>
 
 Common gray areas include:
 
-- **Onboarding sequences** — Welcome emails triggered by sign-up are transactional in nature, but multi-step onboarding drip campaigns start to look like marketing. If the email is educating the user about the product they signed up for, it leans transactional. If it is upselling or promoting features they did not request, it leans marketing.
-- **Review requests** — Asking for a product review after a purchase is related to a transaction, but the request itself is promotional. Most regulators consider these marketing emails.
-- **Cross-sell content in transactional emails** — Adding a "You might also like..." section to an order confirmation blurs the line. CAN-SPAM allows some promotional content in transactional emails as long as the primary purpose remains transactional. GDPR is stricter. Keep promotional additions minimal and clearly secondary.
+- **Onboarding sequences**: a welcome email triggered by sign-up is transactional, while a multi-step onboarding drip campaign is closer to marketing. If the email is educating the user about the product they signed up for, it leans transactional. If it is upselling or promoting features they did not request, it leans marketing.
+- **Review requests**: asking for a product review after a purchase is related to a transaction, but the request itself is promotional. Most regulators consider these marketing emails.
+- **Cross-sell content in transactional emails**: adding a "You might also like..." section to an order confirmation blurs the line. CAN-SPAM allows some promotional content in transactional emails as long as the primary purpose remains transactional. GDPR is stricter. Keep promotional additions minimal and clearly secondary.
 
 ---
 
 ## Why Separate Your Sending Streams
 
-Running transactional and marketing email through the same sending infrastructure is a common mistake. Here is why separation matters:
+Transactional and marketing email sent through the same infrastructure share one reputation and one delivery path. Separating them helps in each of these areas.
 
 ### Reputation Isolation
 
-If a marketing campaign triggers a spike in spam complaints, that reputation damage stays contained to your marketing sending domain. Your transactional emails — the password resets and order confirmations your users depend on — continue to deliver reliably.
+Each sending domain builds its own reputation. Spam complaints about a marketing campaign count against the marketing domain, while password resets and order confirmations keep delivering from the transactional one.
 
 ### Different Deliverability Profiles
 
-Transactional emails should arrive instantly. A password reset link that arrives five minutes late is a failed product experience, and a two-factor code that takes thirty seconds is barely acceptable. Marketing emails are typically batched and can tolerate slight delays. Separating streams lets you send transactional email immediately through the API, without queuing or batching it behind marketing volume.
+Transactional emails should arrive instantly, because a password reset link or a verification code is only useful while the user is still on the page waiting for it. Marketing emails are typically batched and can tolerate slight delays. Separate streams let transactional email go out immediately through the API, without queuing or batching behind marketing volume.
 
-If a transactional email lands in spam, that is a product outage, not a missed opportunity: a user who cannot receive a password reset is locked out entirely.
+A transactional email in the spam folder is a product failure: a user who cannot receive a password reset is locked out entirely, and a missing shipping notice leaves a customer guessing about their order.
 
 ### Different Compliance Rules
 
-Transactional and marketing emails have different legal requirements. Separating them at the infrastructure level makes compliance easier to manage and audit. You can apply unsubscribe logic, consent checks, and suppression lists independently.
+Transactional and marketing emails have different legal requirements. Separating them at the infrastructure level makes compliance easier to manage and audit, because unsubscribe logic, consent checks and suppression lists can be applied to each stream independently.
 
 ---
 
 ## How to Separate in Lettr
 
-Lettr gives you several tools to cleanly separate your transactional and marketing email streams.
+Lettr offers several ways to separate the two streams: sending subdomains, a per-send flag, template projects, tags and metadata.
 
 ### Use Different Subdomains
 
 Configure separate sending subdomains for each email type. This is the most important step for reputation isolation.
 
 | Email Type | Subdomain Example |
-|---|---|
+|-|-|
 | Transactional | `mail.yourdomain.com` |
 | Marketing | `campaigns.yourdomain.com` |
 
@@ -128,6 +124,8 @@ Each subdomain builds its own sender reputation independently. See [Sending Doma
 ### Mark the Stream When You Send
 
 The send API has an `options.transactional` flag, which defaults to `true`. Leave it at the default for password resets, receipts and other triggered email. Set it to `false` for marketing-style sends. Lettr adds `List-Unsubscribe` and `List-Unsubscribe-Post` headers only to campaigns. For API sends with `transactional: false`, Lettr does not add them itself, so check the headers of a delivered message and add your own unsubscribe mechanism where the law requires one.
+
+A password reset leaves the flag at its default:
 
 ```javascript
 const response = await fetch('https://app.lettr.com/api/emails', {
@@ -149,11 +147,11 @@ const response = await fetch('https://app.lettr.com/api/emails', {
 });
 ```
 
-If your application already sends through SMTP (common with frameworks like Laravel, Rails or Django), use `smtp.lettr.com` on port 587 with STARTTLS, username `lettr` and your API key as the password. Define your content once with [templates](/learn/templates/introduction) so non-developers can update designs without a code deploy.
+Applications that already send through SMTP (common with frameworks like Laravel, Rails or Django) can use `smtp.lettr.com` on port 587 with STARTTLS, username `lettr` and your API key as the password. Define your content once with [templates](/learn/templates/introduction) so non-developers can update designs without a code deploy.
 
 ### Use Different Templates and Projects
 
-Organize your templates into separate [projects](/learn/templates/projects) — one for transactional templates, one for marketing templates. This keeps your template library clean and makes it easy to apply different design standards and review processes to each type.
+Organize your templates into separate [projects](/learn/templates/projects), one for transactional templates and one for marketing templates. Each type can then follow its own design standards and review process.
 
 ### Use `tag` for Marketing Emails
 
@@ -161,7 +159,7 @@ When sending marketing emails through the API, include a `tag` to group related 
 
 ```json
 POST /api/emails
-Authorization: Bearer your-api-key
+Authorization: Bearer lttr_xxxxxxxxxxxx
 
 {
   "from": "news@campaigns.yourdomain.com",
@@ -179,7 +177,7 @@ Transactional emails typically do not need a `tag` since they are triggered indi
 
 ### Use Metadata for Internal Tracking
 
-Add metadata to your API calls to classify and filter emails in your internal systems:
+Metadata on each API call classifies emails for filtering in your internal systems:
 
 ```json
 {
@@ -193,19 +191,19 @@ Add metadata to your API calls to classify and filter emails in your internal sy
 }
 ```
 
-You can use [webhooks](/learn/webhooks/introduction) to receive delivery events and route them based on this metadata.
+[Webhook](/learn/webhooks/introduction) events carry this metadata, so your handler can route on it.
 
 ---
 
 ## Compliance Differences
 
-Transactional and marketing emails face different regulatory requirements. Here is a summary for the two most common frameworks:
+The two most common frameworks treat transactional and marketing email differently:
 
 | Requirement | CAN-SPAM (Transactional) | CAN-SPAM (Marketing) | GDPR (Transactional) | GDPR (Marketing) |
-|---|---|---|---|---|
+|-|-|-|-|-|
 | **Consent** | Not required | Opt-out model (can send until unsubscribed) | Legitimate interest or contractual basis | Explicit opt-in required |
-| **Unsubscribe link** | Not required | Required, must work within 10 days | Not required | Required, must be immediate |
-| **Physical address** | Not required if purely transactional | Required | Not required | Required |
+| **Unsubscribe link** | Not required | Required, opt-outs honored within 10 business days | Not required | Required, as easy to withdraw as to give, honored promptly |
+| **Physical address** | Not required if purely transactional | Required | Not a GDPR requirement | Not a GDPR requirement |
 | **Accurate sender info** | Required | Required | Required | Required |
 | **Honest subject lines** | Required | Required | Required | Required |
 
@@ -219,11 +217,11 @@ Transactional and marketing emails face different regulatory requirements. Here 
 
 <AccordionGroup>
   <Accordion title="Do not mix promotional content into transactional emails">
-    It is tempting to add a coupon code or product recommendation to an order confirmation. Resist the urge, or keep it minimal. If promotional content becomes the primary purpose of the email, regulators and mailbox providers will treat it as marketing — and your transactional sending reputation suffers. A "You might also like..." block can also cause stricter filtering and legal complications under GDPR.
+    Keep coupon codes and product recommendations out of order confirmations, or keep them minimal. If promotional content becomes the primary purpose of the email, regulators and mailbox providers treat it as marketing, and the transactional sending reputation suffers with it. Even a "You might also like..." block can cause stricter filtering and, under GDPR, legal complications.
   </Accordion>
 
   <Accordion title="Use separate subdomains for each email type">
-    This is the single most effective way to protect your transactional deliverability. A spam complaint spike on your marketing subdomain will not affect password reset delivery on your transactional subdomain. Configure each subdomain with its own DNS authentication records in Lettr.
+    This is the single most effective way to protect transactional deliverability, because complaints on the marketing subdomain do not affect password reset delivery on the transactional subdomain. Configure each subdomain with its own DNS authentication records in Lettr.
   </Accordion>
 
   <Accordion title="Always include an unsubscribe mechanism in marketing emails">
@@ -231,7 +229,7 @@ Transactional and marketing emails face different regulatory requirements. Here 
   </Accordion>
 
   <Accordion title="Keep transactional emails focused and fast">
-    Transactional emails should contain exactly what the user needs — nothing more. A password reset email should have the reset link and minimal context. Every extra element adds load time, increases rendering complexity, and dilutes the purpose. Deliver them immediately via the API without batching.
+    Transactional emails should contain exactly what the user needs. A password reset email needs the reset link and minimal context, and every extra element adds load time and rendering complexity. Deliver them immediately via the API without batching.
   </Accordion>
 
   <Accordion title="Monitor each stream independently">
@@ -239,7 +237,7 @@ Transactional and marketing emails face different regulatory requirements. Here 
   </Accordion>
 
   <Accordion title="Handle failures in your application">
-    Implement webhook handlers that respond to delivery failures. If a password reset email bounces, your application should surface an alternative recovery flow. If a 2FA code is delayed, let the user request a new one.
+    Use webhook handlers to respond to delivery failures. When a password reset email bounces, the application should offer an alternative recovery flow, and when a 2FA code is delayed, the user should be able to request a new one.
   </Accordion>
 
   <Accordion title="Set up authentication and a plain text version">

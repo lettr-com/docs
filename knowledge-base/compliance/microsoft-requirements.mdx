@@ -3,7 +3,7 @@ title: "Microsoft Outlook Sender Requirements"
 description: "What Outlook.com, Hotmail, and Live.com require from senders over 5,000 messages a day, why mail gets 550 5.7.515, and how to fix it in Lettr."
 ---
 
-Do the Google and Yahoo rules cover everything, or does Microsoft ask for more? Microsoft has its own requirements for high-volume senders to its consumer mailboxes (Outlook.com, Hotmail, Live.com). They look like the Google and Yahoo rules, but the enforcement is different: mail that fails is rejected with `550 5.7.515`.
+Microsoft has its own requirements for high-volume senders to its consumer mailboxes (Outlook.com, Hotmail, Live.com). They look like the Google and Yahoo rules, but the enforcement is different: mail that fails is rejected with `550 5.7.515`.
 
 This page explains who the rules apply to, what they require, and how a Lettr sending domain meets them. For the Google and Yahoo side, see [Google & Yahoo Sender Requirements](/knowledge-base/compliance/google-yahoo-requirements).
 
@@ -13,10 +13,10 @@ This page explains who the rules apply to, what they require, and how a Lettr se
 
 Microsoft announced the rules in spring 2025, for domains sending **more than 5,000 emails per day** to its consumer mail services. Its support article for the rejection error words the threshold as 5,000 or more messages to Microsoft consumer email services, all using the same domain in the `5322.From` address.
 
-That means the count is per **From domain**, not per account, API key, or IP address. If you send from several domains, each domain is counted on its own.
+That means the count is per **From domain**, not per account, API key, or IP address. An account that sends from several domains has each domain counted on its own.
 
 <Note>
-  Microsoft says every sender benefits from these practices, even below 5,000 a day. The enforcement targets large senders first. Authenticating below the threshold costs you nothing and keeps you ready if your volume grows.
+  Microsoft says every sender benefits from these practices, even below 5,000 a day. The enforcement targets large senders first. Authenticating below the threshold costs nothing and keeps a domain ready if its volume grows.
 </Note>
 
 ---
@@ -39,7 +39,7 @@ These requirements match the authentication rules in the Google and Yahoo articl
 
 ### Hygiene Recommendations
 
-Microsoft also lists practices it recommends for large senders. These are recommendations, not the authentication gate, but Microsoft reserves the right to filter or block non-compliant senders.
+Microsoft also lists practices it recommends for large senders. They sit outside the authentication gate, but Microsoft reserves the right to filter or block non-compliant senders.
 
 - A valid `From` or `Reply-To` address that reflects the real sending domain and can receive replies
 - A functional unsubscribe link that is easy to find, particularly for marketing or bulk mail
@@ -77,13 +77,13 @@ A sending domain that is fully verified in Lettr covers the SPF and DKIM checks.
 | DKIM | Lettr signs messages with the DKIM key for your sending domain. The DKIM TXT record is required for verification. |
 | SPF | A subdomain uses the CNAME record, which points to `sparkpostmail.com`. A root domain uses an SPF TXT record with `include:_spf.sparkpostmail.com`. |
 | DMARC | Lettr shows a DMARC TXT record, `v=DMARC1;p=none;`, for you to add. Add it to `_dmarc` on your domain. |
-| Sending allowed | You can send only when the domain is approved and every required record is valid. |
+| Sending allowed | Sending works only when the domain is approved and every required record is valid. |
 
 ### SPF Alignment Needs the Bounce Domain
 
 By default, bounce notifications use SparkPost's shared bounce domain as the Return-Path. SPF can pass in that setup, but it does not align with your `From` domain. DMARC then passes through DKIM alignment alone.
 
-That satisfies Microsoft's DMARC rule, which needs only one aligned check. If you want SPF aligned as well, which Microsoft prefers, switch on **Use this sending domain as bounce domain** in the domain's **Bounce Domain** card. The toggle stays disabled until the CNAME record shows as valid. See [Sending Domains](/learn/domains/sending-domains) and [Custom Return-Path and MAIL FROM](/knowledge-base/fundamentals/custom-return-path).
+That satisfies Microsoft's DMARC rule, which needs only one aligned check. To align SPF as well, which Microsoft prefers, switch on **Use this sending domain as bounce domain** in the domain's **Bounce Domain** card. The toggle stays disabled until the CNAME record shows as valid. See [Sending Domains](/learn/domains/sending-domains) and [Custom Return-Path and MAIL FROM](/knowledge-base/fundamentals/custom-return-path).
 
 ### Check Your DMARC Record
 
@@ -103,19 +103,11 @@ If the command returns nothing, the record is missing. Add it and see [DMARC](/l
 
 ## Unsubscribe Headers in Lettr
 
-Microsoft lists a functional unsubscribe link as a hygiene recommendation. In Lettr, the mail you send falls into three groups.
+Microsoft lists a functional unsubscribe link as a hygiene recommendation. In Lettr, outgoing mail falls into three groups:
 
-<Steps>
-  <Step title="Campaigns">
-    Every campaign email carries the `List-Unsubscribe` header and the `List-Unsubscribe-Post: List-Unsubscribe=One-Click` header. Lettr adds them automatically.
-  </Step>
-  <Step title="API sends with transactional set to false">
-    Lettr's own code does not add these headers to API sends. It passes `options.transactional` through to the sending infrastructure, and the default is `true`. If you rely on unsubscribe headers for an API send, check the headers of a delivered test message instead of assuming they are present.
-  </Step>
-  <Step title="Transactional API sends">
-    Transactional API sends don't get these headers. You also cannot add them yourself: `List-Unsubscribe` and `List-Unsubscribe-Post` are blocked in the custom `headers` field of the send request.
-  </Step>
-</Steps>
+- **Campaigns**: every campaign email carries the `List-Unsubscribe` header and the `List-Unsubscribe-Post: List-Unsubscribe=One-Click` header. Lettr adds them automatically.
+- **API sends with transactional set to false**: Lettr's own code does not add these headers to API sends. It passes `options.transactional` through to the sending infrastructure, and the default is `true`. To rely on unsubscribe headers for an API send, check the headers of a delivered test message instead of assuming they are present.
+- **Transactional API sends**: these don't get the headers, and they cannot be added by hand either. `List-Unsubscribe` and `List-Unsubscribe-Post` are blocked in the custom `headers` field of the send request.
 
 A marketing send through the API should set `transactional` to `false`, which marks it as non-transactional:
 
@@ -152,7 +144,7 @@ For the visible link in the body, use the `data-msys-unsubscribe="1"` attribute 
     Microsoft counts volume per From domain. If a CRM, help desk, or marketing tool also sends as your domain, it needs its own aligned SPF or DKIM. A missing record there can trigger the rejection even when Lettr is configured correctly.
   </Step>
   <Step title="Look at the SPF lookup limit">
-    Microsoft's FAQ warns that more than 10 DNS lookups in an SPF record can make the check fail. If you added several `include:` entries, reduce them.
+    Microsoft's FAQ warns that more than 10 DNS lookups in an SPF record can make the check fail. Reduce the number of `include:` entries if the record has several.
   </Step>
   <Step title="Send again">
     After the records validate, send a new message.

@@ -89,7 +89,7 @@ Ask Adamko about a single address, for example *"is jane@acme.com suppressed?"*,
 
 ### Removing a suppression
 
-You cannot remove a suppression yourself. There is no dashboard page or API endpoint for it, so a removal is a request to the Lettr team. Support reviews each request individually and does not guarantee removal.
+There is no dashboard page or API endpoint for removing a suppression, so a removal is a request to the Lettr team. Support reviews each request individually and does not guarantee removal.
 
 A request makes sense when you can show that the original reason no longer applies, for example:
 
@@ -109,8 +109,8 @@ If so, email [support@lettr.com](mailto:support@lettr.com) with the address, why
 
 Lettr operates two layers of suppression:
 
-- **Global suppression list** — Lettr maintains a platform-wide list of known-bad addresses, such as role addresses that consistently bounce or addresses associated with spam traps. These suppressions apply across all Lettr accounts and cannot be overridden.
-- **Account-level suppression list** — Your account has its own list, populated by your sending activity (bounces, complaints, and unsubscribes from API sends; campaign unsubscribes update the contact instead).
+- **Global suppression list**: Lettr maintains a platform-wide list of known-bad addresses, such as role addresses that consistently bounce or addresses associated with spam traps. These suppressions apply across all Lettr accounts and cannot be overridden.
+- **Account-level suppression list**: Each account has its own list, populated by sending activity (bounces, complaints, and unsubscribes from API sends; campaign unsubscribes update the contact instead).
 
 If an address appears on the global list, it will be suppressed even if it does not appear on your account-level list.
 
@@ -145,7 +145,7 @@ Suppressed sends are **not** counted as bounces in your Lettr analytics, because
 However, a high volume of suppressed sends can indicate list quality issues. If a significant portion of your sends are being suppressed, it is a signal that your mailing list contains stale or problematic addresses and needs cleanup.
 
 <Note>
-  Watch the `rejected` count in your send responses, or ask Adamko to check your sending health — it estimates how many of your contacts are suppressed. A rising suppression rate is an early warning sign that your list hygiene practices need attention.
+  Watch the `rejected` count in your send responses, or ask Adamko to check sending health, which estimates how many of your contacts are suppressed. A rising suppression rate is an early warning sign that your list hygiene practices need attention.
 </Note>
 
 ---

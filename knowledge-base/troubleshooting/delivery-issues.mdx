@@ -63,7 +63,7 @@ When emails are not reaching your recipients, work through the steps below to id
   <Accordion title="Recipient Suppressed">
     If a recipient hard-bounced or filed a spam complaint, the address is added to your suppression list, and later sends to it are rejected and counted in the `rejected` total of the API response. Unsubscribes work differently: a campaign unsubscribe only changes the contact's status, and an unsubscribe entry on the suppression list only blocks sends with `transactional: false`. See [Unsubscribes, Pauses and Suppressions](/knowledge-base/fundamentals/unsubscribe-vs-suppression).
 
-    There is no suppressions page in the dashboard and no API endpoint for suppressions. To check an address, ask [Adamko](/learn/ai-assistant/troubleshooting-and-diagnostics) *"is jane@acme.com suppressed?"* — he tells you why and when it was suppressed. You cannot lift a suppression yourself. If the original reason no longer applies (the recipient re-opted in, or you fixed the cause of a hard bounce and confirmed the mailbox is valid), email [support@lettr.com](mailto:support@lettr.com) with the address and what has changed. Removal is reviewed case by case and is unlikely for spam complaints.
+    There is no suppressions page in the dashboard and no API endpoint for suppressions. To check an address, ask [Adamko](/learn/ai-assistant/troubleshooting-and-diagnostics) *"is jane@acme.com suppressed?"*, and he reports why and when it was suppressed. A suppression can't be lifted from the dashboard or API. If the original reason no longer applies (the recipient re-opted in, or you fixed the cause of a hard bounce and confirmed the mailbox is valid), email [support@lettr.com](mailto:support@lettr.com) with the address and what has changed. Removal is reviewed case by case and is unlikely for spam complaints.
 
     <Warning>
       Repeatedly sending to addresses that have hard-bounced damages your sender reputation. Only ask for a suppression to be lifted if you have confirmed the mailbox is valid again.
@@ -105,7 +105,7 @@ When emails are not reaching your recipients, work through the steps below to id
 
 The fastest way to check the status of a specific email is through the **Events** section of the Lettr dashboard, where you can search by recipient address and open the full event history of each message.
 
-You can also retrieve an email by the request ID returned when you sent it:
+An email can also be retrieved by the request ID returned when it was sent:
 
 ```bash
 curl https://app.lettr.com/api/emails/{requestId} \
@@ -127,7 +127,7 @@ When a recipient server rejects an email, it returns an SMTP status code. Lettr 
 | `452 4.2.2` | Mailbox full. | This is a soft bounce. Lettr will retry automatically. If it persists, the recipient may have abandoned the mailbox. |
 | `421 4.7.0` | Temporary rate limit from the recipient server. | No action needed. Lettr will retry delivery. If the problem persists across many recipients at the same domain, slow your sending rate. |
 
-You can handle bounces programmatically using webhooks. The `message.bounce` event includes the bounce class and SMTP details:
+Bounces can be handled programmatically using webhooks. The `message.bounce` event includes the bounce class and SMTP details:
 
 ```javascript
 const express = require("express");

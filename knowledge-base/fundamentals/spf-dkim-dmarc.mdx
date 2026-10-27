@@ -28,16 +28,16 @@ A typical SPF record looks like this:
 v=spf1 include:_spf.sparkpostmail.com ~all
 ```
 
-- `v=spf1` — identifies this as an SPF record
-- `include:_spf.sparkpostmail.com` — authorizes all servers listed in that domain's own SPF record (this is how Lettr's infrastructure is authorized)
-- `~all` — soft-fail any server not on the list (meaning treat it as suspicious but don't outright reject)
+- `v=spf1`: identifies this as an SPF record
+- `include:_spf.sparkpostmail.com`: authorizes all servers listed in that domain's own SPF record (this is how Lettr's infrastructure is authorized)
+- `~all`: soft-fail any server not on the list (meaning treat it as suspicious but don't outright reject)
 
 ### How Lettr Handles SPF
 
 What you publish depends on whether your sending domain is a subdomain or a root domain:
 
-- **Subdomain** (e.g., `mail.yourdomain.com`) — you add a **CNAME record** pointing the subdomain to `sparkpostmail.com`, which maintains the authoritative SPF record for Lettr's sending IPs. You don't manage IP addresses or an SPF TXT record for the subdomain.
-- **Root domain** (e.g., `yourdomain.com`) — DNS doesn't allow a CNAME at the zone apex, so Lettr checks your SPF TXT record instead. It must contain `include:_spf.sparkpostmail.com`.
+- **Subdomain** (e.g., `mail.yourdomain.com`): add a **CNAME record** pointing the subdomain to `sparkpostmail.com`, which maintains the authoritative SPF record for Lettr's sending IPs. No IP addresses or SPF TXT record need to be managed for the subdomain.
+- **Root domain** (e.g., `yourdomain.com`): DNS doesn't allow a CNAME at the zone apex, so Lettr checks your SPF TXT record instead. It must contain `include:_spf.sparkpostmail.com`.
 
 <Note>
   If your root domain already has an SPF record for other services, add `include:_spf.sparkpostmail.com` to that record rather than creating a second one. A subdomain's CNAME doesn't touch the root domain's SPF record at all.
@@ -45,7 +45,7 @@ What you publish depends on whether your sending domain is a subdomain or a root
 
 ### Limitations
 
-SPF has one well-known weakness: **it breaks when emails are forwarded.** When a server forwards your email, the forwarding server's IP address is what the next receiver sees — and that IP won't be in your SPF record. This is one of the reasons SPF alone isn't enough, and why DKIM and DMARC exist. See [Forwarding, SRS, and ARC](/knowledge-base/fundamentals/forwarding-arc) for how this is repaired.
+SPF has one well-known weakness: **it breaks when emails are forwarded.** When a server forwards your email, the forwarding server's IP address is what the next receiver sees, and that IP won't be in your SPF record. This is one of the reasons SPF alone isn't enough, and why DKIM and DMARC exist. See [Forwarding, SRS, and ARC](/knowledge-base/fundamentals/forwarding-arc) for how this is repaired.
 
 ---
 

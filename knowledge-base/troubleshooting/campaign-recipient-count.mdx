@@ -3,7 +3,7 @@ title: "Campaign Reached Fewer Contacts Than Expected"
 description: "Why a Lettr campaign reaches fewer contacts than your list size: contact status, pauses, topic opt-outs, mid-send changes and suppressed addresses"
 ---
 
-You picked a list of 10,000 contacts, but the campaign shows 9,400 recipients, or it finished with fewer sends than that. Nothing is broken in most of these cases. Lettr only emails contacts who currently consent, and several different rules can remove a contact between "this is on my list" and "this was sent". This guide explains each rule, in the order they apply, and how to find which one affected your campaign.
+A campaign can show fewer recipients than the list it targets, or finish with fewer sends than its Recipients total. In most cases nothing is broken. Lettr only emails contacts who currently consent, and several rules can remove a contact between the audience selection and the send. This guide explains each rule in the order they apply and how to find which one affected a campaign.
 
 ---
 
@@ -13,7 +13,7 @@ A campaign goes through three filters before an email leaves. Each one removes c
 
 <Steps>
   <Step title="Recipients are resolved when the campaign is prepared">
-    When you send (or when a scheduled campaign fires), the campaign enters **Preparing** and Lettr builds the recipient list from your audience selection. Only contacts with status `subscribed` who are not paused are included, and if the campaign targets a [topic](/learn/audience/topics), only contacts subscribed to that topic. The resulting number is the campaign's **Recipients** total.
+    When the campaign is sent (or a scheduled campaign fires), it enters **Preparing** and Lettr builds the recipient list from your audience selection. Only contacts with status `subscribed` who are not paused are included, and if the campaign targets a [topic](/learn/audience/topics), only contacts subscribed to that topic. The resulting number is the campaign's **Recipients** total.
   </Step>
   <Step title="Consent is re-checked for every batch">
     Emails go out in batches, and a large send can take a while. Before each batch, Lettr checks every pending recipient again: the contact must still be `subscribed`, not paused, and (for topic campaigns) still in the topic. Anyone who opted out, paused, or left the topic since the list was built is dropped from that batch.
@@ -52,7 +52,7 @@ A recipient can pause marketing email for 30, 60 or 90 days from the [preference
 **How to check:** in Audiences, use the **Paused** filter. Paused contacts also carry a violet **Paused** badge with the end date, and exports and the API include a `paused_until` value.
 
 <Note>
-  Pauses are set by recipients only. You can't create or edit one from the app or the API, and the pause expires on its own. There is nothing to "fix" on your side. If the contact's pause ends after the campaign finishes, they are not sent that campaign afterwards.
+  Pauses are set by recipients only. Neither the app nor the API can create or edit one, and the pause expires on its own, so there is nothing to fix on the sender's side. A contact whose pause ends after the campaign finishes is not sent that campaign afterwards.
 </Note>
 
 ---
@@ -67,7 +67,7 @@ If the campaign targets a topic, only contacts subscribed to that topic are incl
 
 ## Cause 4: Changes While the Campaign Is Sending
 
-Recipients are fixed when the campaign is prepared, but their consent is not. On a large send, hours can pass between the first and last batch. If a contact unsubscribes, pauses or leaves the topic in that window, the next batch leaves them out.
+Recipients are fixed when the campaign is prepared, but their consent is not. On a large send, hours can pass between the first and last batch. A contact who unsubscribes, pauses or leaves the topic in that window is left out of the next batch.
 
 Lettr marks these recipients as `skipped`. A skipped recipient was deliberately not emailed, and it is final: it stays skipped even if the pause ends later or the contact resubscribes. Once all batches finish, any recipient who was never sent to because of the consent re-check is closed out as `skipped`.
 
@@ -79,10 +79,10 @@ Lettr marks these recipients as `skipped`. A skipped recipient was deliberately 
 | `skipped` | Dropped by the consent re-check before sending |
 
 <Warning>
-  The campaign page does not show a skipped count. You see the **Recipients** total, a sent-over-total progress figure only while the campaign is sending, and the campaign stats once it has finished. For a final comparison, use the campaign stats, the Events page, or the API `sent_count` against `total_recipients`; the difference is contacts that were skipped or failed.
+  The campaign page does not show a skipped count. It shows the **Recipients** total, a sent-over-total progress figure only while the campaign is sending, and the campaign stats once it has finished. For a final comparison, use the campaign stats, the Events page, or the API `sent_count` against `total_recipients`; the difference is contacts that were skipped or failed.
 </Warning>
 
-The same gap also appears over the API: the campaign object carries `total_recipients` and `sent_count`.
+The same gap appears over the API, where the campaign object carries `total_recipients` and `sent_count`.
 
 ```bash
 curl -X GET https://app.lettr.com/api/campaigns \
@@ -126,7 +126,7 @@ The reverse also holds. Unsubscribing a contact in Lettr's audience updates only
     Filter the list by status and by **Paused**. Add up `unsubscribed`, `bounced`, `complained`, `unverified` and paused contacts. For a topic campaign, also compare topic subscribers with list members.
   </Step>
   <Step title="Check the live estimate next time">
-    The Audience step of the campaign builder shows a live recipient estimate using the same resolution logic as a real send. If the estimate is lower than expected, you already know the reason is one of causes 1 to 3.
+    The Audience step of the campaign builder shows a live recipient estimate using the same resolution logic as a real send. An estimate lower than expected means the reason is one of causes 1 to 3.
   </Step>
   <Step title="Look up specific missing contacts">
     For a named contact, open their record and check status, **Paused** badge and topics. If all three are fine, search Events for the address and check for suppression.
@@ -139,7 +139,7 @@ The reverse also holds. Unsubscribing a contact in Lettr's audience updates only
 
 <AccordionGroup>
   <Accordion title="The estimate was higher than the final Recipients total">
-    The estimate is computed live. Between your estimate and the moment the campaign is prepared, contacts may have unsubscribed, paused or changed segment membership. Segments are re-evaluated at send time, so the final total reflects the audience at that moment.
+    The estimate is computed live. Between the estimate and the moment the campaign is prepared, contacts may have unsubscribed, paused or changed segment membership. Segments are re-evaluated at send time, so the final total reflects the audience at that moment.
   </Accordion>
   <Accordion title="Can I send to the skipped contacts afterwards?">
     Only if they are consenting again. Skipped contacts were removed because they withdrew consent, so don't email them. If a paused contact returns when the pause ends, include them in your next campaign.

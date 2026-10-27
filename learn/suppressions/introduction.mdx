@@ -21,10 +21,10 @@ Addresses can be suppressed for several reasons:
 
 When you send an email through Lettr, the suppression system is involved at multiple stages:
 
-1. **API call** — You call the Lettr API to send an email. Lettr forwards the request to the delivery infrastructure, which checks the recipient against the suppression list. If the address is suppressed, the recipient is rejected and included in the `rejected` count of the API response. The email is never sent.
-2. **Delivery attempt** — If the address is not suppressed, the email is sent to the recipient's mail server.
-3. **Post-delivery event** — If the email hard bounces, the recipient reports spam, or they unsubscribe from an API send, the address is automatically added to the suppression list. You receive a webhook notification for the event.
-4. **Future sends blocked** — Any subsequent sends targeting that address are rejected at the suppression check stage, preventing further damage to your sender reputation.
+1. **API call**: the app calls the Lettr API to send an email. Lettr forwards the request to the delivery infrastructure, which checks the recipient against the suppression list. If the address is suppressed, the recipient is rejected and included in the `rejected` count of the API response. The email is never sent.
+2. **Delivery attempt**: if the address is not suppressed, the email is sent to the recipient's mail server.
+3. **Post-delivery event**: if the email hard bounces, the recipient reports spam, or they unsubscribe from an API send, the address is automatically added to the suppression list. A webhook notification is sent for the event.
+4. **Future sends blocked**: any subsequent sends targeting that address are rejected at the suppression check stage, preventing further damage to your sender reputation.
 
 ## Why Suppressions Matter
 

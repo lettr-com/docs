@@ -3,7 +3,7 @@ title: "Custom Return-Path and MAIL FROM"
 description: "What the Return-Path and MAIL FROM addresses do, and how using your sending subdomain as a custom bounce domain in Lettr gives you SPF alignment."
 ---
 
-Every email has two "from" addresses: the one the recipient sees in their inbox (the **From header**) and a hidden technical address used for bounce handling (the **Return-Path**, also called the envelope sender or MAIL FROM). These two addresses are often different — and understanding why is key to diagnosing authentication issues and achieving full DMARC alignment.
+Every email has two "from" addresses: the one the recipient sees in their inbox (the **From header**) and a hidden technical address used for bounce handling (the **Return-Path**, also called the envelope sender or MAIL FROM). These two addresses are often different, and understanding why is key to diagnosing authentication issues and achieving full DMARC alignment.
 
 ---
 
@@ -20,7 +20,7 @@ The `From` header is what your recipients see and recognize. The Return-Path is 
 
 ### Why They Differ
 
-By default, Lettr sets the Return-Path to an address on the bounce domain of its delivery infrastructure (e.g., `bounces-12345@sparkpostmail.com`). This allows Lettr to receive and process bounce notifications automatically — parsing bounce codes, classifying bounce types, updating suppression lists, and surfacing bounce data in your dashboard and webhooks.
+By default, Lettr sets the Return-Path to an address on the bounce domain of its delivery infrastructure (e.g., `bounces-12345@sparkpostmail.com`). This allows Lettr to receive and process bounce notifications automatically: parsing bounce codes, classifying bounce types, updating suppression lists, and surfacing bounce data in your dashboard and webhooks.
 
 If Lettr used your From address as the Return-Path, bounces would go directly to your mailbox instead, and Lettr would have no way to track or process them.
 
@@ -30,7 +30,7 @@ If Lettr used your From address as the Return-Path, bounces would go directly to
 
 Having a different Return-Path domain creates a specific authentication challenge: **SPF alignment failure**.
 
-[SPF](/knowledge-base/fundamentals/spf-dkim-dmarc) is verified against the **Return-Path domain**, not the From header domain. When the Return-Path is `bounces-12345@sparkpostmail.com` but the From header shows `hello@yourapp.com`, SPF passes for `sparkpostmail.com` — but it does not align with `yourapp.com`.
+[SPF](/knowledge-base/fundamentals/spf-dkim-dmarc) is verified against the **Return-Path domain**, not the From header domain. When the Return-Path is `bounces-12345@sparkpostmail.com` but the From header shows `hello@yourapp.com`, SPF passes for `sparkpostmail.com`, but it does not align with `yourapp.com`.
 
 ```
 From:        hello@yourapp.com        ← what the recipient sees
@@ -78,7 +78,7 @@ DMARC:       Pass (via both SPF and DKIM alignment)
 
 ## Setting Up a Custom Return-Path in Lettr
 
-Lettr uses the sending domain itself as the bounce domain — there is no separate subdomain to configure. Once a sending domain's CNAME record is verified, you can enable it as the bounce domain with a single toggle. Only subdomain sending domains (such as `mail.yourapp.com`) have a CNAME record — Lettr verifies root domains with SPF instead — so the bounce domain must be a subdomain.
+Lettr uses the sending domain itself as the bounce domain. There is no separate subdomain to configure. Once a sending domain's CNAME record is verified, you can enable it as the bounce domain with a single toggle. Only subdomain sending domains (such as `mail.yourapp.com`) have a CNAME record (Lettr verifies root domains with SPF instead), so the bounce domain must be a subdomain.
 
 <Steps>
   <Step title="Verify the CNAME Record">
@@ -171,7 +171,7 @@ dig TXT mail.yourapp.com
 
 ### Check via Lettr Dashboard
 
-The domain's page under **Domains → Sending Domains** shows whether its CNAME record is verified and whether **Use this sending domain as bounce domain** is switched on. It doesn't test SPF alignment — check the `Authentication-Results` header of a test email for that.
+The domain's page under **Domains → Sending Domains** shows whether its CNAME record is verified and whether **Use this sending domain as bounce domain** is switched on. It doesn't test SPF alignment. Check the `Authentication-Results` header of a test email for that.
 
 ---
 

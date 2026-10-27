@@ -65,7 +65,7 @@ This automatic suppression is critical for protecting your sending reputation. C
 
 ### Webhook Events
 
-Lettr fires a `message.spam_complaint` webhook event for every complaint received. Webhook payloads arrive as an array of events, each wrapped in an `msys` object. Your application can listen for this event to update its own records:
+Lettr fires a `message.spam_complaint` webhook event for every complaint received. Webhook payloads arrive as an array of events, each wrapped in an `msys` object. An application can listen for this event to update its own records:
 
 ```javascript
 app.post('/webhooks/lettr', express.json(), (req, res) => {
@@ -123,7 +123,7 @@ This is why making it easy to unsubscribe is a deliverability strategy, not a su
 
 <AccordionGroup>
   <Accordion title="Make unsubscribing easier than complaining">
-    If the unsubscribe link is buried at the bottom of your email in small gray text, recipients will use the more visible "Report Spam" button instead. Place your unsubscribe link prominently. Implement one-click unsubscribe via the `List-Unsubscribe` header — Lettr adds it automatically to campaigns. For API sends, including those with `transactional: false`, it does not add the header itself, so check the headers of a delivered message.
+    If the unsubscribe link is buried at the bottom of your email in small gray text, recipients will use the more visible "Report Spam" button instead. Place your unsubscribe link prominently. Implement one-click unsubscribe via the `List-Unsubscribe` header. Lettr adds it automatically to campaigns. For API sends, including those with `transactional: false`, it does not add the header itself, so check the headers of a delivered message.
   </Accordion>
 
   <Accordion title="Only send to recipients who opted in">

@@ -3,7 +3,7 @@ title: "Forwarding, SRS, and ARC"
 description: "Why forwarding breaks SPF, how SRS and ARC repair the damage, and why aligned DKIM keeps DMARC passing for mail you send with Lettr."
 ---
 
-You send an email that passes SPF, DKIM, and DMARC. The recipient has an alias or an auto-forward rule, so the message lands in a second mailbox, and there it fails authentication or goes to spam. Nothing changed on your side. This guide explains what forwarding does to each protocol, what SRS and ARC are for, and what you can do as a sender.
+Forwarding relays a message from the mailbox it was addressed to into a second mailbox, through an alias, an auto-forward rule, or a mailing list. A message that passed SPF, DKIM, and DMARC at the first mailbox can fail authentication or go to spam at the second, with nothing changed on the sender's side. This guide explains what forwarding does to each protocol, what SRS and ARC are for, and what a sender can do about it.
 
 This page builds on [Understanding SPF, DKIM, and DMARC](/knowledge-base/fundamentals/spf-dkim-dmarc). Read that first if the terms below are new.
 
@@ -13,11 +13,9 @@ This page builds on [Understanding SPF, DKIM, and DMARC](/knowledge-base/fundame
 
 SPF checks the **connecting IP address** against the list of servers published for the domain in the envelope sender (the Return-Path). Forwarding changes the connecting IP and, usually, nothing else.
 
-1. You send to `alice@university.example` through Lettr. The receiving server sees a Lettr sending IP, finds it in your SPF data, and SPF passes.
-2. `university.example` forwards the message to `alice@gmail.com`. The forwarder's server now connects to Gmail, still using your original Return-Path.
-3. Gmail looks up your SPF data and compares it with the forwarder's IP address. It is not listed, so SPF fails.
+SPF passes at the first hop because the connecting IP is a Lettr sending IP, which your SPF data lists. After forwarding, the connecting IP belongs to the forwarder while the Return-Path is still your original one, so the final receiver finds no match in your SPF data and SPF fails.
 
-The forwarder did nothing wrong, and your SPF record is correct. SPF simply has no way to express "this server is relaying mail that someone else authorized". The SPF specification discusses this under mediators ([RFC 7208, section 10.3](https://datatracker.ietf.org/doc/html/rfc7208#section-10.3)).
+Neither the forwarder nor your SPF record is misconfigured. SPF has no way to express "this server is relaying mail that someone else authorized". The SPF specification discusses this under mediators ([RFC 7208, section 10.3](https://datatracker.ietf.org/doc/html/rfc7208#section-10.3)).
 
 <Note>
   This is why [DMARC](/learn/domains/dmarc) accepts either an aligned SPF pass or an aligned DKIM pass. Forwarding is the main reason the "or" matters.
@@ -39,7 +37,7 @@ The receiving server now evaluates SPF against `forwarder.example`, whose SPF re
 What SRS does and does not do:
 
 - SPF passes, but only for the **forwarder's domain**. That domain is not your From domain, so **SPF alignment still fails** and SPF cannot help DMARC.
-- SRS is something the forwarder must implement. You cannot enable it from your side.
+- SRS has to be implemented by the forwarder. A sender cannot enable it.
 - Many large providers rewrite for their own forwarding features, but behavior varies by service, and small or self-hosted forwarders often do not.
 
 SRS is not an IETF standard. The SPF specification only says that mediators can rewrite the envelope sender into their own domain, and that schemes for doing so vary ([RFC 7208, appendix D.2](https://datatracker.ietf.org/doc/html/rfc7208#appendix-D.2)).
@@ -102,7 +100,7 @@ ARC does not override DMARC by itself. The RFC leaves the decision to the final 
 Because trust is local, ARC helps with legitimate forwarding and mailing lists but gives no guarantee. A forwarder with no reputation, or a broken chain (`cv=fail`), earns nothing. Microsoft documents this model in [Configure trusted ARC sealers](https://learn.microsoft.com/en-us/defender-office-365/email-authentication-arc-configure), where an admin lists the intermediaries whose ARC results Microsoft 365 should honor.
 
 <Note>
-  ARC is implemented by the intermediaries, not by you. Signing your mail with ARC is not part of sending through Lettr, and there is no ARC record to publish in your DNS. As a sender, you improve your odds by making your own authentication strong enough that you do not need ARC.
+  ARC is implemented by the intermediaries. Signing your mail with ARC is not part of sending through Lettr, and there is no ARC record to publish in your DNS. The best a sender can do is make its own authentication strong enough not to need ARC.
 </Note>
 
 ---
@@ -124,9 +122,9 @@ That is exactly the combination that survives forwarding:
 | Subdomain, such as `mail.yourdomain.com` | The subdomain | CNAME to `sparkpostmail.com` | SPF breaks; aligned DKIM passes DMARC |
 | Root domain, such as `yourdomain.com` | The root domain | SPF TXT with `include:_spf.sparkpostmail.com` | SPF breaks; aligned DKIM passes DMARC |
 
-If your From address is on the same domain you verified in Lettr, alignment is exact and works under both strict and relaxed DMARC alignment. If you verified a subdomain but send From the parent domain (or the reverse), the signature aligns only under **relaxed** alignment, which is the DMARC default. The tag `adkim=s` in your DMARC record turns on strict alignment and would break that case. See [Subdomain vs Root Domain](/knowledge-base/fundamentals/subdomain-vs-root) for how this affects your choice.
+When the From address is on the same domain verified in Lettr, alignment is exact and works under both strict and relaxed DMARC alignment. When a subdomain is verified but mail is sent From the parent domain (or the reverse), the signature aligns only under **relaxed** alignment, which is the DMARC default. The tag `adkim=s` in a DMARC record turns on strict alignment and would break that case. See [Subdomain vs Root Domain](/knowledge-base/fundamentals/subdomain-vs-root) for how this affects your choice.
 
-The default Return-Path on Lettr mail is a shared bounce domain, so SPF would not align with your From domain even before forwarding. You can move SPF alignment to your own domain with a [custom bounce domain](/knowledge-base/fundamentals/custom-return-path). Either way, forwarding breaks SPF alignment for everyone, so DKIM is the protection that matters here.
+The default Return-Path on Lettr mail is a shared bounce domain, so SPF would not align with your From domain even before forwarding. A [custom bounce domain](/knowledge-base/fundamentals/custom-return-path) moves SPF alignment to your own domain. Either way, forwarding breaks SPF alignment for everyone, so DKIM is the protection that matters here.
 
 ### Recommendations
 
@@ -148,7 +146,7 @@ Ask the recipient for the full headers of the forwarded copy and look at the `Au
 | `dkim=none` | The signature was stripped, or the message was re-sent rather than forwarded. |
 | `arc=pass` next to a DMARC failure | The receiver can see that the message was authentic earlier in its journey. Delivery depends on whether it trusts the sealer. |
 
-When DKIM fails on a mailing list copy, the usual fix is on the **list** side (ARC, or rewriting the From address to the list's own domain). Mailing list software commonly does the latter for domains with strict DMARC policies. If you run the list, consult its documentation. If you subscribe to one, there is little you can do except accept that the list copy may be filtered.
+When DKIM fails on a mailing list copy, the usual fix is on the **list** side (ARC, or rewriting the From address to the list's own domain). Mailing list software commonly does the latter for domains with strict DMARC policies. If you run the list, consult its documentation. A subscriber can do little except accept that the list copy may be filtered.
 
 ---
 

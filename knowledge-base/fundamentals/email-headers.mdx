@@ -30,7 +30,7 @@ These headers appear on virtually every email message.
 | **Content-Type** | Format of the message body | `multipart/alternative; boundary="..."` | Lettr, based on the content you provide |
 
 <Tip>
-  The **Message-ID** header is useful for tracking a specific email across mail server logs and support requests. To correlate Lettr webhook events with the original send, use the `request_id` returned by the send API — it arrives as `transmission_id` in webhook payloads — or attach your own IDs with `metadata`.
+  The **Message-ID** header is useful for tracking a specific email across mail server logs and support requests. To correlate Lettr webhook events with the original send, use the `request_id` returned by the send API (it arrives as `transmission_id` in webhook payloads) or attach your own IDs with `metadata`.
 </Tip>
 
 ---
@@ -123,7 +123,7 @@ List-Unsubscribe-Post: List-Unsubscribe=One-Click
 ```
 
 <Note>
-  Lettr automatically adds `List-Unsubscribe` and `List-Unsubscribe-Post` headers to campaign emails. For API sends, including those with `transactional: false`, Lettr does not add them itself, so check the headers of a delivered message. You can't set these two headers yourself through the API. Both headers are strongly recommended for bulk and marketing email.
+  Lettr automatically adds `List-Unsubscribe` and `List-Unsubscribe-Post` headers to campaign emails. For API sends, including those with `transactional: false`, Lettr does not add them itself, so check the headers of a delivered message. These two headers can't be set through the API. Both headers are strongly recommended for bulk and marketing email.
 </Note>
 
 ---
@@ -150,7 +150,7 @@ Lettr supports custom headers via the `headers` API parameter (up to 10 per emai
 ```
 
 <Tip>
-  Custom headers are not included in webhook event payloads. To match delivery events, opens, clicks, and bounces back to specific records in your system, put the same IDs in the [`metadata`](/learn/sending/metadata) parameter — metadata is included in every webhook event for that email.
+  Custom headers are not included in webhook event payloads. To match delivery events, opens, clicks, and bounces back to specific records in your system, put the same IDs in the [`metadata`](/learn/sending/metadata) parameter. Metadata is included in every webhook event for that email.
 </Tip>
 
 ---
@@ -181,7 +181,7 @@ Authentication-Results: mx.example.com;
 
 | Line | Meaning |
 |---|---|
-| `spf=pass` | The sending IP address is authorized by the SPF record of the Return-Path domain — Lettr's default bounce domain, or your sending subdomain once you use it as a [custom bounce domain](/knowledge-base/fundamentals/custom-return-path) (its CNAME points to Lettr's SPF). |
+| `spf=pass` | The sending IP address is authorized by the SPF record of the Return-Path domain (Lettr's default bounce domain, or your sending subdomain once you use it as a [custom bounce domain](/knowledge-base/fundamentals/custom-return-path), whose CNAME points to Lettr's SPF). |
 | `dkim=pass` | The DKIM signature is valid. The message was signed by Lettr using the key published at `scph0722._domainkey.yourapp.com` (your selector is shown on the domain's page in Lettr) and was not modified in transit. |
 | `dmarc=pass` | The message aligns with the domain's DMARC policy. Both SPF and/or DKIM passed and the domains align with the `From` header. |
 
@@ -197,9 +197,9 @@ Authentication-Results: mx.example.com;
   <Accordion title="DKIM is failing">
     A `dkim=fail` result means the cryptographic signature could not be verified. Common causes:
 
-    - **Missing DKIM DNS record** — Ensure the TXT record at `{selector}._domainkey.yourapp.com` (using the selector Lettr shows for your domain) is published and has propagated.
-    - **Message modified in transit** — Forwarding services or mailing lists may alter the message body, breaking the signature.
-    - **Wrong signing domain** — The `d=` value in the DKIM-Signature must match your verified sending domain in Lettr.
+    - **Missing DKIM DNS record**: Ensure the TXT record at `{selector}._domainkey.yourapp.com` (using the selector Lettr shows for your domain) is published and has propagated.
+    - **Message modified in transit**: Forwarding services or mailing lists may alter the message body, breaking the signature.
+    - **Wrong signing domain**: The `d=` value in the DKIM-Signature must match your verified sending domain in Lettr.
 
     Check your domain's DNS configuration in the Lettr dashboard to confirm the DKIM record is correctly published.
   </Accordion>
@@ -207,17 +207,17 @@ Authentication-Results: mx.example.com;
   <Accordion title="SPF is failing">
     A `spf=fail` result means the sending IP is not authorized by your domain's SPF record. Common causes:
 
-    - **Missing Lettr include** — On a root sending domain, your SPF record must contain `include:_spf.sparkpostmail.com`. Without it, Lettr's sending IPs are not authorized and the domain won't verify. Subdomains are covered by the CNAME record instead.
-    - **Too many DNS lookups** — SPF allows a maximum of 10 DNS lookups. If your record exceeds this limit, SPF evaluation stops and may return `permerror`.
-    - **Incorrect Return-Path domain** — SPF is evaluated against the Return-Path (envelope sender) domain, not the From header domain.
+    - **Missing Lettr include**: On a root sending domain, your SPF record must contain `include:_spf.sparkpostmail.com`. Without it, Lettr's sending IPs are not authorized and the domain won't verify. Subdomains are covered by the CNAME record instead.
+    - **Too many DNS lookups**: SPF allows a maximum of 10 DNS lookups. If your record exceeds this limit, SPF evaluation stops and may return `permerror`.
+    - **Incorrect Return-Path domain**: SPF is evaluated against the Return-Path (envelope sender) domain, not the From header domain.
   </Accordion>
 
   <Accordion title="Wrong From display name or address">
     If the recipient sees an unexpected sender name or address:
 
     - **Check the `from` and `from_name` parameters** in your API request. The `from` must be an address on a verified domain in Lettr.
-    - **Some email clients show a "via" label** — Gmail shows "via" plus another domain when the message isn't DKIM-signed by the From domain. Lettr signs with your verified sending domain, so check that DKIM passes for it.
-    - **Check "mailed-by"** — Gmail's message details show the Return-Path domain as "mailed-by". Enabling a [custom bounce domain](/knowledge-base/fundamentals/custom-return-path) in Lettr puts your own domain there.
+    - **Some email clients show a "via" label**: Gmail shows "via" plus another domain when the message isn't DKIM-signed by the From domain. Lettr signs with your verified sending domain, so check that DKIM passes for it.
+    - **Check "mailed-by"**: Gmail's message details show the Return-Path domain as "mailed-by". Enabling a [custom bounce domain](/knowledge-base/fundamentals/custom-return-path) in Lettr puts your own domain there.
   </Accordion>
 
   <Accordion title="Replies are going to the wrong address">

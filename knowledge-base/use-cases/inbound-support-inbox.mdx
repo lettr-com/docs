@@ -3,7 +3,7 @@ title: Building a Support Inbox with Inbound Email
 description: "Turn customer emails into tickets with Lettr inbound: set up MX records and a forwarding URL, parse the relay payload, filter spam yourself and reply in-thread."
 ---
 
-You want customers to email `support@yourcompany.com`, have each message land in your app as a ticket, and send your agents' answers back into the same conversation. You don't want to run a mail server or poll an IMAP mailbox. This guide builds that flow with Lettr: inbound email posts each message to your application as JSON, and the send API sends the reply.
+This guide builds a support inbox on Lettr: customers email an address such as `support@yourcompany.com`, each message reaches your application as a ticket, and agents' answers go back into the same conversation. Inbound email posts each message to your application as JSON and the send API sends the reply, so there is no mail server to run and no IMAP mailbox to poll.
 
 ---
 
@@ -14,15 +14,15 @@ Customer → MX records → Lettr inbound servers → Forwarding URL (JSON POST)
 Your app (agent reply) → Send API → Customer
 ```
 
-Lettr only moves mail. It accepts a message for your inbound domain, posts it to your forwarding URL and stops there. Everything else is yours to build:
+Lettr only moves mail: it accepts a message for your inbound domain, posts it to your forwarding URL and stops there. Everything else happens in your handler:
 
 | Concern | Who handles it |
 |-|-|
 | Receiving mail over SMTP | Lettr |
 | Delivering the message as JSON | Lettr |
-| Spam and abuse filtering | **Your handler** |
-| Creating the ticket, threading, assignment | **Your handler** |
-| Storing attachments | **Your handler** (they are inside the raw message) |
+| Spam and abuse filtering | Your handler |
+| Creating the ticket, threading, assignment | Your handler |
+| Storing attachments | Your handler (they are inside the raw message) |
 | Sending the reply | Lettr send API |
 
 <Warning>
@@ -33,7 +33,7 @@ Lettr only moves mail. It accepts a message for your inbound domain, posts it to
 
 ## Step 1: Pick an Address Layout
 
-Use a dedicated subdomain for the support inbox, such as `support.example.com`. Mail to **any** address at an inbound domain goes to the same forwarding URL, so `help@`, `billing@` and `anything@` all arrive at one endpoint and you route them in code.
+Use a dedicated subdomain for the support inbox, such as `support.example.com`. Mail to any address at an inbound domain goes to the same forwarding URL, so `help@`, `billing@` and `anything@` all arrive at one endpoint and are routed in code.
 
 A subdomain also keeps your root domain's MX records pointing at your regular mailbox provider (Google Workspace, Microsoft 365), so staff email is unaffected.
 
@@ -45,7 +45,7 @@ A subdomain also keeps your root domain's MX records pointing at your regular ma
 
 ## Step 2: Build the Receiving Endpoint First
 
-The forwarding URL is required. When you create the inbound domain, Lettr tests it with a `POST` request and refuses to create the domain unless your endpoint answers with a `2xx` status. So the endpoint must exist and be publicly reachable before you touch the dashboard.
+The forwarding URL is required. When you create the inbound domain, Lettr tests it with a `POST` request and refuses to create the domain unless your endpoint answers with a `2xx` status. The endpoint therefore has to exist and be publicly reachable before the domain is created in the dashboard.
 
 Start with an endpoint that verifies the auth token and acknowledges the request:
 
@@ -79,7 +79,7 @@ app.post('/webhooks/inbound', verifyToken, express.json({ limit: '50mb' }), asyn
 ```
 
 <Note>
-  The test request is sent when you create the domain. If your endpoint sits behind a firewall or WAF that challenges unknown clients (a Cloudflare `403`, for example), the dashboard shows the status your endpoint returned and the domain is not created. Allow server-to-server `POST` requests on that path. Lettr's mail infrastructure publishes no fixed source IP addresses, so rely on the auth token rather than an IP allowlist. See [Security](/learn/inbound/security#verify-the-auth-token).
+  An endpoint behind a firewall or WAF that challenges unknown clients (a Cloudflare `403`, for example) fails the test: the dashboard shows the status your endpoint returned and the domain is not created. Allow server-to-server `POST` requests on that path. Lettr's mail infrastructure publishes no fixed source IP addresses, so rely on the auth token rather than an IP allowlist. See [Security](/learn/inbound/security#verify-the-auth-token).
 </Note>
 
 ---
@@ -108,7 +108,7 @@ app.post('/webhooks/inbound', verifyToken, express.json({ limit: '50mb' }), asyn
 
 A domain with MX records but no forwarding URL shows **No forwarding URL**, and mail sent to it is accepted and then discarded. Check the status before you announce the address.
 
-You can test without DNS first: the [inbound sandbox](/learn/inbound/sandbox) gives every team an address for inspecting what arrives, but sandbox mail is never forwarded to your endpoint. To test the handler end to end, create a real inbound domain on a test subdomain.
+To look at incoming mail before DNS is set up, the [inbound sandbox](/learn/inbound/sandbox) gives every team an address for inspecting what arrives, but sandbox mail is never forwarded to your endpoint. To test the handler end to end, create a real inbound domain on a test subdomain.
 
 Full details are in the [Inbound Email Setup](/learn/inbound/setup) guide.
 
@@ -187,13 +187,13 @@ async function handleSupportEmail(relay) {
 }
 ```
 
-Resolve the customer's address in that order: the `Reply-To` header, then the address in `friendly_from`, with `msg_from` only as a last fallback. Store each inbound `Message-ID`. You need it in Step 6 to reply in-thread. Lettr's send API returns a `request_id`, not the `Message-ID` of the email it sent, so the stored IDs come from the customer's messages. For the complete field list see [Email Parsing](/learn/inbound/parsing).
+Resolve the customer's address in that order: the `Reply-To` header, then the address in `friendly_from`, with `msg_from` only as a last fallback. Store each inbound `Message-ID`, because Step 6 needs it to reply in-thread. Lettr's send API returns a `request_id`, not the `Message-ID` of the email it sent, so the stored IDs come from the customer's messages. For the complete field list see [Email Parsing](/learn/inbound/parsing).
 
 ---
 
 ## Step 5: Filter Spam in Your Handler
 
-Because Lettr forwards everything, a public support address will receive spam, bounce notices and auto-replies. Three rules keep the queue clean:
+A public support address receives spam, bounce notices and auto-replies, and all of it reaches the handler. Three rules keep the queue clean:
 
 - **Always answer `2xx`**, including for messages you drop. The mail was already accepted by the time it reaches you, so an error status cannot reject it back to the sender. It only makes the delivery to your endpoint look failed.
 - **Treat sender fields as claims.** `msg_from` and `friendly_from` are set by whoever sent the message. When the receiving server added an `Authentication-Results` header, a `dmarc=fail` is a strong signal. A missing header means "unknown", not "pass".
@@ -225,7 +225,7 @@ More patterns, including quarantining instead of dropping, are in [Spam Filterin
 
 ## Step 6: Reply with the Send API
 
-An agent answers in your ticket UI, and your app sends the reply through `POST /emails`. Three details make the reply land in the customer's existing conversation:
+Replies written in your ticket UI go out through `POST /emails`. Three details make the reply land in the customer's existing conversation:
 
 - **`from`** must be an address on a verified sending domain. The inbound domain is for receiving. Sending is configured separately under [sending domains](/learn/domains/sending-domains).
 - **`reply_to`** is the support address on your inbound domain, so the customer's next message comes back to your endpoint. To tie the reply to a ticket, put the ticket ID in it with a plus-style address such as `support+t-4821@support.example.com`, then read it from `rcpt_to`. Use lowercase letters, digits and hyphens in the ID.
@@ -275,9 +275,6 @@ If the same `from` address will receive customer replies too, don't send replies
   </Accordion>
   <Accordion title="Replies start new tickets instead of joining the thread">
     Match on more than one signal: the ticket ID in the `reply_to` address first, then `In-Reply-To` and `References` against stored `Message-ID` values, then a subject token. Customers edit subjects and some clients drop headers.
-  </Accordion>
-  <Accordion title="Spam is flooding the queue">
-    Lettr forwards everything, so filtering is your job. Add sender rate limits, a blocklist and a third-party spam filter in the handler. See [Spam Filtering](/learn/inbound/spam-filtering).
   </Accordion>
 </AccordionGroup>
 

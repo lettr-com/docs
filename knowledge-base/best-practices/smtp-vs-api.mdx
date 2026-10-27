@@ -74,13 +74,13 @@ await transporter.sendMail({
 
 | Feature | REST API | SMTP |
 |---------|----------|------|
-| **Template rendering** | Yes — pass `template_slug` and `substitution_data` in the request | No — you must render the email before sending |
-| **Batch sending** | Yes — up to 50 recipients in one request | Yes — up to 50 recipients (`RCPT TO`) per message |
-| **Immediate response with request ID** | Yes | No — SMTP returns only a queue acknowledgment |
-| **Metadata and tags** | Yes — include `metadata` and `tag` in the JSON payload | No — metadata and tags are API-only |
-| **Scheduled sending** | Yes — `POST /emails/scheduled` with `scheduled_at` | No |
-| **Attachments** | Yes — base64-encoded in JSON | Yes — native MIME attachments |
-| **Idempotency keys** | Yes — via `Idempotency-Key` header | No |
+| **Template rendering** | Yes: pass `template_slug` and `substitution_data` in the request | No: the email must be rendered the email before sending |
+| **Batch sending** | Yes: up to 50 recipients in one request | Yes: up to 50 recipients (`RCPT TO`) per message |
+| **Immediate response with request ID** | Yes | No: SMTP returns only a queue acknowledgment |
+| **Metadata and tags** | Yes: include `metadata` and `tag` in the JSON payload | No: metadata and tags are API-only |
+| **Scheduled sending** | Yes: `POST /emails/scheduled` with `scheduled_at` | No |
+| **Attachments** | Yes: base64-encoded in JSON | Yes: native MIME attachments |
+| **Idempotency keys** | Yes: via `Idempotency-Key` header | No |
 | **Works with legacy systems** | Requires HTTP client support | Works with any SMTP-capable system |
 | **Connection overhead** | New HTTPS connection per request (or connection pooling) | Persistent TCP connection with reuse |
 | **Firewall compatibility** | Port 443 (HTTPS) — rarely blocked | Port 587 — sometimes blocked in hosted environments |
@@ -92,7 +92,7 @@ await transporter.sendMail({
 The API is the recommended method for most use cases. Choose it when:
 
 - **You're building a new integration.** The API provides the richest feature set and the most straightforward developer experience.
-- **You use Lettr templates.** The API lets you pass a template slug and substitution variables — the rendering happens server-side.
+- **Using Lettr templates.** The API accepts a template slug and substitution variables, and the rendering happens server-side.
 - **You need batch sending.** Send to up to 50 recipients in a single API call.
 - **You want immediate feedback.** The API response includes the request ID and any validation errors.
 - **You're in a serverless environment.** Lambda, Cloud Functions, and similar platforms handle HTTP requests natively but may not support long-lived SMTP connections.
@@ -141,7 +141,7 @@ SMTP throughput can be improved by reusing connections (sending multiple message
 
 ### Latency
 
-For a single email, the difference is negligible — both methods typically complete in under 200ms. For high-volume sending, putting up to 50 recipients in each API request reduces the number of round trips.
+For a single email, the difference is negligible, as both methods typically complete in under 200ms. For high-volume sending, putting up to 50 recipients in each API request reduces the number of round trips.
 
 ### Error Handling
 

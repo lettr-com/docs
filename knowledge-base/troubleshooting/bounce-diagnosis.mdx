@@ -3,7 +3,7 @@ title: Bounce Diagnosis
 description: "Read Lettr bounce data, tell hard from soft bounces, and use bounce classes to take the right action for each delivery failure"
 ---
 
-When an email bounces, Lettr provides structured data about the failure — including a numeric bounce class, the SMTP response code, and the raw response from the receiving server. This guide explains how to read that data and respond appropriately.
+Every bounce in Lettr comes with structured data about the failure: a numeric bounce class, the SMTP response code, and the raw response from the receiving server. This guide explains how to read that data and which action each kind of bounce calls for.
 
 ---
 
@@ -34,7 +34,7 @@ A soft bounce is a temporary delivery failure. The email may be deliverable if r
 Every bounce event includes a numeric `bounce_class` that describes the specific reason for the failure. Use this table to determine the correct response for each class.
 
 | Bounce Class | Category | Type | Recommended Action |
-|----------|------|-------------|-------------------|
+|-|-|-|-|
 | `1` | Undetermined | Varies | Review the `error_code` and `raw_reason` fields manually |
 | `10` | Invalid Recipient | Hard | Remove from your list immediately |
 | `20` | Soft Bounce | Soft | Wait for automatic retry; no immediate action needed |
@@ -63,7 +63,7 @@ The `error_code` field in bounce events contains the SMTP response code returned
 These codes indicate a temporary issue. Lettr automatically retries delivery for these responses.
 
 | Code | Meaning | Typical Cause |
-|------|---------|---------------|
+|-|-|-|
 | `421` | Server temporarily unavailable | The receiving server is down, overloaded, or restarting |
 | `450` | Mailbox unavailable (busy) | The mailbox exists but is temporarily locked or in use |
 | `452` | Insufficient storage | The recipient's mailbox is full or the server is out of disk space |
@@ -73,14 +73,14 @@ These codes indicate a temporary issue. Lettr automatically retries delivery for
 These codes indicate a permanent failure. The address should be removed from your list or the issue investigated.
 
 | Code | Meaning | Typical Cause |
-|------|---------|---------------|
+|-|-|-|
 | `550 5.1.1` | User unknown / mailbox not found | The email address does not exist on the receiving server |
 | `550 5.1.2` | Bad destination domain | The domain exists but is not configured to receive email |
 | `550 5.7.1` | Message rejected (policy/spam) | The message was blocked due to content filtering or sender policy |
 | `551` | User not local | The recipient is not hosted on that server and forwarding was refused |
 | `552` | Message too large | The email exceeded the recipient server's size limit |
 | `553` | Invalid mailbox name | The email address format is syntactically invalid |
-| `554` | Transaction failed | A general rejection — check the full `raw_reason` field for details |
+| `554` | Transaction failed | A general rejection. Check the full `raw_reason` field for details |
 
 <Warning>
   SMTP response codes alone do not tell the full story. Always read the `raw_reason` field in the bounce event for the specific reason provided by the receiving server.
@@ -90,7 +90,7 @@ These codes indicate a permanent failure. The address should be removed from you
 
 ## Reading Bounce Webhook Events
 
-The most reliable way to monitor bounces is through webhooks. When an email bounces, Lettr sends a `message.bounce` event to your configured webhook endpoint. Events arrive in batches, as an array of objects.
+Webhooks are the most reliable way to monitor bounces. Lettr sends a `message.bounce` event to your configured webhook endpoint for every bounce, and events arrive in batches, as an array of objects.
 
 ### Event Payload
 
@@ -154,7 +154,7 @@ app.post('/webhooks/lettr', express.json(), async (req, res) => {
         reason: data.raw_reason
       });
     } else {
-      // Track soft bounces — suppress after repeated failures
+      // Track soft bounces; suppress after repeated failures
       await db.subscribers.update({
         where: { email: data.rcpt_to },
         data: {
@@ -173,7 +173,7 @@ app.post('/webhooks/lettr', express.json(), async (req, res) => {
 
 ## Out-of-Band Bounces
 
-Some bounces arrive asynchronously, well after the initial delivery attempt appeared to succeed. These are called out-of-band (OOB) bounces. They occur when the receiving server initially accepts the message but later discovers it cannot be delivered — for example, when a forwarding address turns out to be invalid.
+Some bounces arrive asynchronously, well after the initial delivery attempt appeared to succeed. These are called out-of-band (OOB) bounces. They occur when the receiving server initially accepts the message but later finds it cannot be delivered (for example, because a forwarding address is invalid).
 
 Lettr sends these as `message.out_of_band` events:
 
@@ -208,7 +208,7 @@ if (data.type === 'out_of_band') {
     timestamp: new Date()
   });
 
-  // Permanent failure — update your records
+  // Permanent failure: update your records
   if (HARD_BOUNCE_CLASSES.includes(bounceClass)) {
     await db.subscribers.update({
       where: { email: data.rcpt_to },
@@ -225,7 +225,7 @@ if (data.type === 'out_of_band') {
 
 ## Deferred Emails
 
-A deferred email is not a bounce — it is a temporary delay. The receiving server has asked Lettr to try again later, usually because of rate limiting or temporary unavailability. Lettr tracks these as `message.delay` events.
+A deferred email is a temporary delay rather than a bounce. The receiving server has asked Lettr to try again later, usually because of rate limiting or temporary unavailability. Lettr tracks these as `message.delay` events.
 
 ```json
 [{
@@ -243,28 +243,28 @@ A deferred email is not a bounce — it is a temporary delay. The receiving serv
 }]
 ```
 
-Lettr handles retries automatically with exponential backoff. You do not need to take action on individual deferral events.
+Lettr handles retries automatically with exponential backoff, so individual deferral events need no action.
 
 **When to investigate deferrals:**
 
-- A large number of emails to the same domain are being deferred — this may indicate that the receiving server is throttling you due to reputation concerns or volume limits.
-- Emails to a specific recipient are deferred repeatedly across multiple sends — the receiving server may have a persistent issue.
-- Your overall deferral rate spikes suddenly — check whether you recently increased sending volume or changed your content.
+- **Many deferrals to one domain**: The receiving server may be throttling you because of reputation concerns or volume limits.
+- **Repeated deferrals for one recipient**: Deferrals that repeat across multiple sends suggest the receiving server has a persistent issue.
+- **A sudden jump in the overall deferral rate**: Check whether sending volume recently increased or the content changed.
 
 ---
 
 ## Reducing Your Bounce Rate
 
 <Tip>
-  For a single problem recipient, [Adamko](/learn/ai-assistant/troubleshooting-and-diagnostics#a-specific-recipient-didnt-get-an-email) can do the bounce forensics for you — he reads the recipient's recent events, decodes the SMTP response, checks suppression state, and names the likely root cause. For a list-wide view, ask him to *"check my sending health"*.
+  For a single problem recipient, [Adamko](/learn/ai-assistant/troubleshooting-and-diagnostics#a-specific-recipient-didnt-get-an-email) can do the bounce forensics for you. He reads the recipient's recent events, decodes the SMTP response, checks suppression state, and names the likely root cause. For a list-wide view, ask him to *"check my sending health"*.
 </Tip>
 
 <AccordionGroup>
   <Accordion title="Validate email addresses at collection">
-    Check for valid syntax, common typos (e.g., `gmial.com`), and disposable email providers at the point of signup. Catching invalid addresses before they enter your list prevents bounces entirely.
+    Check for valid syntax, common typos (e.g., `gmial.com`), and disposable email providers at the point of signup. Catching invalid addresses before they enter your list prevents the bounces they would cause.
   </Accordion>
   <Accordion title="Use double opt-in">
-    Require new subscribers to confirm their email address by clicking a link in a verification email. This ensures the address is real, reachable, and owned by the person who signed up.
+    Require new subscribers to confirm their email address by clicking a link in a verification email. This ensures the address is real and belongs to the person who signed up.
   </Accordion>
   <Accordion title="Handle bounces in real time">
     Set up webhook handlers to process `message.bounce` and `message.out_of_band` events as they arrive. Remove hard-bounced addresses from your sending lists immediately rather than waiting for a batch cleanup.
@@ -273,7 +273,7 @@ Lettr handles retries automatically with exponential backoff. You do not need to
     Remove subscribers who have not opened or clicked any email in the past 6 to 12 months. Inactive addresses are more likely to become invalid over time as people abandon mailboxes.
   </Accordion>
   <Accordion title="Monitor your bounce rate continuously">
-    Track your bounce rate in the Lettr dashboard after every send. If you notice an upward trend, investigate immediately rather than waiting for it to reach critical levels.
+    Track your bounce rate in the Lettr dashboard after every send. Investigate any upward trend immediately rather than waiting for it to reach critical levels.
   </Accordion>
 </AccordionGroup>
 
@@ -284,13 +284,13 @@ Lettr handles retries automatically with exponential backoff. You do not need to
 Use these thresholds to assess the health of your sending practices:
 
 | Bounce Rate | Status | What to Do |
-|-------------|--------|------------|
-| Below 2% | Healthy | Your list hygiene is good. Continue current practices and monitor regularly. |
+|-|-|-|
+| Below 2% | Healthy | List hygiene is good. Continue current practices and monitor regularly. |
 | 2% to 5% | Warning | Review your list for stale or unvalidated addresses. Implement double opt-in if you haven't already. Check recent list imports for quality issues. |
 | Above 5% | Critical | Stop sending to unverified segments immediately. Clean your entire list by removing unengaged and invalid addresses. Investigate the source of bad addresses before resuming normal volume. |
 
 <Warning>
-  ISPs closely monitor bounce rates. A bounce rate consistently above 5% can result in your domain being throttled or blocked entirely. Address bounce rate problems before they escalate.
+  ISPs closely monitor bounce rates. A bounce rate consistently above 5% can result in your domain being throttled or blocked entirely.
 </Warning>
 
 ---

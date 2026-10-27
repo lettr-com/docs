@@ -3,18 +3,18 @@ title: Verified Domain Stopped Working
 description: "Find out why a previously verified Lettr domain shows Not working or a DNS warning, what the daily check does, and how to fix and re-verify it"
 ---
 
-Your domain verified without trouble, and then one day it shows a red **Not working** badge, a DNS warning on a record, or an alert in your inbox. Nothing changed in Lettr, so something changed in your DNS. This guide explains what Lettr checks after verification, what the warnings mean, and how to get the domain healthy again.
+A domain that passed verification can later show a red **Not working** badge, a DNS warning on a record, or an alert in your inbox. The cause is a change on the DNS side rather than in Lettr. This guide explains what Lettr checks after verification, what the warnings mean, and how to get the domain healthy again.
 
-If your domain has never verified, start with [Domain Verification Failures](/knowledge-base/troubleshooting/domain-verification) instead.
+For a domain that has never verified, start with [Domain Verification Failures](/knowledge-base/troubleshooting/domain-verification) instead.
 
 ---
 
 ## Why a Verified Domain Breaks
 
-DNS records are not permanent. A record that passed verification months ago can stop working without anyone touching Lettr:
+A record that passed verification can stop working later without any change in Lettr. Common causes:
 
 - A teammate deletes or "cleans up" records at your DNS provider.
-- You move DNS hosting (new registrar, new nameservers) and forget to copy the Lettr records.
+- DNS hosting moves (new registrar, new nameservers) without the Lettr records being copied.
 - A tracking or storage CNAME is repointed at another server.
 - A domain registration expires or lapses.
 - A DNS-level change such as turning on a proxy for a CNAME rewrites the answer Lettr sees.
@@ -32,7 +32,7 @@ Lettr has two separate mechanisms that notice this. They behave differently, so 
 
 Every day at 03:00, Lettr runs a health check across the verified domains on your team: sending, tracking, inbound, and storage.
 
-The check is **read-only**. It does one DNS lookup per domain and records whether it passed. It never writes a verification status back, never disables a domain, and never stops your sending. It only observes and warns.
+The check is read-only. It does one DNS lookup per domain and records whether it passed, and it never writes a verification status back, disables a domain or stops your sending.
 
 What each domain type is checked for:
 
@@ -49,7 +49,7 @@ What each domain type is checked for:
 
 Before judging your domain, the check confirms Lettr's own DNS resolution is working by looking up a control domain. If that lookup fails, the run is skipped, so a problem on Lettr's side does not produce false alarms for your team.
 
-The result is stored on every run, healthy or not. When you fix the DNS record, the next 03:00 run clears the warning on its own, as long as **Enable alerts** and **Domain DNS Health** alerts are both on.
+The result is stored on every run, healthy or not. Once the DNS record is fixed, the next 03:00 run clears the warning on its own, as long as Enable alerts and Domain DNS Health alerts are both on.
 
 <Warning>
   The daily check, and with it the Not working badge, only updates while alerts are enabled (**Settings → Alerts → Enable alerts**) and **Domain DNS Health** alerts are on. With either turned off, the check does not record new results, so an existing badge stays as it was.
@@ -61,12 +61,12 @@ The result is stored on every run, healthy or not. When you fix the DNS record, 
 
 When a domain fails the daily check, Lettr tells you in several places:
 
-- **Not working badge** — a red badge next to the domain in the domain lists. It shows what the last daily check saw, not the stored verification status of the records.
-- **Warning panel** — on the domain's detail page, explaining the consequence in plain terms and asking you to fix the DNS record and re-verify.
-- **Dashboard alert** — a critical alert titled, for example, "Sending domain not working".
-- **Notification center** — a notification titled "DNS problem on yourdomain.com" with a **Check domain** link. This one always arrives, even if you have turned off the email channel.
-- **Email** — if the email channel is enabled, the team owner gets one email per daily run listing the domains whose alerts are due that day. A record that is still broken but already inside its backoff (see below) is left out of the email.
-- **Webhook** — if you configured a webhook URL, a `domain_dns_regression` event is delivered with the domain, its type, and the failing records.
+- **Not working badge**: a red badge next to the domain in the domain lists. It shows what the last daily check saw, not the stored verification status of the records.
+- **Warning panel**: on the domain's detail page, it explains the consequence in plain terms and asks for the DNS record to be fixed and re-verified.
+- **Dashboard alert**: a critical alert titled, for example, "Sending domain not working".
+- **Notification center**: a notification titled "DNS problem on yourdomain.com" with a **Check domain** link. This one always arrives, even with the email channel turned off.
+- **Email**: if the email channel is enabled, the team owner gets one email per daily run listing the domains whose alerts are due that day. A record that is still broken but already inside its backoff (see below) is left out of the email.
+- **Webhook**: if a webhook URL is configured, a `domain_dns_regression` event is delivered with the domain, its type, and the failing records.
 
 The warning panel states what the failure means for that domain type:
 
@@ -77,24 +77,24 @@ The warning panel states what the failure means for that domain type:
 | Storage | Images in emails you have already sent are not loading |
 | Inbound | Email sent to this domain is not being delivered |
 
-Alert settings, including the cooldown and the webhook, live under **Settings → Alerts**. See [Monitoring & Alerts](/learn/settings/alerts#domain-dns-health-alerts) for the full setup.
+Alert settings, including the cooldown and the webhook, live under Settings → Alerts. See [Monitoring & Alerts](/learn/settings/alerts#domain-dns-health-alerts) for the full setup.
 
 ---
 
 ## Why You Don't Get the Same Alert Every Day
 
-A record that stays broken does not page you forever. Alerts for a still-failing record back off:
+Alerts for a record that stays broken back off instead of repeating every day:
 
-- On the default 24-hour cooldown, you are alerted on day 0, 1, 4, and 11.
-- After that the alerts stop, but the domain keeps showing **Not working** until the daily check next finds the record fixed.
+- On the default 24-hour cooldown, alerts go out on day 0, 1, 4, and 11.
+- After that the alerts stop, but the domain keeps showing Not working until the daily check next finds the record fixed.
 - Backoff is tracked per record per domain. A newly broken record alerts immediately, even while another record is still failing.
 - When a record recovers, its schedule resets. If it breaks again later, alerts start from day 0.
 
 <Tip>
-  Silence from Lettr does not mean the problem went away. If you stopped receiving emails about a domain but the badge is still there, the DNS record is still broken.
+  An end to the alert emails does not mean the problem is fixed. While the badge is still there, the DNS record is still broken.
 </Tip>
 
-You can change the base cooldown (1 to 720 hours) or turn DNS health alerts off under **Settings → Alerts → Domain DNS Health**. Turning them off also stops the badge from updating.
+The base cooldown (1 to 720 hours) can be changed, and DNS health alerts turned off, under **Settings → Alerts → Domain DNS Health**. Turning them off also stops the badge from updating.
 
 ---
 
@@ -104,10 +104,10 @@ The daily check only warns. The stored status of a record changes through verifi
 
 When a record that was `valid` fails a verification run, Lettr does not mark it `invalid` straight away:
 
-1. **Within 10 minutes of the last successful verification**, a failure is ignored. The record stays `valid` and no failure is counted.
-2. **Once those 10 minutes have passed**, each failing run is counted. The first and second failures keep the record `valid` but show a warning on the record card.
-3. **On the third consecutive failure**, the record flips to its failing status (for example `invalid` or `missing`).
-4. **A single passing run resets the counter** to zero.
+1. Within 10 minutes of the last successful verification, a failure is ignored. The record stays `valid` and no failure is counted.
+2. Once those 10 minutes have passed, each failing run is counted. The first and second failures keep the record `valid` but show a warning on the record card.
+3. On the third consecutive failure, the record flips to its failing status (for example `invalid` or `missing`).
+4. A single passing run resets the counter to zero.
 
 The warning wording on the record card:
 
@@ -117,10 +117,10 @@ The warning wording on the record card:
 | 2 | Multiple DNS checks have returned unexpected results. Your record is still active — please verify your DNS configuration if this persists. |
 
 <Note>
-  Failures are counted per verification run, not per day. Clicking **Verify DNS Records** three times in a row against a broken record will flip it, as will three API or MCP verification calls. The 03:00 health check does not count toward the three.
+  Failures are counted per verification run, not per day. Clicking Verify DNS Records three times in a row against a broken record will flip it, as will three API or MCP verification calls. The 03:00 health check does not count toward the three.
 </Note>
 
-A record that was never valid is not given any grace. It simply shows the result of the latest check.
+A record that was never valid is not given any grace. It shows the result of the latest check.
 
 ---
 
@@ -128,13 +128,13 @@ A record that was never valid is not given any grace. It simply shows the result
 
 How much a broken record affects you depends on what is broken and what the stored status says.
 
-- **While only the daily check is failing**, nothing in Lettr is switched off. The check is informational, so your domain keeps its stored status. The real-world risk is on the receiving side: with a missing or changed record, mailbox providers can no longer authenticate your mail, so messages may bounce or land in spam.
-- **After a record flips to invalid** through verification, the domain no longer counts as fully verified, and sends from it are refused:
-  - **API and scheduled sends** — Lettr only accepts a send when the domain is **Approved**, DKIM and DMARC are `valid`, and the routing record (CNAME or SPF) is `valid`. Otherwise the request fails with HTTP `400`, `error_code` `unconfigured_domain`, and the message *The sender domain is not configured or approved for sending.* This applies to both the send and schedule endpoints.
-  - **Campaigns** — the same conditions apply, and the campaign sender check fails with *The domain "yourdomain.com" is not verified for sending.*
+- While only the daily check is failing, nothing in Lettr is switched off. The check is informational, so your domain keeps its stored status. The real-world risk is on the receiving side: with a missing or changed record, mailbox providers can no longer authenticate your mail, so messages may bounce or land in spam.
+- After a record flips to invalid through verification, the domain no longer counts as fully verified, and sends from it are refused:
+  - **API and scheduled sends**: Lettr only accepts a send when the domain is **Approved**, DKIM and DMARC are `valid`, and the routing record (CNAME or SPF) is `valid`. Otherwise the request fails with HTTP `400`, `error_code` `unconfigured_domain`, and the message *The sender domain is not configured or approved for sending.* This applies to both the send and schedule endpoints.
+  - **Campaigns**: the same conditions apply, and the campaign sender check fails with *The domain "yourdomain.com" is not verified for sending.*
 
 <Warning>
-  Do not wait for the third failure. Real receivers evaluate your DNS on every message, so a broken DKIM or SPF record can hurt delivery before Lettr changes any status.
+  Do not wait for the third failure. Receiving servers evaluate your DNS on every message, so a broken DKIM or SPF record can hurt delivery before Lettr changes any status.
 </Warning>
 
 ---
@@ -160,38 +160,38 @@ How much a broken record affects you depends on what is broken and what the stor
     Re-create the missing record or fix the value at your DNS provider. If you moved DNS hosting, copy every Lettr record to the new provider. If your provider proxies CNAMEs, set them to DNS only.
   </Step>
   <Step title="Re-verify">
-    Back on the domain page, click **Verify DNS Records**. This refreshes each record's stored status and resets the failure counter. You can also call the [verification endpoint](/knowledge-base/troubleshooting/domain-verification#verifying-via-api).
+    Back on the domain page, click **Verify DNS Records**. This refreshes each record's stored status and resets the failure counter. The [verification endpoint](/knowledge-base/troubleshooting/domain-verification#verifying-via-api) does the same over the API.
   </Step>
 </Steps>
 
 Two different things can need clearing, and they clear differently:
 
-- **Health warning only** (the Not working badge, warning panel, and dashboard alert): these are written only by the daily check, so they clear at the first 03:00 run after the record resolves again, provided **Enable alerts** and **Domain DNS Health** are both still on in **Settings → Alerts**. Re-verifying does not clear them, and you do not need to.
-- **Stored status flipped to invalid** (the record card shows a failing status and sends are refused): this changes only through verification, so it returns to `valid` only when you click **Verify DNS Records**. Do this as soon as the DNS is fixed rather than waiting for the daily check, because the badge can disappear overnight while the stored status is still invalid.
+- **Health warning only** (the Not working badge, warning panel, and dashboard alert): these are written only by the daily check, so they clear at the first 03:00 run after the record resolves again, provided Enable alerts and Domain DNS Health are both still on in Settings → Alerts. Re-verifying does not clear them, and you do not need to.
+- **Stored status flipped to invalid** (the record card shows a failing status and sends are refused): this changes only through verification, so it returns to `valid` only when you click Verify DNS Records. Do this as soon as the DNS is fixed rather than waiting for the daily check, because the badge can disappear overnight while the stored status is still invalid.
 
 <Tip>
-  Not sure which record is wrong? Ask [Adamko](/learn/ai-assistant/troubleshooting-and-diagnostics#domain-verification-problems), the AI assistant. It runs live DNS lookups, compares each record against what Lettr expects, and points at the one that differs.
+  To find which record is wrong, ask [Adamko](/learn/ai-assistant/troubleshooting-and-diagnostics#domain-verification-problems), the AI assistant. It runs live DNS lookups, compares each record against what Lettr expects, and points at the one that differs.
 </Tip>
 
 ---
 
 ## Preventing Drift
 
-- **Keep a copy of your Lettr records** outside your DNS provider, so you can restore them after a migration. The domain page has a **Send to developer** menu that can export them as CSV.
-- **Review DNS before cleanups.** Records at `_domainkey`, `_dmarc`, and your tracking, storage, and bounce subdomains look unused but are not.
-- **Plan DNS migrations.** Add all Lettr records to the new provider before changing nameservers.
-- **Make sure alerts reach a person.** Alerts go to the team owner. Keep the email channel on, or add a webhook, so a broken record does not sit unnoticed.
-- **Renew your domain.** An expired domain stops resolving, and the daily check will flag it.
+- Keep a copy of your Lettr records outside your DNS provider, so they can be restored after a migration. The domain page has a **Send to developer** menu that can export them as CSV.
+- Review DNS before cleanups. Records at `_domainkey`, `_dmarc`, and your tracking, storage, and bounce subdomains look unused but are not.
+- Plan DNS migrations: add all Lettr records to the new provider before changing nameservers.
+- Make sure alerts reach a person. Alerts go to the team owner, so keep the email channel on or add a webhook to keep a broken record from going unnoticed.
+- Renew your domain. An expired domain stops resolving, and the daily check will flag it.
 
 ---
 
 ## When to Contact Support
 
-Contact **support@lettr.com** or use the in-app chat if:
+Contact support@lettr.com or use the in-app chat if:
 
-- The domain still shows **Not working** more than a day after you fixed the record and the record is visible with `dig`.
+- The domain still shows Not working more than a day after you fixed the record and the record is visible with `dig`.
 - Verification reports a record as `invalid` when it matches the expected value exactly.
-- You receive alerts for a domain you already deleted.
+- Alerts keep arriving for a domain that was already deleted.
 
 Include the domain name and the `dig` output.
 

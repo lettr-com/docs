@@ -21,14 +21,14 @@ When an email event occurs, Lettr sends an HTTP POST request to your configured 
 
 | Response | Result |
 |----------|--------|
-| `2xx` status code | Success — event is marked as delivered |
-| `3xx` redirect | Failure — Lettr does not follow redirects |
-| `410` status code | Failure — not retried; the webhook is disabled |
-| Other `4xx` status code | Failure — retried according to retry schedule |
-| `5xx` status code | Failure — retried according to retry schedule |
-| Connection timeout (30s) | Failure — retried according to retry schedule |
-| DNS resolution failure | Failure — retried according to retry schedule |
-| TLS handshake failure | Failure — retried according to retry schedule |
+| `2xx` status code | Success: event is marked as delivered |
+| `3xx` redirect | Failure: Lettr does not follow redirects |
+| `410` status code | Failure: not retried; the webhook is disabled |
+| Other `4xx` status code | Failure: retried according to retry schedule |
+| `5xx` status code | Failure: retried according to retry schedule |
+| Connection timeout (30s) | Failure: retried according to retry schedule |
+| DNS resolution failure | Failure: retried according to retry schedule |
+| TLS handshake failure | Failure: retried according to retry schedule |
 
 <Warning>
   Lettr does not follow HTTP redirects (`301`, `302`, `307`, `308`). Your endpoint must respond directly with a `2xx` status. If your URL has changed, update it in the [Webhooks settings](https://app.lettr.com/webhooks).
@@ -49,7 +49,7 @@ When a webhook delivery fails, Lettr retries the request with exponential backof
 | 5th retry | 8 hours |
 | 6th retry | 24 hours |
 
-After 6 failed retries (7 total attempts, spanning roughly 35 hours), the webhook event is marked as **permanently failed** and no further delivery attempts are made. Webhooks that keep failing are disabled automatically — re-enable them from the webhook's page in the dashboard once the issue is fixed.
+After 6 failed retries (7 total attempts, spanning roughly 35 hours), the webhook event is marked as **permanently failed** and no further delivery attempts are made. Webhooks that keep failing are disabled automatically; re-enable them from the webhook's page in the dashboard once the issue is fixed.
 
 <Note>
   The webhook's page in the Lettr dashboard (**Webhooks**, then select the webhook) shows its **Last Attempt** time and **Last Status**. Failed events can't be replayed from the dashboard, so make your own system able to recover missed events.
@@ -173,7 +173,7 @@ app.post("/webhooks/lettr-slow", express.json(), (req, res) => {
 
 ## Endpoint Authentication
 
-Lettr doesn't sign webhook payloads. Instead, each webhook has an authentication type — **None**, **Basic**, or **OAuth 2.0** — and Lettr sends the matching `Authorization` header with every request. Use Basic or OAuth 2.0 in production and reject requests without valid credentials.
+Lettr doesn't sign webhook payloads. Instead, each webhook has an authentication type (**None**, **Basic**, or **OAuth 2.0**), and Lettr sends the matching `Authorization` header with every request. Use Basic or OAuth 2.0 in production and reject requests without valid credentials.
 
 ### Verifying Basic Auth
 
@@ -205,9 +205,9 @@ function verifyBasicAuth(req) {
 | Problem | Cause | Fix |
 |---------|-------|-----|
 | Header always empty | A proxy, CDN, or gateway strips the `Authorization` header | Configure it to pass the header through to your application |
-| Looking for a signature | Expecting a `lettr-signature` or `x-signature` header | Lettr doesn't sign payloads — check the `Authorization` header instead |
-| Wrong credentials | Using credentials from a different webhook | Each webhook has its own authentication settings — check the dashboard |
-| OAuth 2.0 token rejected | Token URL, client ID, or client secret is wrong | Lettr fetches a token from your OAuth server before each delivery — confirm all three values |
+| Looking for a signature | Expecting a `lettr-signature` or `x-signature` header | Lettr doesn't sign payloads; check the `Authorization` header instead |
+| Wrong credentials | Using credentials from a different webhook | Each webhook has its own authentication settings; check the dashboard |
+| OAuth 2.0 token rejected | Token URL, client ID, or client secret is wrong | Lettr fetches a token from your OAuth server before each delivery; confirm all three values |
 
 <Warning>
   Never run a production webhook without authentication. Without it, anyone who discovers your webhook URL can send forged events to your server.
@@ -217,7 +217,7 @@ function verifyBasicAuth(req) {
 
 ## Idempotency
 
-Lettr may deliver the same webhook event more than once (due to retries or network issues). Your handler must be idempotent — processing the same event twice should not cause duplicate side effects. See [Duplicate Emails](/knowledge-base/troubleshooting/duplicate-emails) for duplicate sends and webhook events.
+Lettr may deliver the same webhook event more than once (due to retries or network issues). Handlers must be idempotent: processing the same event twice should not cause duplicate side effects. See [Duplicate Emails](/knowledge-base/troubleshooting/duplicate-emails) for duplicate sends and webhook events.
 
 ### Implementing Idempotency
 

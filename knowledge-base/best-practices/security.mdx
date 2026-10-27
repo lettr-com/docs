@@ -67,10 +67,10 @@ See [API Key Permissions](/learn/api-keys/permissions) for details on what each 
 
 Create distinct API keys for each environment:
 
-- **Development** — a [sandbox key](/learn/api-keys/sandbox) (`lttr_sandbox_` prefix), which delivers every email to your own inbox
-- **Staging** — a Sending Only key for pre-production testing
-- **Production** — a Sending Only key for live email sending
-- **Admin** — a Full Access key used only for dashboard-level operations
+- **Development**: a [sandbox key](/learn/api-keys/sandbox) (`lttr_sandbox_` prefix), which delivers every email to your own inbox
+- **Staging**: a Sending Only key for pre-production testing
+- **Production**: a Sending Only key for live email sending
+- **Admin**: a Full Access key used only for dashboard-level operations
 
 If one environment is compromised, you only need to rotate that key without affecting other environments.
 
@@ -110,7 +110,7 @@ app.post('/webhooks/lettr', express.json(), (req, res) => {
     return res.sendStatus(401);
   }
 
-  // Credentials are valid — safe to process
+  // Credentials are valid; safe to process
   handleEvents(req.body);
 
   res.sendStatus(200);
@@ -133,7 +133,7 @@ See [Webhook Authorization](/learn/webhooks/authorization) for Basic and OAuth 2
 
 ### Enable Two-Factor Authentication
 
-Enable 2FA for every team member in the Lettr dashboard under **Settings** → **Two-Factor Auth**. This protects against password compromise — even if an attacker obtains a password, they can't access the dashboard without the second factor.
+Enable 2FA for every team member in the Lettr dashboard under **Settings** → **Two-Factor Auth**. This protects against password compromise: even if an attacker obtains a password, they can't access the dashboard without the second factor.
 
 <Note>
   2FA is configured per user in the dashboard. If you own the team, turn on **Require Two-Factor Authentication** under **Settings** → **Team** so every member must enable it before accessing team resources.
@@ -198,7 +198,7 @@ app.post('/webhooks/lettr', express.json(), (req, res) => {
     if (data?.type === 'bounce' && [10, 30, 90].includes(parseInt(data.bounce_class))) {
       trackBounce(data.rcpt_to);
 
-      // Alert if hard bounces spike — could indicate a compromised key
+      // Alert if hard bounces spike; could indicate a compromised key
       // sending to purchased or invalid lists
       if (getRecentBounceCount() > BOUNCE_THRESHOLD) {
         alertSecurityTeam('Unusual hard bounce spike detected');

@@ -3,7 +3,7 @@ title: "Unsubscribes, Pauses and Suppressions"
 description: "What stops which email in Lettr: how a contact unsubscribe, a pause and a suppression differ, and why API sends can still reach an unsubscribed address."
 ---
 
-A recipient clicked unsubscribe, but they got another email from you the next day. Or an address is "unsubscribed" in your audience and your API send to it still went through. Both are normal behaviour once you know that Lettr has **two separate places** where an address can be stopped, and that they don't talk to each other.
+Lettr has **two separate places** where an address can be stopped from receiving email: the contact status in your Audience and the suppression list in the delivery layer. They don't share data, so an address that is unsubscribed in your Audience can still receive an API send.
 
 This guide explains the difference between an audience unsubscribe, a pause and a suppression, which of your sends each one affects, and what to do about the gaps.
 
@@ -17,11 +17,9 @@ This guide explains the difference between an audience unsubscribe, a pause and 
 | **Used by** | Campaigns | Sends through the API or SMTP |
 | **Set by** | The recipient (preferences page, unsubscribe link, one-click), you (status change, import, API) | Hard bounces, spam complaints, and in some cases unsubscribe events recorded by SparkPost |
 | **Visible to you** | Contact status, `paused_until`, topics | Through [Adamko](/learn/ai-assistant/troubleshooting-and-diagnostics) only |
-| **You can change it** | Yes, any time | No. Removal is a request to Lettr support |
+| **Changeable by you** | Yes, any time | No. Removal is a request to Lettr support |
 
-The key sentence: **an audience unsubscribe only updates the Lettr contact.** It is never copied to the suppression list. Lettr's campaign code says so directly: a Lettr unsubscribe is written to the contact record and nothing registers it with the delivery layer, so the contact status check is the only thing that stops the next campaign email.
-
-The reverse is also true: the suppression list is separate from contact status, so don't assume one mirrors the other.
+An audience unsubscribe only updates the Lettr contact and is never copied to the suppression list. Nothing registers it with the delivery layer, so the contact status check is the only thing that stops the next campaign email.
 
 ---
 
@@ -52,22 +50,22 @@ A pause is a time-boxed opt-out for marketing email. On the [Manage email prefer
 - A full unsubscribe clears any active pause.
 - A pause applies to campaigns only. It has no effect on API or SMTP sends.
 
-Pauses are a good outcome. A recipient who would otherwise unsubscribe or file a spam complaint chooses to take a break instead, and you keep the contact.
+A pause keeps the contact on your list and gives a recipient who wants less email an option short of unsubscribing or marking mail as spam.
 
 ---
 
 ## What Stops Which Email
 
-This is the part that surprises people. The answer depends on how the email was sent and on the `options.transactional` flag.
+Which mechanism applies depends on how the email was sent and on the `options.transactional` flag.
 
-### Transactional vs non-transactional
+### Transactional vs Non-Transactional
 
 `options.transactional` is a boolean on the [send endpoint](/api-reference/emails/send-email). It **defaults to `true`**. Campaigns are always sent as non-transactional.
 
 - `transactional: true` is for one-to-one, operational email: password resets, receipts, security alerts.
 - `transactional: false` is for marketing-shaped email: newsletters, promotions, announcements. Lettr does not add `List-Unsubscribe` headers to API sends itself (it does for campaigns), so check a delivered message's headers and include your own unsubscribe link if you need one. See [Sending](/learn/sending/introduction#unsubscribe-handling).
 
-### The comparison
+### The Comparison
 
 | Event | Campaign | API send, `transactional: false` | API send, `transactional: true` (default) |
 |-|-|-|-|
@@ -83,17 +81,17 @@ This is the part that surprises people. The answer depends on how the email was 
 </Warning>
 
 <Note>
-  Audience status is never checked on API or SMTP sends. If you send a newsletter through the API, Lettr doesn't look at whether the address is `unsubscribed` in your Audience. Either send it as a campaign, or filter recipients against your own records before you call the API.
+  Audience status is never checked on API or SMTP sends. For a newsletter sent through the API, Lettr doesn't look at whether the address is `unsubscribed` in your Audience. Either send it as a campaign, or filter recipients against your own records before calling the API.
 </Note>
 
-### Which unsubscribes end up where
+### Where Each Unsubscribe Is Recorded
 
 | How the recipient unsubscribed | Result |
 |-|-|
 | Campaign `{{unsubscribe_link}}` and the preferences page | Contact status becomes `unsubscribed`, topics are detached, any pause is cleared |
 | One-click unsubscribe from a campaign (mail client button) | Contact status becomes `unsubscribed` immediately, with no preferences page |
 | Unsubscribe handled by SparkPost on an API send | SparkPost can record it on the suppression list as a non-transactional entry. The suppression-list API lists "List Unsubscribe" and "Unsubscribe Link" as entry sources |
-| You set the contact's status in the Audience, via import or the API | Contact status changes. Nothing is added to the suppression list |
+| The contact's status is changed in the Audience, via import or the API | Contact status changes. Nothing is added to the suppression list |
 
 The `List-Unsubscribe` header on a campaign points at a signed Lettr URL for that one contact, so a campaign unsubscribe lands on the contact record in Lettr, not on the suppression list.
 
@@ -169,7 +167,7 @@ The way back depends on which system stopped them.
 
 ---
 
-## Related Pages
+## Related Topics
 
 <CardGroup cols={2}>
   <Card title="Understanding Suppression Lists" icon="ban" href="/knowledge-base/fundamentals/suppression-lists">
@@ -182,6 +180,6 @@ The way back depends on which system stopped them.
     Webhook events and handling code for complaints and unsubscribes.
   </Card>
   <Card title="Unsubscribe Best Practices" icon="shield-check" href="/knowledge-base/compliance/unsubscribe-best-practices">
-    Legal requirements and honouring opt-outs.
+    Legal requirements and honoring opt-outs.
   </Card>
 </CardGroup>

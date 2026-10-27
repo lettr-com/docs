@@ -13,13 +13,13 @@ Each email client uses a different rendering engine, which means different level
 
 | Client | Rendering Engine | CSS Support |
 |--------|-----------------|-------------|
-| **Gmail (web)** | Custom (rewrites class names, drops invalid CSS) | Moderate — supports `<style>` in `<head>` and media queries, but discards a whole `<style>` block if it contains an error |
-| **Gmail (mobile app)** | WebKit | Moderate — supports media queries for Gmail accounts, but strips `<style>` for non-Gmail accounts added to the app |
-| **Outlook 2019/2021/365 (desktop)** | Microsoft Word | Very limited — no `background-image`, broken `float`, poor `margin`/`padding` |
-| **Outlook.com (web)** | Custom | Moderate — better than desktop Outlook |
-| **Apple Mail** | WebKit | Excellent — closest to a web browser |
-| **Yahoo Mail** | Custom | Moderate — strips some CSS properties |
-| **Thunderbird** | Gecko | Good — similar to Firefox |
+| **Gmail (web)** | Custom (rewrites class names, drops invalid CSS) | Moderate: supports `<style>` in `<head>` and media queries, but discards a whole `<style>` block if it contains an error |
+| **Gmail (mobile app)** | WebKit | Moderate: supports media queries for Gmail accounts, but strips `<style>` for non-Gmail accounts added to the app |
+| **Outlook 2019/2021/365 (desktop)** | Microsoft Word | Very limited: no `background-image`, broken `float`, poor `margin`/`padding` |
+| **Outlook.com (web)** | Custom | Moderate: better than desktop Outlook |
+| **Apple Mail** | WebKit | Excellent: closest to a web browser |
+| **Yahoo Mail** | Custom | Moderate: strips some CSS properties |
+| **Thunderbird** | Gecko | Good: similar to Firefox |
 
 <Warning>
   Outlook desktop's use of the Word rendering engine is the single biggest source of email rendering problems. If you design for Outlook first, other clients will generally work. The reverse is not true.

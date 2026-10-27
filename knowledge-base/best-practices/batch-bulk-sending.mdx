@@ -80,8 +80,8 @@ Each API request accepts at most 50 recipients across `to`, `cc` and `bcc`. Requ
 | List Size | Batch Size | Approach |
 |-----------|----------------------|----------|
 | ≤ 50 | All in one request | Single API call |
-| 50–10,000 | 50 per request | Loop with sequential requests |
-| 10,000–100,000 | 50 per request | Queue-based with rate limiting |
+| 50-10,000 | 50 per request | Loop with sequential requests |
+| 10,000-100,000 | 50 per request | Queue-based with rate limiting |
 | 100,000+ | 50 per request | Queue-based with backpressure and monitoring |
 
 ### Queue-Based Architecture

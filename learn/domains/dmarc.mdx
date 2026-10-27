@@ -167,8 +167,8 @@ When you verify a sending domain in Lettr, Lettr signs your mail with a DKIM key
 
 DMARC needs only one of SPF or DKIM to pass with alignment. Because Lettr handles DKIM signing for you, emails sent through Lettr will pass DMARC as long as:
 
-1. Your sending domain is **verified** in Lettr (the DKIM DNS records are in place)
-2. Your DMARC record exists at `_dmarc.yourdomain.com`
+1. The sending domain is **verified** in Lettr (the DKIM DNS records are in place)
+2. A DMARC record exists at `_dmarc.yourdomain.com`
 
 Turning on the custom bounce domain adds SPF alignment as a second aligned check.
 

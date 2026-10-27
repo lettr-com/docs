@@ -23,7 +23,7 @@ Domain verification confirms that you own the domain and have correctly configur
     Return to Lettr and click **Verify DNS Records**, or call the verification API endpoint. Lettr queries your DNS records and checks that they match the expected values.
   </Step>
   <Step title="Lettr Confirms the Records">
-    Each DNS record receives a status: `valid`, `unverified`, `invalid`, `missing`, or `not_applicable` (for the record your domain type doesn't use). You can send from the domain only when all required records are valid and the domain has **Approved** status.
+    Each DNS record receives a status: `valid`, `unverified`, `invalid`, `missing`, or `not_applicable` (for the record your domain type doesn't use). Sending from the domain requires all required records to be valid and the domain to have **Approved** status.
   </Step>
 </Steps>
 
@@ -68,12 +68,12 @@ The DKIM record is a long TXT value that must be copied exactly as Lettr provide
 
 ### CNAME Conflicts
 
-Lettr only asks for a CNAME record on subdomains — root domains use an SPF record instead. A CNAME record cannot coexist with other record types at the same name (this is a DNS specification requirement). If you already have an A, MX, or TXT record at the subdomain you're adding (for example, `mail.yourdomain.com`), the CNAME will conflict.
+Lettr only asks for a CNAME record on subdomains; root domains use an SPF record instead. A CNAME record cannot coexist with other record types at the same name (this is a DNS specification requirement). If you already have an A, MX, or TXT record at the subdomain you're adding (for example, `mail.yourdomain.com`), the CNAME will conflict.
 
 **Solutions:**
 
-- **Remove the conflicting records** — If the existing records at that subdomain are no longer used, delete them and add the CNAME.
-- **Use a different subdomain** — Add a subdomain that has no other records (e.g., `send.yourdomain.com`) as your sending domain instead.
+- **Remove the conflicting records**: If the existing records at that subdomain are no longer used, delete them and add the CNAME.
+- **Use a different subdomain**: Add a subdomain that has no other records (e.g., `send.yourdomain.com`) as your sending domain instead.
 
 ---
 
@@ -83,8 +83,8 @@ Root domains need an SPF TXT record that includes `_spf.sparkpostmail.com`, for 
 
 **Common problems:**
 
-- **Multiple SPF records** — A domain can have only one SPF record. If you already have one, add `include:_spf.sparkpostmail.com` to it instead of creating a second record.
-- **Missing include** — An existing SPF record that doesn't include `_spf.sparkpostmail.com` will not validate.
+- **Multiple SPF records**: A domain can have only one SPF record. If you already have one, add `include:_spf.sparkpostmail.com` to it instead of creating a second record.
+- **Missing include**: An existing SPF record that doesn't include `_spf.sparkpostmail.com` will not validate.
 
 ---
 
@@ -146,7 +146,7 @@ The output should point to `sparkpostmail.com`, the value shown in your dashboar
 dig TXT yourdomain.com +short
 ```
 
-You should see exactly one record starting with `v=spf1` that contains `include:_spf.sparkpostmail.com`.
+There should be exactly one `v=spf1` record, and it must contain `include:_spf.sparkpostmail.com`.
 
 **Check the DMARC record:**
 
@@ -174,7 +174,7 @@ nslookup -type=TXT _dmarc.yourdomain.com
 ## Verifying via API
 
 <Note>
-  Verification is not a one-time event: once a domain is verified, Lettr's daily [DNS health check](/learn/settings/alerts#domain-dns-health-alerts) keeps watching it and alerts you if a record later stops resolving. If you see a **Not working** badge on a previously verified domain, fix the DNS record at your provider — the warning clears automatically on the next check. See [Verified Domain Stopped Working](/knowledge-base/troubleshooting/domain-dns-drift) for the full fix.
+  Verification is not a one-time event: once a domain is verified, Lettr's daily [DNS health check](/learn/settings/alerts#domain-dns-health-alerts) keeps watching it and alerts you if a record later stops resolving. A **Not working** badge on a previously verified domain means a record needs fixing. Fix the DNS record at your provider; the warning clears automatically on the next check. See [Verified Domain Stopped Working](/knowledge-base/troubleshooting/domain-dns-drift) for the full fix.
 </Note>
 
 ### Trigger Verification

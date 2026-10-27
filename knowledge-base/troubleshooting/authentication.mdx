@@ -166,11 +166,11 @@ curl https://app.lettr.com/api/domains \
 
 ## Webhook Authentication Issues
 
-Lettr doesn't sign webhook payloads, so there is no signature header to verify. Instead, each webhook is configured with an authentication type — **None**, **Basic**, or **OAuth 2.0** — and Lettr sends the matching credentials with every delivery. Below are common issues and how to solve them.
+Lettr doesn't sign webhook payloads, so there is no signature header to verify. Instead, each webhook is configured with an authentication type (**None**, **Basic**, or **OAuth 2.0**) and Lettr sends the matching credentials with every delivery. Below are common issues and how to solve them.
 
 ### Check the Basic Auth Credentials
 
-With Basic authentication, Lettr sends an `Authorization: Basic ...` header built from the username and password you entered when creating the webhook. Your endpoint should decode it and compare both values.
+With Basic authentication, Lettr sends an `Authorization: Basic ...` header built from the username and password you entered when creating the webhook. The endpoint should decode it and compare both values.
 
 **Express.js -- correct setup:**
 ```javascript
