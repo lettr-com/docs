@@ -1,0 +1,204 @@
+---
+title: Blocked Domain or Account
+description: "Why Lettr blocks a sending domain or an account, what you see when it happens, and how to appeal to support@lettr.com with the right details"
+---
+
+You tried to send, or opened the dashboard, and found out that a domain or your whole account is blocked. This guide explains why Lettr blocks senders, what each kind of block looks like from your side, and how to ask for a review.
+
+Blocks are a protection for the shared infrastructure every Lettr customer sends through. They are not a verdict on your business. A single abusive sender can damage delivery for everyone, so Lettr acts quickly and reviews afterwards.
+
+---
+
+## Two Levels of Block
+
+A block applies either to one sending domain or to your whole team.
+
+| Level | What stops working | What still works |
+|-|-|-|
+| Domain | Sending from that domain and verifying its DNS records | Other domains on the account, the dashboard, viewing DNS records |
+| Account (team) | Sending through the API, and access to the dashboard | Signing out and switching to another team you belong to |
+
+A domain block is the more common one. An account block is applied when the problem is bigger than one domain: abuse across the account, or a pattern of domains being blocked.
+
+---
+
+## What You See
+
+### A blocked domain
+
+Open the domain in the dashboard. A red alert reads **This domain is blocked** with a status badge, followed by:
+
+> This domain has been blocked and cannot send email. You can still review its DNS records, but verification and sending are disabled. If you believe this is a mistake, please contact support.
+
+The **Verify DNS Records** button is disabled. Fixing DNS does not clear this block, because the block is about the domain itself and not its records.
+
+A domain can also sit in **Pending Review**. That means Lettr is looking at the domain before it can send. Like a blocked domain, a domain that is not **Approved** cannot send.
+
+Over the API, a send from a blocked domain returns HTTP 400 with the same error as a domain that was never set up:
+
+```json
+{
+  "message": "The sender domain is not configured or approved for sending.",
+  "error_code": "unconfigured_domain"
+}
+```
+
+<Note>
+  The API deliberately does not say "blocked" in this response. If you get `unconfigured_domain` and your DNS records all show `valid`, check the domain's status in the dashboard. A status other than **Approved** is the cause. See [Domain Verification Failures](/knowledge-base/troubleshooting/domain-verification) for the other causes of this error.
+</Note>
+
+If the content check blocks a domain after you send, Lettr also emails the account owner. The subject line is **Urgent: Sending paused for your domain** and it names the domain and the reason.
+
+### A blocked account
+
+Every page of the dashboard is replaced by an **Account Blocked** screen:
+
+> Your account has been blocked and you can no longer access this service.
+
+When a reason was recorded, it appears below that line under **Reason:**. The screen offers **Sign Out** and tells you to contact support if you believe it is a mistake.
+
+API requests with any of your keys are rejected with HTTP 403:
+
+```json
+{
+  "message": "Account is blocked. Please contact support."
+}
+```
+
+### A campaign in review
+
+A campaign can be held before it sends. Its status badge shows **In review**, and the campaign page says:
+
+> Our team flagged this campaign for a quick review before sending. We'll get back to you shortly.
+
+This is a hold, not a block. The campaign is checked, then either approved to send or the domain is blocked.
+
+---
+
+## Why Lettr Blocks Domains and Accounts
+
+Blocks come from automated screening and from manual review by the Lettr team. The reasons below are the ones Lettr records.
+
+### Reasons shown for an account block
+
+When an account is blocked with a preset reason, this is the text you see on the Account Blocked screen:
+
+| Reason | Text shown |
+|-|-|
+| Phishing or impersonation | Your account was used to send phishing emails or emails impersonating another brand. |
+| Spam | Your account sent unsolicited bulk email, which our acceptable use policy does not allow. |
+| High bounce or complaint rate | Emails from your account caused bounce or spam-complaint rates far above acceptable levels. |
+| Malware or malicious links | Emails from your account contained links to malware or malicious websites. |
+| Prohibited content | Your emails promote products or services our acceptable use policy does not allow. |
+| Fraudulent signup or payment | This account was flagged for fraudulent signup or payment activity. |
+| Block evasion | This account was created to get around an earlier block. |
+| Unusual sending volume | Your account sent an unusually high volume of email in a short time, so sending is paused while we review it. |
+| Repeated domain blocks | Several of your sending domains were blocked for abuse in a short time. |
+| Coordinated abuse | This account is linked to abuse coordinated across several accounts. |
+
+Staff can also write a custom reason, which appears in the same place.
+
+### Reasons recorded for a domain block
+
+Domain-level reasons are kept in Lettr's internal activity log rather than shown on a screen, so you may not see the exact label. These are the categories:
+
+- Phishing or brand impersonation
+- Spam content
+- Malware or malicious links
+- Lookalike domain name that impersonates a brand
+- Fake or fraudulent website
+- The team does not own the domain
+- High bounce or complaint rate
+- Prohibited content
+
+---
+
+## How the Automated Checks Work
+
+You do not need the internal numbers to avoid a block. These are the behaviours the screening looks at.
+
+### Brand impersonation screening
+
+Every new sending domain is checked when you add it. The check looks at whether the domain name imitates a known brand, for example by adding a word to a bank's name or swapping similar-looking characters. This runs in the background and takes a few seconds, and a domain cannot send until it is verified anyway.
+
+There are three outcomes:
+
+- **Clean:** the domain stays Approved and you carry on with DNS setup.
+- **Unclear:** the domain moves to Pending Review and a person looks at it.
+- **Clear impersonation:** the domain is blocked.
+
+A domain that is not Approved cannot send even if every DNS record is valid. The impersonation screen is its own check. The approval score described in [Domain Approval Process](/learn/domains/approval) also looks at the domain name, so a domain can be affected by either.
+
+### Content checks
+
+Campaigns and sends can be checked for phishing, scam and other prohibited content. A strong match blocks the sending domain and emails the account owner. A weaker match marks the domain for review by a person. Separately, a campaign flagged before sending is held as **In review** until it is approved or the domain is blocked.
+
+### Repeated domain blocks
+
+If several of your domains are blocked for abuse in a short period, Lettr can suspend the whole account. This protects against the common pattern of rotating through throwaway domains. The account screen then shows the reason "Several of your sending domains were blocked for abuse in a short time."
+
+If you are on the receiving end of a legitimate domain block, do not add another domain to work around it. Repeated domain blocks can lead to an account block. Separately, "Block evasion" is a reason staff can choose when blocking an account that was created to get around an earlier block. See the [Acceptable Use Policy](/knowledge-base/compliance/acceptable-use-policy).
+
+### Sending spikes
+
+A sudden jump in volume compared with your normal sending is flagged for review, since a compromised account or leaked API key can show up as a sudden change in volume. If sending is paused for this reason, the Account Blocked screen reads "Your account sent an unusually high volume of email in a short time, so sending is paused while we review it."
+
+If you have a legitimate reason for a big send, such as a product launch or an annual announcement, ramp up gradually where possible. See [IP and Domain Warm-Up](/knowledge-base/best-practices/ip-domain-warmup).
+
+### Bounce and complaint rates
+
+Bounce or spam-complaint rates far above acceptable levels are a reason Lettr staff can block an account or domain, even when the content is fine. They usually mean the list has old or unverified addresses. See [List Hygiene](/knowledge-base/best-practices/list-hygiene) and [Bounce Diagnosis](/knowledge-base/troubleshooting/bounce-diagnosis).
+
+---
+
+## How to Appeal
+
+Email [support@lettr.com](mailto:support@lettr.com). Send it from an address on the account if you can, so support can match the request to your team quickly.
+
+Include:
+
+1. **The account name and the email you sign in with.**
+2. **The domain**, if only one domain is blocked.
+3. **What you saw**, for example the Account Blocked screen and its reason text, the "This domain is blocked" alert, or the API response.
+4. **Who you are and what you send.** The business, the website, and what the emails are for (receipts, password resets, newsletters).
+5. **How you collect recipients.** Where the addresses come from and how people consented.
+6. **What you think happened.** If you recognise the cause, such as an old list, a leaked API key, or a launch send, say so.
+7. **What you have already fixed.** Rotated API keys, removed a list, added an unsubscribe link, or stopped a script.
+
+<Tip>
+  The best appeals are short and specific. A plain account of what you send and who you send it to gives support what it needs. If your account was compromised, say that and mention that you rotated your API keys.
+</Tip>
+
+Do not open a second account or add another domain while you wait. Creating an account to get around a block is itself a reason for blocking.
+
+Lettr decides each case on its facts. A review can end with the block lifted or kept.
+
+---
+
+## Avoiding a Block
+
+- Send only to people who asked for your email, and keep a record of how they consented.
+- Use a domain you own and that looks like your business, not a name imitating another brand.
+- Keep API keys secret and rotate any key that may have leaked. See [Security](/knowledge-base/best-practices/security).
+- Include a working unsubscribe link in marketing email.
+- Remove hard bounces and complaints promptly, and do not mail old lists without re-confirming consent.
+- Ramp volume up gradually instead of sending your first large batch all at once.
+
+---
+
+## Related Pages
+
+<CardGroup cols={2}>
+  <Card title="Acceptable Use Policy" icon="shield" href="/knowledge-base/compliance/acceptable-use-policy">
+    What you can send and how Lettr enforces the rules.
+  </Card>
+  <Card title="Domain Approval Process" icon="circle-check" href="/learn/domains/approval">
+    How new sending domains are screened.
+  </Card>
+  <Card title="Domain Verification Failures" icon="globe" href="/knowledge-base/troubleshooting/domain-verification">
+    Fix DNS problems that look like a block.
+  </Card>
+  <Card title="Sending Reputation" icon="star" href="/knowledge-base/best-practices/sending-reputation">
+    Keep bounce and complaint rates healthy.
+  </Card>
+</CardGroup>
