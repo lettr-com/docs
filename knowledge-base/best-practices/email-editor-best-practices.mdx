@@ -130,7 +130,7 @@ If you don't have a suitable image, search the Pexels image library directly fro
 </Tip>
 
 <Info>
-Images uploaded to File Manager are available team-wide and can be reused across templates. They are stored in your team's [Storage Domain](/learn/domains/storage-domains) and served from your custom domain.
+Images uploaded to File Manager are available team-wide and can be reused across templates. If your team has a [Storage Domain](/learn/domains/storage-domains) set up, they are stored there and served from your custom domain; otherwise the editor uses its built-in image storage.
 </Info>
 
 When you select an Image block, the left-side panel lets you adjust alignment, size, and margins. You can also add a link so users are redirected when they click the image.
@@ -307,7 +307,7 @@ The Multilingual option is used when you're working with templates that need to 
 
 <img src="/images/editor-multilingual.png" alt="Multilingual dropdown in the top bar showing available language versions of the template" />
 
-Each language version shares the same structure but has its own text content. This makes it much easier to manage translations without duplicating templates or worrying about layout differences.
+Each language version shares the same structure but has its own content: text, button labels and links, images, HTML blocks and the preheader can all differ per language. This makes it much easier to manage translations without duplicating templates or worrying about layout differences.
 
 <Tip>
 A good approach is to finalize your structure first and then add additional languages. Making major layout changes later can mean more work across all language versions.
@@ -441,7 +441,7 @@ Even experienced users run into issues from time to time. This section covers th
   </Accordion>
 
   <Accordion title="Merge tags show raw placeholder text instead of values">
-    Merge tags only get replaced with real values when the email is actually sent with substitution data. In the editor and in previews, they appear as placeholders. To verify they work correctly, send a test email with sample data. If tags still appear raw after sending, check that the tag names match exactly what you're passing in `substitution_data`.
+    Merge tags only get replaced with real values when the email is actually sent with substitution data. In the editor they appear as placeholders. To check them, open the **Merge tags - Preview** panel in preview mode and enter sample values, or send a test email with sample data. If tags still appear raw after sending, check that the tag names match exactly what you're passing in `substitution_data`.
   </Accordion>
 
   <Accordion title="Hidden content still appears in the sent email">
@@ -449,7 +449,7 @@ Even experienced users run into issues from time to time. This section covers th
   </Accordion>
 
   <Accordion title="Editing one language version changes the layout in others">
-    In multilingual templates, all language versions share the same structure. Adding, removing, or rearranging structures in one language affects all of them. Only text content is independent per language. If you need a different layout for a specific language, consider using separate templates instead of the multilingual feature.
+    In multilingual templates, all language versions share the same structure. Adding, removing, or rearranging structures in one language affects all of them. Only content (text, button labels and links, images, HTML blocks) is independent per language. If you need a different layout for a specific language, consider using separate templates instead of the multilingual feature.
   </Accordion>
 
   <Accordion title="Gmail clips the email with a 'View entire message' link">

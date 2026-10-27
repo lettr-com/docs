@@ -1,9 +1,9 @@
 ---
 title: Personalization and Dynamic Content
-description: "Use Lettr merge tags, conditionals, loops, and filters to build one template that renders personalized, relevant content for each recipient."
+description: "Use Lettr merge tags, default values, conditionals, and loops to build one template that renders personalized, relevant content for each recipient."
 ---
 
-Personalized emails outperform generic ones. Recipients are more likely to open, read, and act on emails that address them by name, reference their specific activity, and show content relevant to their situation. Lettr's [template language](/learn/templates/template-language) provides merge tags, conditionals, loops, and filters that let you build a single template that renders differently for each recipient.
+Personalized emails outperform generic ones. Recipients are more likely to open, read, and act on emails that address them by name, reference their specific activity, and show content relevant to their situation. Lettr's [template language](/learn/templates/template-language) provides merge tags, default values, conditionals, and loops that let you build a single template that renders differently for each recipient.
 
 ---
 
@@ -33,9 +33,9 @@ await fetch('https://app.lettr.com/api/emails', {
   },
   body: JSON.stringify({
     from: 'hello@mail.example.com',
-    to: 'alice@example.com',
-    templateId: 'welcome-email',
-    substitutionData: {
+    to: ['alice@example.com'],
+    template_slug: 'welcome-email',
+    substitution_data: {
       name: 'Alice',
       email: 'alice@example.com',
       signup_date: 'January 15, 2025'
@@ -153,7 +153,7 @@ Use `{{elseif}}` for more than two branches:
 
 ## Dynamic Loops
 
-Use `{{each}}` to iterate over arrays of data — order items, activity logs, recommendations, or any list.
+Use `{{each}}` to iterate over arrays of data — order items, activity logs, recommendations, or any list. Inside the loop, `loop_var` holds the current item.
 
 ### Order Items
 
@@ -175,9 +175,9 @@ Use `{{each}}` to iterate over arrays of data — order items, activity logs, re
     <td style="padding: 12px 0; border-bottom: 1px solid #e5e7eb;">
       <table role="presentation" width="100%">
         <tr>
-          <td style="color: #4a4a68; font-size: 14px;">{{ name }}</td>
-          <td style="color: #4a4a68; font-size: 14px; text-align: center;">{{ quantity }}</td>
-          <td style="color: #4a4a68; font-size: 14px; text-align: right;">{{ price }}</td>
+          <td style="color: #4a4a68; font-size: 14px;">{{ loop_var.name }}</td>
+          <td style="color: #4a4a68; font-size: 14px; text-align: center;">{{ loop_var.quantity }}</td>
+          <td style="color: #4a4a68; font-size: 14px; text-align: right;">{{ loop_var.price }}</td>
         </tr>
       </table>
     </td>
@@ -217,14 +217,14 @@ With this substitution data:
 {{each notifications}}
   <tr>
     <td style="padding: 12px 0; border-bottom: 1px solid #e5e7eb;">
-      {{if type == 'alert'}}
-        <p style="margin: 0; color: #dc2626; font-weight: bold;">⚠ {{ message }}</p>
-      {{elseif type == 'success'}}
-        <p style="margin: 0; color: #16a34a;">✓ {{ message }}</p>
+      {{if loop_var.type == 'alert'}}
+        <p style="margin: 0; color: #dc2626; font-weight: bold;">⚠ {{ loop_var.message }}</p>
+      {{elseif loop_var.type == 'success'}}
+        <p style="margin: 0; color: #16a34a;">✓ {{ loop_var.message }}</p>
       {{else}}
-        <p style="margin: 0; color: #4a4a68;">{{ message }}</p>
+        <p style="margin: 0; color: #4a4a68;">{{ loop_var.message }}</p>
       {{end}}
-      <p style="margin: 4px 0 0; color: #9ca3af; font-size: 12px;">{{ timestamp }}</p>
+      <p style="margin: 4px 0 0; color: #9ca3af; font-size: 12px;">{{ loop_var.timestamp }}</p>
     </td>
   </tr>
 {{end}}
@@ -234,46 +234,34 @@ With this substitution data:
 
 ## Per-Recipient Personalization at Scale
 
-When sending to multiple recipients in a single API call, pass individual substitution data for each recipient:
+`substitution_data` applies to every recipient in a request, so recipient-specific values need one request per recipient. Reuse the same template and change only the data:
 
 ```javascript
-await fetch('https://app.lettr.com/api/emails', {
-  method: 'POST',
-  headers: {
-    'Authorization': 'Bearer your-api-key',
-    'Content-Type': 'application/json'
-  },
-  body: JSON.stringify({
-    from: 'billing@mail.example.com',
-    to: [
-      {
-        email: 'alice@example.com',
-        substitutionData: {
-          name: 'Alice',
-          plan: 'pro',
-          usage: '12,450',
-          limit: '50,000',
-          invoice_url: 'https://example.com/invoices/inv_001'
-        }
-      },
-      {
-        email: 'bob@example.com',
-        substitutionData: {
-          name: 'Bob',
-          plan: 'starter',
-          usage: '4,820',
-          limit: '5,000',
-          invoice_url: 'https://example.com/invoices/inv_002'
-        }
+for (const account of accounts) {
+  await fetch('https://app.lettr.com/api/emails', {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer your-api-key',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      from: 'billing@mail.example.com',
+      to: [account.email],
+      template_slug: 'monthly-usage-report',
+      substitution_data: {
+        name: account.name,
+        plan: account.plan,
+        usage: account.usage,
+        limit: account.limit,
+        invoice_url: account.invoiceUrl
       }
-    ],
-    templateId: 'monthly-usage-report'
-  })
-});
+    })
+  });
+}
 ```
 
 <Tip>
-  Batch sending with per-recipient substitution data is the most efficient way to send personalized emails at scale. One API call with 200 recipients and individual data is much faster than 200 separate calls.
+  Pace these requests to stay within the API rate limit of 3 requests per second per team. For marketing sends to your Lettr audience, campaigns personalize each email from the contact's properties, so you don't need one API call per recipient.
 </Tip>
 
 ---

@@ -32,7 +32,7 @@ There are two distinct components to sender reputation:
 | IP reputation | Reputation tied to the IP address that delivers your email | Shared across all senders using the same IP infrastructure |
 
 <Note>
-  Lettr sends via shared IP infrastructure powered by SparkPost. This means your domain reputation is the primary lever you control. Domain reputation has become the dominant signal for most major mailbox providers, making it more important than IP reputation in most cases.
+  By default, Lettr sends via shared IP infrastructure powered by SparkPost (dedicated IPs are available as an add-on on the Business plan and on Enterprise). This means your domain reputation is the primary lever you control. Domain reputation has become the dominant signal for most major mailbox providers, making it more important than IP reputation in most cases.
 </Note>
 
 ### Why It Matters
@@ -69,7 +69,7 @@ New domains have no reputation history. Mailbox providers treat unknown senders 
 - **Send to engaged users first.** Positive engagement signals (opens, clicks, replies) teach mailbox providers that recipients want your emails. Start with your most active subscribers and expand outward.
 - **Be consistent.** Send every day during warm-up. Sporadic bursts of volume look suspicious to spam filters.
 - **Monitor metrics after every send.** If your bounce rate exceeds 5% or spam complaint rate exceeds 0.3%, stop and investigate before continuing.
-- **Use authentication from day one.** Ensure your CNAME, DKIM, and DMARC records are all verified and passing before you send a single email. See [Sending Domains](/learn/domains/sending-domains) for setup instructions.
+- **Use authentication from day one.** Ensure your DKIM, DMARC, and CNAME (or SPF, for a root domain) records are all verified and passing before you send a single email. See [Sending Domains](/learn/domains/sending-domains) for setup instructions.
 
 ---
 
@@ -85,7 +85,7 @@ Check your sending metrics in the Lettr dashboard regularly. The two most critic
 - **Spam complaint rate** — Keep below 0.1%. Major providers like Gmail will throttle or block senders who exceed 0.3%.
 
 <Tip>
-  Set up webhook endpoints for `email.bounced` and `email.complained` events to catch problems in real time rather than waiting to check the dashboard.
+  Set up webhook endpoints for `message.bounce` and `message.spam_complaint` events to catch problems in real time rather than waiting to check the dashboard.
 </Tip>
 
 ### Handle Bounces Immediately via Webhooks
@@ -93,33 +93,41 @@ Check your sending metrics in the Lettr dashboard regularly. The two most critic
 Hard bounces indicate permanently invalid addresses. Every email you send to a hard-bounced address damages your reputation. Process bounces the moment they occur:
 
 ```javascript
+const HARD_BOUNCE_CLASSES = [10, 30, 90];
+const SOFT_BOUNCE_CLASSES = [20, 21, 22, 23, 24, 40, 70];
+
 app.post('/webhooks/lettr', (req, res) => {
-  const event = req.body;
+  // Lettr delivers webhook events as a JSON array
+  for (const event of req.body) {
+    const data = event.msys?.message_event;
+    if (!data) continue;
 
-  switch (event.type) {
-    case 'email.bounced': {
-      const { to, bounceType, bounceCode } = event.data;
+    const to = data.rcpt_to;
 
-      if (bounceType === 'hard') {
-        // Permanently invalid — remove immediately
-        suppressRecipient(to, 'hard_bounce');
-      } else if (bounceType === 'soft') {
-        // Temporary issue — track consecutive soft bounces
-        incrementSoftBounceCount(to);
+    switch (data.type) {
+      case 'bounce': {
+        const bounceClass = parseInt(data.bounce_class);
 
-        // Suppress after 3 consecutive soft bounces
-        if (getSoftBounceCount(to) >= 3) {
-          suppressRecipient(to, 'repeated_soft_bounce');
+        if (HARD_BOUNCE_CLASSES.includes(bounceClass)) {
+          // Permanently invalid — remove immediately
+          suppressRecipient(to, 'hard_bounce');
+        } else if (SOFT_BOUNCE_CLASSES.includes(bounceClass)) {
+          // Temporary issue — track consecutive soft bounces
+          incrementSoftBounceCount(to);
+
+          // Suppress after 3 consecutive soft bounces
+          if (getSoftBounceCount(to) >= 3) {
+            suppressRecipient(to, 'repeated_soft_bounce');
+          }
         }
+        break;
       }
-      break;
-    }
 
-    case 'email.complained': {
-      const { to } = event.data;
-      // Recipient marked your email as spam — never send to them again
-      suppressRecipient(to, 'spam_complaint');
-      break;
+      case 'spam_complaint': {
+        // Recipient marked your email as spam — never send to them again
+        suppressRecipient(to, 'spam_complaint');
+        break;
+      }
     }
   }
 
@@ -132,14 +140,16 @@ You can verify your webhook endpoint receives events correctly using curl:
 ```bash
 curl -X POST https://yourdomain.com/webhooks/lettr \
   -H "Content-Type: application/json" \
-  -d '{
-    "type": "email.bounced",
-    "data": {
-      "to": "test@example.com",
-      "bounceType": "hard",
-      "bounceCode": "550"
+  -d '[{
+    "msys": {
+      "message_event": {
+        "type": "bounce",
+        "rcpt_to": "test@example.com",
+        "bounce_class": "10",
+        "error_code": "550"
+      }
     }
-  }'
+  }]'
 ```
 
 ### Sunset Unengaged Subscribers
@@ -148,7 +158,7 @@ Recipients who haven't opened or clicked any of your emails in 6–12 months are
 
 <Steps>
   <Step title="Identify unengaged subscribers">
-    Query your database for recipients who haven't opened or clicked any email in the last 6–12 months. Use `email.opened` and `email.clicked` webhook events to track engagement over time.
+    Query your database for recipients who haven't opened or clicked any email in the last 6–12 months. Use `engagement.open` and `engagement.click` webhook events to track engagement over time.
   </Step>
   <Step title="Send a re-engagement campaign">
     Send a targeted email asking if they still want to hear from you. Make it easy to confirm or unsubscribe.
@@ -184,7 +194,7 @@ Mailbox providers weigh multiple signals when evaluating your reputation. Here's
 
 ### Shared IP Infrastructure
 
-Lettr sends emails through shared IP infrastructure powered by SparkPost. This means your emails share IP addresses with other Lettr customers. While SparkPost actively manages the reputation of these shared IPs, it also means your domain reputation is the factor you have the most control over.
+By default, Lettr sends emails through shared IP infrastructure powered by SparkPost. This means your emails share IP addresses with other Lettr customers. Dedicated IPs are available as an add-on on the Business plan and on Enterprise. While SparkPost actively manages the reputation of these shared IPs, it also means your domain reputation is the factor you have the most control over.
 
 ### Domain Reputation Is What You Control
 
@@ -215,7 +225,7 @@ Separating your email streams by subdomain is one of the most effective ways to 
 ### How to Implement
 
 1. Add each subdomain as a separate sending domain in Lettr
-2. Configure CNAME, DKIM, and DMARC records for each subdomain
+2. Configure the CNAME, DKIM, and DMARC records Lettr shows for each subdomain
 3. Wait for all domains to reach **approved** status before sending
 4. Route each email type through its corresponding subdomain
 
@@ -240,7 +250,7 @@ If your reputation has been damaged — emails are going to spam, delivery rates
     - A spike in spam complaints after a poorly targeted campaign
     - Broken authentication (DKIM/DMARC failures)
 
-    Check your webhook logs for `email.bounced`, `email.complained`, and `email.deferred` events to pinpoint the issue.
+    Check your webhook logs for `message.bounce`, `message.spam_complaint`, and `message.delay` events to pinpoint the issue.
   </Step>
   <Step title="Clean your recipient list aggressively">
     Remove all hard-bounced addresses, all spam complainants, and anyone who hasn't engaged in the last 6 months. This is not the time for a generous re-engagement window.
@@ -268,13 +278,13 @@ Watch for these indicators that your reputation may be slipping:
 
 <AccordionGroup>
   <Accordion title="Increasing deferrals">
-    If you see a growing number of `email.deferred` webhook events, receiving servers are delaying your emails rather than accepting them immediately. This is often the first sign that a provider is losing trust in your domain. Check which providers are deferring and whether the pattern correlates with a recent volume increase or a change in your recipient list.
+    If you see a growing number of `message.delay` webhook events, receiving servers are delaying your emails rather than accepting them immediately. This is often the first sign that a provider is losing trust in your domain. Check which providers are deferring and whether the pattern correlates with a recent volume increase or a change in your recipient list.
   </Accordion>
   <Accordion title="Sudden drop in open rates">
     A sharp decline in open rates — especially at a specific provider like Gmail or Outlook — usually means your emails are being routed to spam. Open rates naturally fluctuate, but a drop of more than 20–30% over a few days is a red flag. Test by sending to a seed account at the affected provider to confirm inbox placement.
   </Accordion>
   <Accordion title="Bounce rate creeping up">
-    A gradually increasing bounce rate indicates your list is aging and accumulating invalid addresses. If you're not processing `email.bounced` webhook events in real time, stale addresses will pile up and accelerate reputation damage. Review your bounce handling code and confirm suppression is working correctly.
+    A gradually increasing bounce rate indicates your list is aging and accumulating invalid addresses. If you're not processing `message.bounce` webhook events in real time, stale addresses will pile up and accelerate reputation damage. Review your bounce handling code and confirm suppression is working correctly.
   </Accordion>
   <Accordion title="Emails going to spam at specific providers">
     If your emails land in the inbox at most providers but consistently go to spam at one (commonly Gmail), that provider has flagged your domain. This often happens when your complaint rate exceeds their threshold. Reduce volume to that provider, send only to engaged recipients there, and ensure your DKIM and DMARC records are passing. Recovery at a single provider can take 1–4 weeks of improved behavior.

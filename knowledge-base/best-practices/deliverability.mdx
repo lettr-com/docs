@@ -13,11 +13,12 @@ Email authentication tells receiving mail servers that you are who you claim to 
 
 ### Complete Your Domain Setup
 
-Every sending domain in Lettr needs three DNS records configured:
+Every sending domain in Lettr needs DKIM and DMARC records, plus SPF for a root domain or a CNAME for a subdomain:
 
 | Record | Purpose | What It Does |
 |--------|---------|--------------|
-| CNAME | Domain verification | Proves you own the domain and authorizes Lettr to send on your behalf |
+| SPF (TXT, root domains) | Sender authorization | Authorizes Lettr's servers to send on behalf of your domain |
+| CNAME (subdomains) | Domain verification | Proves you own the domain and points bounce handling to Lettr |
 | DKIM (TXT) | Email signing | Adds a cryptographic signature to every email, proving it wasn't altered in transit |
 | DMARC (TXT) | Policy enforcement | Tells receivers what to do when authentication fails, and where to send reports |
 
@@ -72,14 +73,16 @@ Set up a webhook to handle bounce events in real time:
 
 ```javascript
 app.post('/webhooks/lettr', (req, res) => {
-  const event = req.body;
+  // Lettr delivers webhook events as a JSON array
+  for (const event of req.body) {
+    const data = event.msys?.message_event;
 
-  if (event.type === 'email.bounced') {
-    const { to, bounceType } = event.data;
-
-    if (bounceType === 'hard') {
-      // Remove from your mailing list immediately
-      removeFromList(to);
+    if (data?.type === 'bounce') {
+      // Hard bounce classes: 10 (invalid recipient), 30 (no RCPT), 90 (unsubscribe)
+      if ([10, 30, 90].includes(parseInt(data.bounce_class))) {
+        // Remove from your mailing list immediately
+        removeFromList(data.rcpt_to);
+      }
     }
   }
 
@@ -197,7 +200,7 @@ See [Test Emails](/learn/sending/test-emails) for how to send test emails throug
   <Accordion title="Emails delayed or deferred">
     - Check if you're sending too fast during domain warm-up
     - Verify your domain reputation hasn't been damaged
-    - Look for `email.deferred` webhook events for specific reasons
+    - Look for `message.delay` webhook events for specific reasons
     - Some delays are normal — receiving servers may throttle new senders
   </Accordion>
 </AccordionGroup>

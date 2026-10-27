@@ -128,10 +128,10 @@ Authorization: Bearer your-api-key
 
 {
   "from": "news@campaigns.yourdomain.com",
-  "to": "recipient@example.com",
-  "template_id": "tmpl_summer_sale",
+  "to": ["recipient@example.com"],
+  "template_slug": "summer-sale",
   "tag": "summer-sale-2025",
-  "merge_tags": {
+  "substitution_data": {
     "first_name": "Alex",
     "offer_code": "SAVE20"
   }
@@ -147,8 +147,8 @@ Add metadata to your API calls to classify and filter emails in your internal sy
 ```json
 {
   "from": "no-reply@mail.yourdomain.com",
-  "to": "user@example.com",
-  "template_id": "tmpl_password_reset",
+  "to": ["user@example.com"],
+  "template_slug": "password-reset",
   "metadata": {
     "email_type": "transactional",
     "triggered_by": "password_reset_request"
@@ -156,7 +156,7 @@ Add metadata to your API calls to classify and filter emails in your internal sy
 }
 ```
 
-You can use [webhooks](/learn/sending/introduction) to receive delivery events and route them based on this metadata.
+You can use [webhooks](/learn/webhooks/introduction) to receive delivery events and route them based on this metadata.
 
 ---
 

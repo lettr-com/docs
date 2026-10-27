@@ -265,7 +265,7 @@ In body text, always underline links. Users with color vision deficiencies may n
 
 Always include a plain text version of your email alongside the HTML version. Some recipients prefer plain text, and some email clients don't render HTML at all.
 
-When using the Lettr API, include both `html` and `text` fields:
+When sending your own HTML through the Lettr API, include both `html` and `text` fields (when you send with a template via `template_slug`, Lettr generates the text version for you):
 
 ```javascript
 await fetch('https://app.lettr.com/api/emails', {
@@ -276,7 +276,7 @@ await fetch('https://app.lettr.com/api/emails', {
   },
   body: JSON.stringify({
     from: 'updates@mail.example.com',
-    to: 'recipient@example.com',
+    to: ['recipient@example.com'],
     subject: 'Your order has shipped',
     html: '<h1>Order #1234 shipped</h1><p>Your package is on its way.</p>',
     text: 'Order #1234 shipped\n\nYour package is on its way.\n\nTrack your package: https://example.com/track/1234'
