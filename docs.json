@@ -562,7 +562,6 @@
             "group": "Concepts",
             "pages": [
               "knowledge-base/concepts/email-deliverability",
-              "knowledge-base/concepts/transactional-email",
               "knowledge-base/concepts/feedback-loops",
               "knowledge-base/concepts/email-service-provider",
               "knowledge-base/concepts/dedicated-vs-shared-ips"
@@ -668,6 +667,10 @@
     "options": ["copy", "view", "chatgpt", "claude", "perplexity"]
   },
   "redirects": [
+    {
+      "source": "/knowledge-base/concepts/transactional-email",
+      "destination": "/knowledge-base/best-practices/transactional-vs-marketing"
+    },
     {
       "source": "/knowledge-base/best-practices/sending-reputation",
       "destination": "/knowledge-base/best-practices/deliverability"
