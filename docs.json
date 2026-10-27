@@ -638,8 +638,7 @@
               "knowledge-base/troubleshooting/outlook-delivery",
               "knowledge-base/troubleshooting/webhook-failures",
               "knowledge-base/troubleshooting/duplicate-emails",
-              "knowledge-base/troubleshooting/rendering-issues",
-              "knowledge-base/troubleshooting/sandbox-testing"
+              "knowledge-base/troubleshooting/rendering-issues"
             ]
           },
           {
@@ -673,6 +672,10 @@
     {
       "source": "/mcp/introduction",
       "destination": "/learn/mcp/introduction"
+    },
+    {
+      "source": "/knowledge-base/troubleshooting/sandbox-testing",
+      "destination": "/learn/api-keys/sandbox"
     },
     {
       "source": "/learn/sending/rate-limits",
