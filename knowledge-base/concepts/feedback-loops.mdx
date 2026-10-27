@@ -123,7 +123,7 @@ This is why making it easy to unsubscribe is a deliverability strategy, not a su
 
 <AccordionGroup>
   <Accordion title="Make unsubscribing easier than complaining">
-    If the unsubscribe link is buried at the bottom of your email in small gray text, recipients will use the more visible "Report Spam" button instead. Place your unsubscribe link prominently. Implement one-click unsubscribe via the `List-Unsubscribe` header — Lettr adds it automatically to campaigns and to API sends with `transactional: false`.
+    If the unsubscribe link is buried at the bottom of your email in small gray text, recipients will use the more visible "Report Spam" button instead. Place your unsubscribe link prominently. Implement one-click unsubscribe via the `List-Unsubscribe` header — Lettr adds it automatically to campaigns. For API sends, including those with `transactional: false`, it does not add the header itself, so check the headers of a delivered message.
   </Accordion>
 
   <Accordion title="Only send to recipients who opted in">

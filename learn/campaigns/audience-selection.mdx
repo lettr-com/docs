@@ -26,6 +26,7 @@ When you send a campaign, Lettr resolves the actual recipient list at the start 
 - Segments are re-evaluated at send time, so contacts who match the segment conditions when you send (not when you built the segment) are the ones who get the email
 - Newly added contacts who fit your audience selection between scheduling and sending are included
 - Contacts whose status changed to `unsubscribed`, `bounced`, or `complained` after you built the campaign are excluded
+- Contacts who paused marketing email or left the campaign's topic after the send started are skipped when their batch is sent (see [Automatic Suppression](#automatic-suppression))
 
 The same logic applies whether the campaign is sent immediately or pulled out of a scheduled queue.
 
@@ -39,7 +40,7 @@ The estimate is computed on demand whenever you change your selection. Large aud
 
 Lettr filters out contacts who shouldn't be emailed automatically. You don't need to manage suppression lists yourself.
 
-A contact is excluded from a campaign send if their status is anything other than `subscribed`:
+A contact is excluded from a campaign send if their status is anything other than `subscribed`, or if they are paused or outside the campaign's topic:
 
 | Status | Excluded? | Reason |
 |-|-|-|
@@ -48,8 +49,11 @@ A contact is excluded from a campaign send if their status is anything other tha
 | `bounced` | **Yes** | Their email permanently failed previously; sending again would hurt your reputation |
 | `complained` | **Yes** | They marked you as spam previously; sending again would compound the problem |
 | `unverified` | **Yes** | They haven't completed [double opt-in](/learn/audience/double-opt-in) |
+| `subscribed` and paused | **Yes** | The contact paused marketing email from the [preferences page](/learn/audience/email-preferences) for 30, 60, or 90 days. They are excluded until the pause ends |
 
 This filter applies even when you pick "All contacts" or include contacts via lists or segments — non-subscribed contacts are silently filtered out at the recipient-resolution step.
+
+If the campaign targets a [topic](/learn/audience/topics), only contacts who are in that topic are included. Status, pause, and topic membership are checked again for each batch just before it is sent, so a contact who unsubscribes, pauses, or leaves the topic mid-send is not emailed. Their recipient row is marked `skipped` when the send finishes, and the campaign isn't re-sent when a pause later ends.
 
 <Note>
   If your live recipient estimate seems lower than the size of the lists you picked, suppression is usually why. Open a list and filter by status to see how many contacts in it are not currently `subscribed`. For other reasons a campaign reaches fewer contacts, see [Campaign Reached Fewer Contacts Than Expected](/knowledge-base/troubleshooting/campaign-recipient-count).

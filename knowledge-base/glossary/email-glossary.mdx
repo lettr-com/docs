@@ -511,7 +511,7 @@ See [List Hygiene](/knowledge-base/best-practices/list-hygiene).
 
 ### List-Unsubscribe Header
 
-An email header that provides a machine-readable unsubscribe mechanism. Google and Yahoo require the `List-Unsubscribe-Post` header (RFC 8058) for one-click unsubscribe in bulk email. Lettr adds this header automatically to campaigns and to API sends marked as marketing (`transactional: false`).
+An email header that provides a machine-readable unsubscribe mechanism. Google and Yahoo require the `List-Unsubscribe-Post` header (RFC 8058) for one-click unsubscribe in bulk email. Lettr adds this header automatically to campaigns. It does not add it to API sends, including those marked as marketing (`transactional: false`).
 
 See [Unsubscribe Best Practices](/knowledge-base/compliance/unsubscribe-best-practices).
 

@@ -126,7 +126,7 @@ The response indicates how many recipients were accepted or rejected:
     Personalized emails (using the recipient's name, relevant data, or tailored content) achieve significantly higher open and click rates than generic messages. Use `substitution_data` to customize merge tags without making separate API calls.
   </Accordion>
   <Accordion title="Respect Rate Limits">
-    Add a delay between batches proportional to your API rate limit. If your limit is 300 requests per 5 minutes, spacing batches 1 second apart lets you send to 15,000 recipients per 5-minute window (300 batches × 50 recipients) without hitting limits.
+    Add a delay between batches to stay under the API rate limit of 3 requests per second per team, shared by all your live API keys. For example, sending at most 3 batch requests per second (one request roughly every 350 ms) with 50 recipients each reaches about 150 recipients per second without hitting the limit. A burst above that returns `429`, so retry with backoff. A separate per-IP limit of 2,000 requests per 5 minutes applies on API routes. See [Rate Limits](/knowledge-base/troubleshooting/rate-limits) for details.
   </Accordion>
   <Accordion title="Handle Partial Failures">
     A batch send can partially succeed — some recipients are accepted while others are rejected (due to suppression or validation). Always check the `accepted` and `rejected` counts in the response and log rejected addresses for investigation rather than silently dropping them.

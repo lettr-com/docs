@@ -37,7 +37,7 @@ This works for every campaign, not only [multilingual campaigns](/learn/multilin
 
 **Ticking and unticking topics** changes only topic subscriptions. A recipient who unticks "Product updates" but leaves "Newsletter" ticked stays `subscribed` and keeps receiving the newsletter. Topic opt-outs genuinely suppress sends: consent is re-checked when the campaign's recipients are resolved and again for every batch.
 
-**Unticking every box** unsubscribes the contact from all marketing email. Committing an empty selection opens a short dialog asking for an optional reason before it goes through. The contact's status becomes `unsubscribed`, every topic is detached (private topics included), any active pause is cleared, and the `unsubscribe.link_unsubscribe` webhook event fires.
+**Unticking every box** unsubscribes the contact from all marketing email. Committing an empty selection opens a short dialog asking for an optional reason before it goes through. The contact's status becomes `unsubscribed`, every topic is detached (private topics included), and any active pause is cleared.
 
 | Reason offered | |
 |-|-|

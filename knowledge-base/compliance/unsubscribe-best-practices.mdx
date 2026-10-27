@@ -32,7 +32,7 @@ Google and Yahoo enforce one-click unsubscribe for bulk senders. Messages that l
 | Apple Mail | Yes |
 | Microsoft Outlook | Yes |
 
-Lettr automatically adds the `List-Unsubscribe` and `List-Unsubscribe-Post` headers to marketing email: every campaign, and API sends with `transactional: false`. You can't set these two headers yourself through the API's `headers` field.
+Lettr automatically adds the `List-Unsubscribe` and `List-Unsubscribe-Post` headers to every campaign. For API sends with `transactional: false`, Lettr does not add them itself, so check the headers of a delivered message. You can't set these two headers yourself through the API's `headers` field.
 
 ---
 

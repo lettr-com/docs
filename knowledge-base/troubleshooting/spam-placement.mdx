@@ -135,7 +135,7 @@ Replace `selector` with the DKIM selector shown on your Lettr domain settings pa
     - Match send frequency to subscriber expectations
   </Accordion>
   <Accordion title="One-click unsubscribe is required">
-    Since February 2024, Gmail and Yahoo require a working `List-Unsubscribe` header with one-click unsubscribe support for bulk senders. Lettr automatically adds the correct headers to campaigns and to API sends marked as marketing (`transactional: false`).
+    Since February 2024, Gmail and Yahoo require a working `List-Unsubscribe` header with one-click unsubscribe support for bulk senders. Lettr automatically adds the correct headers to campaigns. For API sends marked as marketing (`transactional: false`), Lettr does not add them itself, so check the headers of a delivered message.
 
     <Warning>
       If you override email headers manually via the API, make sure you do not remove the `List-Unsubscribe` or `List-Unsubscribe-Post` headers.
@@ -248,7 +248,7 @@ For a complete guide on building and maintaining sender reputation, see [Sending
     If you are using the default shared tracking domain, set up a custom one under [Tracking Domains](/learn/domains/tracking-domains). This immediately improves link reputation.
   </Accordion>
   <Accordion title="Add a visible unsubscribe link">
-    Make sure every marketing email has a clear, easy-to-find unsubscribe link. Lettr adds the required `List-Unsubscribe` header automatically, but the visible link in the email body matters too.
+    Make sure every marketing email has a clear, easy-to-find unsubscribe link. Lettr adds the required `List-Unsubscribe` header to campaigns automatically, but the visible link in the email body matters too.
   </Accordion>
   <Accordion title="Include a physical mailing address">
     CAN-SPAM and GDPR both require a physical mailing address in marketing emails. Add it to your email footer.

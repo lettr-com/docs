@@ -34,7 +34,11 @@ Addresses can land on your suppression list through several triggers:
 | --- | --- | --- |
 | **Hard bounce** | The recipient address is permanently undeliverable (e.g., mailbox does not exist). | Yes |
 | **Spam complaint** | The recipient marked your email as spam via their mailbox provider. | Yes |
-| **Unsubscribe** | The recipient clicked an unsubscribe link or used a list-unsubscribe header. | Yes |
+| **Unsubscribe** | The recipient clicked an unsubscribe link in an API-sent email or used a list-unsubscribe header. An unsubscribe from a Lettr campaign is different: see the note below. | Yes |
+
+<Note>
+  Not every unsubscribe lands on the suppression list. When a recipient unsubscribes from a Lettr campaign, Lettr only updates the contact (status `unsubscribed`); it does not add the address to the delivery provider's suppression list. Campaigns honor it because they check the contact's status before each batch. See [Unsubscribes, Pauses and Suppressions](/knowledge-base/fundamentals/unsubscribe-vs-suppression).
+</Note>
 
 <Tip>
   Soft bounces (a full mailbox, a temporary server error) are retried automatically. A single temporary failure will not suppress an address.
@@ -106,7 +110,7 @@ If so, email [support@lettr.com](mailto:support@lettr.com) with the address, why
 Lettr operates two layers of suppression:
 
 - **Global suppression list** — Lettr maintains a platform-wide list of known-bad addresses, such as role addresses that consistently bounce or addresses associated with spam traps. These suppressions apply across all Lettr accounts and cannot be overridden.
-- **Account-level suppression list** — Your account has its own list, populated by your sending activity (bounces, complaints, and unsubscribes).
+- **Account-level suppression list** — Your account has its own list, populated by your sending activity (bounces, complaints, and unsubscribes from API sends; campaign unsubscribes update the contact instead).
 
 If an address appears on the global list, it will be suppressed even if it does not appear on your account-level list.
 

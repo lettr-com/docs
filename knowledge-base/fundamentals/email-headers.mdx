@@ -123,7 +123,7 @@ List-Unsubscribe-Post: List-Unsubscribe=One-Click
 ```
 
 <Note>
-  Lettr automatically adds `List-Unsubscribe` and `List-Unsubscribe-Post` headers to campaign emails and to API sends with `transactional: false`. You can't set these two headers yourself through the API. Both headers are strongly recommended for bulk and marketing email.
+  Lettr automatically adds `List-Unsubscribe` and `List-Unsubscribe-Post` headers to campaign emails. For API sends, including those with `transactional: false`, Lettr does not add them itself, so check the headers of a delivered message. You can't set these two headers yourself through the API. Both headers are strongly recommended for bulk and marketing email.
 </Note>
 
 ---

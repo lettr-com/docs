@@ -92,7 +92,7 @@ For bulk senders, Google and Yahoo require:
 
 ### Implementation in Lettr
 
-Lettr adds the `List-Unsubscribe` and `List-Unsubscribe-Post` headers to every campaign email and to API sends with `transactional: false`. For the visible body link, add the `data-msys-unsubscribe="1"` attribute to your unsubscribe link to enable unsubscribe event tracking:
+Lettr adds the `List-Unsubscribe` and `List-Unsubscribe-Post` headers to every campaign email. For API sends with `transactional: false`, Lettr does not add them itself, so check the headers of a delivered message. For the visible body link, add the `data-msys-unsubscribe="1"` attribute to your unsubscribe link to enable unsubscribe event tracking:
 
 ```html
 <a href="https://yourdomain.com/unsubscribe?id=12345"
