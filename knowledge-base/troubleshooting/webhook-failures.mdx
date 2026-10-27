@@ -217,7 +217,7 @@ function verifyBasicAuth(req) {
 
 ## Idempotency
 
-Lettr may deliver the same webhook event more than once (due to retries or network issues). Your handler must be idempotent — processing the same event twice should not cause duplicate side effects.
+Lettr may deliver the same webhook event more than once (due to retries or network issues). Your handler must be idempotent — processing the same event twice should not cause duplicate side effects. See [Duplicate Emails](/knowledge-base/troubleshooting/duplicate-emails) for duplicate sends and webhook events.
 
 ### Implementing Idempotency
 

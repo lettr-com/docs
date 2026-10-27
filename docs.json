@@ -573,12 +573,15 @@
             "pages": [
               "knowledge-base/fundamentals/how-email-delivery-works",
               "knowledge-base/fundamentals/spf-dkim-dmarc",
+              "knowledge-base/fundamentals/forwarding-arc",
               "knowledge-base/fundamentals/email-headers",
               "knowledge-base/fundamentals/bounce-codes-reference",
               "knowledge-base/fundamentals/suppression-lists",
+              "knowledge-base/fundamentals/unsubscribe-vs-suppression",
               "knowledge-base/fundamentals/content-types",
               "knowledge-base/fundamentals/subdomain-vs-root",
               "knowledge-base/fundamentals/smtp-protocol-basics",
+              "knowledge-base/fundamentals/email-transport-security",
               "knowledge-base/fundamentals/email-address-anatomy",
               "knowledge-base/fundamentals/bimi",
               "knowledge-base/fundamentals/custom-return-path",
@@ -607,6 +610,7 @@
             "group": "Compliance & Regulations",
             "pages": [
               "knowledge-base/compliance/google-yahoo-requirements",
+              "knowledge-base/compliance/microsoft-requirements",
               "knowledge-base/compliance/can-spam",
               "knowledge-base/compliance/gdpr-email",
               "knowledge-base/compliance/unsubscribe-best-practices",
@@ -621,15 +625,19 @@
             "group": "Troubleshooting",
             "pages": [
               "knowledge-base/troubleshooting/delivery-issues",
+              "knowledge-base/troubleshooting/campaign-recipient-count",
               "knowledge-base/troubleshooting/spam-placement",
               "knowledge-base/troubleshooting/bounce-diagnosis",
               "knowledge-base/troubleshooting/authentication",
               "knowledge-base/troubleshooting/rate-limits",
               "knowledge-base/troubleshooting/domain-verification",
+              "knowledge-base/troubleshooting/domain-dns-drift",
+              "knowledge-base/troubleshooting/blocked-domain-or-account",
               "knowledge-base/troubleshooting/tracking-accuracy",
               "knowledge-base/troubleshooting/gmail-delivery",
               "knowledge-base/troubleshooting/outlook-delivery",
               "knowledge-base/troubleshooting/webhook-failures",
+              "knowledge-base/troubleshooting/duplicate-emails",
               "knowledge-base/troubleshooting/rendering-issues",
               "knowledge-base/troubleshooting/sandbox-testing"
             ]
@@ -643,7 +651,9 @@
               "knowledge-base/use-cases/two-factor-authentication-emails",
               "knowledge-base/use-cases/invoice-billing-emails",
               "knowledge-base/use-cases/adamko-in-action",
-              "knowledge-base/use-cases/multilingual-newsletter"
+              "knowledge-base/use-cases/multilingual-newsletter",
+              "knowledge-base/use-cases/ai-agent-email",
+              "knowledge-base/use-cases/inbound-support-inbox"
             ]
           },
           {

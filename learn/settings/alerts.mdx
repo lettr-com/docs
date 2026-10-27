@@ -43,7 +43,7 @@ When a check fails:
 Repeat alerts for a record that stays broken **back off** instead of firing every day forever. On the default 24-hour cooldown a still-failing record alerts on day 0, 1, 4, and 11, then goes silent while the domain keeps showing as failing in the app. The cooldown (configurable from 1 to 720 hours under **Settings → Alerts**) sets the base interval for that schedule. Backoff is tracked per record per domain: a newly broken record always alerts immediately even while another is still failing, and a record that recovers resets its schedule, so a later break alerts from day 0 again.
 
 <Note>
-  DNS health monitoring is informational — it never disables a domain or stops your sending. Once you fix the DNS record, the warning clears automatically on the next check; you don't need to re-verify the domain manually.
+  DNS health monitoring is informational — it never disables a domain or stops your sending. Once you fix the DNS record, the warning clears automatically on the next check; you don't need to re-verify the domain manually. See [Verified Domain Stopped Working](/knowledge-base/troubleshooting/domain-dns-drift) for how to fix and re-verify.
 </Note>
 
 Deleting a domain clears its health alert from the dashboard and the notification center at the same time. A **Check domain** link from an older alert email or notification that points at a domain you have since deleted lands on the domain list with an explanation.

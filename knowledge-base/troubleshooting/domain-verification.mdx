@@ -174,7 +174,7 @@ nslookup -type=TXT _dmarc.yourdomain.com
 ## Verifying via API
 
 <Note>
-  Verification is not a one-time event: once a domain is verified, Lettr's daily [DNS health check](/learn/settings/alerts#domain-dns-health-alerts) keeps watching it and alerts you if a record later stops resolving. If you see a **Not working** badge on a previously verified domain, fix the DNS record at your provider — the warning clears automatically on the next check.
+  Verification is not a one-time event: once a domain is verified, Lettr's daily [DNS health check](/learn/settings/alerts#domain-dns-health-alerts) keeps watching it and alerts you if a record later stops resolving. If you see a **Not working** badge on a previously verified domain, fix the DNS record at your provider — the warning clears automatically on the next check. See [Verified Domain Stopped Working](/knowledge-base/troubleshooting/domain-dns-drift) for the full fix.
 </Note>
 
 ### Trigger Verification
@@ -283,7 +283,7 @@ If you have confirmed your DNS records are correct using the `dig` commands abov
 **Contact support when:**
 
 - Your domain has been stuck in `pending` status for more than 48 hours after adding the correct DNS records.
-- Your domain shows a `blocked` status. This may indicate a policy issue that requires manual review.
+- Your domain shows a `blocked` status. This may indicate a policy issue that requires manual review. See [Blocked Domain or Account](/knowledge-base/troubleshooting/blocked-domain-or-account).
 - You see `invalid` status on a record that matches the expected value exactly.
 
 Reach out at **support@lettr.com** or through the in-app chat widget with your domain name and the output of the `dig` commands listed above.

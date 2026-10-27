@@ -212,3 +212,5 @@ A replay is a **success**, not an error — the original transmission is returne
 <Note>
   **Laravel is the exception: it does this for you.** `lettr-laravel` derives a key for every *queued* mail automatically, from the queue job's UUID plus the payload, so a job retry cannot deliver twice. Pass your own key with `Mail::lettr()->idempotencyKey(...)` to override it, or set `LETTR_IDEMPOTENCY_ENABLED=false` to turn the automatic behaviour off. Synchronous sends have no job UUID and so get no automatic key.
 </Note>
+
+If recipients still received the same email twice, see [Duplicate Emails](/knowledge-base/troubleshooting/duplicate-emails).

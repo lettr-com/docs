@@ -45,7 +45,7 @@ What you publish depends on whether your sending domain is a subdomain or a root
 
 ### Limitations
 
-SPF has one well-known weakness: **it breaks when emails are forwarded.** When a server forwards your email, the forwarding server's IP address is what the next receiver sees — and that IP won't be in your SPF record. This is one of the reasons SPF alone isn't enough, and why DKIM and DMARC exist.
+SPF has one well-known weakness: **it breaks when emails are forwarded.** When a server forwards your email, the forwarding server's IP address is what the next receiver sees — and that IP won't be in your SPF record. This is one of the reasons SPF alone isn't enough, and why DKIM and DMARC exist. See [Forwarding, SRS, and ARC](/knowledge-base/fundamentals/forwarding-arc) for how this is repaired.
 
 ---
 
