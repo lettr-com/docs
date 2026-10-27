@@ -1,6 +1,6 @@
 ---
 title: "Webhook Delivery Failures"
-description: "Diagnose and fix webhook delivery issues, including retry logic, timeout handling, debugging failed deliveries, and signature verification."
+description: "Diagnose and fix webhook delivery issues, including retry logic, timeout handling, debugging failed deliveries, and endpoint authentication."
 ---
 
 Lettr sends webhook events to your server when email events occur (delivery, bounce, open, click, complaint, etc.). When your endpoint fails to receive or process these events, you lose visibility into your email delivery pipeline. This guide covers how to diagnose and fix webhook delivery failures.
@@ -23,7 +23,8 @@ When an email event occurs, Lettr sends an HTTP POST request to your configured 
 |----------|--------|
 | `2xx` status code | Success — event is marked as delivered |
 | `3xx` redirect | Failure — Lettr does not follow redirects |
-| `4xx` status code | Failure — retried according to retry schedule |
+| `410` status code | Failure — not retried; the webhook is disabled |
+| Other `4xx` status code | Failure — retried according to retry schedule |
 | `5xx` status code | Failure — retried according to retry schedule |
 | Connection timeout (30s) | Failure — retried according to retry schedule |
 | DNS resolution failure | Failure — retried according to retry schedule |
@@ -46,11 +47,12 @@ When a webhook delivery fails, Lettr retries the request with exponential backof
 | 3rd retry | 30 minutes |
 | 4th retry | 2 hours |
 | 5th retry | 8 hours |
+| 6th retry | 24 hours |
 
-After 5 failed retries (6 total attempts), the webhook event is marked as **permanently failed** and no further delivery attempts are made.
+After 6 failed retries (7 total attempts, spanning roughly 35 hours), the webhook event is marked as **permanently failed** and no further delivery attempts are made. Webhooks that keep failing are disabled automatically — re-enable them from the webhook's page in the dashboard once the issue is fixed.
 
 <Note>
-  Failed webhook events are visible in the Lettr dashboard under **Webhooks > Event Log**. You can manually retry individual failed events from this page.
+  The webhook's page in the Lettr dashboard (**Webhooks**, then select the webhook) shows its **Last Attempt** time and **Last Status**. Failed events can't be replayed from the dashboard, so make your own system able to recover missed events.
 </Note>
 
 ---
@@ -61,17 +63,14 @@ After 5 failed retries (6 total attempts), the webhook event is marked as **perm
   A quick first pass: ask [Adamko](/learn/ai-assistant/troubleshooting-and-diagnostics#integration--api-problems) *"is my webhook working?"* — he reads your endpoint configuration and its last success and failure, alongside your recent API activity, and points at the most likely problem before you start digging through logs.
 </Tip>
 
-### Check the Webhook Event Log
+### Check the Webhook Status
 
-The fastest way to diagnose webhook issues is the event log in the Lettr dashboard:
+Start with the webhook's status in the Lettr dashboard:
 
 1. Go to **Webhooks** in the dashboard
 2. Click on the webhook endpoint that is failing
-3. Review the **Event Log** tab
-4. Click on a failed event to see the full request and response details, including:
-   - Request headers and body sent by Lettr
-   - Response status code and body returned by your server
-   - Error message (for connection-level failures)
+3. Check whether it is **Enabled**, and review its **Last Attempt** and **Last Status**
+4. Compare the last attempt time with your server and load balancer logs to see the request Lettr sent and the response your server returned
 
 ### Common Failure Patterns
 
@@ -118,7 +117,7 @@ The fastest way to diagnose webhook issues is the event log in the Lettr dashboa
 
     **Fixes:**
     - If you have IP-based access controls, exempt your webhook path from them. Webhooks are not sent from a fixed, published set of IP addresses, so authenticate requests with the auth method configured on the webhook instead.
-    - If you require authentication headers, note that Lettr sends a `lettr-signature` header — make sure your middleware isn't blocking the request before signature verification.
+    - If you require authentication headers, make sure the Basic or OAuth 2.0 credentials configured on the webhook match what your middleware expects. Lettr doesn't send a signature header.
     - Check for CSRF protection middleware intercepting the POST request.
   </Accordion>
 </AccordionGroup>
@@ -140,15 +139,15 @@ app.post(
   "/webhooks/lettr",
   express.raw({ type: "application/json" }),
   (req, res) => {
-    // Verify signature first
-    const isValid = verifySignature(req);
+    // Verify credentials first
+    const isValid = verifyBasicAuth(req);
     if (!isValid) {
-      return res.status(401).send("Invalid signature");
+      return res.status(401).send("Invalid credentials");
     }
 
     // Parse and queue for background processing
-    const event = JSON.parse(req.body);
-    queue.add("process-webhook", event);
+    const events = JSON.parse(req.body); // Array of events
+    queue.add("process-webhook", events);
 
     // Respond immediately
     res.status(200).send("OK");
@@ -172,46 +171,46 @@ app.post("/webhooks/lettr-slow", express.json(), (req, res) => {
 
 ---
 
-## Signature Verification
+## Endpoint Authentication
 
-Every webhook request from Lettr includes a `lettr-signature` header containing an HMAC-SHA256 signature of the request body. Always verify this signature to confirm the request is from Lettr.
+Lettr doesn't sign webhook payloads. Instead, each webhook has an authentication type — **None**, **Basic**, or **OAuth 2.0** — and Lettr sends the matching `Authorization` header with every request. Use Basic or OAuth 2.0 in production and reject requests without valid credentials.
 
-### Verification Steps
+### Verifying Basic Auth
 
-1. Get the raw request body (unparsed)
-2. Compute an HMAC-SHA256 hash using your webhook secret
-3. Compare the computed hash with the `lettr-signature` header value
+1. Read the `Authorization` header
+2. Decode the Base64 value after `Basic `
+3. Compare the username and password with the ones configured on the webhook
 
 ```javascript
 const crypto = require("crypto");
 
-function verifySignature(req) {
-  const signature = req.headers["lettr-signature"];
-  const webhookSecret = process.env.LETTR_WEBHOOK_SECRET;
+function verifyBasicAuth(req) {
+  const header = req.headers.authorization || "";
+  if (!header.startsWith("Basic ")) return false;
 
-  const expectedSignature = crypto
-    .createHmac("sha256", webhookSecret)
-    .update(req.body) // Must be the raw body (Buffer), not parsed JSON
-    .digest("hex");
+  const expected = Buffer.from(
+    `${process.env.LETTR_WEBHOOK_USERNAME}:${process.env.LETTR_WEBHOOK_PASSWORD}`
+  ).toString("base64");
+  const received = header.slice(6);
 
-  return crypto.timingSafeEqual(
-    Buffer.from(signature),
-    Buffer.from(expectedSignature)
+  return (
+    received.length === expected.length &&
+    crypto.timingSafeEqual(Buffer.from(received), Buffer.from(expected))
   );
 }
 ```
 
-### Common Signature Verification Failures
+### Common Authentication Failures
 
 | Problem | Cause | Fix |
 |---------|-------|-----|
-| Signature always fails | Body parsed as JSON before verification | Use `express.raw()` on the webhook route |
-| Wrong signature header name | Looking for `x-signature` instead of `lettr-signature` | Use the correct header: `lettr-signature` |
-| Wrong secret | Using a secret from a different webhook endpoint | Each webhook endpoint has its own secret — check the dashboard |
-| Timing-based failures | Using `===` instead of `timingSafeEqual` | Use `crypto.timingSafeEqual()` to prevent timing attacks |
+| Header always empty | A proxy, CDN, or gateway strips the `Authorization` header | Configure it to pass the header through to your application |
+| Looking for a signature | Expecting a `lettr-signature` or `x-signature` header | Lettr doesn't sign payloads — check the `Authorization` header instead |
+| Wrong credentials | Using credentials from a different webhook | Each webhook has its own authentication settings — check the dashboard |
+| OAuth 2.0 token rejected | Token URL, client ID, or client secret is wrong | Lettr fetches a token from your OAuth server before each delivery — confirm all three values |
 
 <Warning>
-  Never skip signature verification in production. Without it, anyone who discovers your webhook URL can send forged events to your server.
+  Never run a production webhook without authentication. Without it, anyone who discovers your webhook URL can send forged events to your server.
 </Warning>
 
 ---
@@ -222,23 +221,27 @@ Lettr may deliver the same webhook event more than once (due to retries or netwo
 
 ### Implementing Idempotency
 
-Use the event ID included in every webhook payload to deduplicate:
+Use the `event_id` included in every event to deduplicate:
 
 ```javascript
 async function processWebhook(event) {
+  const eventType = event.msys ? Object.keys(event.msys)[0] : null;
+  const data = eventType ? event.msys[eventType] : null;
+  if (!data) return;
+
   // Check if we've already processed this event
-  const exists = await db.webhookEvents.findOne({ eventId: event.id });
+  const exists = await db.webhookEvents.findOne({ eventId: data.event_id });
   if (exists) {
-    console.log(`Event ${event.id} already processed, skipping`);
+    console.log(`Event ${data.event_id} already processed, skipping`);
     return;
   }
 
   // Process the event
-  await handleEvent(event);
+  await handleEvent(data);
 
   // Record that we've processed it
   await db.webhookEvents.insertOne({
-    eventId: event.id,
+    eventId: data.event_id,
     processedAt: new Date(),
   });
 }
@@ -250,14 +253,14 @@ async function processWebhook(event) {
 
 Before deploying to production, test your webhook endpoint to verify it handles events correctly.
 
-### Using Lettr's Test Events
+### Triggering Real Events
 
-Send test events from the Lettr dashboard:
+Generate real events by sending an email:
 
-1. Go to **Webhooks** and select your endpoint
-2. Click **Send Test Event**
-3. Select the event type to test
-4. Check your server logs and the event log to verify delivery
+1. Go to **Webhooks**, select your endpoint, and confirm it is enabled and subscribed to the events you handle
+2. Send an email with a live API key to an address you control
+3. Open the email and click a link to generate engagement events
+4. Check your server logs and the webhook's **Last Status** to verify delivery
 
 ### Using a Tunnel for Local Development
 
@@ -282,7 +285,7 @@ Copy the generated public URL and use it as your webhook endpoint in the Lettr d
     Overview of Lettr's webhook system and available event types.
   </Card>
   <Card title="Webhook Authorization" icon="lock" href="/learn/webhooks/authorization">
-    Set up and verify webhook signatures.
+    Set up and verify webhook authentication.
   </Card>
   <Card title="Webhook Retries" icon="rotate" href="/learn/webhooks/retries">
     Detailed retry behavior and handling.

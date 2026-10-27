@@ -79,7 +79,7 @@ Look for the `Authentication-Results` header in your email source. Here is what 
 
 ```
 Authentication-Results: mx.google.com;
-  dkim=pass header.d=yourdomain.com header.s=lettr;
+  dkim=pass header.d=yourdomain.com header.s=scph0722;
   dmarc=pass (p=REJECT dis=NONE) header.from=yourdomain.com;
 ```
 
@@ -120,7 +120,7 @@ Replace `selector` with the DKIM selector shown on your Lettr domain settings pa
 
 <AccordionGroup>
   <Accordion title="DKIM and DMARC are required for bulk senders">
-    Since February 2024, Google requires all senders who send more than 5,000 messages per day to a Gmail domain to have both DKIM and DMARC properly configured. Messages without valid authentication are increasingly rejected or sent to spam.
+    Since February 2024, Google requires all senders who send more than 5,000 messages per day to Gmail accounts to have SPF, DKIM, and DMARC properly configured. Messages without valid authentication are increasingly rejected or sent to spam.
 
     Confirm both pass by checking email headers as described above.
   </Accordion>
@@ -135,7 +135,7 @@ Replace `selector` with the DKIM selector shown on your Lettr domain settings pa
     - Match send frequency to subscriber expectations
   </Accordion>
   <Accordion title="One-click unsubscribe is required">
-    Since February 2024, Gmail and Yahoo require a working `List-Unsubscribe` header with one-click unsubscribe support for bulk senders. Lettr automatically adds the correct headers when you include an unsubscribe link in your email.
+    Since February 2024, Gmail and Yahoo require a working `List-Unsubscribe` header with one-click unsubscribe support for bulk senders. Lettr automatically adds the correct headers to campaigns and to API sends marked as marketing (`transactional: false`).
 
     <Warning>
       If you override email headers manually via the API, make sure you do not remove the `List-Unsubscribe` or `List-Unsubscribe-Post` headers.
@@ -197,7 +197,7 @@ Spam filters analyze your email content in addition to authentication and reputa
 | Image-only emails with no text | Filters can't read images, and spammers use this to evade text-based filters | Maintain at least a 60/40 text-to-image ratio |
 | URL shorteners (bit.ly, tinyurl) | Heavily used in phishing, automatically flagged | Use full URLs or your custom tracking domain |
 | Misleading subject lines | Violates CAN-SPAM and triggers filters | Make subject lines accurately reflect the email content |
-| Missing plain text version | Legitimate senders include both HTML and plain text | Lettr automatically generates a plain text version from your HTML |
+| Missing plain text version | Legitimate senders include both HTML and plain text | Pass a `text` version with your HTML; for template sends, Lettr generates it from the template HTML |
 | Too many links | Excessive links signal promotional or spam content | Keep links relevant and limit them to what's necessary |
 
 <Tip>
@@ -228,11 +228,14 @@ For a complete guide on building and maintaining sender reputation, see [Sending
 
 <AccordionGroup>
   <Accordion title="Verify all DNS records are correct">
-    Open the [Domains page](https://app.lettr.com/domains) and confirm your CNAME, DKIM, and DMARC records all show as **valid**. Run a manual check:
+    Open the [Domains page](https://app.lettr.com/domains) and confirm your DKIM, DMARC, and SPF (root domain) or CNAME (subdomain) records all show as **valid**. Run a manual check:
 
     ```bash
-    # Check CNAME verification record
-    dig CNAME yourdomain.com +short
+    # Check SPF record (root domains)
+    dig TXT yourdomain.com +short
+
+    # Check CNAME record (subdomains)
+    dig CNAME mail.yourdomain.com +short
 
     # Check DKIM record
     dig TXT selector._domainkey.yourdomain.com +short
@@ -254,7 +257,7 @@ For a complete guide on building and maintaining sender reputation, see [Sending
     Review complaint data in the Lettr dashboard under **Analytics** and in [Google Postmaster Tools](https://postmaster.google.com/). If the rate is above 0.1%, take immediate steps to reduce it.
   </Accordion>
   <Accordion title="Remove invalid addresses from your list">
-    Go to **Suppressions** in the Lettr dashboard and review bounce entries. Set up a bounce webhook to automatically handle hard bounces going forward.
+    Filter the **Events** page in the Lettr dashboard by the Bounce event type and review the bounced addresses. Set up a bounce webhook to automatically handle hard bounces going forward.
   </Accordion>
   <Accordion title="Send a test email and check headers">
     Send a test to your own Gmail and Outlook accounts. Check that `dkim=pass` and `dmarc=pass` appear in the headers before sending to your full list.

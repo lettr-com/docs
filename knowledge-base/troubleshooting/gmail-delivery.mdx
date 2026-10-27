@@ -177,7 +177,7 @@ Gmail weighs recipient engagement more heavily than most providers. Low engageme
     A gradual increase in spam complaints — even if still below 0.3% — will eventually cause reputation damage. Address the trend early.
   </Accordion>
   <Accordion title="Confirm one-click unsubscribe is working">
-    Gmail requires a functional `List-Unsubscribe` header with one-click support for bulk senders. Lettr adds this automatically, but verify it hasn't been overridden via custom headers in the API.
+    Gmail requires a functional `List-Unsubscribe` header with one-click support for bulk senders. Lettr adds this automatically to campaigns and marketing sends (`transactional: false`), but verify it hasn't been overridden via custom headers in the API.
   </Accordion>
 </AccordionGroup>
 

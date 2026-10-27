@@ -11,10 +11,10 @@ Testing your email integration before sending to real recipients is essential. L
 
 The simplest way to test is from the Lettr dashboard:
 
-1. Go to **Emails** and open any template
+1. Go to **Emails** and open any template in the editor
 2. Click **Send Test Email**
 3. Enter your own email address (or any address you control)
-4. The email is sent through the full delivery pipeline, so you can verify rendering, headers, tracking, and deliverability
+4. The email is sent through the full delivery pipeline, so you can verify rendering, headers, and deliverability (tracking is disabled for test emails)
 
 <Tip>
   Use test emails to verify your email renders correctly before sending to your full audience. Test in multiple email clients by sending to your Gmail, Outlook, and Apple Mail accounts.
@@ -40,7 +40,7 @@ curl -X POST https://app.lettr.com/api/emails \
 
 The email above will be delivered to **your account email**, not to `customer@example.com`. Sandbox sends are free, don't require a verified domain, and don't count against your quota.
 
-Create a sandbox key in **Settings** > **API Keys** by setting the type to **Sandbox**. See the [Sandbox API Keys guide](/learn/api-keys/sandbox) for full details on rate limits, allowed endpoints, and data isolation.
+Create a sandbox key under **API Keys** in the dashboard sidebar by setting the type to **Sandbox**. See the [Sandbox API Keys guide](/learn/api-keys/sandbox) for full details on rate limits, allowed endpoints, and data isolation.
 
 ---
 
@@ -64,36 +64,43 @@ curl -X POST https://app.lettr.com/api/emails \
 
 ### Validating the Response
 
-A successful send returns a `202 Accepted` response with the email ID:
+A successful send returns a `200 OK` response with the request ID and recipient counts:
 
 ```json
 {
-  "id": "em_xxxxxxxxxxxxxx",
-  "status": "queued"
+  "message": "Email queued for delivery.",
+  "data": {
+    "request_id": "7582751837467401763",
+    "accepted": 1,
+    "rejected": 0
+  }
 }
 ```
 
-Use this ID to check the email's delivery status:
+Use the request ID to check the email's delivery status:
 
 ```bash
-curl https://app.lettr.com/api/emails/em_xxxxxxxxxxxxxx \
+curl https://app.lettr.com/api/emails/7582751837467401763 \
   -H "Authorization: Bearer lttr_xxxxxxxxxxxx"
 ```
 
-The response includes the current status and event history:
+The response includes the current state and event history:
 
 ```json
 {
-  "id": "em_xxxxxxxxxxxxxx",
-  "status": "delivered",
-  "from": "you@yourdomain.com",
-  "to": ["your-test-address@gmail.com"],
-  "subject": "Integration Test",
-  "events": [
-    { "type": "queued", "timestamp": "2026-01-30T10:00:00Z" },
-    { "type": "sent", "timestamp": "2026-01-30T10:00:01Z" },
-    { "type": "delivered", "timestamp": "2026-01-30T10:00:02Z" }
-  ]
+  "message": "Email retrieved successfully.",
+  "data": {
+    "transmission_id": "7582751837467401763",
+    "state": "delivered",
+    "from": "you@yourdomain.com",
+    "subject": "Integration Test",
+    "recipients": ["your-test-address@gmail.com"],
+    "num_recipients": 1,
+    "events": [
+      { "type": "delivery", "timestamp": "2026-01-30T10:00:02.000Z", "rcpt_to": "your-test-address@gmail.com" },
+      { "type": "injection", "timestamp": "2026-01-30T10:00:00.000Z", "rcpt_to": "your-test-address@gmail.com" }
+    ]
+  }
 }
 ```
 
@@ -131,14 +138,14 @@ This keeps test email completely separate from production sending.
 
 Verify your webhook endpoint processes events correctly before relying on it in production.
 
-### Send Test Webhook Events
+### Trigger Real Webhook Events
 
-From the Lettr dashboard:
+The quickest way to exercise your endpoint is to generate real events:
 
-1. Go to **Webhooks** and select your endpoint
-2. Click **Send Test Event**
-3. Choose the event type (delivered, bounced, opened, clicked, etc.)
-4. Check your server logs to confirm the event was received and processed
+1. Go to **Webhooks** and confirm your endpoint is enabled and subscribed to the events you handle
+2. Send an email with a live API key to an address you control
+3. Open the email and click a link to generate engagement events (requires open and click tracking)
+4. Check your server logs to confirm the `message.injection`, `message.delivery`, and engagement events were received and processed
 
 ### Local Development with Tunnels
 
@@ -211,7 +218,7 @@ Before switching from testing to production sending, work through this checklist
     Send a test email and verify `dkim=pass`, `spf=pass`, and `dmarc=pass` in the email headers. Do not proceed until all three pass. See [Authentication Issues](/knowledge-base/troubleshooting/authentication) if any are failing.
   </Accordion>
   <Accordion title="Webhook endpoint is receiving and processing events">
-    Send test webhook events from the dashboard and confirm your endpoint handles them correctly. Verify signature verification is working. See [Webhook Delivery Failures](/knowledge-base/troubleshooting/webhook-failures).
+    Trigger real events with a test send and confirm your endpoint handles them correctly. Verify your Basic or OAuth 2.0 authentication check is working. See [Webhook Delivery Failures](/knowledge-base/troubleshooting/webhook-failures).
   </Accordion>
   <Accordion title="Email renders correctly in major clients">
     Test your email templates in Gmail, Outlook, and Apple Mail. Check both desktop and mobile rendering. See [Email Content Rendering Issues](/knowledge-base/troubleshooting/rendering-issues).
@@ -223,7 +230,7 @@ Before switching from testing to production sending, work through this checklist
     Your integration should handle API errors (rate limits, validation errors, server errors) gracefully with appropriate retries. See [Rate Limits](/knowledge-base/troubleshooting/rate-limits) and [Errors and Retries](/learn/sending/errors-retries).
   </Accordion>
   <Accordion title="Environment variables are set correctly">
-    Confirm your production environment has the correct API key, webhook secret, and any other configuration values. Do not use test or development keys in production.
+    Confirm your production environment has the correct API key, webhook credentials, and any other configuration values. Do not use test or development keys in production.
   </Accordion>
   <Accordion title="Warm-up plan is ready (for new domains)">
     If this is a new sending domain, prepare a warm-up schedule before sending at full volume. See [IP and Domain Warm-Up](/knowledge-base/best-practices/ip-domain-warmup).
@@ -237,11 +244,11 @@ Before switching from testing to production sending, work through this checklist
 | Issue | Cause | Fix |
 |-------|-------|-----|
 | Test email not arriving | Email went to spam folder | Check spam/junk folder; verify authentication passes |
-| `401 Unauthorized` response | Invalid API key | Verify the key is correct and active in **Settings > API Keys** |
+| `401 Unauthorized` response | Invalid API key | Verify the key is correct and active under **API Keys** in the dashboard |
 | `422 Validation Error` | Invalid request body | Check the response body for specific field errors; verify `from`, `to`, `subject`, and `html` fields |
-| Template variables not rendering | Missing or incorrect variable syntax | Verify you're passing the correct `data` object with matching variable names |
+| Template variables not rendering | Missing or incorrect variable syntax | Verify you're passing the correct `substitution_data` object with matching variable names |
 | Tracking links not working | Custom tracking domain not configured | Set up a tracking domain at [Tracking Domains](/learn/domains/tracking-domains) or use the default |
-| Webhook test event not received | Endpoint URL incorrect or server not running | Verify the URL in webhook settings and confirm your server is accessible from the internet |
+| Webhook events not received | Endpoint URL incorrect or server not running | Verify the URL in webhook settings and confirm your server is accessible from the internet |
 
 ---
 

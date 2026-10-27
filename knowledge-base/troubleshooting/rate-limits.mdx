@@ -9,17 +9,16 @@ Lettr enforces rate limits to protect infrastructure stability and ensure consis
 
 ## Rate Limit Overview
 
-Lettr applies limits at the API request level, per authentication credential:
+Lettr applies limits at the API request level, per team. The request limit is shared across all live API keys that belong to the same team:
 
 | Limit | Threshold | Window |
 |-------|-----------|--------|
-| Standard API rate limit | 300 requests | 5 minutes |
-| High-volume API rate limit | 2,000 requests | 5 minutes |
-| Authentication failures | 5 failures | 5 minutes (triggers 15-minute block) |
+| API rate limit | 3 requests | 1 second |
+| SMTP authentication failures | 5 failures | 5 minutes (triggers 15-minute block) |
 | Recipients per request | 50 | Per request (combined to, cc, bcc) |
 
 <Note>
-  High-volume rate limits are available on Pro and Enterprise plans. Contact [sales@lettr.com](mailto:sales@lettr.com) to discuss your volume needs.
+  [Sandbox API keys](/learn/api-keys/sandbox) have their own separate limits and don't count toward the team limit. Contact [sales@lettr.com](mailto:sales@lettr.com) to discuss your volume needs.
 </Note>
 
 ---
@@ -30,24 +29,22 @@ When you exceed the rate limit, the API returns an HTTP `429` status code with t
 
 ```json
 {
-  "status": "error",
-  "error_code": "rate_limit_exceeded",
-  "message": "Too many requests. Please retry after 60 seconds.",
-  "retry_after": 60
+  "message": "Rate limit exceeded. Please slow down your requests.",
+  "error_code": "rate_limit_exceeded"
 }
 ```
 
-The `retry_after` field indicates how many seconds you should wait before making another request.
+The `Retry-After` response header indicates how many seconds you should wait before making another request. Every API response also carries `X-RateLimit-Limit`, `X-RateLimit-Remaining`, and `X-RateLimit-Reset` headers.
 
 <Warning>
-  If you continue sending requests after receiving a `429` response, the cooldown period may be extended. Always respect the `retry_after` value before retrying.
+  Requests sent before the window resets are rejected with another `429`. Always respect the `Retry-After` header before retrying.
 </Warning>
 
 ---
 
 ## Handling Rate Limits — Implementing Backoff
 
-When your application receives a `429` response, it should pause and retry with exponential backoff. The following example reads the `retry_after` value from the response body and backs off accordingly:
+When your application receives a `429` response, it should pause and retry with exponential backoff. The following example reads the `Retry-After` header from the response and backs off accordingly:
 
 ```javascript
 async function sendWithBackoff(url, payload, maxRetries = 5) {
@@ -62,8 +59,7 @@ async function sendWithBackoff(url, payload, maxRetries = 5) {
     });
 
     if (response.status === 429) {
-      const body = await response.json();
-      const retryAfter = body.retry_after || 60;
+      const retryAfter = Number(response.headers.get("Retry-After")) || 1;
       const backoff = retryAfter * 1000 * Math.pow(2, attempt);
 
       console.log(`Rate limited. Retrying in ${backoff / 1000}s (attempt ${attempt + 1})`);
@@ -92,7 +88,7 @@ curl -s -w "\nHTTP Status: %{http_code}\n" \
   }'
 ```
 
-If the response status is `429`, parse the JSON body and wait for the number of seconds specified in `retry_after` before retrying.
+If the response status is `429`, wait for the number of seconds specified in the `Retry-After` header before retrying.
 
 ---
 
@@ -125,7 +121,7 @@ async function sendToAll(recipients, emailPayload) {
 ```
 
 <Tip>
-  Sending to 10,000 recipients at 50 per request requires only 200 API calls. With a 1-second delay between each, that completes in under 4 minutes — well within the standard rate limit of 300 requests per 5 minutes.
+  Sending to 10,000 recipients at 50 per request requires only 200 API calls. With a 1-second delay between each, that completes in under 4 minutes — well within the rate limit of 3 requests per second.
 </Tip>
 
 ---
@@ -145,7 +141,7 @@ Each plan includes a monthly email quota. Every recipient on every request count
 | Enterprise | Custom |
 
 <Note>
-  Emails beyond your tier limit are charged at $0.80 per 1,000 emails. Check your current plan details in the Lettr dashboard under **Settings > Billing**.
+  On paid plans, emails beyond your tier limit are charged at $0.80 per 1,000 emails. The free tier is a hard cap (with an additional limit of 100 emails per day), and sends past it return `429` with `quota_exceeded` or `daily_quota_exceeded`. Check your current plan details in the Lettr dashboard under **Settings > Billing**.
 </Note>
 
 ---
@@ -154,9 +150,9 @@ Each plan includes a monthly email quota. Every recipient on every request count
 
 You can track your current API usage and monthly email quota in the Lettr dashboard:
 
-1. Go to **Dashboard > Usage** to view your current month's email volume.
+1. Go to **Settings > Usage** to view your current month's email volume.
 2. Review your remaining quota and historical usage trends.
-3. Set up alerts if your usage is approaching the plan limit.
+3. On the free tier, read the `X-Daily-Remaining` and `X-Monthly-Remaining` headers returned by the Send Email endpoint to alert your own team when you're approaching the limit.
 
 <Tip>
   Check your usage regularly, especially when launching new campaigns or onboarding large recipient lists. This helps you avoid unexpected quota exhaustion mid-send.
@@ -204,7 +200,7 @@ This approach uses a simple in-memory queue with `setTimeout` pacing. For produc
 
 <AccordionGroup>
   <Accordion title="Implement exponential backoff">
-    Always handle `429` responses by reading the `retry_after` value and backing off exponentially. Never retry immediately — this worsens throttling and can extend the cooldown period.
+    Always handle `429` responses by reading the `Retry-After` header and backing off exponentially. Never retry immediately — the retry is rejected with another `429` and wastes a request.
   </Accordion>
 
   <Accordion title="Batch recipients efficiently">
@@ -230,8 +226,8 @@ This approach uses a simple in-memory queue with `setTimeout` pacing. For produc
 
 If you are consistently hitting rate limits or approaching your monthly quota, you have two options:
 
-1. **Upgrade your plan.** Higher plans include larger monthly quotas and access to high-volume rate limits. Visit **Settings > Billing** in the dashboard to compare plans.
-2. **Contact sales for Enterprise.** If you need custom rate limits, dedicated infrastructure, or quotas beyond 500,000 emails per month, reach out to [sales@lettr.com](mailto:sales@lettr.com).
+1. **Upgrade your plan.** Higher plans include larger monthly quotas. Visit **Settings > Billing** in the dashboard to compare plans.
+2. **Contact sales for Enterprise.** If you need custom rate limits, dedicated infrastructure, or quotas beyond 1,000,000 emails per month, reach out to [sales@lettr.com](mailto:sales@lettr.com).
 
 <Note>
   If you are experiencing rate limit issues that seem incorrect — for example, receiving `429` errors well below the documented thresholds — contact [support@lettr.com](mailto:support@lettr.com) with your API key prefix and timestamps of the affected requests.

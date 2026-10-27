@@ -5,7 +5,7 @@ description: "Learn how Lettr open and click tracking works, why metrics like Ap
 
 ## How Open Tracking Works
 
-Lettr tracks email opens by embedding an invisible tracking pixel (a tiny 1x1 transparent image) into the HTML body of your email. When a recipient opens the email and their email client loads images, a request is made to Lettr's servers, which records an `email.opened` webhook event.
+Lettr tracks email opens by embedding an invisible tracking pixel (a tiny 1x1 transparent image) into the HTML body of your email. When a recipient opens the email and their email client loads images, a request is made to Lettr's servers, which records an `engagement.open` webhook event (plus `engagement.initial_open` for the first open).
 
 You can enable or disable open tracking on a per-email basis using the `options` object in the API request.
 
@@ -16,7 +16,7 @@ You can enable or disable open tracking on a per-email basis using the `options`
 ### Limitations
 
 - The pixel only fires when images are loaded — it does not detect whether the recipient actually read the email.
-- A single open may trigger multiple pixel loads (e.g., when scrolling back to an email), though Lettr deduplicates where possible.
+- A single open may trigger multiple pixel loads (e.g., when scrolling back to an email), though only the first one is reported as `engagement.initial_open`.
 - Forwarded emails can trigger additional opens from recipients who were not on the original send list.
 
 ---
@@ -41,7 +41,7 @@ Open rates have become an increasingly unreliable metric due to changes in email
 
 ## How Click Tracking Works
 
-Lettr tracks clicks by rewriting links in your HTML emails to pass through your configured tracking domain. When a recipient clicks a rewritten link, the request hits Lettr's tracking server, an `email.clicked` webhook event is recorded, and the recipient is immediately redirected to the original destination URL.
+Lettr tracks clicks by rewriting links in your HTML emails to pass through your configured tracking domain. When a recipient clicks a rewritten link, the request hits Lettr's tracking server, an `engagement.click` webhook event is recorded, and the recipient is immediately redirected to the original destination URL.
 
 You can control click tracking on individual links using the `data-msys-clicktrack` attribute:
 
