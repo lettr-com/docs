@@ -5,7 +5,7 @@ description: "When to use HTML, plain text, and AMP email content types in Lettr
 
 Every email you send through Lettr contains content in one or more formats. The three supported content types are **HTML** for rich formatting, **plain text** for universal compatibility, and **AMP HTML** for interactive experiences. Understanding when and how to use each format directly affects how your emails render, how accessible they are, and how mailbox providers evaluate them.
 
-Lettr's API accepts three corresponding parameters: `html`, `text`, and `amp_html`. At least one of `html` or `text` is required for every send.
+Lettr's API accepts three corresponding parameters: `html`, `text`, and `amp_html`. At least one of `html` or `text` is required unless you send a stored template with `template_slug`.
 
 ---
 
@@ -220,7 +220,7 @@ When you include both `html` and `text` in a single API call, Lettr constructs a
 
 ```bash
 curl -X POST https://app.lettr.com/api/emails \
-  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Authorization: Bearer lttr_YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "from": "you@example.com",

@@ -3,7 +3,7 @@ title: "Bounce Codes Reference"
 description: "Reference for SMTP response and enhanced status codes, covering soft versus hard bounces and the recommended action for each in Lettr."
 ---
 
-Every time an email is sent, the receiving mail server responds with an SMTP status code indicating whether the message was accepted, temporarily deferred, or permanently rejected. Lettr surfaces these codes in your **dashboard** and via **`email.bounced` webhook events**, so understanding them helps you diagnose delivery issues quickly.
+Every time an email is sent, the receiving mail server responds with an SMTP status code indicating whether the message was accepted, temporarily deferred, or permanently rejected. Lettr surfaces these codes on the **Events** page of your dashboard and via **`message.bounce` webhook events**, so understanding them helps you diagnose delivery issues quickly.
 
 ---
 
@@ -49,7 +49,7 @@ Soft bounces are transient failures. Lettr automatically retries delivery for so
 | **454** | 4.7.0        | TLS negotiation failed; TLS not available    | Retry without TLS if your sending policy allows opportunistic encryption. |
 
 <Info>
-  Lettr retries soft bounces automatically with exponential backoff. You do not need to resend these messages manually. Monitor the **Activity Log** in your dashboard to track retry progress.
+  Lettr retries soft bounces automatically with exponential backoff. You do not need to resend these messages manually. Watch for `Delayed` events on the **Events** page of your dashboard to track retry progress.
 </Info>
 
 ---
@@ -140,22 +140,22 @@ Major mailbox providers often return custom error messages alongside standard SM
 
 ## How Lettr Categorizes Bounces
 
-Lettr maps raw SMTP response codes to standardized bounce categories that appear in your dashboard and in `email.bounced` webhook payloads. This makes it easier to take action without interpreting SMTP codes directly.
+Lettr assigns every bounce a numeric **bounce class** that appears on the **Events** page and in the `bounce_class` field of `message.bounce` and `message.out_of_band` webhook payloads, alongside the raw SMTP response in `raw_reason`. This makes it easier to take action without interpreting SMTP codes directly.
 
-| Lettr Category       | SMTP Codes / Conditions                          | Description                                      |
-| -------------------- | ------------------------------------------------ | ------------------------------------------------ |
-| `invalid_address`    | 550 5.1.1, 553 5.1.3                            | The recipient address does not exist or is malformed. |
-| `domain_not_found`   | 550 5.1.2                                        | The recipient domain does not exist or has no MX records. |
-| `mailbox_full`       | 452 4.2.2, 552 5.2.2                            | The recipient mailbox is over its storage quota.  |
-| `blocked`            | 550 5.7.1 (IP/domain block), 554 5.7.1          | The receiving server blocked delivery due to reputation or blocklisting. |
-| `spam_related`       | 550 5.7.1 (content rejection)                   | The message was flagged as spam by the receiving server. |
-| `policy_related`     | 550 5.7.1 (authentication), 551 5.1.6           | Rejected due to authentication failure, DMARC policy, or other sending policies. |
-| `server_error`       | 451 4.3.0, 421 4.7.0                            | A temporary server-side issue on the receiving end. |
-| `protocol_error`     | 454 4.7.0, 552 5.2.3                            | A protocol-level failure such as TLS negotiation or message size limits. |
-| `unknown`            | Any unrecognized or ambiguous response           | The bounce could not be classified into a specific category. |
+| Bounce Class | Category | Type |
+| ------------ | -------- | ---- |
+| `10` | Invalid recipient | Hard |
+| `21`, `22`, `24` | DNS failure, mailbox full, timeout | Soft |
+| `30` | Generic bounce, no RCPT | Hard |
+| `50`–`54` | Blocked by the receiving server (general, spam, content, attachment, relay) | Block |
+| `60` | Auto-reply | Not a failure |
+| `70` | Transient failure | Soft |
+| `90` | Unsubscribe | Hard |
+
+Hard bounce classes (`10`, `30`, `90`) are added to your suppression list automatically. Block classes usually point to reputation or authentication problems rather than a bad address.
 
 <Tip>
-  You can filter bounces by category in the **Activity** section of your dashboard, or use the `category` field in `email.bounced` webhook events to automate list management in your application.
+  You can filter by event type on the **Events** page of your dashboard, or read the `bounce_class` field in `message.bounce` webhook events to automate list management in your application. See [Bounces](/learn/suppressions/bounces) for the full list of classes.
 </Tip>
 
 ---
@@ -173,6 +173,6 @@ Lettr maps raw SMTP response codes to standardized bounce categories that appear
     Understand the full email delivery pipeline from send to inbox.
   </Card>
   <Card title="Webhook Event Types" icon="bell" href="/learn/webhooks/event-types">
-    Reference for all webhook events including email.bounced payloads.
+    Reference for all webhook events including message.bounce payloads.
   </Card>
 </CardGroup>

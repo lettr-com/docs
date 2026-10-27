@@ -60,7 +60,7 @@ An SMTP transaction is a structured back-and-forth between two servers: the **cl
     The client specifies the envelope sender (also called the Return-Path or bounce address). This is where bounce notifications are sent if delivery fails. It may differ from the `From` header the recipient sees.
 
     ```
-    C: MAIL FROM:<bounces+abc123@bounce.lettr.com>
+    C: MAIL FROM:<bounces-12345@sparkpostmail.com>
     S: 250 OK
     ```
   </Step>
@@ -117,7 +117,7 @@ SMTP uses different ports depending on the type of connection and its purpose.
 | **587** | Submission | The standard port for email clients and applications to submit outgoing mail to a relay server. | STARTTLS (required by most servers) |
 
 <Note>
-  When connecting to Lettr's SMTP relay, use **port 587** with STARTTLS or **port 465** with implicit TLS. Port 25 is not available for submission to Lettr — it is reserved for server-to-server relay and is commonly blocked by ISPs and cloud providers.
+  When connecting to Lettr's SMTP relay, use **port 587** with STARTTLS or **port 465** with implicit TLS. Port 25 is not available for submission — it is reserved for server-to-server relay and is commonly blocked by ISPs and cloud providers.
 </Note>
 
 ### Which Port Should You Use?
@@ -167,12 +167,12 @@ Common SMTP authentication mechanisms:
 
 ### Authenticating with Lettr's SMTP Relay
 
-To send via Lettr's SMTP relay, use your **API key** as the authentication credential:
+To send via Lettr's SMTP relay, use your **API key** as the password. The relay accepts the PLAIN and LOGIN mechanisms:
 
 - **Host**: `smtp.lettr.com`
 - **Port**: `587` (STARTTLS) or `465` (implicit TLS)
-- **Username**: Your Lettr API key ID
-- **Password**: Your Lettr API key secret
+- **Username**: `lettr`
+- **Password**: Your Lettr API key (`lttr_...`)
 
 ```javascript
 // Node.js example using Nodemailer
@@ -183,8 +183,8 @@ const transporter = nodemailer.createTransport({
   port: 587,
   secure: false, // STARTTLS
   auth: {
-    user: 'your-api-key-id',
-    pass: 'your-api-key-secret'
+    user: 'lettr',
+    pass: 'lttr_your_api_key'
   }
 });
 
@@ -210,7 +210,7 @@ Lettr supports both SMTP relay and a REST API for sending email. Each approach h
 | **Error handling** | SMTP response codes during the session | HTTP status codes and JSON error bodies |
 | **Throughput** | Connection-based — limited by concurrent connections | Request-based — designed for high concurrency |
 | **Features** | Basic sending, headers, attachments | Full access to templates, substitution data, tags, metadata |
-| **TLS** | STARTTLS or implicit TLS | HTTPS |
+| **TLS** | STARTTLS (587) or implicit TLS (465) | HTTPS |
 
 <Info>
   If you are starting a new integration with Lettr, the **REST API** is the recommended approach. It provides access to all Lettr features including templates, merge tags, and event metadata. SMTP relay is ideal when migrating from another provider or when your application already uses SMTP (e.g., WordPress, legacy systems).

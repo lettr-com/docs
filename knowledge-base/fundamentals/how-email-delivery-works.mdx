@@ -33,7 +33,7 @@ This guide walks through every stage of the journey — from API request to inbo
   <Step title="Authentication Check">
     The receiving mail server verifies the message's authenticity by checking three authentication mechanisms:
 
-    - **SPF** — Does the sending IP have permission to send on behalf of the From domain?
+    - **SPF** — Does the sending IP have permission to send on behalf of the envelope sender (Return-Path) domain?
     - **DKIM** — Does the cryptographic signature match, proving the message was not altered in transit?
     - **DMARC** — Do SPF and DKIM results align with the domain owner's published policy?
   </Step>
@@ -95,7 +95,7 @@ This guide walks through every stage of the journey — from API request to inbo
   </Accordion>
 
   <Accordion title="Mailbox Full or Inactive">
-    The recipient's mailbox may be over its storage quota or the account may be inactive or disabled. These are typically reported as soft bounces (temporary) or hard bounces (permanent) depending on the provider's response. Lettr automatically suppresses addresses that repeatedly hard bounce.
+    The recipient's mailbox may be over its storage quota or the account may be inactive or disabled. These are typically reported as soft bounces (temporary) or hard bounces (permanent) depending on the provider's response. Lettr automatically suppresses addresses that hard bounce.
   </Accordion>
 </AccordionGroup>
 
@@ -128,7 +128,7 @@ Sending email directly from your own servers is technically possible, but introd
   </Card>
 
   <Card title="DKIM Infrastructure">
-    Lettr handles key generation, rotation, and signing automatically. You configure a single DNS record and Lettr manages the cryptographic operations for every message.
+    Lettr handles key generation and signing automatically. You publish the DNS records Lettr provides for your sending domain and Lettr manages the cryptographic operations for every message.
   </Card>
 
   <Card title="Bounce Handling">
@@ -148,7 +148,7 @@ Sending email directly from your own servers is technically possible, but introd
 
 ## Email Lifecycle Events
 
-Every message that passes through Lettr generates a series of events that track its progress from submission to final outcome. These events are available through Lettr webhooks.
+Every message that passes through Lettr generates a series of events that track its progress from submission to final outcome. These events are available through Lettr webhooks — see [Event Types](/learn/webhooks/event-types) for the exact event names, such as `message.delivery` and `message.spam_complaint`.
 
 | Event | Description |
 | ----- | ----------- |

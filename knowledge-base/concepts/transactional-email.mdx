@@ -91,15 +91,15 @@ The most common approach is sending transactional email through Lettr's REST API
 const response = await fetch('https://app.lettr.com/api/emails', {
   method: 'POST',
   headers: {
-    'Authorization': 'Bearer your-api-key',
+    'Authorization': 'Bearer lttr_your_api_key',
     'Content-Type': 'application/json',
   },
   body: JSON.stringify({
     from: 'no-reply@mail.yourdomain.com',
-    to: 'user@example.com',
+    to: ['user@example.com'],
     subject: 'Reset your password',
-    template_id: 'tmpl_password_reset',
-    merge_tags: {
+    template_slug: 'password-reset',
+    substitution_data: {
       reset_link: 'https://yourdomain.com/reset?token=abc123',
       expiry_minutes: '30',
     },
@@ -114,8 +114,8 @@ If your application sends email through SMTP (common with legacy systems and fra
 ```
 Host: smtp.lettr.com
 Port: 587
-Username: your-api-key
-Password: your-api-key
+Username: lettr
+Password: lttr_your_api_key
 Encryption: STARTTLS
 ```
 

@@ -65,29 +65,32 @@ This automatic suppression is critical for protecting your sending reputation. C
 
 ### Webhook Events
 
-Lettr fires a `email.complained` webhook event for every complaint received. Your application can listen for this event to update its own records:
+Lettr fires a `message.spam_complaint` webhook event for every complaint received. Webhook payloads arrive as an array of events, each wrapped in an `msys` object. Your application can listen for this event to update its own records:
 
 ```javascript
-app.post('/webhooks/lettr', (req, res) => {
-  const event = req.body;
-
-  if (event.type === 'email.complained') {
-    const { to, complaint_type, timestamp } = event.data;
-
-    // Update your database
-    markAsComplained(to, timestamp);
-
-    // Optional: trigger internal review if complaints spike
-    checkComplaintRate();
-  }
-
+app.post('/webhooks/lettr', express.json(), (req, res) => {
   res.sendStatus(200);
+
+  for (const event of req.body) {
+    const eventType = Object.keys(event.msys)[0];
+    const data = event.msys[eventType];
+
+    if (data.type === 'spam_complaint') {
+      const { rcpt_to, fbtype, timestamp } = data;
+
+      // Update your database
+      markAsComplained(rcpt_to, new Date(parseInt(timestamp) * 1000));
+
+      // Optional: trigger internal review if complaints spike
+      checkComplaintRate();
+    }
+  }
 });
 ```
 
 ### Dashboard Visibility
 
-Complaint events are visible in your Lettr dashboard under email event history. You can filter by complaint events to see which messages generated complaints and identify patterns.
+Complaint events are visible on the **Events** page of your Lettr dashboard, where they show as **Spam**. Filter by event type to see which messages generated complaints and identify patterns.
 
 ---
 
@@ -120,7 +123,7 @@ This is why making it easy to unsubscribe is a deliverability strategy, not a su
 
 <AccordionGroup>
   <Accordion title="Make unsubscribing easier than complaining">
-    If the unsubscribe link is buried at the bottom of your email in small gray text, recipients will use the more visible "Report Spam" button instead. Place your unsubscribe link prominently. Implement one-click unsubscribe via the `List-Unsubscribe` header — Lettr supports this automatically.
+    If the unsubscribe link is buried at the bottom of your email in small gray text, recipients will use the more visible "Report Spam" button instead. Place your unsubscribe link prominently. Implement one-click unsubscribe via the `List-Unsubscribe` header — Lettr adds it automatically to campaigns and to API sends with `transactional: false`.
   </Accordion>
 
   <Accordion title="Only send to recipients who opted in">

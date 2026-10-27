@@ -159,7 +159,6 @@ The receiving mail server strips the `+tag` portion and delivers to the base add
 
 - **Treat plus-addressed variants as the same recipient** for suppression and deduplication purposes. `jane@example.com` and `jane+shop@example.com` are the same person.
 - **Do not strip the plus tag** before sending — deliver to the exact address the user provided.
-- Lettr's suppression system matches on the base address, so a bounce or complaint on `jane@example.com` also suppresses `jane+anything@example.com`.
 
 ---
 
@@ -196,7 +195,7 @@ const exists = await db.recipients.findOne({ normalized_email: normalized });
 ```
 
 <Tip>
-  Lettr normalizes addresses to lowercase internally for suppression list matching and deduplication, but preserves the original casing in the `To` header of sent messages.
+  Lettr stores audience contacts in lowercase, so `Jane@example.com` and `jane@example.com` are the same contact. Addresses you pass to the send API are delivered with the casing you provided.
 </Tip>
 
 ---

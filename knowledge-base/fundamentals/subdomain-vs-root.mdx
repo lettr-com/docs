@@ -7,7 +7,7 @@ description: "Trade-offs of sending email from a subdomain versus your root doma
 
 When setting up your sending domain in Lettr, you face a fundamental choice: should you send from your root domain (`example.com`) or a subdomain (`mail.example.com`)?
 
-Both approaches are fully supported. Lettr lets you add any domain or subdomain, verify it via CNAME, DKIM, and DMARC records, and track its status as **pending**, **approved**, or **blocked**. The right choice depends on your sending volume, email types, and risk tolerance.
+Both approaches are fully supported. Lettr lets you add any domain or subdomain, verify it with DKIM and DMARC records plus an SPF include (root domain) or a CNAME record (subdomain), and track its status as **pending**, **approved**, or **blocked**. The right choice depends on your sending volume, email types, and risk tolerance.
 
 ---
 
@@ -24,7 +24,7 @@ Sending directly from `example.com` keeps things simple and immediately recogniz
 ### Cons
 
 - **Shared reputation risk** — if your email reputation suffers, it affects your entire domain including your website and corporate email.
-- **CNAME conflicts at root** — many DNS providers do not allow a CNAME record at the zone apex alongside MX, A, or other records.
+- **No custom bounce domain** — DNS does not allow a CNAME record at the zone apex alongside MX, A, or other records, so Lettr verifies root domains with SPF instead of a CNAME. Only a subdomain can serve as your [custom Return-Path](/knowledge-base/fundamentals/custom-return-path) for SPF alignment.
 - **No segmentation** — all email types share a single reputation.
 
 <Note>
@@ -92,7 +92,7 @@ The most common technical reason to choose a subdomain is the **CNAME conflict a
 
 DNS standards do not allow a CNAME record to coexist with other record types at the same name. Because your root domain typically has A, AAAA, MX, and TXT records, you cannot add a CNAME there without removing them.
 
-Subdomains avoid this entirely — you can freely add CNAME records to `mail.example.com` without affecting any records on `example.com`.
+Subdomains avoid this entirely — you can freely add CNAME records to `mail.example.com` without affecting any records on `example.com`. This is why Lettr asks for a CNAME record only on subdomains; on a root domain it checks for `include:_spf.sparkpostmail.com` in your existing SPF record instead.
 
 <Note>
 Some DNS providers like Cloudflare support **CNAME flattening**, which resolves the CNAME at the apex and returns an A record instead. This can work around the limitation, but not all providers offer it.

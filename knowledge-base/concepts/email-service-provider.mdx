@@ -5,7 +5,7 @@ description: "What an email service provider does, how it differs from an ISP, a
 
 An email service provider (ESP) is a platform that sends email on your behalf. Instead of running your own mail server and managing the infrastructure required for reliable email delivery, you send emails through an ESP's API or SMTP relay, and the ESP handles the rest — message delivery, authentication, reputation management, bounce processing, and compliance.
 
-Lettr is an ESP built for developers sending transactional email. When your application needs to send a password reset, order confirmation, or any other email, it makes an API call to Lettr, and Lettr delivers the message to the recipient's mailbox provider.
+Lettr is an ESP built for developers sending transactional email, with campaigns and audience management for marketing email on the same platform. When your application needs to send a password reset, order confirmation, or any other email, it makes an API call to Lettr, and Lettr delivers the message to the recipient's mailbox provider.
 
 ---
 
@@ -102,7 +102,7 @@ Not all ESPs serve the same purpose. The ESP landscape broadly splits into two c
 
 Built for application-triggered, one-to-one emails — password resets, order confirmations, account notifications. These ESPs prioritize delivery speed, API reliability, and developer experience.
 
-Lettr is a transactional ESP. Other examples include Postmark, Resend, and Amazon SES.
+Lettr is a transactional ESP that also sends marketing campaigns. Other examples include Postmark, Resend, and Amazon SES.
 
 Key characteristics:
 
