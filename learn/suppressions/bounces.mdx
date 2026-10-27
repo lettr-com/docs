@@ -17,7 +17,7 @@ Hard bounces are permanent delivery failures. The recipient's mail server has de
 - Recipient has blocked the sender
 - Mailbox has been deactivated
 
-When a hard bounce occurs, you receive a `message.bounce` webhook event. Hard bounces use bounce classes in the 10–30 and 100 ranges:
+When a hard bounce occurs, you receive a `message.bounce` webhook event. Hard bounces use bounce classes 10, 30 and 90:
 
 ```json
 [{
@@ -112,15 +112,17 @@ Lettr uses numeric bounce classes to categorize bounces. These correspond to the
 | `25` | Admin Failure | Soft | Mailbox admin-related issue | Review and retry |
 | `30` | Generic Bounce (no RCPT) | Hard | Rejected without valid recipient | Remove from list |
 | `40` | Generic Bounce | Soft | Temporary generic failure | Automatic retry |
-| `50` | Mail Block (General) | Soft | Blocked by receiving server | Investigate |
-| `51` | Mail Block (Spam Related) | Soft | Blocked as spam by receiving server | Review content |
-| `52` | Mail Block (Content) | Soft | Blocked due to content filtering | Review content |
+| `50` | Mail Block | Block | Blocked by receiving server | Investigate |
+| `51` | Spam Block | Block | Blocked as spam by receiving server | Review content |
+| `52` | Spam Content | Block | Blocked due to content filtering | Review content |
+| `53` | Attachment | Block | Blocked because of an attachment | Review attachments |
+| `54` | Relay Denied | Block | Relay not permitted | Investigate |
 | `60` | Auto-Reply | N/A | Automatic reply (vacation, etc.) | No action needed |
 | `70` | Transient Failure | Soft | Temporary infrastructure issue | Automatic retry |
-| `100` | Relay Denied | Hard | Relay not permitted | Remove from list |
+| `90` | Unsubscribe Bounce | Hard | Recipient unsubscribed via the bounce | Remove from list |
 
 <Note>
-  Hard bounce classes (10, 30, 100) result in automatic suppression. Soft bounce classes may lead to suppression if delivery continues to fail after retries.
+  Hard bounce classes (10, 30, 90) result in automatic suppression. Soft bounce classes may lead to suppression if delivery continues to fail after retries.
 </Note>
 
 ## Handling Bounces
@@ -149,8 +151,8 @@ app.post('/webhooks/lettr', express.json(), async (req, res) => {
         timestamp: new Date(parseInt(data.timestamp) * 1000)
       });
 
-      // Hard bounce classes: 10 (invalid recipient), 30 (no RCPT), 100 (relay denied)
-      if ([10, 30, 100].includes(bounceClass)) {
+      // Hard bounce classes: 10 (invalid recipient), 30 (no RCPT), 90 (unsubscribe bounce)
+      if ([10, 30, 90].includes(bounceClass)) {
         // Remove from mailing list immediately
         await db.subscribers.update({
           where: { email: data.rcpt_to },

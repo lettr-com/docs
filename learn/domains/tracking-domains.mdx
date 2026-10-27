@@ -43,13 +43,13 @@ https://links.yourcompany.com/c/abc123
   <Step title="Navigate to Tracking Domains">
     Go to **Domains** → **Tracking** in your dashboard.
   </Step>
-  <Step title="Add Domain">
-    Click **Add Domain** and enter your tracking subdomain (e.g., `links.example.com`).
+  <Step title="Create Tracking Domain">
+    Click **New Tracking Domain** (or **Create Tracking Domain** if you have none yet) and enter your tracking subdomain (e.g., `links.example.com`).
   </Step>
   <Step title="Add DNS Records">
     Add the provided DNS records to your domain. You'll need:
     - A CNAME record pointing to Lettr's tracking server
-    - TXT records for SSL certificate validation
+    - A CNAME record for SSL certificate validation
   </Step>
   <Step title="Verify Domain">
     Click **Verify** to check DNS configuration and provision your SSL certificate.
@@ -82,28 +82,18 @@ Points your subdomain to Lettr's tracking servers:
   If your DNS is managed by Cloudflare, the CNAME record must be set to **DNS only** (grey cloud). With the proxy enabled (orange cloud), the hostname returns Cloudflare's A records instead of the CNAME, and Lettr rejects verification with a "hostname is returning A records instead of the required CNAME" error. See the [Cloudflare guide](/knowledge-base/dns-guides/cloudflare) for details.
 </Warning>
 
-### SSL Validation TXT Record
+### SSL Validation CNAME Record
 
 Required for automatic SSL certificate provisioning:
 
 | Field | Value |
 |-------|-------|
-| Type | TXT |
+| Type | CNAME |
 | Name | `_acme-challenge.links` |
-| Value | (provided by Lettr) |
-
-### Ownership TXT Record
-
-Verifies domain ownership:
-
-| Field | Value |
-|-------|-------|
-| Type | TXT |
-| Name | `_cf-custom-hostname.links` |
-| Value | (provided by Lettr) |
+| Value | (provided by Lettr, ends in `.dcv.cloudflare.com`) |
 
 <Note>
-  The exact TXT record values are unique to your domain and will be provided when you add your tracking domain. Copy them exactly as shown.
+  The exact SSL validation value is unique to your domain and will be provided when you add your tracking domain. Copy them exactly as shown.
 </Note>
 
 ## Choosing a Subdomain
@@ -132,7 +122,7 @@ Lettr automatically provisions and renews SSL certificates for your tracking dom
 |--------|-------------|
 | `active` | SSL certificate provisioned and active |
 | `pending` | Certificate being provisioned |
-| `pending_validation` | Waiting for TXT record validation |
+| `pending_validation` | Waiting for SSL validation CNAME |
 | `initializing` | Initial setup in progress |
 
 SSL provisioning typically completes within a few minutes after DNS verification.
@@ -244,8 +234,8 @@ curl -X POST https://app.lettr.com/api/emails \
   </Accordion>
 
   <Accordion title="SSL certificate pending">
-    - Ensure both TXT records are added correctly
-    - TXT record values must match exactly (including any trailing characters)
+    - Ensure the `_acme-challenge` CNAME record is added correctly
+    - The record value must match exactly (including any trailing characters)
     - Certificate provisioning can take up to 24 hours in rare cases
     - If stuck, try removing and re-adding the tracking domain
   </Accordion>
@@ -258,7 +248,7 @@ curl -X POST https://app.lettr.com/api/emails \
 
   <Accordion title="Certificate renewal issues">
     - SSL certificates auto-renew before expiration
-    - If renewal fails, check that TXT records are still in place
+    - If renewal fails, check that the `_acme-challenge` CNAME record is still in place
     - Contact support if certificates expire unexpectedly
   </Accordion>
 </AccordionGroup>
