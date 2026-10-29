@@ -270,6 +270,7 @@
                   "learn/templates/template-language",
                   "learn/templates/projects",
                   "learn/templates/versions",
+                  "learn/templates/comments",
                   "learn/templates/saved-blocks",
                   "learn/templates/loop-blocks",
                   "learn/templates/image-storage"
