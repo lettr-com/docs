@@ -6877,13 +6877,28 @@
       "post": {
         "operationId": "createCampaign",
         "summary": "Create a campaign",
-        "description": "Creates a draft campaign. Give the content as `html_content` (optionally with the editor's `json_content`) or as a `template_id`, whose HTML is copied onto the campaign. Every list, segment, topic and template must belong to your team. The sender domain is checked when the campaign is sent, not here; language override senders are checked here and must use a verified sending domain. Send or schedule the draft with the send and schedule endpoints. Requires the `campaigns:write` scope. Not available to sandbox keys.",
+        "description": "Creates a draft campaign. Give the content as `html_content` (optionally with the editor's `json_content`) or as a `template_id`, whose HTML is copied onto the campaign. Every list, segment, topic and template must belong to your team. The sender domain is checked when the campaign is sent, not here; language override senders are checked here and must use a verified sending domain. Send or schedule the draft with the send and schedule endpoints. Requires the `campaigns:write` scope. Not available to sandbox keys.\n\nSupply `Idempotency-Key` to retry safely after a timeout. Keys are scoped to your team and retained for 24 hours, as for `POST /emails`. Repeating the same key with the same payload returns the originally created campaign with `201` and an `Idempotency-Replayed: true` header instead of creating another draft; the same key with a different payload, or while the first request is still running, returns 409. A request that fails (for example with 422) does not use up its key. If the original campaign has since been deleted, the key creates a new one. Requests without this header always create a new draft.",
         "tags": [
           "Campaigns"
         ],
         "security": [
           {
             "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "description": "A unique key for one logical campaign creation. Reuse it with the same payload when retrying. Keys are scoped to your team and retained for 24 hours.",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 255,
+              "pattern": "^[A-Za-z0-9._-]{1,255}$"
+            },
+            "example": "october-newsletter-draft"
           }
         ],
         "requestBody": {
@@ -6898,7 +6913,18 @@
         },
         "responses": {
           "201": {
-            "description": "Campaign created successfully.",
+            "description": "Campaign created successfully. A replay of an earlier request with the same `Idempotency-Key` returns the campaign that request created.",
+            "headers": {
+              "Idempotency-Replayed": {
+                "description": "Present with value true when the campaign was created by an earlier request with the same Idempotency-Key.",
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "true"
+                  ]
+                }
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -6914,10 +6940,43 @@
             "$ref": "#/components/responses/ServiceUnavailableError"
           },
           "403": {
-            "$ref": "#/components/responses/ForbiddenError"
+            "$ref": "#/components/responses/CampaignSenderForbiddenError"
+          },
+          "409": {
+            "description": "Idempotency conflict: the key was used with a different payload, or the request that first used it is still creating the campaign.",
+            "headers": {
+              "Retry-After": {
+                "description": "Present for idempotency_in_progress. Retry with the same key after this many seconds.",
+                "schema": {
+                  "type": "integer",
+                  "example": 1
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "conflict": {
+                    "value": {
+                      "message": "This Idempotency-Key was already used with a different request payload.",
+                      "error_code": "idempotency_key_conflict"
+                    }
+                  },
+                  "in_progress": {
+                    "value": {
+                      "message": "A request with this Idempotency-Key is still processing. Retry with the same key.",
+                      "error_code": "idempotency_in_progress"
+                    }
+                  }
+                }
+              }
+            }
           },
           "422": {
-            "description": "Validation error. Also returned when a list, segment, topic or template is not in your team, when both `html_content` and `template_id` are given, or when a language override sender uses an unverified domain.",
+            "description": "Validation error. Also returned when a list, segment, topic or template is not in your team, when both `html_content` and `template_id` are given, when a language override sender uses an unverified domain, or when `Idempotency-Key` is malformed.",
             "content": {
               "application/json": {
                 "schema": {
@@ -7187,7 +7246,7 @@
             "$ref": "#/components/responses/ServiceUnavailableError"
           },
           "403": {
-            "$ref": "#/components/responses/ForbiddenError"
+            "$ref": "#/components/responses/CampaignSenderForbiddenError"
           },
           "404": {
             "description": "Resource not found",
@@ -7204,7 +7263,7 @@
             }
           },
           "422": {
-            "description": "Precondition failed. `campaign_not_sendable` when the campaign is not a draft or is missing a subject, sender, or content; `campaign_has_pending_schedule` when the campaign already has a future scheduled delivery time (unschedule it first to send now — this also clears a time staged on a draft — or use the schedule endpoint to confirm it).",
+            "description": "Precondition failed. `campaign_not_sendable` when the campaign is not a draft, is missing a subject, sender, or content, or the team has more contacts than its marketing plan allows; `campaign_has_pending_schedule` when the campaign already has a future scheduled delivery time (unschedule it first to send now — this also clears a time staged on a draft — or use the schedule endpoint to confirm it).",
             "content": {
               "application/json": {
                 "schema": {
@@ -7223,6 +7282,13 @@
                     "value": {
                       "message": "This campaign is staged to send at 2026-06-01T09:00:00+00:00. Unschedule it first to send immediately, or use the schedule endpoint to confirm the delivery time.",
                       "error_code": "campaign_has_pending_schedule"
+                    }
+                  },
+                  "contact_limit_exceeded": {
+                    "summary": "Team is over its marketing plan's contact limit",
+                    "value": {
+                      "message": "This team has 501 contacts but its marketing plan allows 500. Upgrade the marketing plan to send campaigns.",
+                      "error_code": "campaign_not_sendable"
                     }
                   }
                 }
@@ -7289,7 +7355,7 @@
             "$ref": "#/components/responses/ServiceUnavailableError"
           },
           "403": {
-            "$ref": "#/components/responses/ForbiddenError"
+            "$ref": "#/components/responses/CampaignSenderForbiddenError"
           },
           "404": {
             "description": "Resource not found",
@@ -7306,7 +7372,7 @@
             }
           },
           "422": {
-            "description": "Validation error (invalid or missing `scheduled_at`), or `campaign_not_sendable` when the campaign is not a draft or scheduled campaign, or is missing a subject, sender, or content.",
+            "description": "Validation error (invalid or missing `scheduled_at`), or `campaign_not_sendable` when the campaign is not a draft or scheduled campaign, is missing a subject, sender, or content, or the team has more contacts than its marketing plan allows.",
             "content": {
               "application/json": {
                 "schema": {
@@ -7496,6 +7562,32 @@
             "example": {
               "message": "Your API key does not have the required permissions for this action.",
               "error_code": "insufficient_scope"
+            }
+          }
+        }
+      },
+      "CampaignSenderForbiddenError": {
+        "description": "Forbidden - the API key lacks the required scope, or a campaign sender (`from_email`, or a language override's `from_email` / `from_email_domain`) uses a domain outside the key's allowed sender domains",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "examples": {
+              "insufficient_scope": {
+                "summary": "Missing scope",
+                "value": {
+                  "message": "Your API key does not have the required permissions for this action.",
+                  "error_code": "insufficient_scope"
+                }
+              },
+              "domain_not_allowed": {
+                "summary": "Sender domain not allowed for this API key",
+                "value": {
+                  "message": "The sender domain is not allowed for this API key.",
+                  "error_code": "domain_not_allowed"
+                }
+              }
             }
           }
         }
@@ -7885,7 +7977,7 @@
       },
       "ErrorCode": {
         "type": "string",
-        "description": "Error codes returned by the API.\n\n| Code | HTTP Status | Description |\n|------|-------------|-------------|\n| `validation_error` | 422 | Request validation failed. Check the `errors` object for field-specific messages. |\n| `invalid_domain` | 400 | The sender domain could not be determined from the email address. |\n| `unconfigured_domain` | 400 | The sender domain is not configured or approved for sending. |\n| `send_error` | 400, 500 | General error during email send preparation or domain registration. |\n| `retrieval_error` | 400, 500 | Failed to retrieve resources (e.g., sandbox key without associated user, upstream error). |\n| `transmission_failed` | 502 | Email transmission to the upstream provider failed. |\n| `resource_already_exists` | 409 | The resource (e.g., domain) already exists. |\n| `not_found` | 404 | The specified resource was not found. |\n| `template_not_found` | 404 | The specified template, project, or template version was not found. |\n| `insufficient_scope` | 403 | The API key does not have the required scope for this endpoint. |\n| `schedule_cancellation_failed` | 409, 500 | The scheduled email can no longer be cancelled (already sent, already cancelled, or being injected right now), or the cancellation itself failed. |\n| `quota_exceeded` | 429 | Monthly sending quota exceeded. Upgrade your plan to continue sending. |\n| `daily_quota_exceeded` | 429 | Daily sending quota exceeded. Try again tomorrow. |\n| `campaign_not_sendable` | 422 | The campaign cannot be sent in its current state (not a draft, or missing subject/sender/content). |\n| `campaign_not_scheduled` | 422 | The campaign is not scheduled, so it cannot be unscheduled. |",
+        "description": "Error codes returned by the API.\n\n| Code | HTTP Status | Description |\n|------|-------------|-------------|\n| `validation_error` | 422 | Request validation failed. Check the `errors` object for field-specific messages. |\n| `invalid_domain` | 400 | The sender domain could not be determined from the email address. |\n| `unconfigured_domain` | 400 | The sender domain is not configured or approved for sending. |\n| `send_error` | 400, 500 | General error during email send preparation or domain registration. |\n| `retrieval_error` | 400, 500 | Failed to retrieve resources (e.g., sandbox key without associated user, upstream error). |\n| `internal_error` | 500 | An unexpected error on our side. The `message` names what failed; retry later. |\n| `transmission_failed` | 502 | Email transmission to the upstream provider failed. |\n| `resource_already_exists` | 409 | The resource (e.g., domain) already exists. |\n| `not_found` | 404 | The specified resource was not found. |\n| `template_not_found` | 404 | The specified template, project, or template version was not found. |\n| `insufficient_scope` | 403 | The API key does not have the required scope for this endpoint. |\n| `domain_not_allowed` | 403 | The sender domain is not in the API key's allowed sender domains. |\n| `schedule_cancellation_failed` | 409, 500 | The scheduled email can no longer be cancelled (already sent, already cancelled, or being injected right now), or the cancellation itself failed. |\n| `quota_exceeded` | 429 | Monthly sending quota exceeded. Upgrade your plan to continue sending. |\n| `daily_quota_exceeded` | 429 | Daily sending quota exceeded. Try again tomorrow. |\n| `campaign_not_sendable` | 422 | The campaign cannot be sent in its current state (not a draft, or missing subject/sender/content). |\n| `campaign_not_scheduled` | 422 | The campaign is not scheduled, so it cannot be unscheduled. |",
         "enum": [
           "validation_error",
           "idempotency_key_conflict",
@@ -7894,11 +7986,13 @@
           "unconfigured_domain",
           "send_error",
           "retrieval_error",
+          "internal_error",
           "transmission_failed",
           "resource_already_exists",
           "not_found",
           "template_not_found",
           "insufficient_scope",
+          "domain_not_allowed",
           "schedule_cancellation_failed",
           "quota_exceeded",
           "daily_quota_exceeded",
@@ -13209,6 +13303,49 @@
           },
           "stats": {
             "$ref": "#/components/schemas/CampaignStats"
+          },
+          "audience_config": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "Who receives the campaign, or null when no audience has been set. With no lists or segments, every subscribed contact (of the topic, when set) receives it.",
+            "required": [
+              "all_contacts",
+              "list_ids",
+              "segment_ids",
+              "topic_id"
+            ],
+            "properties": {
+              "all_contacts": {
+                "type": "boolean"
+              },
+              "list_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "segment_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "topic_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          },
+          "template_id": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Template the campaign content was copied from, or null when the content was given directly"
           }
         }
       },
@@ -13239,6 +13376,14 @@
                     "reply_to": { "type": ["string", "null"], "format": "email" }
                   }
                 }
+              },
+              "json_content": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "additionalProperties": true,
+                "description": "Editor JSON stored next to the HTML content, or null when the campaign has none"
               }
             }
           }
