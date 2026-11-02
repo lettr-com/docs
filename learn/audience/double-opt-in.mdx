@@ -61,11 +61,15 @@ A minimal example:
 <p>If you didn't sign up, you can ignore this email.</p>
 ```
 
+Lettr sends the confirmation with a [plain text version](/learn/sending/content-types#automatic-plain-text-for-templates) generated from the template's HTML, so you only need to design the HTML.
+
 Take note of the template's slug — you'll pass it in the API call.
 
 ### 2. A Verified Sending Domain
 
-The `from` address on the confirmation email must be from a [verified sending domain](/learn/domains/sending-domains). If your sending domain isn't yet verified, the confirmation email will fail to send.
+The `from` address on the confirmation email must be from a [verified sending domain](/learn/domains/sending-domains). Lettr checks the domain before it creates the contact. If the domain isn't verified, the request returns the same errors as the send endpoints, `400` `unconfigured_domain` or `invalid_domain`, and no contact is created.
+
+If the confirmation email itself fails to send, for example during an email provider outage, Lettr removes the new contact again, so you can retry the same request.
 
 ### 3. A Redirect URL
 
