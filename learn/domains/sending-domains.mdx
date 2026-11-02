@@ -18,7 +18,7 @@ Configuring a sending domain provides four key benefits:
 
 <Steps>
   <Step title="Add domain in Dashboard">
-    Go to **Domains → Sending Domains** and click **+ New Sending Domain**. Enter your domain name.
+    Go to **Domains → Sending Domains** and click **+ New Sending Domain**. Enter your domain name on its own, such as `example.com` or `mail.example.com`, without `https://` or a path. It must be a domain you own: public mailbox domains such as `gmail.com` are refused.
   </Step>
   <Step title="Configure DNS Records">
     Add the required DNS records (see table below—root domains need SPF, DKIM, DMARC; subdomains need DKIM, DMARC, and Bounce CNAME only).
@@ -349,6 +349,10 @@ curl -X DELETE https://app.lettr.com/api/domains/example.com \
 ## Troubleshooting
 
 <AccordionGroup>
+  <Accordion title="Domain is also an inbound domain">
+    The same domain can't be used for both sending and receiving. If you verify a sending domain that your account also has as an [inbound domain](/learn/domains/inbound-domains), verification fails and says so. Use a different subdomain for sending or for receiving, for example `mail.example.com` for sending and `inbound.example.com` for receiving.
+  </Accordion>
+
   <Accordion title="DNS records not detected">
     - DNS changes can take up to 48 hours to propagate, though most complete within minutes
     - Verify records are added to the correct domain/subdomain

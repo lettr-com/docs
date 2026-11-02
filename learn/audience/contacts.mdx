@@ -117,7 +117,9 @@ Each property has a type that affects how it can be filtered in segments and how
 
 ### Fallback Values
 
-Each property can have an optional fallback value, used whenever a contact doesn't have a value of their own for that property. Fallbacks are handy when you want to safely personalize emails without leaving variables blank — for example, a `first_name` property with the fallback `there` will render as "Hi there" for contacts whose first name you don't know.
+Each property can have an optional fallback value, used whenever a contact's value for that property is missing or empty. Fallbacks are handy when you want to safely personalize emails without leaving variables blank — for example, a `first_name` property with the fallback `there` will render as "Hi there" instead of "Hi ," for contacts whose first name you don't know.
+
+Lettr applies fallbacks in campaign sends, the campaign's web version, the unsubscribe page and the contact preview. Test emails and the sample-data preview use sample values instead. Emails sent through the API don't read contact properties at all, so give a default in the template with [`or`](/learn/templates/template-language#default-values-with-or) there.
 
 ### Communication Language
 

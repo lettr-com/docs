@@ -116,6 +116,12 @@ Double-check the record type in your DNS provider matches what Lettr specifies.
 
 ---
 
+### Domain Also Used for Inbound Mail
+
+A domain can be a sending domain or an inbound domain, not both. If your account already receives mail on `example.com` through an [inbound domain](/learn/domains/inbound-domains), verifying `example.com` as a sending domain fails with a message saying it's also set up for receiving. Use a different subdomain for one of them, for example `mail.example.com` for sending and `inbound.example.com` for receiving.
+
+---
+
 ## Checking DNS Records Yourself
 
 <Note>

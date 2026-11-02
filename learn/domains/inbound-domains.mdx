@@ -52,7 +52,7 @@ Lettr doesn't score, filter, or store the mail it forwards. Spam checks, routing
 
 ### Forwarding URL Test
 
-The forwarding URL is required and is tested before the domain is created: SparkPost, the mail infrastructure behind Lettr's inbound servers, sends a `POST` request to it and needs a `2xx` response. If your endpoint rejects the test, the dashboard shows the status it returned (for example "Your forwarding URL answered SparkPost with HTTP 403") and the domain is not created.
+The forwarding URL is required and is tested before the domain is created: SparkPost, the mail infrastructure behind Lettr's inbound servers, sends a `POST` request to it and needs a `2xx` response. If your endpoint rejects the test, the dashboard shows the status it returned (for example "Your forwarding URL answered SparkPost with HTTP 403") and the domain is not created. The URL's host must resolve in public DNS to a public IP address. A host that doesn't resolve, usually a typo, or one that points at a private or local address is refused with an explanation on the field.
 
 <Warning>
   A firewall or WAF such as Cloudflare commonly blocks the test with a challenge page. Allow server-to-server `POST` requests on your forwarding URL's path. SparkPost publishes no fixed source IP addresses, so verify requests with the auth token rather than an IP allowlist. See [Inbound Security](/learn/inbound/security#verify-the-auth-token).
@@ -227,6 +227,7 @@ Extract structured data from incoming emails:
   <Accordion title="Forwarding URL rejected when creating the domain">
     - The dashboard shows the HTTP status your endpoint returned to the test request, and the domain is not created
     - Make sure the endpoint accepts `POST` requests and returns a `2xx` status
+    - Check the hostname for typos. It must resolve in public DNS to a public IP address; private and local addresses such as `localhost` or `192.168.x.x` aren't allowed
     - If it sits behind Cloudflare or another WAF, allow server-to-server `POST` requests on that path
     - SparkPost publishes no fixed source IPs, so don't rely on an IP allowlist. Use the auth token instead.
   </Accordion>

@@ -32,7 +32,7 @@ Before setting up inbound email, ensure you have:
 1. Go to **Domains** → **Inbound**
 2. Click **Create Inbound Domain** (**New Inbound Domain** once you already have one)
 3. Enter your domain in **Domain Name** (e.g., `mail.example.com`)
-4. Enter your endpoint in **Forwarding URL** (e.g., `https://yourapp.com/webhooks/inbound`). It must be a full `http://` or `https://` address.
+4. Enter your endpoint in **Forwarding URL** (e.g., `https://yourapp.com/webhooks/inbound`). It must be a full `http://` or `https://` address whose host resolves in public DNS to a public IP address. Private and local addresses aren't allowed.
 5. Optionally enter an **Auth token**. Lettr sends it to your endpoint in the `X-MessageSystems-Webhook-Token` header so you can verify each request.
 6. Click **Create Inbound Domain**
 

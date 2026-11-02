@@ -62,10 +62,11 @@ await lettr.emails.send({
 When an email's content comes from a template, you don't have to write the plain text version. Lettr generates it from the template's HTML and sends both parts together. This covers:
 
 - API sends with `template_slug`, including [scheduled emails](/api-reference/emails/schedule-email)
+- [Double opt-in](/learn/audience/double-opt-in) confirmation emails
 - [Campaigns](/learn/campaigns/introduction), with a separate text version for each language
 - Test emails sent from the editor and from a campaign
 
-To send your own text instead, pass `text` together with `template_slug`. Lettr sends it as is and generates nothing. Emails sent with inline `html` and no template are unchanged: they carry a plain text version only when you include `text`.
+There is no setting to turn this off. To send your own text instead, pass `text` together with `template_slug`. Lettr sends it as is and generates nothing. Emails sent with inline `html` and no template are unchanged: they carry a plain text version only when you include `text`.
 
 The generated text follows a few rules:
 

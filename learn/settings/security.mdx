@@ -3,7 +3,7 @@ title: Account Security
 description: "Add two-factor authentication or a passkey to your Lettr account, scan an authenticator QR code, and store recovery codes to keep sign-in secure."
 ---
 
-Lettr supports two-factor authentication (2FA) to add an extra layer of security to your account. When enabled, you'll need both your password and a time-based verification code from an authenticator app to sign in.
+Lettr supports two-factor authentication (2FA) to add an extra layer of security to your account. When it's on, signing in with a password, Google or GitHub asks for a second step: a time-based code from an authenticator app, or one of your [passkeys](#using-passkeys-for-two-factor-authentication). You can turn on either method or both.
 
 ## Setting Up Two-Factor Authentication
 
@@ -11,8 +11,8 @@ Lettr supports two-factor authentication (2FA) to add an extra layer of security
   <Step title="Go to Security Settings">
     Navigate to **Settings** → **Two-Factor Auth** in the sidebar.
   </Step>
-  <Step title="Enable 2FA">
-    Click **Enable Two-Factor Authentication**. You'll be prompted to confirm your password.
+  <Step title="Set up the authenticator app">
+    On the **Authenticator app** row, click **Set up**. You'll be prompted to confirm your password.
   </Step>
   <Step title="Scan the QR Code">
     Open your authenticator app (such as Google Authenticator, Authy, or 1Password) and scan the QR code displayed on screen.
@@ -30,25 +30,25 @@ Lettr supports two-factor authentication (2FA) to add an extra layer of security
 </Card>
 
 <Warning>
-  Recovery codes are shown only once. Store them securely (e.g., in a password manager). If you lose both your authenticator device and your recovery codes, you will not be able to access your account.
+  Store your recovery codes securely (e.g., in a password manager). You can show them again later with **View Recovery Codes**. If you lose your authenticator device or passkeys and your recovery codes, you will not be able to access your account.
 </Warning>
 
 ## Signing In with 2FA
 
 After enabling two-factor authentication, the sign-in process adds one step:
 
-1. Enter your email and password as usual
-2. When prompted, enter the 6-digit code from your authenticator app
-3. Alternatively, use a recovery code if you don't have access to your authenticator
+1. Enter your email and password as usual, or sign in with Google or GitHub
+2. When prompted, enter the 6-digit code from your authenticator app, or confirm with a passkey if you use passkeys for 2FA
+3. Alternatively, use a recovery code if you can't use either
 
 ## Recovery Codes
 
-Recovery codes are single-use backup codes that let you sign in when you don't have access to your authenticator app. Each code can only be used once.
+Recovery codes are single-use backup codes that let you sign in when you don't have access to your authenticator app or passkeys. Each code can only be used once. The authenticator app and passkeys share one set of codes.
 
 To regenerate recovery codes:
 
 1. Go to **Settings** → **Two-Factor Auth**
-2. Click **Regenerate Recovery Codes**
+2. Under **2FA Recovery Codes**, click **View Recovery Codes**, then **Regenerate Codes**
 3. Store the new codes securely
 
 <Note>
@@ -60,8 +60,10 @@ To regenerate recovery codes:
 To disable two-factor authentication:
 
 1. Go to **Settings** → **Two-Factor Auth**
-2. Click **Disable Two-Factor Authentication**
-3. Confirm your password
+2. Click **Remove** on the **Authenticator app** row, and turn off the **Passkeys** switch if it's on
+3. Confirm your password if asked
+
+2FA stays on while either method is on.
 
 ## Passkeys
 
@@ -74,7 +76,7 @@ A passkey lets you sign in with Touch ID, Windows Hello, your phone, or a hardwa
     Go to **Settings** → **Two-Factor Auth** and find the **Passkeys** section.
   </Step>
   <Step title="Add a passkey">
-    Click **Add passkey** and give it a name you'll recognize later, such as *MacBook Pro* or *YubiKey*.
+    Click **Add passkey** and give it a name you'll recognize later, such as *MacBook Pro* or *YubiKey*. Lettr first asks you to confirm it's you with your password or an existing passkey. If you sign in with Google or GitHub and don't have a passkey yet, Lettr emails you a code instead.
   </Step>
   <Step title="Confirm on your device">
     Your browser asks you to confirm with your fingerprint, device PIN, phone, or security key. Once confirmed, the passkey appears in the list.
@@ -93,8 +95,17 @@ Passkeys also work in these places:
 - **Two-factor challenge**: if you sign in with your password and also use an authenticator app, the code screen offers **Use a passkey instead**.
 - **Team invitations**: signing in with a passkey from an invitation link accepts the invitation, just like signing in with a password.
 
+### Using Passkeys for Two-Factor Authentication
+
+Adding a passkey doesn't turn on two-factor authentication by itself. To make a passkey your second sign-in step, turn on the **Passkeys** switch under **Settings** → **Two-Factor Auth**. You don't need an authenticator app for this. The switch is available once you've added at least one passkey.
+
+- Turning the switch on asks for your password or an existing passkey, and signs you out on your other devices.
+- Signing in with a password, Google or GitHub then asks for one of your passkeys. If you also use an authenticator app, either one works.
+- If you don't have recovery codes yet, turning the switch on creates them. Both methods share the same codes.
+- Removing your last passkey turns the switch off. If your team requires 2FA and passkeys are your only method, Lettr won't let you remove your last passkey.
+
 <Note>
-  Adding a passkey does **not** turn on two-factor authentication, and it does not satisfy a team's **Require Two-Factor Authentication** setting. If your team requires 2FA, you still need to set up an authenticator app as described above. You can use both: a passkey for everyday sign-in and an authenticator app to meet the team requirement.
+  Only the **Passkeys** switch counts toward a team's **Require Two-Factor Authentication** setting. A passkey you only use on the login page doesn't. To meet the requirement, turn on the switch, set up an authenticator app, or both.
 </Note>
 
 ## Requiring 2FA for Your Team
@@ -106,7 +117,7 @@ To enable this requirement:
 1. Go to **Settings** → **Team**
 2. In the **Security** section, toggle on **Require Two-Factor Authentication**
 
-Members who haven't set up 2FA will see a setup prompt when they try to access the dashboard. They can still sign in, but they won't be able to use any team features until 2FA is configured. A [passkey](#passkeys) does not count toward this requirement; members need an authenticator app.
+Members who haven't set up 2FA will see a setup prompt when they try to access the dashboard. They can still sign in, but they won't be able to use any team features until 2FA is configured. Members can meet the requirement with an authenticator app or by turning on the [Passkeys switch](#using-passkeys-for-two-factor-authentication). A passkey without the switch doesn't count.
 
 <Tip>
   The team settings page shows which members have 2FA enabled (green shield icon) and which don't (gray shield with alert). Review this before enabling the requirement to give your team advance notice.
@@ -120,7 +131,7 @@ Lettr supports signing in with **Google** and **GitHub**. Social login provides 
 
 When you sign in with a social provider for the first time, your social account is linked to your Lettr account automatically (matched by email address). If you don't have a Lettr account yet, one is created for you with your email automatically verified.
 
-Social login does **not** bypass two-factor authentication. If you have 2FA enabled, you'll still need to complete the 2FA challenge after authenticating with your social provider.
+Social login does **not** bypass two-factor authentication. If you have 2FA enabled, you'll still need to complete the 2FA challenge, with your authenticator app, a passkey or a recovery code, after authenticating with your social provider.
 
 For full details, see [Social Login (OAuth)](/learn/settings/social-login).
 

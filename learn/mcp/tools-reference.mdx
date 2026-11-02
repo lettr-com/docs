@@ -98,6 +98,8 @@ The delivery time must be at least 5 minutes and at most 30 days in the future. 
 
 <Warning>
   `send_campaign` and `schedule_campaign` send real email to every recipient in the campaign's audience. Emails that have gone out can't be recalled.
+
+  Both run the same checks as the [API](/api-reference/campaigns/send-a-campaign-now) and return an error instead of sending when the sender's domain isn't verified, the audience has no subscribed contacts, or your team is over its plan's contact limit. `schedule_campaign` accepts times less than one year ahead.
 </Warning>
 
 ## Audience

@@ -148,7 +148,7 @@ The reverse also holds. Unsubscribing a contact in Lettr's audience updates only
     Lettr has no exclusion control in the audience builder. Build a [segment](/learn/audience/segments) such as "in List A and not in List B" instead.
   </Accordion>
   <Accordion title="Why did my campaign fail immediately?">
-    If no contact matches the audience selection when the campaign is prepared, the campaign has no one to send to and fails. Check statuses and the audience selection.
+    Lettr refuses to send or schedule a campaign whose audience has no subscribed contacts, so an empty audience usually shows up as an error before the campaign leaves Draft. A scheduled campaign fails when its time comes if its audience has emptied since, or if its sending domain is no longer verified. Check statuses, the audience selection and the [sending domain](/learn/domains/sending-domains).
   </Accordion>
   <Accordion title="Sent equals Recipients, but deliveries are lower">
     Sent means the message was accepted for delivery. Bounces, deferrals and suppressed addresses reduce deliveries afterwards. See [Bounce Diagnosis](/knowledge-base/troubleshooting/bounce-diagnosis) and [Delivery Issues](/knowledge-base/troubleshooting/delivery-issues).

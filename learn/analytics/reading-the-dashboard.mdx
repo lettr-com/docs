@@ -11,7 +11,9 @@ At the top of the page, a date range picker sets the time window for all the dat
 
 Precision determines the spacing between data points on the x-axis. A precision of **1 Min** gives you a data point every minute — useful for monitoring a batch send in real time. A precision of **Day** gives you one data point per day — better suited to understanding weekly or monthly trends.
 
-Lettr adjusts the available precision options based on your date range to prevent the chart from becoming unusable. If your date range spans more than 12 hours, the 1 Min and 5 Min options are removed. If it spans more than 24 hours, 15 Min is also removed. You can always select a coarser precision manually regardless of the date range.
+Lettr adjusts the available precision options based on your date range to prevent the chart from becoming unusable. If your date range spans more than 12 hours, the 1 Min and 5 Min options are removed. If it spans more than 24 hours, 15 Min is also removed. Beyond 30 days, only **Day** is offered, because the data source accepts hourly data for at most 30 days. Within those limits you can always pick a coarser precision.
+
+If a precision you picked is too fine for the range, Lettr switches to the finest one the range allows, and the selector shows the precision actually used. The range covers exactly the dates and times you pick in your own time zone; it isn't rounded to whole UTC days.
 
 ## The Line Chart
 
