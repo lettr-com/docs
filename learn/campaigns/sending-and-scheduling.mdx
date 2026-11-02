@@ -22,7 +22,7 @@ Draft → (schedule) → Scheduled → Preparing → Sending → Sent
 | **In review** | Preparing (rarely) | No | An automated check flagged the content; a Lettr admin is reviewing |
 | **Sending** | Preparing (passed validation) | No | Emails being delivered in batches |
 | **Sent** | Sending (completed) | No (read-only) | All recipients processed; analytics still updating |
-| **Failed** | Preparing (no recipients or unexpected error) | No | Campaign couldn't be sent |
+| **Failed** | Scheduled (can't go out when its time comes), Preparing (no recipients or unexpected error), or Sending (a batch was refused on every attempt) | No | Campaign couldn't be sent |
 
 Two important rules to keep in mind:
 
@@ -39,7 +39,7 @@ From the Review step of the builder, click **Send now**.
 
 What happens:
 
-1. Lettr validates the campaign has the required content (subject, from address, body)
+1. Lettr checks that the campaign can go out: it has a subject, from address and body, the sender's domain is verified for your team, the audience has at least one subscribed contact, and your team doesn't have more contacts than its plan allows. If a check fails, the campaign stays in Draft and the message says what to fix.
 2. The campaign moves to `Preparing` and starts resolving recipients
 3. Once recipients are resolved and the content is checked, the campaign moves to `Sending` and emails start going out in batches
 4. When every recipient has been processed, the campaign moves to `Sent`
@@ -48,7 +48,9 @@ You're returned to the campaign's Show page, where you can watch progress in rea
 
 ## Scheduling for Later
 
-In the Schedule step of the builder, choose **Schedule** and pick a date and time. The campaign moves to `Scheduled` and waits.
+In the Schedule step of the builder, choose **Schedule** and pick a date and time less than one year ahead. Lettr runs the same checks as for sending now, then the campaign moves to `Scheduled` and waits.
+
+On the Campaigns list, a scheduled campaign shows its send time in blue in the **Sent** column, with a countdown such as "in 40 min" or "in 6 days" that turns into "Sending any moment" once the time has passed. Hover over it to see the full date and time zone.
 
 <Note>
   Scheduling locks the content. If the campaign links a template with more than one language, Lettr saves every language version at this moment and sends from that copy, so later edits to the template don't change what goes out. Unscheduling releases the copy; rescheduling takes the template as it is then. See [Content is locked when you schedule](/learn/multilingual-campaigns/sending-and-results#content-is-locked-when-you-schedule).
@@ -64,7 +66,9 @@ When you pick a time in the schedule picker, Lettr interprets it in your **brows
 
 ### When the Schedule Fires
 
-Lettr checks every minute for campaigns whose scheduled time has been reached. When yours is up, the campaign automatically moves from `Scheduled` to `Preparing` and follows the same flow as a "Send now" campaign from there.
+Lettr checks every minute for campaigns whose scheduled time has been reached. When yours is up, Lettr runs the send checks again, and the campaign moves from `Scheduled` to `Preparing` and follows the same flow as a "Send now" campaign from there.
+
+If the campaign can no longer go out, for example because its sending domain lost verification or its audience emptied, it moves to `Failed` instead. If an unexpected error stops it from starting, Lettr tries again every minute and marks it `Failed` after an hour. One campaign's problem never holds back other campaigns due at the same time.
 
 There can be a brief delay (typically a few seconds, up to a minute) between the scheduled time and when sending actually begins. This isn't a precision-down-to-the-second mechanism — schedule a few minutes before any hard deadline, not exactly at it.
 
@@ -93,7 +97,7 @@ For small audiences, Preparing completes in seconds. For very large audiences it
 
 ### If No Recipients Match
 
-If the resolved recipient list is empty (for example, you selected a segment that no contacts currently match), the campaign moves to `Failed` rather than `Sending`. The Show page tells you the cause so you can adjust the audience and try again.
+Lettr won't send or schedule a campaign whose audience has no subscribed contacts, so you usually find out before the campaign leaves Draft. If the audience empties later, for example because contacts unsubscribed before a scheduled send, the campaign moves to `Failed` rather than `Sending`. The Show page tells you the cause so you can adjust the audience and try again.
 
 ### The "In Review" State
 
@@ -117,6 +121,8 @@ There is no fixed sending rate. Lettr dispatches each batch as soon as the previ
 
 There is no "quiet hours" or send-window configuration. Once you start sending, the campaign goes out as quickly as the queue allows.
 
+If the email provider refuses a batch, Lettr sends that batch again, up to three attempts in all. A batch refused on every attempt stops the campaign and marks it `Failed`; recipients in batches that went out before it keep their email.
+
 ## The Sent State
 
 When every recipient has been processed, the campaign reaches `Sent`. From here on:
@@ -129,10 +135,13 @@ See [Analytics & Reporting](/learn/campaigns/analytics-and-reporting) for the fu
 
 ## Failed Campaigns
 
-A campaign can fail at the Preparing step if:
+A campaign can fail if:
 
-- No subscribed contacts match the selected audience
+- It is scheduled and, when its time comes, can no longer go out (for example, its sending domain lost verification or its audience emptied)
+- It is scheduled and an unexpected error keeps it from starting for an hour
+- No subscribed contacts match the selected audience at the Preparing step
 - An unexpected error occurs during recipient resolution or content validation
+- The email provider refuses a batch on every attempt while it is sending
 
 A `Failed` campaign cannot be retried directly — instead, duplicate it, fix the issue (typically by adjusting the audience selection), and send the duplicate.
 

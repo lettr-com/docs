@@ -57,7 +57,7 @@ Draft → (schedule) → Scheduled → Preparing → Sending → Sent
 | **Sending** | Emails are being delivered in batches. Live metrics are updating as they come in. |
 | **Sent** | Every recipient has been processed. The campaign is now read-only; analytics keep updating as recipients open and click. |
 | **In review** | An automated content check flagged the campaign, and a Lettr admin is reviewing it before sending continues. Rare in practice. |
-| **Failed** | The campaign couldn't be sent (typically because no recipients matched the audience or an unexpected error occurred). |
+| **Failed** | The campaign couldn't be sent: a scheduled campaign could no longer go out when its time came, no recipients matched the audience, the email provider kept refusing a batch, or an unexpected error occurred. |
 
 Two things to know up front:
 
@@ -90,7 +90,7 @@ The [Sending & Scheduling](/learn/campaigns/sending-and-scheduling) page covers 
 
 <Steps>
   <Step title="Open the Campaigns page">
-    Click **Campaigns** in the sidebar. You'll see a list of past and in-progress campaigns.
+    Click **Campaigns** in the sidebar. The list shows every campaign, newest first by creation date, with its status, audience, recipient count, when it was sent and when it was created. A scheduled campaign shows its send time with a countdown in the **Sent** column.
   </Step>
   <Step title="Create a new campaign">
     Click **New campaign**. You can describe what the campaign is about, and Lettr's AI will pre-fill the subject and pull sender defaults from a similar previous campaign if one exists.
@@ -129,10 +129,10 @@ Most campaigns are built in the Lettr dashboard, where you write the content, ch
 - **`html_content`**: your own HTML. Merge tags such as `{{first_name}}` are filled from contact properties. Add the editor's `json_content` if you want the campaign to stay editable in the dashboard editor.
 - **`template_id`**: a template from one of your projects. Its HTML is copied onto the campaign.
 
-Set the recipients in `audience_config`. Every list, segment, topic and template you reference must belong to your team. Then pass the returned ID to [send a campaign now](/api-reference/campaigns/send-a-campaign-now) or [schedule a campaign](/api-reference/campaigns/schedule-a-campaign).
+Set the recipients in `audience_config`, which accepts `all_contacts`, `list_ids`, `segment_ids` and `topic_id`; any other key returns `422`. Every list, segment, topic and template you reference must belong to your team. For a multilingual campaign, `language_overrides` needs a multi-language `template_id` and accepts only its secondary languages; any other key returns `422` naming the allowed ones. Then pass the returned ID to [send a campaign now](/api-reference/campaigns/send-a-campaign-now) or [schedule a campaign](/api-reference/campaigns/schedule-a-campaign).
 
 <Note>
-  Creating a draft doesn't check the sender domain. Lettr checks it when you send or schedule the campaign: the `from_email` domain must be a verified [sending domain](/learn/domains/sending-domains), and at least one subscribed contact must be in the audience. Language override senders are the exception. Lettr checks them when the draft is created.
+  Creating a draft doesn't check whether the sender domain is verified. Lettr checks that when you send or schedule the campaign: the `from_email` domain and every language override's sender must use a verified [sending domain](/learn/domains/sending-domains), the audience must contain at least one subscribed contact, and your team must be within its plan's contact limit. Otherwise the request returns `422` `campaign_not_sendable`. Language override senders are also checked when the draft is created.
 </Note>
 
 ## Next Steps

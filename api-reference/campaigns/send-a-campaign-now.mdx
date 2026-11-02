@@ -3,4 +3,13 @@ title: Send a campaign now
 openapi: POST /campaigns/{campaignId}/send
 ---
 
-Immediately dispatches a draft campaign. The campaign must be a draft with a subject, sender email, and content. Sending is asynchronous; the campaign transitions to `preparing`. Requires the `campaigns:write` scope. Not available to sandbox keys.
+Immediately dispatches a draft campaign. Sending is asynchronous; the campaign transitions to `preparing`. Requires the `campaigns:write` scope. Not available to sandbox keys.
+
+Lettr refuses a campaign that can't go out with `422` `campaign_not_sendable`, and `message` says why. The campaign must:
+
+- be a draft with a subject, sender email and content
+- send from a domain verified for your team, including the sender of each language override
+- have at least one subscribed contact in its audience
+- belong to a team that doesn't have more contacts than its marketing plan allows
+
+If two send requests for the same campaign arrive at once, for example after a double click or a retry, one starts the send and the other gets the same `422`. An unexpected failure returns `500` `internal_error`.

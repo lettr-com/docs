@@ -83,8 +83,22 @@ A request to an endpoint whose scope the key doesn't hold is rejected with `403`
 4. Select the permission level:
    - **Full Access** — Complete access to all endpoints
    - **Sending Only** — Restricted to email, SMS, and WhatsApp sending
-5. Configure optional IP restrictions
-6. Click **Create**
+5. For a Sending Only key, optionally pick the **Allowed Domains** it may send from
+6. Configure optional IP restrictions
+7. Click **Create**
+
+## Allowed Sending Domains
+
+A **Sending Only** key can be limited to some of your verified sending domains. Pick them in the **Allowed Domains** field when you create or edit the key, or leave it blank to allow every domain. The field isn't offered for Full Access keys.
+
+A send from any other domain is rejected with `403`:
+
+```json
+{
+  "message": "The sender domain is not allowed for this API key.",
+  "error_code": "domain_not_allowed"
+}
+```
 
 ## IP Restrictions
 

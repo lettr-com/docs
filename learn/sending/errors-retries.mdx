@@ -25,14 +25,17 @@ Every error is a JSON object with the same shape. **`error_code` identifies the 
 | Error code | HTTP status | Description |
 |-|-|-|
 | `validation_error` | 422 | Invalid request parameters or an invalid `Idempotency-Key` |
-| `invalid_domain` | 400 | Sender domain not verified |
-| `unconfigured_domain` | 400 | Domain not ready for sending |
+| `invalid_domain` | 400 | No domain could be read from the `from` address |
+| `unconfigured_domain` | 400 | Sender domain not added, verified or approved for sending |
+| `domain_not_allowed` | 403 | The sender domain isn't one of the API key's allowed sending domains |
 | `template_not_found` | 404 | Template slug not found |
 | `idempotency_in_progress` | 409 | The original request with this `Idempotency-Key` is still being processed |
 | `idempotency_key_conflict` | 409 | The `Idempotency-Key` was reused with a different payload |
+| `campaign_not_sendable` | 422 | The campaign can't be sent or scheduled yet; `message` says why |
 | `rate_limit_exceeded` | 429 | Too many requests; wait for `Retry-After` |
 | `quota_exceeded` | 429 | Monthly or daily sending quota reached |
 | `send_error` | 500 | Email sending error |
+| `internal_error` | 500 | Unexpected error while creating, sending or scheduling a campaign |
 | `transmission_failed` | 502 | Email delivery to upstream provider failed |
 | `auth_unavailable` | 503 | Lettr couldn't verify your API key because of a temporary problem on its side; wait for `Retry-After` |
 
@@ -79,10 +82,10 @@ try {
   });
 } catch (error) {
   if (error.error_code === 'invalid_domain') {
-    console.log('Domain not verified. Please verify your domain first.');
+    console.log('The from address has no valid domain. Check its format.');
   }
   if (error.error_code === 'unconfigured_domain') {
-    console.log('Domain DNS records not configured correctly.');
+    console.log('Domain not verified. Add it and check its DNS records.');
   }
 }
 ```
@@ -101,7 +104,8 @@ Retrying a validation error or an unauthorized request produces the same result 
 | `409` `idempotency_key_conflict` | No | The key was reused with a different payload. Use a new key for a new email. |
 | `422` `validation_error` | No | Correct the invalid key or payload |
 | `401` Unauthorized | No | The API key is missing or invalid. Check the API key |
-| `403` Forbidden | No | Check the API key's permissions |
+| `403` Forbidden | No | Check the API key's permissions and, for `domain_not_allowed`, its allowed sending domains |
+| `422` `campaign_not_sendable` | No | Fix what the `message` names (sender domain, audience, contact limit), then send again |
 | `404` Not found | No | Check that the template or resource exists |
 
 ## Retry logic

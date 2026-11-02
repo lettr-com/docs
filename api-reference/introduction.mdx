@@ -75,9 +75,11 @@ curl -X POST https://app.lettr.com/api/emails \
 | `200` | Success - Email queued for delivery |
 | `400` | Bad Request - Domain configuration error |
 | `401` | Unauthorized - Invalid or missing API key |
+| `403` | Forbidden - The API key lacks the scope, or the sender domain isn't allowed for the key |
 | `409` | Conflict - The resource already exists, or is still in use |
-| `422` | Unprocessable Entity - Validation failed |
+| `422` | Unprocessable Entity - Validation failed, or the campaign can't be sent yet |
 | `429` | Too Many Requests - Rate limit or sending quota exceeded |
+| `500` | Internal Server Error - Unexpected error on Lettr's side; retry later |
 | `502` | Bad Gateway - Upstream transmission failed |
 | `503` | Service Unavailable - The API key couldn't be verified right now; retry after `Retry-After` |
 
@@ -89,11 +91,15 @@ curl -X POST https://app.lettr.com/api/emails \
 | `invalid_domain` | 400 | The sender domain could not be determined from the email address. |
 | `unconfigured_domain` | 400 | The sender domain is not configured or approved for sending. |
 | `send_error` | 400 | General error during email send preparation. |
+| `insufficient_scope` | 403 | The API key doesn't have the scope this endpoint needs. |
+| `domain_not_allowed` | 403 | The sender domain isn't one of the API key's allowed sending domains. |
 | `resource_already_exists` | 409 | The resource already exists — for example a sending domain your team has already added. |
 | `list_in_use` | 409 | The audience list cannot be deleted because segments are scoped to it. The message names them. |
+| `campaign_not_sendable` | 422 | The campaign can't be sent or scheduled: it isn't a draft, it's missing a subject, sender or content, a sender's domain isn't verified for your team, the audience has no subscribed contacts, or your team has more contacts than its plan allows. The message says which. |
 | `rate_limit_exceeded` | 429 | Too many API requests. Slow down and retry after the `Retry-After` period. |
 | `quota_exceeded` | 429 | Monthly sending quota exceeded. Upgrade your plan to continue sending. |
 | `daily_quota_exceeded` | 429 | Daily sending quota exceeded (free tier). Try again tomorrow. |
+| `internal_error` | 500 | An unexpected error while creating, sending or scheduling a campaign. Retry later. |
 | `transmission_failed` | 502 | Email transmission to the upstream provider failed. |
 | `auth_unavailable` | 503 | Lettr couldn't verify your API key because of a temporary problem on its side. This doesn't mean the key is invalid (an invalid key returns `401`). Retry after the `Retry-After` delay, currently 5 seconds. |
 
