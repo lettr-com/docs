@@ -347,6 +347,8 @@
  * its natural width, and painted in the primary colour through a mask, the way
  * Mintlify draws its card icons. The img's own pixels are pushed out of view.
  * The logo files are trimmed to their ink so equal heights look equal.
+ * Production serves the files from a CDN with a query string, so match
+ * with *=, never $=.
  * ======================================================================== */
 [data-component-part="card-icon"]:has(> img[src*="/images/integrations/"]) {
   display: flex;
@@ -366,8 +368,8 @@
   background-color: rgb(var(--primary-light));
 }
 
-[data-component-part="card-icon"] > img[src$="/apiant.svg"] { --partner-logo: url("/images/integrations/apiant.svg"); }
-[data-component-part="card-icon"] > img[src$="/elaichi.svg"] { --partner-logo: url("/images/integrations/elaichi.svg"); }
-[data-component-part="card-icon"] > img[src$="/flowrunner.svg"] { --partner-logo: url("/images/integrations/flowrunner.svg"); }
-[data-component-part="card-icon"] > img[src$="/truto.svg"] { --partner-logo: url("/images/integrations/truto.svg"); }
-[data-component-part="card-icon"] > img[src$="/unified.svg"] { --partner-logo: url("/images/integrations/unified.svg"); }
+[data-component-part="card-icon"] > img[src*="/integrations/apiant.svg"] { --partner-logo: url("/images/integrations/apiant.svg"); }
+[data-component-part="card-icon"] > img[src*="/integrations/elaichi.svg"] { --partner-logo: url("/images/integrations/elaichi.svg"); }
+[data-component-part="card-icon"] > img[src*="/integrations/flowrunner.svg"] { --partner-logo: url("/images/integrations/flowrunner.svg"); }
+[data-component-part="card-icon"] > img[src*="/integrations/truto.svg"] { --partner-logo: url("/images/integrations/truto.svg"); }
+[data-component-part="card-icon"] > img[src*="/integrations/unified.svg"] { --partner-logo: url("/images/integrations/unified.svg"); }
