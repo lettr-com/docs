@@ -369,7 +369,11 @@
 }
 
 [data-component-part="card-icon"] > img[src*="/integrations/apiant.svg"] { --partner-logo: url("/images/integrations/apiant.svg"); }
+[data-component-part="card-icon"] > img[src*="/integrations/composio.svg"] { --partner-logo: url("/images/integrations/composio.svg"); }
 [data-component-part="card-icon"] > img[src*="/integrations/elaichi.svg"] { --partner-logo: url("/images/integrations/elaichi.svg"); }
 [data-component-part="card-icon"] > img[src*="/integrations/flowrunner.svg"] { --partner-logo: url("/images/integrations/flowrunner.svg"); }
+[data-component-part="card-icon"] > img[src*="/integrations/mindcloud.svg"] { --partner-logo: url("/images/integrations/mindcloud.svg"); }
+[data-component-part="card-icon"] > img[src*="/integrations/one.svg"] { --partner-logo: url("/images/integrations/one.svg"); }
+[data-component-part="card-icon"] > img[src*="/integrations/tray.svg"] { --partner-logo: url("/images/integrations/tray.svg"); }
 [data-component-part="card-icon"] > img[src*="/integrations/truto.svg"] { --partner-logo: url("/images/integrations/truto.svg"); }
 [data-component-part="card-icon"] > img[src*="/integrations/unified.svg"] { --partner-logo: url("/images/integrations/unified.svg"); }
